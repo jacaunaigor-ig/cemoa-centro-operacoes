@@ -32,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-bg text-text">
+      <body className="h-full overflow-hidden bg-bg text-text max-xl:overflow-auto">
         <a className="skip-link" href="#conteudo">
           Ir para o conteúdo
         </a>

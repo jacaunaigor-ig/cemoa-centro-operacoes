@@ -143,8 +143,8 @@ export function HydrologyWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:p-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 max-xl:overflow-visible sm:p-4">
+        <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-lg font-black tracking-tight sm:text-xl">
               Boletim Hidrológico
@@ -158,7 +158,7 @@ export function HydrologyWorkbench() {
         </div>
 
         <section
-          className="grid gap-2 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]"
+          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]"
           aria-label="Resumo do boletim"
         >
           <Card className="flex flex-col justify-between gap-3 p-3 sm:p-4">
@@ -279,8 +279,8 @@ export function HydrologyWorkbench() {
           </div>
         ) : null}
 
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
-          <div className="flex min-h-0 flex-col gap-3">
+        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
+          <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
             {status === "SL" ? (
               <NoReadingPanel
                 stations={visible}
@@ -326,7 +326,7 @@ export function HydrologyWorkbench() {
             />
           </div>
 
-          <Card className="relative flex min-h-[420px] flex-col overflow-hidden">
+          <Card className="relative flex h-full min-h-[420px] flex-col overflow-hidden xl:min-h-0">
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
@@ -435,7 +435,7 @@ export function HydrologyWorkbench() {
               </div>
             </div>
 
-            <div className="relative min-h-[360px] flex-1">
+            <div className="relative min-h-[360px] flex-1 overflow-hidden xl:min-h-0">
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">
                   Carregando estações e mapa-base…

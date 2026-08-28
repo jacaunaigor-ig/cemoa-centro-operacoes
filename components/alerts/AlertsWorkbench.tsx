@@ -285,8 +285,8 @@ export function AlertsWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source}>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:p-4">
-        <div>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 max-xl:overflow-visible sm:p-4">
+        <div className="shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-black tracking-tight sm:text-xl">
               Painel de Alertas
@@ -305,7 +305,7 @@ export function AlertsWorkbench() {
         </div>
 
         <section
-          className="grid gap-2 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]"
+          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]"
           aria-label="Resumo de chuva intensa"
         >
           <Card className="flex flex-col justify-between gap-3 p-3 sm:p-4">
@@ -363,7 +363,7 @@ export function AlertsWorkbench() {
           </div>
         ) : null}
 
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
           <AlertList
             municipios={visibleMunicipios}
             catalog={catalog}
@@ -407,7 +407,7 @@ export function AlertsWorkbench() {
             }}
           />
 
-          <Card className="relative flex min-h-[420px] flex-col overflow-hidden">
+          <Card className="relative flex h-full min-h-[420px] flex-col overflow-hidden xl:min-h-0">
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
@@ -517,7 +517,7 @@ export function AlertsWorkbench() {
               </div>
             </div>
 
-            <div className="relative min-h-[360px] flex-1">
+            <div className="relative min-h-[360px] flex-1 overflow-hidden xl:min-h-0">
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">
                   Carregando malha municipal e mapa-base…

@@ -58,7 +58,7 @@ export function StationsList({
   }
 
   return (
-    <Card className="flex min-h-[320px] flex-col overflow-hidden">
+    <Card className="flex h-full min-h-[320px] flex-1 flex-col overflow-hidden xl:min-h-0">
       <div className="space-y-2 border-b border-border p-3">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -138,7 +138,7 @@ export function StationsList({
           aria-label="Buscar município ou estação"
         />
       </div>
-      <ScrollArea className="h-[min(52vh,640px)] lg:h-auto lg:flex-1">
+      <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">
         <ul>
           {loading
             ? Array.from({ length: 7 }).map((_, i) => (

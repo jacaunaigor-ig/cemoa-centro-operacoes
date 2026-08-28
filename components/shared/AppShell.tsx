@@ -37,7 +37,7 @@ export function AppShell({
   const suffix = shared.toString() ? `?${shared.toString()}` : "";
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex h-dvh max-xl:h-auto max-xl:min-h-dvh flex-col overflow-hidden max-xl:overflow-visible">
       <header className="relative z-20 flex flex-wrap items-center gap-3 border-b border-border bg-panel/90 px-3 py-2.5 backdrop-blur-xl sm:px-5">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand to-transparent" />
         <Link href="/" className="flex min-w-0 items-center gap-3">
@@ -104,7 +104,7 @@ export function AppShell({
           </InfoTooltip>
         </div>
       </header>
-      <div id="conteudo" className="flex min-h-0 flex-1 flex-col">
+      <div id="conteudo" className="flex min-h-0 flex-1 flex-col overflow-hidden max-xl:overflow-visible">
         {children}
       </div>
     </div>

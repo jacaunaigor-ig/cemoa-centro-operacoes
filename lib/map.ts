@@ -4,7 +4,7 @@ export const OSM_TILE_URL = "/tiles/osm/{z}/{x}/{y}";
 export const OSM_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
 
-export const OSM_BASEMAP_ID = "osm-local-proxy-v2";
+export const OSM_BASEMAP_ID = "osm-local-proxy-v3";
 
 /** Southwest → northeast, used to keep the maps on Amazonas. */
 export const AMAZONAS_CENTER: [number, number] = [-3.9, -64.5];

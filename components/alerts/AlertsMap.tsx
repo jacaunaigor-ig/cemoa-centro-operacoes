@@ -339,8 +339,13 @@ export const AlertsMap = forwardRef<
       if (onlyRisk) map.removeLayer(tiles);
 
       resizeObs = new ResizeObserver(() => {
+        const before = map.getSize().y;
         map.invalidateSize();
-        if (!mapCenterInAmazonas(map)) fitMapToAmazonas(map, false);
+        const after = map.getSize();
+        if (after.x < 40 || after.y < 40) return;
+        if (Math.abs(after.y - before) > 48 || !mapCenterInAmazonas(map)) {
+          fitMapToAmazonas(map, false);
+        }
       });
       if (hostRef.current) resizeObs.observe(hostRef.current);
 
