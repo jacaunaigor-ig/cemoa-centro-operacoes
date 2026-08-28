@@ -8,6 +8,7 @@ import {
   type HydroPatch,
 } from "@/lib/hydro-overrides";
 import { invalidate } from "@/lib/cache";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,8 @@ export function GET() {
 }
 
 export async function POST(request: Request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
   try {
     const body = (await request.json()) as {
       updates?: Record<string, unknown>;
@@ -57,7 +60,9 @@ export async function POST(request: Request) {
   }
 }
 
-export function DELETE() {
+export async function DELETE(request: Request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
   clearHydroOverrides();
   invalidate("hydrology");
   return NextResponse.json({ ok: true, overrides: {} });

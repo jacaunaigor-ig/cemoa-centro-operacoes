@@ -27,7 +27,7 @@ export function KpiCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-panel px-3 py-3 text-left shadow-[0_1px_2px_rgba(0,0,0,.3)]",
+        "relative overflow-hidden rounded-xl border bg-panel px-3 py-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.3)] transition-[border-color,background-color,transform] duration-200 touch-manipulation sm:py-3",
         active ? "border-brand/55 bg-brand/8" : "border-border hover:border-border-strong",
       )}
     >
@@ -41,7 +41,7 @@ export function KpiCard({
       {loading ? (
         <Skeleton className="mt-2 h-8 w-16" />
       ) : (
-        <p className="mt-1 font-mono text-2xl font-bold">{value}</p>
+        <p className="mt-1 font-mono text-xl font-bold sm:text-2xl">{value}</p>
       )}
       <p className="text-[10px] text-text-mute">{sub}</p>
     </button>

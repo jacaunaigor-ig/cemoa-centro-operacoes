@@ -107,7 +107,7 @@ export function AlertsWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const { admin, isMobile } = useOpsMode();
+  const { admin, isMobile, session } = useOpsMode();
   const selected = params.get("municipio");
   const bacia = parseBacia(params.get("bacia"), params.get("calha"));
   const tipo = parseAlertType(params.get("tipo"));
@@ -129,17 +129,27 @@ export function AlertsWorkbench() {
   const [opacity, setOpacity] = useState(58);
   const mapApi = useRef<AlertsMapHandle>(null);
   const hydrated = useRef(false);
+  const localPushed = useRef(false);
   const prevRef = useRef<AlertsPayload | null>(null);
   const firstRef = useRef(true);
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
 
   const persistOverrides = useCallback(
     async (updates: Record<string, string>, replace = false) => {
-      await fetch("/api/alerts/overrides", {
+      const res = await fetch("/api/alerts/overrides", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tipo, updates, replace }),
       });
+      if (res.status === 401) {
+        toast.error("Entre no modo Admin para alterar o mapa.");
+        return;
+      }
+      if (!res.ok) {
+        toast.error("Não foi possível gravar a classificação.");
+        return;
+      }
       try {
         const current = readLocalOverrides();
         if (replace) {
@@ -186,6 +196,7 @@ export function AlertsWorkbench() {
           if (!updates || !Object.keys(updates).length) continue;
           await fetch("/api/alerts/overrides", {
             method: "POST",
+            credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tipo: t, updates, replace: true }),
           });
@@ -197,8 +208,9 @@ export function AlertsWorkbench() {
 
     async function load() {
       try {
-        if (!hydrated.current) {
-          hydrated.current = true;
+        if (!hydrated.current) hydrated.current = true;
+        if (session && !localPushed.current) {
+          localPushed.current = true;
           await hydrateLocal();
         }
         const [payload, hydroPayload] = await Promise.all([
@@ -224,7 +236,7 @@ export function AlertsWorkbench() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [tipo]);
+  }, [tipo, session]);
 
   useEffect(() => {
     if (!data || data.tipo !== tipo) return;
@@ -359,7 +371,14 @@ export function AlertsWorkbench() {
   }
 
   async function restoreLive() {
-    await fetch(`/api/alerts/overrides?tipo=${tipo}`, { method: "DELETE" });
+    const res = await fetch(`/api/alerts/overrides?tipo=${tipo}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    if (res.status === 401) {
+      toast.error("Entre no modo Admin para restaurar o monitoramento.");
+      return;
+    }
     try {
       const current = readLocalOverrides();
       for (const key of Object.keys(current)) {
@@ -402,7 +421,7 @@ export function AlertsWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source}>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 max-xl:overflow-visible sm:p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
         <div className="shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-black tracking-tight sm:text-xl">
@@ -426,7 +445,7 @@ export function AlertsWorkbench() {
         </div>
 
         <section
-          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]"
+          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]"
           aria-label={`Resumo de ${product.short}`}
         >
           <Card className="flex flex-col justify-between gap-3 p-3 sm:p-4">
@@ -505,10 +524,10 @@ export function AlertsWorkbench() {
         ) : null}
 
         <div className={cn(
-          "grid min-h-0 flex-1 gap-3",
+          "grid min-h-0 flex-1 gap-2 sm:gap-3",
           isMobile
             ? "grid-cols-1"
-            : "xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden",
+            : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
           {isMobile ? null : (
           <AlertList
@@ -557,7 +576,7 @@ export function AlertsWorkbench() {
           />
           )}
 
-          <Card className="relative flex h-full min-h-[420px] flex-col overflow-hidden xl:min-h-0">
+          <Card className="relative flex h-full min-h-[min(58dvh,640px)] flex-col overflow-hidden lg:min-h-0">
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
@@ -670,7 +689,7 @@ export function AlertsWorkbench() {
               </div>
             </div>
 
-            <div className="relative min-h-[360px] flex-1 overflow-hidden xl:min-h-0">
+            <div className="relative min-h-[min(48dvh,560px)] flex-1 overflow-hidden lg:min-h-0">
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">
                   Carregando malha municipal e mapa-base…

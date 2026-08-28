@@ -51,9 +51,26 @@ Query strings compartilhadas: `municipio`, `bacia`, `calha`. No painel também: 
 
 ## Desktop, mobile e Admin
 
-O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs e ficha do município; sem lista, PNG, lote ou polígono).
+O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs e ficha do município; sem lista, PNG, lote ou polígono). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado.
 
-**Admin** só existe no Desktop. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
+**Admin** só existe no Desktop e exige login. Clique em **Admin** (ou **Criar Admin** na primeira vez) para autenticar. Sem sessão, as APIs de alteração respondem 401. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
+
+Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). Dá para ter vários administradores: quem já entrou abre o ícone de pessoas no cabeçalho, cria outro usuário e, se quiser, troca a própria senha.
+
+### Primeiro administrador
+
+Na primeira execução, **Criar Admin** pede nome, usuário e senha (mínimo 10 caracteres, com letras e números). O cadastro fica em `data/admins.json` (fora do git).
+
+Em produção (Vercel), defina:
+
+```bash
+CEMOA_SESSION_SECRET=uma-string-longa-aleatoria
+CEMOA_ADMIN_LOGIN=igor
+CEMOA_ADMIN_PASSWORD=senha-forte-aqui
+CEMOA_ADMIN_NAME=Igor
+```
+
+`CEMOA_SESSION_SECRET` é obrigatório em produção (mínimo 16 caracteres). O usuário do ambiente não se apaga pela interface. Contas extras criadas no painel persistem no arquivo local; no serverless elas podem não sobreviver a um reciclo — use o ambiente para a conta permanente.
 
 No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
 

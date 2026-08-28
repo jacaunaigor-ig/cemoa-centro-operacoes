@@ -25,6 +25,7 @@ export const viewport: Viewport = {
   themeColor: "#080d17",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="h-full overflow-hidden bg-bg text-text max-xl:overflow-auto">
+      <body className="h-full overflow-hidden bg-bg text-text max-lg:overflow-auto">
         <a className="skip-link" href="#conteudo">
           Ir para o conteúdo
         </a>

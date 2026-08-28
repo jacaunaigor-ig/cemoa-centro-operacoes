@@ -8,6 +8,7 @@ import {
   serializeOverrides,
 } from "@/lib/overrides";
 import { invalidate } from "@/lib/cache";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ export function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
   try {
     const body = (await request.json()) as {
       tipo?: string;
@@ -45,7 +48,9 @@ export async function POST(request: Request) {
   }
 }
 
-export function DELETE(request: Request) {
+export async function DELETE(request: Request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
   const url = new URL(request.url);
   const tipoRaw = url.searchParams.get("tipo");
   const tipo = tipoRaw ? parseAlertType(tipoRaw) : undefined;

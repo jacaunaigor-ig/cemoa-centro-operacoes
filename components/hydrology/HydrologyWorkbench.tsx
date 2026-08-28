@@ -88,7 +88,7 @@ export function HydrologyWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const { admin, isMobile } = useOpsMode();
+  const { admin, isMobile, session } = useOpsMode();
   const selected = params.get("municipio");
   const modo = parseModo(params.get("modo"));
   const status = parseStatus(params.get("status"));
@@ -107,14 +107,16 @@ export function HydrologyWorkbench() {
   const [editorOpen, setEditorOpen] = useState(false);
   const mapRef = useRef<StationsMapHandle>(null);
   const hydrated = useRef(false);
+  const localPushed = useRef(false);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
     async function load() {
       try {
-        if (!hydrated.current) {
-          hydrated.current = true;
+        if (!hydrated.current) hydrated.current = true;
+        if (session && !localPushed.current) {
+          localPushed.current = true;
           try {
             const raw = localStorage.getItem(HYDRO_STORAGE);
             if (raw) {
@@ -122,6 +124,7 @@ export function HydrologyWorkbench() {
               if (Object.keys(updates).length) {
                 await fetch("/api/hydrology/overrides", {
                   method: "POST",
+                  credentials: "same-origin",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ updates, replace: true }),
                 });
@@ -149,7 +152,7 @@ export function HydrologyWorkbench() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [session]);
 
   function setQuery(next: Record<string, string | null>) {
     const usp = new URLSearchParams(params.toString());
@@ -186,11 +189,20 @@ export function HydrologyWorkbench() {
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
 
   async function persistHydro(updates: Record<string, HydroPatch>, replace = false) {
-    await fetch("/api/hydrology/overrides", {
+    const res = await fetch("/api/hydrology/overrides", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ updates, replace }),
     });
+    if (res.status === 401) {
+      toast.error("Entre no modo Admin para alterar cotas e status.");
+      return;
+    }
+    if (!res.ok) {
+      toast.error("Não foi possível gravar a alteração hidrológica.");
+      return;
+    }
     try {
       const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
         string,
@@ -236,7 +248,14 @@ export function HydrologyWorkbench() {
   }
 
   async function restoreHydro() {
-    await fetch("/api/hydrology/overrides", { method: "DELETE" });
+    const res = await fetch("/api/hydrology/overrides", {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    if (res.status === 401) {
+      toast.error("Entre no modo Admin para restaurar o monitoramento.");
+      return;
+    }
     localStorage.removeItem(HYDRO_STORAGE);
     const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
     setData(payload);
@@ -279,7 +298,7 @@ export function HydrologyWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 max-xl:overflow-visible sm:p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
         <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-lg font-black tracking-tight sm:text-xl">
@@ -417,10 +436,10 @@ export function HydrologyWorkbench() {
 
         <div
           className={cn(
-            "grid min-h-0 flex-1 gap-3",
+            "grid min-h-0 flex-1 gap-2 sm:gap-3",
             isMobile
               ? "grid-cols-1"
-              : "xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden",
+              : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
           )}
         >
           {isMobile ? null : (
@@ -471,7 +490,7 @@ export function HydrologyWorkbench() {
           </div>
           )}
 
-          <Card className="relative flex h-full min-h-[420px] flex-col overflow-hidden xl:min-h-0">
+          <Card className="relative flex h-full min-h-[min(58dvh,640px)] flex-col overflow-hidden lg:min-h-0">
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
@@ -583,7 +602,7 @@ export function HydrologyWorkbench() {
               </div>
             </div>
 
-            <div className="relative min-h-[360px] flex-1 overflow-hidden xl:min-h-0">
+            <div className="relative min-h-[min(48dvh,560px)] flex-1 overflow-hidden lg:min-h-0">
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">
                   Carregando estações e mapa-base…

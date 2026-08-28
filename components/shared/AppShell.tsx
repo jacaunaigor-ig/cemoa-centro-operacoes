@@ -2,10 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Activity, Droplets, Info, Monitor, Radio, Shield, Smartphone } from "lucide-react";
+import {
+  Activity,
+  Droplets,
+  Info,
+  LogOut,
+  Monitor,
+  Radio,
+  Shield,
+  Smartphone,
+  Users,
+} from "lucide-react";
 import { cn, formatAmazonTime } from "@/lib/utils";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
+import { LoginDialog } from "@/components/auth/LoginDialog";
+import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { useEffect, useState } from "react";
 
 export function AppShell({
@@ -21,7 +33,17 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
-  const { layout, admin, isMobile, setLayout, setAdmin } = useOpsMode();
+  const {
+    layout,
+    admin,
+    isMobile,
+    session,
+    needsSetup,
+    setLayout,
+    setAdmin,
+    openAdmins,
+    logout,
+  } = useOpsMode();
   const [clock, setClock] = useState("--:--:--");
 
   useEffect(() => {
@@ -41,13 +63,13 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "flex flex-col",
+        "flex flex-col transition-[min-height] duration-300",
         isMobile
           ? "min-h-dvh"
-          : "h-dvh max-xl:h-auto max-xl:min-h-dvh overflow-hidden max-xl:overflow-visible",
+          : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
       )}
     >
-      <header className="relative z-20 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 py-2 backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-2.5">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl sm:gap-3 sm:px-4 sm:pb-2.5">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand to-transparent" />
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
@@ -63,7 +85,7 @@ export function AppShell({
 
         <nav
           aria-label="Produtos"
-          className="order-3 flex w-full gap-1 rounded-xl border border-border bg-bg/60 p-1 sm:order-none sm:w-auto sm:ml-4"
+          className="order-3 flex w-full gap-1 rounded-xl border border-border bg-bg/60 p-1 sm:order-none sm:ml-3 sm:w-auto"
         >
           <NavTab
             href={`/${suffix}`}
@@ -83,7 +105,7 @@ export function AppShell({
           </NavTab>
         </nav>
 
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
           <div
             className="flex rounded-lg border border-border bg-bg/60 p-0.5"
             role="group"
@@ -92,7 +114,7 @@ export function AppShell({
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold",
+                "inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-colors duration-200 touch-manipulation",
                 layout === "desktop" ? "bg-brand text-white" : "text-text-mute hover:text-text",
               )}
               aria-pressed={layout === "desktop"}
@@ -104,7 +126,7 @@ export function AppShell({
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold",
+                "inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-colors duration-200 touch-manipulation",
                 layout === "mobile" ? "bg-brand text-white" : "text-text-mute hover:text-text",
               )}
               aria-pressed={layout === "mobile"}
@@ -115,30 +137,54 @@ export function AppShell({
             </button>
           </div>
           {layout === "desktop" ? (
-            <button
-              type="button"
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-black tracking-wide uppercase",
-                admin
-                  ? "border-brand/60 bg-brand text-white"
-                  : "border-border bg-panel-2 text-text-mute hover:text-text",
-              )}
-              aria-pressed={admin}
-              onClick={() => setAdmin(!admin)}
-            >
-              <Shield className="size-3.5" />
-              Admin
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black tracking-wide uppercase transition-colors duration-200 touch-manipulation",
+                  admin
+                    ? "border-brand/60 bg-brand text-white"
+                    : "border-border bg-panel-2 text-text-mute hover:text-text",
+                )}
+                aria-pressed={admin}
+                onClick={() => setAdmin(!admin)}
+              >
+                <Shield className="size-3.5" />
+                {session ? "Admin" : needsSetup ? "Criar Admin" : "Admin"}
+              </button>
+              {session ? (
+                <>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-dim transition-colors hover:text-text"
+                    onClick={openAdmins}
+                    title="Administradores"
+                  >
+                    <Users className="size-3.5" />
+                    <span className="hidden lg:inline max-w-[9rem] truncate">{session.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-lg border border-border bg-panel-2 p-1.5 text-text-mute transition-colors hover:text-text"
+                    onClick={() => void logout()}
+                    aria-label="Sair"
+                    title="Sair"
+                  >
+                    <LogOut className="size-3.5" />
+                  </button>
+                </>
+              ) : null}
+            </div>
           ) : null}
           {!isMobile ? (
-            <div className="text-right">
+            <div className="hidden text-right md:block">
               <small className="block font-mono text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
                 Horário de Manaus
               </small>
-              <strong className="font-mono text-sm">{clock}</strong>
+              <strong className="font-mono text-sm tabular-nums">{clock}</strong>
             </div>
           ) : (
-            <strong className="font-mono text-xs">{clock}</strong>
+            <strong className="font-mono text-xs tabular-nums">{clock}</strong>
           )}
           {!isMobile ? (
             <InfoTooltip
@@ -148,7 +194,7 @@ export function AppShell({
             >
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"
+                className="hidden items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-white/5 sm:flex"
                 aria-label="Sobre a sincronização"
               >
                 <span className="live-dot" aria-hidden />
@@ -171,18 +217,22 @@ export function AppShell({
       </header>
       {admin ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
-          Modo Admin — cotas, status, alertas, seleção em lote e polígonos. Indisponível no mobile.
+          Modo Admin autenticado
+          {session ? ` · ${session.name}` : ""} — cotas, status, alertas, lote e polígonos.
+          Indisponível no mobile.
         </div>
       ) : null}
       <div
         id="conteudo"
         className={cn(
-          "flex min-h-0 flex-1 flex-col",
-          isMobile ? "" : "overflow-hidden max-xl:overflow-visible",
+          "flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]",
+          isMobile ? "" : "overflow-hidden max-lg:overflow-visible",
         )}
       >
         {children}
       </div>
+      <LoginDialog />
+      <AdminsDialog />
     </div>
   );
 }
@@ -204,7 +254,7 @@ function NavTab({
     <Link
       href={href}
       className={cn(
-        "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold sm:flex-none",
+        "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-200 sm:flex-none",
         compact && "px-2 py-1.5",
         active
           ? "bg-brand text-white shadow"
