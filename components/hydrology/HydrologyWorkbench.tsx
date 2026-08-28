@@ -77,7 +77,6 @@ export function HydrologyWorkbench() {
   const [data, setData] = useState<HydrologyPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
-  const [toolsOpen, setToolsOpen] = useState(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
@@ -379,60 +378,59 @@ export function HydrologyWorkbench() {
                     </ul>
                   </PopoverContent>
                 </Popover>
-                <div className="relative">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    aria-expanded={toolsOpen}
-                    onClick={() => setToolsOpen((v) => !v)}
-                  >
-                    <Settings2 className="size-3.5" />
-                    Mapa
-                  </Button>
-                  {toolsOpen ? (
-                    <div className="absolute right-0 z-[1200] mt-1 w-64 rounded-xl border border-border bg-panel p-2 shadow-2xl">
-                      <MapTool
-                        active={onlyRisk}
-                        onClick={() => setOnlyRisk((v) => !v)}
-                        icon={<Layers className="size-3.5" />}
-                      >
-                        Somente risco
-                      </MapTool>
-                      <MapTool
-                        onClick={() => mapRef.current?.fitAmazonas()}
-                        icon={<MapPinned className="size-3.5" />}
-                      >
-                        Ajustar ao Amazonas
-                      </MapTool>
-                      <MapTool
-                        active={showNames}
-                        onClick={() => setShowNames((v) => !v)}
-                      >
-                        {showNames ? "Ocultar nomes dos municípios" : "Mostrar nomes dos municípios"}
-                      </MapTool>
-                      <MapTool
-                        active={showRivers}
-                        onClick={() => setShowRivers((v) => !v)}
-                      >
-                        {showRivers ? "Ocultar rios" : "Mostrar rios"}
-                      </MapTool>
-                      <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
-                        Opacidade
-                        <input
-                          type="range"
-                          min={20}
-                          max={85}
-                          step={5}
-                          value={opacity}
-                          onChange={(e) => setOpacity(Number(e.target.value))}
-                          className="w-28 accent-brand"
-                          aria-label="Opacidade da camada de risco"
-                        />
-                      </label>
-                    </div>
-                  ) : null}
-                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      aria-label="Opções de visualização do mapa"
+                    >
+                      <Settings2 className="size-3.5" />
+                      Mapa
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-64 p-2">
+                    <MapTool
+                      active={onlyRisk}
+                      onClick={() => setOnlyRisk((v) => !v)}
+                      icon={<Layers className="size-3.5" />}
+                    >
+                      Somente risco
+                    </MapTool>
+                    <MapTool
+                      onClick={() => mapRef.current?.fitAmazonas()}
+                      icon={<MapPinned className="size-3.5" />}
+                    >
+                      Ajustar ao Amazonas
+                    </MapTool>
+                    <MapTool
+                      active={showNames}
+                      onClick={() => setShowNames((v) => !v)}
+                    >
+                      {showNames ? "Ocultar nomes dos municípios" : "Mostrar nomes dos municípios"}
+                    </MapTool>
+                    <MapTool
+                      active={showRivers}
+                      onClick={() => setShowRivers((v) => !v)}
+                    >
+                      {showRivers ? "Ocultar rios" : "Mostrar rios"}
+                    </MapTool>
+                    <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
+                      Opacidade
+                      <input
+                        type="range"
+                        min={20}
+                        max={85}
+                        step={5}
+                        value={opacity}
+                        onChange={(e) => setOpacity(Number(e.target.value))}
+                        className="w-28 accent-brand"
+                        aria-label="Opacidade da camada de risco"
+                      />
+                    </label>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
