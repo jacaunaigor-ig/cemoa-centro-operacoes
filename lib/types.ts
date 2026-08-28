@@ -69,41 +69,68 @@ export type AlertsPayload = {
   }>;
 };
 
+export type HydroMode = "vazante" | "enchente";
+
+export type HydroStatus = "NORMAL" | "MODERADO" | "ALTO";
+
+export type HydroStatusFilter = "Todos" | HydroStatus | "SL" | "COM_LEITURA";
+
+export type HydroTendencia = "SUBINDO" | "BAIXANDO" | "PARADO" | "VAZANTE" | "SL";
+
+export type HydroLimites = {
+  alto: number | null;
+  moderado: number | null;
+};
+
+export type HydroChange = {
+  municipio: string;
+  modo: HydroMode;
+  de: string | null;
+  para: HydroStatus | "NORMAL";
+  nota?: string;
+};
+
+export type HydroRiver = {
+  id: string;
+  nome: string;
+  cor: string;
+  velocidade: number;
+  municipios: string[];
+};
+
 export type HydroStation = {
   id: string;
   municipio: string;
+  municipioBoletim: string;
+  calha: string;
   bacia: string;
   rio: string;
   lat: number;
   lon: number;
   estacao: string;
+  fonte: string;
   cota: number | null;
-  cotaAtencao: number;
-  cotaAlerta: number;
-  cotaEmergencia: number;
-  cotaExtrema: number;
-  historico: number[];
-  risco: RiskLevel;
-  tendencia: Trend;
+  variacao: number | null;
+  cotas: Array<number | null>;
+  dias: string[];
+  tendencia: HydroTendencia;
+  statusVazante: HydroStatus;
+  statusEnchente: HydroStatus;
+  limitesVazante: HydroLimites;
+  limitesEnchente: HydroLimites;
   semLeitura: boolean;
-  atualizadoEm: number;
-  historicoRisco: Array<{
-    t: number;
-    risco: RiskLevel;
-    cota: number | null;
-  }>;
+  semEstacao: boolean;
 };
 
 export type HydrologyPayload = {
   generatedAt: number;
   source: string;
   cache: "HIT" | "MISS";
-  stats: {
-    comLeitura: number;
-    semLeitura: number;
-    maiorRisco: RiskLevel;
-    municipiosEmAlerta: number;
-  };
+  referencia: string;
+  dias: string[];
+  calhas: string[];
+  mudancas24h: HydroChange[];
+  rios: HydroRiver[];
   stations: HydroStation[];
 };
 

@@ -1,0 +1,2115 @@
+{
+  "dias": [
+    "20/08",
+    "21/08",
+    "22/08",
+    "23/08",
+    "24/08"
+  ],
+  "referencia": "2026-08-24",
+  "fonte": "CEMOA · ANA / SGB / SEMA",
+  "calhas": [
+    "Alto Solimões",
+    "Baixo Amazonas",
+    "Baixo Solimões",
+    "Juruá",
+    "Madeira",
+    "Médio Amazonas",
+    "Médio Solimões",
+    "Negro",
+    "Purus"
+  ],
+  "mudancas24h": [
+    {
+      "municipio": "Humaitá",
+      "modo": "vazante",
+      "de": "BAIXO",
+      "para": "MODERADO"
+    },
+    {
+      "municipio": "Apuí",
+      "modo": "vazante",
+      "de": "BAIXO",
+      "para": "MODERADO"
+    },
+    {
+      "municipio": "Manicoré",
+      "modo": "vazante",
+      "de": "BAIXO",
+      "para": "MODERADO"
+    },
+    {
+      "municipio": "Novo Aripuanã",
+      "modo": "vazante",
+      "de": "BAIXO",
+      "para": "MODERADO"
+    },
+    {
+      "municipio": "Nova Olinda do Norte",
+      "modo": "enchente",
+      "de": null,
+      "para": "NORMAL",
+      "nota": "Atualizado → Baixo"
+    }
+  ],
+  "rios": [
+    {
+      "id": "solimoes",
+      "nome": "Solimões–Amazonas",
+      "cor": "#38bdf8",
+      "velocidade": 1.55,
+      "municipios": [
+        "TABATINGA",
+        "SÃO PAULO DE OLIVENÇA",
+        "SANTO ANTÔNIO DO IÇÁ",
+        "TONANTINS",
+        "FONTE BOA",
+        "TEFÉ",
+        "COARI (ITAPÉUA)",
+        "MANACAPURU",
+        "MANAUS",
+        "ITACOATIARA",
+        "PARINTINS"
+      ]
+    },
+    {
+      "id": "negro",
+      "nome": "Negro",
+      "cor": "#60a5fa",
+      "velocidade": 1.75,
+      "municipios": [
+        "SÃO GABRIEL DA CACHOEIRA",
+        "SANTA ISABEL DO RIO NEGRO",
+        "BARCELOS",
+        "NOVO AIRÃO",
+        "MANAUS"
+      ]
+    },
+    {
+      "id": "madeira",
+      "nome": "Madeira",
+      "cor": "#22d3ee",
+      "velocidade": 1.68,
+      "municipios": [
+        "HUMAITÁ",
+        "MANICORÉ",
+        "BORBA",
+        "NOVA OLINDA DO NORTE"
+      ]
+    },
+    {
+      "id": "purus",
+      "nome": "Purus",
+      "cor": "#67e8f9",
+      "velocidade": 1.88,
+      "municipios": [
+        "BOCA DO ACRE",
+        "PAUINI",
+        "LÁBREA",
+        "CANUTAMA",
+        "TAPAUÁ",
+        "BERURI"
+      ]
+    },
+    {
+      "id": "jurua",
+      "nome": "Juruá",
+      "cor": "#7dd3fc",
+      "velocidade": 1.95,
+      "municipios": [
+        "GUAJARÁ (CRUZEIRO SUL)",
+        "IPIXUNA",
+        "EIRUNEPÉ",
+        "ITAMARATI",
+        "CARAUARI",
+        "JURUÁ"
+      ]
+    }
+  ],
+  "stations": [
+    {
+      "calha": "Juruá",
+      "municipio": "GUAJARÁ (CRUZEIRO SUL)",
+      "ana": "12500000",
+      "cotas": [
+        4.28,
+        4.26,
+        4.26,
+        4.26,
+        4.27
+      ],
+      "cota": 4.27,
+      "variacao": 0.01,
+      "tendencia": "SUBINDO",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -7.542833,
+      "lng": -72.576706,
+      "id": "1301654",
+      "nomeMalha": "Guajará",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": 4.0,
+        "moderado": 6.0
+      },
+      "limitesEnchente": {
+        "alto": 13.0,
+        "moderado": 11.0
+      }
+    },
+    {
+      "calha": "Juruá",
+      "municipio": "IPIXUNA",
+      "ana": "12520000",
+      "cotas": [
+        3.59,
+        null,
+        3.27,
+        3.23,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -7.051434,
+      "lng": -71.692764,
+      "id": "1301803",
+      "nomeMalha": "Ipixuna",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 13.0,
+        "moderado": 12.0
+      }
+    },
+    {
+      "calha": "Juruá",
+      "municipio": "ENVIRA",
+      "ana": "12680000",
+      "cotas": [
+        5.06,
+        null,
+        5.15,
+        5.16,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -7.43278,
+      "lng": -70.022781,
+      "id": "1301506",
+      "nomeMalha": "Envira",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 15.0,
+        "moderado": 13.0
+      }
+    },
+    {
+      "calha": "Juruá",
+      "municipio": "ITAMARATI",
+      "ana": "12700000",
+      "cotas": [
+        7.87,
+        null,
+        7.56,
+        null,
+        7.54
+      ],
+      "cota": 7.54,
+      "variacao": -0.02,
+      "tendencia": "BAIXANDO",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -6.43852,
+      "lng": -68.2437,
+      "id": "1301951",
+      "nomeMalha": "Itamarati",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": 8.0,
+        "moderado": 12.0
+      },
+      "limitesEnchente": {
+        "alto": 19.5,
+        "moderado": 18.0
+      }
+    },
+    {
+      "calha": "Juruá",
+      "municipio": "EIRUNEPÉ",
+      "ana": "12550000",
+      "cotas": [
+        4.46,
+        4.45,
+        4.26,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -6.65677,
+      "lng": -69.8662,
+      "id": "1301407",
+      "nomeMalha": "Eirunepé",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": 4.0,
+        "moderado": 5.0
+      },
+      "limitesEnchente": {
+        "alto": 16.0,
+        "moderado": 15.0
+      }
+    },
+    {
+      "calha": "Juruá",
+      "municipio": "CARAUARI",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -4.88161,
+      "lng": -66.9086,
+      "id": "1301001",
+      "nomeMalha": "Carauari",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": 18.0,
+        "moderado": 20.0
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Juruá",
+      "municipio": "JURUÁ",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -3.473342,
+      "lng": -66.06456,
+      "id": "1302207",
+      "nomeMalha": "Juruá",
+      "baciaChuva": "Juruá",
+      "rio": "Rio Juruá",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Purus",
+      "municipio": "BOCA DO ACRE",
+      "ana": "13700000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -8.74314,
+      "lng": -67.399307,
+      "id": "1300706",
+      "nomeMalha": "Boca do Acre",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": 5.0,
+        "moderado": 6.0
+      },
+      "limitesEnchente": {
+        "alto": 18.0,
+        "moderado": 16.5
+      }
+    },
+    {
+      "calha": "Purus",
+      "municipio": "PAUINI",
+      "ana": "13750000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -7.71638,
+      "lng": -67.002502,
+      "id": "1303502",
+      "nomeMalha": "Pauini",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 22.0,
+        "moderado": 21.5
+      }
+    },
+    {
+      "calha": "Purus",
+      "municipio": "LÁBREA",
+      "ana": "13870000",
+      "cotas": [
+        6.2,
+        6.15,
+        6.08,
+        6.01,
+        5.95
+      ],
+      "cota": 5.95,
+      "variacao": -0.06,
+      "tendencia": "BAIXANDO",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -7.260879,
+      "lng": -64.799728,
+      "id": "1302405",
+      "nomeMalha": "Lábrea",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": 6.0,
+        "moderado": 10.0
+      },
+      "limitesEnchente": {
+        "alto": 19.0,
+        "moderado": 17.43
+      }
+    },
+    {
+      "calha": "Purus",
+      "municipio": "CANUTAMA",
+      "ana": "13880000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -6.52582,
+      "lng": -64.3953,
+      "id": "1300904",
+      "nomeMalha": "Canutama",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 23.0,
+        "moderado": 22.0
+      }
+    },
+    {
+      "calha": "Purus",
+      "municipio": "TAPAUÁ",
+      "ana": "DCAM",
+      "cotas": [
+        14.69,
+        null,
+        14.43,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "NORMAL",
+      "lat": -5.627966,
+      "lng": -63.187866,
+      "id": "1304104",
+      "nomeMalha": "Tapauá",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Purus",
+      "municipio": "BERURI",
+      "ana": "13990000",
+      "cotas": [
+        17.61,
+        17.48,
+        17.23,
+        17.11,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.89874,
+      "lng": -61.3616,
+      "id": "1300631",
+      "nomeMalha": "Beruri",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": 12.0,
+        "moderado": 13.0
+      },
+      "limitesEnchente": {
+        "alto": 19.5,
+        "moderado": 17.0
+      }
+    },
+    {
+      "calha": "Madeira",
+      "municipio": "HUMAITÁ",
+      "ana": "15630000",
+      "cotas": [
+        12.41,
+        12.27,
+        12.18,
+        12.11,
+        11.91
+      ],
+      "cota": 11.91,
+      "variacao": -0.2,
+      "tendencia": "BAIXANDO",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
+      "lat": -7.51171,
+      "lng": -63.0327,
+      "id": "1301704",
+      "nomeMalha": "Humaitá",
+      "baciaChuva": "Madeira",
+      "rio": "Rio Madeira",
+      "limitesVazante": {
+        "alto": 10.0,
+        "moderado": 12.0
+      },
+      "limitesEnchente": {
+        "alto": 23.0,
+        "moderado": 21.0
+      }
+    },
+    {
+      "calha": "Madeira",
+      "municipio": "APUÍ",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -7.19409,
+      "lng": -59.896,
+      "id": "1300144",
+      "nomeMalha": "Apuí",
+      "baciaChuva": "Madeira",
+      "rio": "Rio Madeira",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Madeira",
+      "municipio": "MANICORÉ",
+      "ana": "15700000",
+      "cotas": [
+        15.5,
+        null,
+        15.23,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -5.813035,
+      "lng": -61.299702,
+      "id": "1302702",
+      "nomeMalha": "Manicoré",
+      "baciaChuva": "Madeira",
+      "rio": "Rio Madeira",
+      "limitesVazante": {
+        "alto": 13.0,
+        "moderado": 15.0
+      },
+      "limitesEnchente": {
+        "alto": 26.0,
+        "moderado": 25.0
+      }
+    },
+    {
+      "calha": "Madeira",
+      "municipio": "NOVO ARIPUANÃ",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -5.127325,
+      "lng": -60.373543,
+      "id": "1303304",
+      "nomeMalha": "Novo Aripuanã",
+      "baciaChuva": "Madeira",
+      "rio": "Rio Madeira",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Madeira",
+      "municipio": "BORBA",
+      "ana": "15900000",
+      "cotas": [
+        15.16,
+        15.03,
+        14.72,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -4.388344,
+      "lng": -59.594814,
+      "id": "1300805",
+      "nomeMalha": "Borba",
+      "baciaChuva": "Madeira",
+      "rio": "Rio Madeira",
+      "limitesVazante": {
+        "alto": 10.5,
+        "moderado": 12.5
+      },
+      "limitesEnchente": {
+        "alto": 19.5,
+        "moderado": 18.0
+      }
+    },
+    {
+      "calha": "Madeira",
+      "municipio": "NOVA OLINDA DO NORTE",
+      "ana": "15940000",
+      "cotas": [
+        15.78,
+        null,
+        15.56,
+        15.47,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.888215,
+      "lng": -59.093483,
+      "id": "1303106",
+      "nomeMalha": "Nova Olinda do Norte",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": 10.0,
+        "moderado": 12.0
+      },
+      "limitesEnchente": {
+        "alto": 18.0,
+        "moderado": 17.0
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "ATALAIA DO NORTE",
+      "ana": "10200000",
+      "cotas": [
+        6.8,
+        null,
+        8.48,
+        9.19,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -4.364241,
+      "lng": -70.192024,
+      "id": "1300201",
+      "nomeMalha": "Atalaia do Norte",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "BENJAMIN CONSTANT",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -4.223479,
+      "lng": -70.01306,
+      "id": "1300607",
+      "nomeMalha": "Benjamin Constant",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "TABATINGA",
+      "ana": "10100000",
+      "cotas": [
+        3.66,
+        3.65,
+        3.44,
+        3.32,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -4.2416,
+      "lng": -69.9383,
+      "id": "1304062",
+      "nomeMalha": "Tabatinga",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": 5.0,
+        "moderado": 6.0
+      },
+      "limitesEnchente": {
+        "alto": 12.0,
+        "moderado": 11.0
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "SÃO PAULO DE OLIVENÇA",
+      "ana": "11400000",
+      "cotas": [
+        6.04,
+        6.03,
+        5.84,
+        5.65,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "ALTO",
+      "lat": -3.463116,
+      "lng": -68.957565,
+      "id": "1303908",
+      "nomeMalha": "São Paulo de Olivença",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 13.38,
+        "moderado": 12.59
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "AMATURA",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -3.37455,
+      "lng": -68.2005,
+      "id": "1300060",
+      "nomeMalha": "Amaturá",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "SANTO ANTÔNIO DO IÇÁ",
+      "ana": "11500000",
+      "cotas": [
+        6.32,
+        6.27,
+        5.48,
+        null,
+        5.38
+      ],
+      "cota": 5.38,
+      "variacao": -0.1,
+      "tendencia": "BAIXANDO",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -3.100451,
+      "lng": -67.946846,
+      "id": "1303700",
+      "nomeMalha": "Santo Antônio do Içá",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 13.3,
+        "moderado": 12.42
+      }
+    },
+    {
+      "calha": "Alto Solimões",
+      "municipio": "TONANTINS",
+      "ana": "DCAM",
+      "cotas": [
+        8.63,
+        8.57,
+        8.58,
+        8.44,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -2.86582,
+      "lng": -67.7919,
+      "id": "1304237",
+      "nomeMalha": "Tonantins",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "JUTAÍ",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.74379,
+      "lng": -66.769493,
+      "id": "1302306",
+      "nomeMalha": "Jutaí",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "FONTE BOA",
+      "ana": "12351000",
+      "cotas": [
+        15.74,
+        15.64,
+        15.62,
+        15.48,
+        15.43
+      ],
+      "cota": 15.43,
+      "variacao": -0.05,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.52342,
+      "lng": -66.0942,
+      "id": "1301605",
+      "nomeMalha": "Fonte Boa",
+      "baciaChuva": "Alto Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": 11.0,
+        "moderado": 13.0
+      },
+      "limitesEnchente": {
+        "alto": 21.0,
+        "moderado": 19.0
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "JAPURÁ",
+      "ana": "12850000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "NORMAL",
+      "lat": -1.88237,
+      "lng": -66.9291,
+      "id": "1302108",
+      "nomeMalha": "Japurá",
+      "baciaChuva": "Japurá",
+      "rio": "Rio Japurá",
+      "limitesVazante": {
+        "alto": 7.0,
+        "moderado": 9.0
+      },
+      "limitesEnchente": {
+        "alto": 12.0,
+        "moderado": 11.0
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "MARAÃ",
+      "ana": "12872000",
+      "cotas": [
+        12.82,
+        12.73,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "NORMAL",
+      "lat": -1.859489,
+      "lng": -65.591133,
+      "id": "1302801",
+      "nomeMalha": "Maraã",
+      "baciaChuva": "Japurá",
+      "rio": "Rio Japurá",
+      "limitesVazante": {
+        "alto": 6.0,
+        "moderado": 8.0
+      },
+      "limitesEnchente": {
+        "alto": 14.0,
+        "moderado": 11.0
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "UARINI",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.99609,
+      "lng": -65.1133,
+      "id": "1304260",
+      "nomeMalha": "Uarini",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "ALVARÃES",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.22727,
+      "lng": -64.8007,
+      "id": "1300029",
+      "nomeMalha": "Alvarães",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "TEFÉ",
+      "ana": "12900001",
+      "cotas": [
+        15.13,
+        14.99,
+        14.84,
+        14.71,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.346037,
+      "lng": -64.707474,
+      "id": "1304203",
+      "nomeMalha": "Tefé",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": 9.0,
+        "moderado": 10.0
+      },
+      "limitesEnchente": {
+        "alto": 10.0,
+        "moderado": 9.0
+      }
+    },
+    {
+      "calha": "Médio Solimões",
+      "municipio": "COARI (ITAPÉUA)",
+      "ana": "13150000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -4.09412,
+      "lng": -63.1441,
+      "id": "1301209",
+      "nomeMalha": "Coari",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 16.9,
+        "moderado": 14.6
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "CODAJÁS",
+      "ana": "13155000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.83053,
+      "lng": -62.0658,
+      "id": "1301308",
+      "nomeMalha": "Codajás",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 17.1,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "ANORI",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.74603,
+      "lng": -61.6575,
+      "id": "1300102",
+      "nomeMalha": "Anori",
+      "baciaChuva": "Purus",
+      "rio": "Rio Purus",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "ANAMÃ",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.56697,
+      "lng": -61.3963,
+      "id": "1300086",
+      "nomeMalha": "Anamã",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 15.4,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "CAAPIRANGA",
+      "ana": "DCAM",
+      "cotas": [
+        10.94,
+        10.84,
+        10.62,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.31537,
+      "lng": -61.2206,
+      "id": "1300839",
+      "nomeMalha": "Caapiranga",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "MANACAPURU",
+      "ana": "14100000",
+      "cotas": [
+        16.52,
+        16.41,
+        16.28,
+        16.17,
+        16.05
+      ],
+      "cota": 16.05,
+      "variacao": -0.12,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.29972,
+      "lng": -60.62056,
+      "id": "1302504",
+      "nomeMalha": "Manacapuru",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": 7.0,
+        "moderado": 9.0
+      },
+      "limitesEnchente": {
+        "alto": 18.0,
+        "moderado": 17.0
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "IRANDUBA",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.27479,
+      "lng": -60.19,
+      "id": "1301852",
+      "nomeMalha": "Iranduba",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 16.8,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "MANAQUIRI",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.44078,
+      "lng": -60.4612,
+      "id": "1302553",
+      "nomeMalha": "Manaquiri",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "CAREIRO",
+      "ana": "DCAM",
+      "cotas": [
+        16.63,
+        16.5,
+        16.39,
+        16.29,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.76803,
+      "lng": -60.369,
+      "id": "1301100",
+      "nomeMalha": "Careiro",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 14.5,
+        "moderado": 13.0
+      }
+    },
+    {
+      "calha": "Baixo Solimões",
+      "municipio": "CAREIRO DA VÁRZEA",
+      "ana": "15040000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.196561,
+      "lng": -59.82655,
+      "id": "1301159",
+      "nomeMalha": "Careiro da Várzea",
+      "baciaChuva": "Médio Solimões",
+      "rio": "Rio Solimões",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 14.5,
+        "moderado": 13.0
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "ITACOATIARA",
+      "ana": "16030000",
+      "cotas": [
+        11.55,
+        11.46,
+        11.36,
+        11.29,
+        11.19
+      ],
+      "cota": 11.19,
+      "variacao": -0.1,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.13861,
+      "lng": -58.4449,
+      "id": "1301902",
+      "nomeMalha": "Itacoatiara",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": 3.0,
+        "moderado": 4.0
+      },
+      "limitesEnchente": {
+        "alto": 14.0,
+        "moderado": 13.0
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "PRESIDENTE FIGUEIREDO",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.02981,
+      "lng": -60.0234,
+      "id": "1303536",
+      "nomeMalha": "Presidente Figueiredo",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "RIO PRETO DA EVA",
+      "ana": "15042000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.69872,
+      "lng": -59.7007,
+      "id": "1303569",
+      "nomeMalha": "Rio Preto da Eva",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "SILVES",
+      "ana": "DCAM",
+      "cotas": [
+        9.84,
+        9.78,
+        9.67,
+        9.59,
+        9.4
+      ],
+      "cota": 9.4,
+      "variacao": -0.19,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.837867,
+      "lng": -58.209599,
+      "id": "1304005",
+      "nomeMalha": "Silves",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "AUTAZES",
+      "ana": "DCAM",
+      "cotas": [
+        18.1,
+        18.03,
+        17.94,
+        17.85,
+        17.75
+      ],
+      "cota": 17.75,
+      "variacao": -0.1,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.58574,
+      "lng": -59.1256,
+      "id": "1300300",
+      "nomeMalha": "Autazes",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "URUCURITUBA",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.12841,
+      "lng": -58.1496,
+      "id": "1304401",
+      "nomeMalha": "Urucurituba",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Médio Amazonas",
+      "municipio": "ITAPIRANGA",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.74081,
+      "lng": -58.0293,
+      "id": "1302009",
+      "nomeMalha": "Itapiranga",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "BARREIRINHA",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.79886,
+      "lng": -57.0679,
+      "id": "1300508",
+      "nomeMalha": "Barreirinha",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "BOA VISTA DO RAMOS",
+      "ana": "—",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.969025,
+      "lng": -57.589161,
+      "id": "1300680",
+      "nomeMalha": "Boa Vista do Ramos",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "NHAMUNDÁ",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        13.42,
+        13.36,
+        13.3,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.20793,
+      "lng": -56.7112,
+      "id": "1303007",
+      "nomeMalha": "Nhamundá",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "URUCARÁ",
+      "ana": "DCAM",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.52936,
+      "lng": -57.7538,
+      "id": "1304302",
+      "nomeMalha": "Urucará",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "SÃO SEBASTIÃO DO UATUMÃ",
+      "ana": "DCAM",
+      "cotas": [
+        10.32,
+        10.24,
+        10.14,
+        10.06,
+        9.98
+      ],
+      "cota": 9.98,
+      "variacao": -0.08,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.57185,
+      "lng": -57.868343,
+      "id": "1303957",
+      "nomeMalha": "São Sebastião do Uatumã",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "PARINTINS",
+      "ana": "16350002",
+      "cotas": [
+        6.36,
+        6.28,
+        6.2,
+        6.12,
+        6.06
+      ],
+      "cota": 6.06,
+      "variacao": -0.06,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.63741,
+      "lng": -56.729,
+      "id": "1303403",
+      "nomeMalha": "Parintins",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": 3.0,
+        "moderado": 4.5
+      },
+      "limitesEnchente": {
+        "alto": 8.0,
+        "moderado": 7.0
+      }
+    },
+    {
+      "calha": "Baixo Amazonas",
+      "municipio": "MAUÉS",
+      "ana": "DCAM",
+      "cotas": [
+        19.05,
+        18.97,
+        18.9,
+        18.84,
+        18.77
+      ],
+      "cota": 18.77,
+      "variacao": -0.07,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.38173,
+      "lng": -57.7152,
+      "id": "1302900",
+      "nomeMalha": "Maués",
+      "baciaChuva": "Médio Amazonas",
+      "rio": "Rio Amazonas",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": null,
+        "moderado": null
+      }
+    },
+    {
+      "calha": "Negro",
+      "municipio": "SÃO GABRIEL DA CACHOEIRA",
+      "ana": "14320001",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -0.11909,
+      "lng": -67.084,
+      "id": "1303809",
+      "nomeMalha": "São Gabriel da Cachoeira",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": 7.0,
+        "moderado": 8.0
+      },
+      "limitesEnchente": {
+        "alto": 11.0,
+        "moderado": 9.0
+      }
+    },
+    {
+      "calha": "Negro",
+      "municipio": "SANTA ISABEL DO RIO NEGRO",
+      "ana": "14400000",
+      "cotas": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -0.414172,
+      "lng": -65.019936,
+      "id": "1303601",
+      "nomeMalha": "Santa Isabel do Rio Negro",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 7.5,
+        "moderado": 6.0
+      }
+    },
+    {
+      "calha": "Negro",
+      "municipio": "BARCELOS",
+      "ana": "14480002",
+      "cotas": [
+        5.94,
+        5.81,
+        5.68,
+        5.6,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "MODERADO",
+      "status_enchente": "NORMAL",
+      "status_vazante": "MODERADO",
+      "lat": -0.975502,
+      "lng": -62.924599,
+      "id": "1300409",
+      "nomeMalha": "Barcelos",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": 2.0,
+        "moderado": 4.0
+      },
+      "limitesEnchente": {
+        "alto": 8.0,
+        "moderado": 7.0
+      }
+    },
+    {
+      "calha": "Negro",
+      "municipio": "NOVO AIRÃO",
+      "ana": "14900050",
+      "cotas": [
+        15.01,
+        14.88,
+        14.74,
+        14.63,
+        null
+      ],
+      "cota": null,
+      "variacao": null,
+      "tendencia": "SL",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -2.618657,
+      "lng": -60.949726,
+      "id": "1303205",
+      "nomeMalha": "Novo Airão",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": null,
+        "moderado": null
+      },
+      "limitesEnchente": {
+        "alto": 19.0,
+        "moderado": 17.0
+      }
+    },
+    {
+      "calha": "Negro",
+      "municipio": "MANAUS",
+      "ana": "14990000",
+      "cotas": [
+        25.67,
+        25.56,
+        25.37,
+        25.27,
+        25.19
+      ],
+      "cota": 25.19,
+      "variacao": -0.08,
+      "tendencia": "BAIXANDO",
+      "status": "NORMAL",
+      "status_enchente": "NORMAL",
+      "status_vazante": "NORMAL",
+      "lat": -3.11866,
+      "lng": -60.0212,
+      "id": "1302603",
+      "nomeMalha": "Manaus",
+      "baciaChuva": "Rio Negro",
+      "rio": "Rio Negro",
+      "limitesVazante": {
+        "alto": 16.0,
+        "moderado": 18.0
+      },
+      "limitesEnchente": {
+        "alto": 27.0,
+        "moderado": 26.0
+      }
+    }
+  ]
+}

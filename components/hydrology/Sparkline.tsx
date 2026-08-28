@@ -1,37 +1,42 @@
 "use client";
 
-import { RISK_COLORS } from "@/lib/risk";
-import type { RiskLevel } from "@/lib/types";
+import { HYDRO_STATUS_COLORS } from "@/lib/hydrology";
+import type { HydroStatus } from "@/lib/types";
 
 export function Sparkline({
   values,
-  risk,
+  status,
   width = 88,
   height = 28,
 }: {
-  values: number[];
-  risk: RiskLevel;
+  values: Array<number | null>;
+  status: HydroStatus | "SL";
   width?: number;
   height?: number;
 }) {
-  if (values.length < 2) {
+  const points = values
+    .map((v, i) => (v != null && Number.isFinite(v) ? { i, v } : null))
+    .filter((p): p is { i: number; v: number } => p != null);
+
+  if (points.length < 2) {
     return <span className="text-[10px] text-text-mute">sem série</span>;
   }
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+
+  const min = Math.min(...points.map((p) => p.v));
+  const max = Math.max(...points.map((p) => p.v));
   const span = max - min || 1;
-  const step = width / (values.length - 1);
-  const points = values
-    .map((v, i) => {
-      const x = i * step;
-      const y = height - ((v - min) / span) * (height - 4) - 2;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-  const last = values[values.length - 1];
-  const first = values[0];
-  const rising = last >= first;
-  const color = RISK_COLORS[risk];
+  const lastIndex = values.length - 1 || 1;
+  const coords = points.map((p) => {
+    const x = (p.i / lastIndex) * width;
+    const y = height - ((p.v - min) / span) * (height - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const last = points[points.length - 1];
+  const first = points[0];
+  const rising = last.v >= first.v;
+  const color = HYDRO_STATUS_COLORS[status];
+  const lastX = (last.i / lastIndex) * width;
+  const lastY = height - ((last.v - min) / span) * (height - 4) - 2;
 
   return (
     <svg
@@ -47,15 +52,10 @@ export function Sparkline({
         strokeWidth="1.8"
         strokeLinejoin="round"
         strokeLinecap="round"
-        points={points}
+        points={coords.join(" ")}
         opacity={0.95}
       />
-      <circle
-        cx={width}
-        cy={height - ((last - min) / span) * (height - 4) - 2}
-        r="2.2"
-        fill={rising ? color : "#aebed4"}
-      />
+      <circle cx={lastX} cy={lastY} r="2.2" fill={rising ? color : "#aebed4"} />
     </svg>
   );
 }

@@ -1,11 +1,11 @@
 # CEMOA — Centro de Operações
 
-Painel integrado da Defesa Civil do Amazonas com dois produtos que compartilham a mesma escala de risco (Baixo, Moderado, Alto, Severo, Extremo):
+Painel integrado da Defesa Civil do Amazonas:
 
-- **Painel de Alertas** — risco de chuva intensa por município, mapa filtrável, lista ao vivo e toasts de novo alerta/agravamento.
-- **Boletim Hidrológico** — cotas fluviométricas, pinos com cluster por bacia, sparklines, estações sem leitura e linha do tempo.
+- **Painel de Alertas** — risco de chuva intensa por município (Baixo, Moderado, Alto, Severo, Extremo), mapa filtrável, classificação operacional e toasts ao vivo.
+- **Boletim Hidrológico** — recorte operacional do boletim CEMOA: modos **Estiagem** e **Inundação**, KPIs clicáveis, filtros por calha e município, polígonos de risco, fluxo dos rios, ticker de cotas e ficha com limiares ANA/SGB.
 
-Os dados de malha municipal vêm do recorte CEMOA (62 municípios). Alertas e cotas são simulados de forma determinística na API local, com cache curto — não exigem Supabase nem credenciais.
+Os 62 municípios vêm da malha CEMOA. O boletim usa as cotas e os status de estiagem/inundação do recorte operacional (referência 24/08). Alertas de chuva continuam simulados de forma determinística na API local. Não exige Supabase.
 
 ## Como rodar
 
@@ -23,11 +23,11 @@ Abra [http://127.0.0.1:43127](http://127.0.0.1:43127). O horário operacional é
 | `/` | Painel de Alertas |
 | `/boletim` | Boletim Hidrológico |
 | `/api/alerts` | JSON dos alertas (polling ~8 s) |
-| `/api/hydrology` | JSON das estações |
+| `/api/hydrology` | JSON das estações e cotas |
 | `/api/logs` | Log de erros de mapa/dados no front |
 
-Query strings compartilhadas: `municipio`, `bacia`, `risco`. Trocar de produto preserva o recorte.
+Query strings compartilhadas: `municipio`, `bacia`. No boletim também: `modo` (`vazante` \| `enchente`), `calha`, `status` (`NORMAL`, `MODERADO`, `ALTO`, `SL`, `COM_LEITURA`).
 
 ## Empilhar
 
-Next.js (App Router), TypeScript, Tailwind CSS, componentes no padrão shadcn/ui, Leaflet + MarkerCluster.
+Next.js (App Router), TypeScript, Tailwind CSS, componentes no padrão shadcn/ui, Leaflet. Mapa-base via proxy local de tiles OpenStreetMap (`/tiles/osm/...`) — sem Carto.

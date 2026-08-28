@@ -1,13 +1,19 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { getOverride } from "@/lib/overrides";
-import { isActiveAlert, maxRisk, riskFromCota, riskRank } from "@/lib/risk";
+import {
+  CALHAS,
+  HYDRO_FONTE,
+  HYDRO_MUDANCAS,
+  HYDRO_REFERENCIA,
+  HYDRO_RIOS,
+  catalogStations,
+} from "@/lib/hydrology";
+import { isActiveAlert, maxRisk, riskRank } from "@/lib/risk";
 import type {
   AlertsPayload,
-  HydroStation,
   HydrologyPayload,
   RainAlert,
   RiskLevel,
-  Trend,
 } from "@/lib/types";
 
 const POLL_MS = 8_000;
@@ -127,97 +133,16 @@ export function buildAlertsPayload(now = Date.now()): Omit<AlertsPayload, "cache
   };
 }
 
-function cotaAt(m: (typeof MUNICIPALITIES)[number], at: number) {
-  const day = at / 86_400_000;
-  const phase = (hash32(m.id) % 628) / 100;
-  const basinBias =
-    m.bacia === "Rio Negro" ? 1.4 : m.bacia === "Madeira" ? 0.9 : m.bacia === "Alto Solimões" ? 0.7 : 0.2;
-  const wave = Math.sin(day / 6 + phase) * (1.15 + basinBias);
-  const pulse = Math.sin(day * 2.2 + phase * 0.4) * 0.22;
-  const tickNoise = (hash32(`${m.id}:${Math.floor(at / POLL_MS)}`) % 80) / 400 - 0.1;
-  const extra =
-    m.nome === "Manaus"
-      ? 4.1
-      : m.nome === "Tabatinga"
-        ? 2.6
-        : m.nome === "Humaitá"
-          ? 3.1
-          : m.nome === "Itacoatiara"
-            ? 2.0
-            : m.bacia === "Madeira"
-              ? 1.7
-              : m.bacia === "Alto Solimões"
-                ? 1.4
-                : 0.35;
-  const base = m.cotaAtencao - 1.05 + extra;
-  return Math.max(0.4, Number((base + wave + pulse + tickNoise).toFixed(2)));
-}
-
-function trendFromHistory(history: number[]): Trend {
-  if (history.length < 4) return "estavel";
-  const recent = history.slice(-3).reduce((a, b) => a + b, 0) / 3;
-  const older = history.slice(-6, -3).reduce((a, b) => a + b, 0) / 3;
-  const delta = recent - older;
-  if (delta > 0.12) return "subida";
-  if (delta < -0.12) return "descida";
-  return "estavel";
-}
-
 export function buildHydrologyPayload(now = Date.now()): Omit<HydrologyPayload, "cache"> {
-  const stations: HydroStation[] = MUNICIPALITIES.map((m) => {
-    const semLeitura = m.semLeituraBase;
-    const historico: number[] = [];
-    for (let i = 13; i >= 0; i--) {
-      historico.push(cotaAt(m, now - i * 86_400_000));
-    }
-    const cota = semLeitura ? null : historico[historico.length - 1];
-    const risco = semLeitura
-      ? "BAIXO"
-      : riskFromCota(cota, m);
-    const historicoRisco = Array.from({ length: 7 }, (_, i) => {
-      const t = now - (6 - i) * 86_400_000;
-      const c = semLeitura && i < 6 ? null : cotaAt(m, t);
-      return {
-        t,
-        cota: c,
-        risco: c == null ? ("BAIXO" as const) : riskFromCota(c, m),
-      };
-    });
-
-    return {
-      id: m.id,
-      municipio: m.nome,
-      bacia: m.bacia,
-      rio: m.rio,
-      lat: m.lat,
-      lon: m.lon,
-      estacao: m.estacao,
-      cota,
-      cotaAtencao: m.cotaAtencao,
-      cotaAlerta: m.cotaAlerta,
-      cotaEmergencia: m.cotaEmergencia,
-      cotaExtrema: m.cotaExtrema,
-      historico,
-      risco,
-      tendencia: semLeitura ? "estavel" : trendFromHistory(historico),
-      semLeitura,
-      atualizadoEm: semLeitura ? now - (2 + (hash32(m.id) % 3)) * 86_400_000 : now - 90_000,
-      historicoRisco,
-    };
-  });
-
-  const comLeitura = stations.filter((s) => !s.semLeitura).length;
-  const alertStations = stations.filter((s) => isActiveAlert(s.risco));
-
+  const stations = catalogStations();
   return {
     generatedAt: now,
-    source: SOURCE,
-    stats: {
-      comLeitura,
-      semLeitura: stations.length - comLeitura,
-      maiorRisco: maxRisk(stations.map((s) => s.risco)),
-      municipiosEmAlerta: alertStations.length,
-    },
+    source: `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    referencia: HYDRO_REFERENCIA,
+    dias: stations[0]?.dias ?? [],
+    calhas: [...CALHAS],
+    mudancas24h: HYDRO_MUDANCAS,
+    rios: HYDRO_RIOS,
     stations,
   };
 }
