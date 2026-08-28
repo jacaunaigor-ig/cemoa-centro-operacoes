@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Activity, Droplets, Radio } from "lucide-react";
+import { Activity, Droplets, Info, Radio } from "lucide-react";
 import { cn, formatAmazonTime } from "@/lib/utils";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useEffect, useState } from "react";
@@ -75,23 +75,29 @@ export function AppShell({
             </small>
             <strong className="font-mono text-sm">{clock}</strong>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="live-dot" aria-hidden />
-            <div>
-              <small className="flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-                {syncLabel}
-                <InfoTooltip
-                  label="Sobre a sincronização"
-                  title="Sincronizado"
-                  body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} Sem Supabase neste recorte: a série é gerada de forma determinística a partir da malha municipal do CEMOA.`}
-                />
-              </small>
-              <strong className="flex items-center gap-1 text-xs font-semibold text-live">
-                <Activity className="size-3.5" />
-                Ao vivo
-              </strong>
-            </div>
-          </div>
+          <InfoTooltip
+            label="Sobre a sincronização"
+            title="Sincronizado"
+            body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} Sem Supabase neste recorte: a série é gerada de forma determinística a partir da malha municipal do CEMOA.`}
+          >
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"
+              aria-label="Sobre a sincronização"
+            >
+              <span className="live-dot" aria-hidden />
+              <span>
+                <small className="flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
+                  {syncLabel}
+                  <Info className="size-3.5 text-text-mute" aria-hidden />
+                </small>
+                <strong className="flex items-center gap-1 text-xs font-semibold text-live">
+                  <Activity className="size-3.5" />
+                  Ao vivo
+                </strong>
+              </span>
+            </button>
+          </InfoTooltip>
         </div>
       </header>
       <div id="conteudo" className="flex min-h-0 flex-1 flex-col">

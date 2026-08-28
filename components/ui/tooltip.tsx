@@ -23,8 +23,9 @@ export function TooltipContent({
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
         sideOffset={sideOffset}
+        collisionPadding={12}
         className={cn(
-          "z-50 max-w-72 rounded-lg border border-border bg-panel-2 px-3 py-2 text-xs leading-relaxed text-text-dim shadow-lg",
+          "z-[2000] max-w-80 rounded-lg border border-border bg-panel-2 px-3 py-2 text-xs leading-relaxed text-text-dim shadow-lg",
           className,
         )}
         {...props}
