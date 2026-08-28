@@ -31,6 +31,8 @@ O botão **Exportar PNG** gera um mapa cartográfico institucional (5200×3400 p
 ## Como rodar
 
 ```bash
+git clone https://github.com/jacaunaigor-ig/cemoa-centro-operacoes.git
+cd cemoa-centro-operacoes
 npm install
 npm run dev
 ```
