@@ -60,6 +60,18 @@ export function validateName(raw: string): string | null {
   return null;
 }
 
+export function normalizeEmail(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+export function validateEmail(raw: string): string | null {
+  const email = normalizeEmail(raw);
+  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email) || email.length > 120) {
+    return "Informe um e-mail válido (Gmail).";
+  }
+  return null;
+}
+
 export function validatePassword(raw: string): string | null {
   if (raw.length < 10 || raw.length > 128) {
     return "A senha deve ter no mínimo 10 caracteres.";

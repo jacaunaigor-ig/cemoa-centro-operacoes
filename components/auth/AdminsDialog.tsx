@@ -11,12 +11,13 @@ type AdminRow = {
   id: string;
   name: string;
   login: string;
+  email?: string | null;
   createdAt: string;
   source: "file" | "env";
 };
 
 export function AdminsDialog() {
-  const { adminsOpen, session, closeAdmins } = useOpsMode();
+  const { adminsOpen, session, googleEnabled, closeAdmins } = useOpsMode();
   const [admins, setAdmins] = useState<AdminRow[]>([]);
   const [me, setMe] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +25,7 @@ export function AdminsDialog() {
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
 
@@ -54,7 +56,7 @@ export function AdminsDialog() {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, login, password }),
+        body: JSON.stringify({ name, login, password, email }),
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
@@ -64,6 +66,7 @@ export function AdminsDialog() {
       setName("");
       setLogin("");
       setPassword("");
+      setEmail("");
       await load();
     } finally {
       setBusy(false);
@@ -118,7 +121,7 @@ export function AdminsDialog() {
       onClose={closeAdmins}
       wide
       title="Administradores"
-      description="Quem entra aqui pode classificar alertas e atualizar cotas. Senhas nunca são exibidas."
+      description="Quem entra aqui pode classificar alertas e atualizar cotas. Associe um Gmail para entrar sem senha."
     >
       <ul className="mb-4 space-y-2">
         {admins.length === 0 ? (
@@ -140,6 +143,7 @@ export function AdminsDialog() {
                 </p>
                 <p className="text-[11px] text-text-mute">
                   {row.login}
+                  {row.email ? ` · ${row.email}` : ""}
                   {row.source === "env" ? " · definido no ambiente" : ""}
                 </p>
               </div>
@@ -173,23 +177,37 @@ export function AdminsDialog() {
             autoComplete="off"
             value={login}
             onChange={(e) => setLogin(e.target.value)}
-            required
             minLength={3}
           />
         </div>
         <Input
+          type="email"
+          placeholder="Gmail (opcional — para entrar com o Google)"
+          autoComplete="off"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
           type="password"
-          placeholder="Senha (mín. 10, letras e números)"
+          placeholder="Senha (opcional se informar o Gmail)"
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={10}
+          minLength={password ? 10 : undefined}
         />
         <Button type="submit" size="sm" disabled={busy}>
           Criar administrador
         </Button>
       </form>
+
+      {googleEnabled && session && !session.id.startsWith("env:") ? (
+        <a
+          href="/api/auth/google?link=1"
+          className="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-xs font-semibold text-neutral-900 hover:bg-neutral-100"
+        >
+          Associar meu Gmail
+        </a>
+      ) : null}
 
       {session?.id.startsWith("env:") ? null : (
         <form className="mt-3 grid gap-2 border-t border-border pt-3" onSubmit={(e) => void changePassword(e)}>

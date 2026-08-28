@@ -72,6 +72,26 @@ CEMOA_ADMIN_NAME=Igor
 
 `CEMOA_SESSION_SECRET` é obrigatório em produção (mínimo 16 caracteres). O usuário do ambiente não se apaga pela interface. Contas extras criadas no painel persistem no arquivo local; no serverless elas podem não sobreviver a um reciclo — use o ambiente para a conta permanente.
 
+### Entrar com Gmail
+
+O modo Admin pode usar **Google / Gmail** junto com usuário e senha.
+
+1. Crie um cliente OAuth 2.0 (tipo Web) no [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. URI de redirecionamento: `https://SEU-DOMINIO/api/auth/google/callback` (local: `http://127.0.0.1:43127/api/auth/google/callback`).
+3. Defina:
+
+```bash
+GOOGLE_CLIENT_ID=....apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=....
+CEMOA_GOOGLE_EMAILS=seu.nome@gmail.com
+```
+
+`CEMOA_GOOGLE_EMAILS` (opcional, separados por vírgula) autoriza esses Gmails mesmo sem cadastro prévio. Sem essa lista, o **primeiro** Gmail vira o primeiro administrador; os próximos precisam ser cadastrados (nome + Gmail) ou associar a conta pelo botão **Associar meu Gmail**.
+
+Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acrescente `CEMOA_GOOGLE_DOMAIN=suaempresa.com`.
+
+Sem as chaves do Google, o botão aparece desativado e o login por senha continua valendo.
+
 No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
 
 ## Empilhar

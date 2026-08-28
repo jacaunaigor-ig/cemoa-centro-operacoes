@@ -4,19 +4,24 @@ import path from "node:path";
 import {
   dummyPasswordCheck,
   hashPassword,
+  normalizeEmail,
   normalizeLogin,
   safeEqualString,
+  validateEmail,
   validateLogin,
   validateName,
   validatePassword,
   verifyPassword,
 } from "@/lib/password";
+import { googleAllowlist, isAllowedGoogleEmail, type GoogleProfile } from "@/lib/google";
 
 export type AdminRecord = {
   id: string;
   name: string;
   login: string;
   passwordHash: string;
+  email?: string;
+  googleSub?: string;
   createdAt: string;
   source: "file";
 };
@@ -25,6 +30,8 @@ export type PublicAdmin = {
   id: string;
   name: string;
   login: string;
+  email: string | null;
+  googleSub: string | null;
   createdAt: string;
   source: "file" | "env";
 };
@@ -58,14 +65,20 @@ function readStoreFrom(file: string): AdminRecord[] {
     const raw = readFileSync(file, "utf8");
     const parsed = JSON.parse(raw) as StoreFile;
     if (!Array.isArray(parsed.admins)) return [];
-    return parsed.admins.filter(
-      (row) =>
-        row &&
-        typeof row.id === "string" &&
-        typeof row.login === "string" &&
-        typeof row.passwordHash === "string" &&
-        typeof row.name === "string",
-    );
+    return parsed.admins
+      .filter(
+        (row) =>
+          row &&
+          typeof row.id === "string" &&
+          typeof row.login === "string" &&
+          typeof row.name === "string",
+      )
+      .map((row) => ({
+        ...row,
+        passwordHash: typeof row.passwordHash === "string" ? row.passwordHash : "",
+        email: row.email ? normalizeEmail(row.email) : undefined,
+        googleSub: row.googleSub || undefined,
+      }));
   } catch {
     return [];
   }
@@ -97,27 +110,38 @@ function writeFileAdmins(admins: AdminRecord[]) {
     : new Error("Não foi possível gravar administradores.");
 }
 
+function toPublic(row: AdminRecord): PublicAdmin {
+  return {
+    id: row.id,
+    name: row.name,
+    login: row.login,
+    email: row.email ?? null,
+    googleSub: row.googleSub ?? null,
+    createdAt: row.createdAt,
+    source: "file",
+  };
+}
+
 export function envAdminPublic(): PublicAdmin | null {
   const login = envLogin();
   const id = envAdminId();
   if (!login || !id || !envPassword()) return null;
+  const email = process.env.CEMOA_ADMIN_EMAIL?.trim()
+    ? normalizeEmail(process.env.CEMOA_ADMIN_EMAIL)
+    : null;
   return {
     id,
     login,
     name: envName(),
+    email,
+    googleSub: null,
     createdAt: "ambiente",
     source: "env",
   };
 }
 
 export function listAdmins(): PublicAdmin[] {
-  const file = readFileAdmins().map((row) => ({
-    id: row.id,
-    name: row.name,
-    login: row.login,
-    createdAt: row.createdAt,
-    source: "file" as const,
-  }));
+  const file = readFileAdmins().map(toPublic);
   const env = envAdminPublic();
   if (env && !file.some((row) => row.login === env.login)) {
     return [env, ...file];
@@ -135,24 +159,24 @@ export function needsSetup(): boolean {
 
 export function findAdminById(id: string): PublicAdmin | null {
   const file = readFileAdmins().find((row) => row.id === id);
-  if (file) {
-    return {
-      id: file.id,
-      name: file.name,
-      login: file.login,
-      createdAt: file.createdAt,
-      source: "file",
-    };
-  }
+  if (file) return toPublic(file);
   const env = envAdminPublic();
   if (env && env.id === id) return env;
   return null;
+}
+
+function findFileByEmail(email: string): AdminRecord | undefined {
+  const key = normalizeEmail(email);
+  return readFileAdmins().find(
+    (row) => row.email === key || row.login === key || normalizeLogin(row.login) === key,
+  );
 }
 
 export function enterWithCredentials(input: {
   name?: string;
   login: string;
   password: string;
+  email?: string;
 }): { admin: PublicAdmin; created: boolean } | { error: string; status: number } {
   const login = typeof input.login === "string" ? input.login : "";
   const password = typeof input.password === "string" ? input.password.trim() : "";
@@ -166,6 +190,7 @@ export function enterWithCredentials(input: {
         name: (input.name && input.name.trim()) || login,
         login,
         password,
+        email: input.email,
       });
       return { admin, created: true };
     } catch (err) {
@@ -185,16 +210,12 @@ export function enterWithCredentials(input: {
 
 export function verifyAdminCredentials(login: string, password: string): PublicAdmin | null {
   const key = normalizeLogin(login);
-  const file = readFileAdmins().find((row) => row.login === key);
+  const file = readFileAdmins().find(
+    (row) => row.login === key || (row.email && row.email === normalizeEmail(login)),
+  );
   if (file) {
-    if (!verifyPassword(password, file.passwordHash)) return null;
-    return {
-      id: file.id,
-      name: file.name,
-      login: file.login,
-      createdAt: file.createdAt,
-      source: "file",
-    };
+    if (!file.passwordHash || !verifyPassword(password, file.passwordHash)) return null;
+    return toPublic(file);
   }
   const env = envAdminPublic();
   const expected = envPassword();
@@ -210,36 +231,142 @@ export function verifyAdminCredentials(login: string, password: string): PublicA
 export function createAdmin(input: {
   name: string;
   login: string;
-  password: string;
+  password?: string;
+  email?: string;
 }): PublicAdmin {
   const nameErr = validateName(input.name);
   if (nameErr) throw new Error(nameErr);
   const loginErr = validateLogin(input.login);
   if (loginErr) throw new Error(loginErr);
-  const passErr = validatePassword(input.password);
-  if (passErr) throw new Error(passErr);
+
+  const email = input.email?.trim() ? normalizeEmail(input.email) : undefined;
+  if (email) {
+    const emailErr = validateEmail(email);
+    if (emailErr) throw new Error(emailErr);
+  }
+
+  const password = input.password?.trim() ?? "";
+  if (password) {
+    const passErr = validatePassword(password);
+    if (passErr) throw new Error(passErr);
+  } else if (!email) {
+    throw new Error("Informe uma senha ou um Gmail para o novo administrador.");
+  }
 
   const login = normalizeLogin(input.login);
   if (readFileAdmins().some((row) => row.login === login) || envLogin() === login) {
     throw new Error("Já existe um administrador com este usuário.");
+  }
+  if (email && (findFileByEmail(email) || listAdmins().some((row) => row.email === email))) {
+    throw new Error("Este Gmail já está associado a um administrador.");
   }
 
   const record: AdminRecord = {
     id: randomUUID(),
     name: input.name.trim(),
     login,
-    passwordHash: hashPassword(input.password),
+    passwordHash: password ? hashPassword(password) : "",
+    email,
     createdAt: new Date().toISOString(),
     source: "file",
   };
   writeFileAdmins([...readFileAdmins(), record]);
-  return {
-    id: record.id,
-    name: record.name,
-    login: record.login,
-    createdAt: record.createdAt,
-    source: "file",
+  return toPublic(record);
+}
+
+export function enterWithGoogle(profile: GoogleProfile):
+  | { admin: PublicAdmin; created: boolean }
+  | { error: string; status: number } {
+  if (!profile.emailVerified) {
+    return { error: "O Gmail precisa estar verificado no Google.", status: 403 };
+  }
+  if (!isAllowedGoogleEmail(profile.email)) {
+    return {
+      error: "Use uma conta Gmail (ou um e-mail autorizado pelo CEMOA).",
+      status: 403,
+    };
+  }
+
+  const bySub = readFileAdmins().find((row) => row.googleSub === profile.sub);
+  if (bySub) {
+    const next = { ...bySub, email: profile.email, name: bySub.name || profile.name };
+    writeFileAdmins(readFileAdmins().map((row) => (row.id === next.id ? next : row)));
+    return { admin: toPublic(next), created: false };
+  }
+
+  const byEmail = findFileByEmail(profile.email);
+  if (byEmail) {
+    const next = { ...byEmail, email: profile.email, googleSub: profile.sub };
+    writeFileAdmins(readFileAdmins().map((row) => (row.id === next.id ? next : row)));
+    return { admin: toPublic(next), created: false };
+  }
+
+  const env = envAdminPublic();
+  if (env?.email && env.email === profile.email) {
+    return { admin: env, created: false };
+  }
+
+  const allow = googleAllowlist();
+  const canCreate = needsSetup() || allow.includes(profile.email);
+  if (!canCreate) {
+    return {
+      error: "Este Gmail não está autorizado. Um administrador precisa cadastrar o e-mail.",
+      status: 403,
+    };
+  }
+
+  try {
+    const admin = createAdmin({
+      name: profile.name,
+      login: profile.email,
+      email: profile.email,
+    });
+    const files = readFileAdmins();
+    const idx = files.findIndex((row) => row.id === admin.id);
+    if (idx >= 0) {
+      files[idx] = { ...files[idx], googleSub: profile.sub, email: profile.email };
+      writeFileAdmins(files);
+      return { admin: toPublic(files[idx]), created: true };
+    }
+    return { admin, created: true };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Não foi possível entrar com o Gmail.",
+      status: 400,
+    };
+  }
+}
+
+export function linkGoogleToAdmin(
+  adminId: string,
+  profile: GoogleProfile,
+): { admin: PublicAdmin } | { error: string; status: number } {
+  if (!profile.emailVerified) {
+    return { error: "O Gmail precisa estar verificado no Google.", status: 403 };
+  }
+  if (!isAllowedGoogleEmail(profile.email)) {
+    return { error: "Use uma conta Gmail (ou um e-mail autorizado pelo CEMOA).", status: 403 };
+  }
+  const admins = readFileAdmins();
+  const idx = admins.findIndex((row) => row.id === adminId);
+  if (idx < 0) {
+    return { error: "Contas do ambiente associam o Gmail por CEMOA_ADMIN_EMAIL.", status: 400 };
+  }
+  const taken = admins.find(
+    (row) =>
+      row.id !== adminId &&
+      (row.googleSub === profile.sub || row.email === profile.email),
+  );
+  if (taken) {
+    return { error: "Este Gmail já está associado a outro administrador.", status: 409 };
+  }
+  admins[idx] = {
+    ...admins[idx],
+    email: profile.email,
+    googleSub: profile.sub,
   };
+  writeFileAdmins(admins);
+  return { admin: toPublic(admins[idx]) };
 }
 
 export function updateAdminPassword(id: string, currentPassword: string, nextPassword: string) {
@@ -252,8 +379,11 @@ export function updateAdminPassword(id: string, currentPassword: string, nextPas
       "Contas definidas no ambiente não alteram a senha por aqui. Use CEMOA_ADMIN_PASSWORD.",
     );
   }
-  if (!verifyPassword(currentPassword, admins[idx].passwordHash)) {
+  if (admins[idx].passwordHash && !verifyPassword(currentPassword, admins[idx].passwordHash)) {
     throw new Error("Senha atual incorreta.");
+  }
+  if (!admins[idx].passwordHash && currentPassword) {
+    throw new Error("Esta conta entra pelo Gmail. Deixe a senha atual em branco ou defina uma nova.");
   }
   admins[idx] = { ...admins[idx], passwordHash: hashPassword(nextPassword) };
   writeFileAdmins(admins);

@@ -18,6 +18,7 @@ export type SessionUser = {
   id: string;
   login: string;
   name: string;
+  email: string | null;
 };
 
 const loginAttempts = new Map<string, { n: number; reset: number }>();
@@ -110,7 +111,7 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!payload) return null;
   const admin = findAdminById(payload.sub);
   if (!admin || admin.login !== payload.login) return null;
-  return { id: admin.id, login: admin.login, name: admin.name };
+  return { id: admin.id, login: admin.login, name: admin.name, email: admin.email };
 }
 
 export function clientIp(request: Request): string {

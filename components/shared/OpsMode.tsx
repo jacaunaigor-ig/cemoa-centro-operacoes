@@ -16,6 +16,7 @@ export type SessionUser = {
   id: string;
   login: string;
   name: string;
+  email?: string | null;
 };
 
 type OpsMode = {
@@ -25,6 +26,8 @@ type OpsMode = {
   session: SessionUser | null;
   authLoading: boolean;
   needsSetup: boolean;
+  googleEnabled: boolean;
+  authError: string | null;
   loginOpen: boolean;
   adminsOpen: boolean;
   setLayout: (layout: LayoutMode) => void;
@@ -79,6 +82,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
 
   const [session, setSession] = useState<SessionUser | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const [adminsOpen, setAdminsOpen] = useState(false);
@@ -89,9 +94,11 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       const data = (await res.json()) as {
         user?: SessionUser | null;
         needsSetup?: boolean;
+        googleEnabled?: boolean;
       };
       setSession(data.user ?? null);
       setNeedsSetup(Boolean(data.needsSetup));
+      setGoogleEnabled(Boolean(data.googleEnabled));
       if (!data.user) {
         sessionStorage.removeItem(TOOLS_KEY);
         emit(toolsListeners);
@@ -105,6 +112,9 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("authError");
+    const authOk = params.get("auth") === "ok";
     (async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -114,13 +124,31 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         const data = (await res.json()) as {
           user?: SessionUser | null;
           needsSetup?: boolean;
+          googleEnabled?: boolean;
         };
         if (cancelled) return;
         setSession(data.user ?? null);
         setNeedsSetup(Boolean(data.needsSetup));
+        setGoogleEnabled(Boolean(data.googleEnabled));
+        if (error) {
+          setAuthError(error);
+          setLoginOpen(true);
+        }
+        if (data.user && authOk) {
+          sessionStorage.setItem(TOOLS_KEY, "1");
+          emit(toolsListeners);
+          setLoginOpen(false);
+        }
         if (!data.user) {
           sessionStorage.removeItem(TOOLS_KEY);
           emit(toolsListeners);
+        }
+        if (error || authOk) {
+          params.delete("authError");
+          params.delete("auth");
+          params.delete("linked");
+          const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+          window.history.replaceState({}, "", next);
         }
       } catch {
         if (!cancelled) setSession(null);
@@ -189,6 +217,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       session,
       authLoading,
       needsSetup,
+      googleEnabled,
+      authError,
       loginOpen,
       adminsOpen,
       setLayout,
@@ -207,6 +237,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       session,
       authLoading,
       needsSetup,
+      googleEnabled,
+      authError,
       loginOpen,
       adminsOpen,
       setLayout,
@@ -227,6 +259,8 @@ const FALLBACK: OpsMode = {
   session: null,
   authLoading: true,
   needsSetup: false,
+  googleEnabled: false,
+  authError: null,
   loginOpen: false,
   adminsOpen: false,
   setLayout: () => {},

@@ -7,7 +7,8 @@ import { Modal } from "@/components/shared/Modal";
 import { useOpsMode } from "@/components/shared/OpsMode";
 
 export function LoginDialog() {
-  const { loginOpen, needsSetup, closeLogin, completeLogin } = useOpsMode();
+  const { loginOpen, needsSetup, googleEnabled, authError, closeLogin, completeLogin } =
+    useOpsMode();
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -64,11 +65,32 @@ export function LoginDialog() {
       title={creating ? "Criar administrador e entrar" : "Entrar no modo Admin"}
       description={
         creating
-          ? "Escolha um usuário e uma senha. Depois use os mesmos dados para entrar."
-          : "Use o usuário e a senha que você cadastrou."
+          ? "Entre com Gmail ou crie usuário e senha. Depois use os mesmos dados para entrar."
+          : "Use o Gmail associado ou o usuário e a senha que você cadastrou."
       }
     >
       <form className="grid gap-3" onSubmit={(e) => void submit(e)}>
+        {googleEnabled ? (
+          <a
+            href="/api/auth/google"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
+          >
+            <GoogleMark />
+            Continuar com Gmail
+          </a>
+        ) : (
+          <p className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-[11px] text-text-mute">
+            Entrar com Gmail fica disponível depois de configurar{" "}
+            <code className="text-text-dim">GOOGLE_CLIENT_ID</code> e{" "}
+            <code className="text-text-dim">GOOGLE_CLIENT_SECRET</code>. Enquanto isso, use usuário e
+            senha.
+          </p>
+        )}
+        <div className="flex items-center gap-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          <span className="h-px flex-1 bg-border" />
+          ou
+          <span className="h-px flex-1 bg-border" />
+        </div>
         {creating ? (
           <label className="grid gap-1 text-xs font-semibold">
             Nome
@@ -138,9 +160,9 @@ export function LoginDialog() {
             Primeiro acesso? Criar usuário e senha
           </button>
         ) : null}
-        {error ? (
+        {error || authError ? (
           <p role="alert" className="rounded-lg border border-risco-severo/40 bg-risco-severo/10 px-3 py-2 text-xs">
-            {error}
+            {error ?? authError}
           </p>
         ) : null}
         <Button type="submit" disabled={busy}>
@@ -148,5 +170,28 @@ export function LoginDialog() {
         </Button>
       </form>
     </Modal>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5c-.3 1.5-1.2 2.8-2.5 3.7v3h4c2.4-2.2 3.5-5.4 3.5-8.8z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.2 0 5.9-1 7.9-2.9l-4-3c-1.1.7-2.5 1.2-3.9 1.2-3 0-5.6-2-6.5-4.7H1.4v3.1C3.4 21.5 7.4 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.5 14.6c-.2-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1V7.3H1.4C.5 9 0 10.9 0 12.5s.5 3.5 1.4 5.2l4.1-3.1z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.8c1.7 0 3.3.6 4.5 1.7l3.4-3.4C17.9 1.1 15.2 0 12 0 7.4 0 3.4 2.5 1.4 7.3l4.1 3.1C6.4 6.8 9 4.8 12 4.8z"
+      />
+    </svg>
   );
 }

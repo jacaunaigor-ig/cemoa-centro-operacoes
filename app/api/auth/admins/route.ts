@@ -13,6 +13,7 @@ export async function GET(request: Request) {
       id: row.id,
       name: row.name,
       login: row.login,
+      email: row.email,
       createdAt: row.createdAt,
       source: row.source,
     })),
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   const gate = await requireAdmin(request);
   if (!gate.ok) return gate.response;
 
-  let body: { name?: unknown; login?: unknown; password?: unknown };
+  let body: { name?: unknown; login?: unknown; password?: unknown; email?: unknown };
   try {
     body = (await request.json()) as {
       name?: unknown;
@@ -38,8 +39,14 @@ export async function POST(request: Request) {
   try {
     const admin = createAdmin({
       name: typeof body.name === "string" ? body.name : "",
-      login: typeof body.login === "string" ? body.login : "",
+      login:
+        typeof body.login === "string" && body.login.trim()
+          ? body.login
+          : typeof body.email === "string"
+            ? body.email
+            : "",
       password: typeof body.password === "string" ? body.password : "",
+      email: typeof body.email === "string" ? body.email : undefined,
     });
     return NextResponse.json({
       ok: true,
@@ -47,6 +54,7 @@ export async function POST(request: Request) {
         id: admin.id,
         name: admin.name,
         login: admin.login,
+        email: admin.email,
         createdAt: admin.createdAt,
         source: admin.source,
       },

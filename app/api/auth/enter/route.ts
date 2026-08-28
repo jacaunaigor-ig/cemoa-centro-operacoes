@@ -43,8 +43,9 @@ export async function POST(request: Request) {
         ? body.senha
         : "";
   const name = typeof body.name === "string" ? body.name : "";
+  const email = login.includes("@") ? login : undefined;
 
-  const result = enterWithCredentials({ name, login, password });
+  const result = enterWithCredentials({ name, login, password, email });
   if ("error" in result) {
     if (result.status === 401) recordLoginFailure(ip);
     return NextResponse.json({ error: result.error }, { status: result.status });
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
       id: result.admin.id,
       login: result.admin.login,
       name: result.admin.name,
+      email: result.admin.email,
     },
   });
 }

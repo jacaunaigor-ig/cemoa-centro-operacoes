@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { needsSetup } from "@/lib/admins";
+import { isGoogleConfigured } from "@/lib/google";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -10,6 +11,7 @@ export async function GET() {
   return NextResponse.json({
     authenticated: Boolean(user),
     needsSetup: needsSetup(),
+    googleEnabled: isGoogleConfigured(),
     user,
   });
 }
