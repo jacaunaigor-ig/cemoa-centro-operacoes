@@ -23,17 +23,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: limited }, { status: 429 });
   }
 
-  let body: { login?: unknown; password?: unknown };
+  let body: { name?: unknown; login?: unknown; usuario?: unknown; password?: unknown; senha?: unknown };
   try {
-    body = (await request.json()) as { login?: unknown; password?: unknown };
+    body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ error: "Requisição inválida." }, { status: 400 });
   }
 
-  const result = enterWithCredentials({
-    login: typeof body.login === "string" ? body.login : "",
-    password: typeof body.password === "string" ? body.password : "",
-  });
+  const login =
+    typeof body.login === "string"
+      ? body.login
+      : typeof body.usuario === "string"
+        ? body.usuario
+        : "";
+  const password =
+    typeof body.password === "string"
+      ? body.password
+      : typeof body.senha === "string"
+        ? body.senha
+        : "";
+  const name = typeof body.name === "string" ? body.name : "";
+
+  const result = enterWithCredentials({ name, login, password });
   if ("error" in result) {
     if (result.status === 401) recordLoginFailure(ip);
     return NextResponse.json({ error: result.error }, { status: result.status });
@@ -44,6 +55,10 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     created: result.created,
-    user: { id: result.admin.id, login: result.admin.login, name: result.admin.name },
+    user: {
+      id: result.admin.id,
+      login: result.admin.login,
+      name: result.admin.name,
+    },
   });
 }

@@ -41,13 +41,13 @@ export function dummyPasswordCheck(password: string) {
 }
 
 export function normalizeLogin(raw: string): string {
-  return raw.trim().toLowerCase();
+  return raw.trim().toLowerCase().replace(/\s+/g, "");
 }
 
 export function validateLogin(raw: string): string | null {
   const login = normalizeLogin(raw);
-  if (!/^[a-z0-9._-]{3,32}$/.test(login)) {
-    return "O usuário deve ter 3 a 32 caracteres (letras, números, ponto, _ ou -).";
+  if (!/^[a-z0-9._@+-]{3,64}$/.test(login)) {
+    return "O usuário deve ter 3 a 64 caracteres (letras, números, ponto, @, _ ou -).";
   }
   return null;
 }

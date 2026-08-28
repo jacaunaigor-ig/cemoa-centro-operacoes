@@ -126,7 +126,7 @@ export function checkLoginRateLimit(ip: string): string | null {
     loginAttempts.set(ip, { n: 0, reset: now + 15 * 60_000 });
     return null;
   }
-  if (bucket.n >= 8) {
+  if (bucket.n >= 20) {
     const mins = Math.max(1, Math.ceil((bucket.reset - now) / 60_000));
     return `Muitas tentativas. Aguarde ${mins} min.`;
   }
@@ -148,21 +148,46 @@ export function clearLoginFailures(ip: string) {
 }
 
 export function assertSameOrigin(request: Request): boolean {
-  const host = request.headers.get("host");
-  if (!host) return false;
+  const site = request.headers.get("sec-fetch-site");
+  if (site === "same-origin" || site === "same-site") return true;
+
+  const allowed = new Set<string>();
+  const addHost = (raw: string | null) => {
+    if (!raw) return;
+    for (const part of raw.split(",")) {
+      const host = part.trim().toLowerCase();
+      if (!host) continue;
+      allowed.add(host);
+      allowed.add(host.split(":")[0] ?? host);
+    }
+  };
+  addHost(request.headers.get("host"));
+  addHost(request.headers.get("x-forwarded-host"));
+
   const origin = request.headers.get("origin");
   if (origin) {
     try {
-      return new URL(origin).host === host;
+      const url = new URL(origin);
+      if (allowed.has(url.host.toLowerCase()) || allowed.has(url.hostname.toLowerCase())) {
+        return true;
+      }
+      const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      const hostLocal = [...allowed].some(
+        (h) => h === "localhost" || h === "127.0.0.1" || h.startsWith("localhost:") || h.startsWith("127.0.0.1:"),
+      );
+      if (local && hostLocal) return true;
+      return false;
     } catch {
       return false;
     }
   }
+
   if (process.env.NODE_ENV === "production") return false;
   const referer = request.headers.get("referer");
   if (!referer) return true;
   try {
-    return new URL(referer).host === host;
+    const url = new URL(referer);
+    return allowed.has(url.host.toLowerCase()) || allowed.has(url.hostname.toLowerCase());
   } catch {
     return false;
   }

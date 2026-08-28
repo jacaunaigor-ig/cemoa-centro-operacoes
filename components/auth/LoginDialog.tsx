@@ -14,32 +14,35 @@ export function LoginDialog() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forceCreate, setForceCreate] = useState(false);
+  const creating = needsSetup || forceCreate;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    if (needsSetup && password !== confirm) {
+    if (creating && confirm && password !== confirm) {
       setError("As senhas não coincidem.");
       return;
     }
     setBusy(true);
     try {
-      const url = needsSetup ? "/api/auth/setup" : "/api/auth/login";
-      const res = await fetch(url, {
+      const res = await fetch("/api/auth/enter", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          needsSetup ? { name, login, password } : { login, password },
-        ),
+        body: JSON.stringify({ name, login, password }),
       });
-      const data = (await res.json()) as { error?: string; user?: { id: string; login: string; name: string } };
+      const data = (await res.json()) as {
+        error?: string;
+        user?: { id: string; login: string; name: string };
+      };
       if (!res.ok || !data.user) {
         setError(data.error ?? "Não foi possível entrar.");
         return;
       }
       setPassword("");
       setConfirm("");
+      setForceCreate(false);
       completeLogin(data.user);
     } catch {
       setError("Falha de rede. Tente de novo.");
@@ -48,27 +51,33 @@ export function LoginDialog() {
     }
   }
 
+  function handleClose() {
+    setError(null);
+    setForceCreate(false);
+    closeLogin();
+  }
+
   return (
     <Modal
       open={loginOpen}
-      onClose={closeLogin}
-      title={needsSetup ? "Criar o primeiro administrador" : "Entrar no modo Admin"}
+      onClose={handleClose}
+      title={creating ? "Criar administrador e entrar" : "Entrar no modo Admin"}
       description={
-        needsSetup
-          ? "Ainda não há administradores. Crie usuário e senha. A senha fica hasheada no servidor e a sessão usa cookie HTTP-only."
-          : "Somente administradores autenticados alteram cotas, status e alertas."
+        creating
+          ? "Escolha um usuário e uma senha. Depois use os mesmos dados para entrar."
+          : "Use o usuário e a senha que você cadastrou."
       }
     >
       <form className="grid gap-3" onSubmit={(e) => void submit(e)}>
-        {needsSetup ? (
+        {creating ? (
           <label className="grid gap-1 text-xs font-semibold">
             Nome
             <Input
+              name="name"
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex.: Igor Silva"
-              required
               minLength={2}
               autoFocus
             />
@@ -77,30 +86,33 @@ export function LoginDialog() {
         <label className="grid gap-1 text-xs font-semibold">
           Usuário
           <Input
+            name="username"
             autoComplete="username"
             value={login}
             onChange={(e) => setLogin(e.target.value)}
             placeholder="ex.: igor"
             required
             minLength={3}
-            autoFocus={!needsSetup}
+            autoFocus={!creating}
           />
         </label>
         <label className="grid gap-1 text-xs font-semibold">
           Senha
           <Input
+            name="password"
             type="password"
-            autoComplete={needsSetup ? "new-password" : "current-password"}
+            autoComplete={creating ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={needsSetup ? 10 : 1}
+            minLength={creating ? 10 : 1}
           />
         </label>
-        {needsSetup ? (
+        {creating ? (
           <label className="grid gap-1 text-xs font-semibold">
             Confirmar senha
             <Input
+              name="confirm"
               type="password"
               autoComplete="new-password"
               value={confirm}
@@ -110,10 +122,21 @@ export function LoginDialog() {
             />
           </label>
         ) : null}
-        {needsSetup ? (
+        {creating ? (
           <p className="text-[11px] text-text-mute">
-            Mínimo 10 caracteres, com letras e números. Guarde esta senha — ela não pode ser recuperada.
+            Mínimo 10 caracteres, com letras e números. Esta senha é a que você vai usar no próximo login.
           </p>
+        ) : needsSetup ? (
+          <button
+            type="button"
+            className="text-left text-[11px] font-semibold text-focus hover:underline"
+            onClick={() => {
+              setForceCreate(true);
+              setError(null);
+            }}
+          >
+            Primeiro acesso? Criar usuário e senha
+          </button>
         ) : null}
         {error ? (
           <p role="alert" className="rounded-lg border border-risco-severo/40 bg-risco-severo/10 px-3 py-2 text-xs">
@@ -121,7 +144,7 @@ export function LoginDialog() {
           </p>
         ) : null}
         <Button type="submit" disabled={busy}>
-          {busy ? "Aguarde…" : needsSetup ? "Criar e entrar" : "Entrar"}
+          {busy ? "Aguarde…" : creating ? "Criar e entrar" : "Entrar"}
         </Button>
       </form>
     </Modal>

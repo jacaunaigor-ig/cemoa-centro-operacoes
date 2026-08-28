@@ -149,6 +149,40 @@ export function findAdminById(id: string): PublicAdmin | null {
   return null;
 }
 
+export function enterWithCredentials(input: {
+  name?: string;
+  login: string;
+  password: string;
+}): { admin: PublicAdmin; created: boolean } | { error: string; status: number } {
+  const login = typeof input.login === "string" ? input.login : "";
+  const password = typeof input.password === "string" ? input.password.trim() : "";
+  if (!login || !password) {
+    return { error: "Informe usuário e senha.", status: 400 };
+  }
+
+  if (needsSetup()) {
+    try {
+      const admin = createAdmin({
+        name: (input.name && input.name.trim()) || login,
+        login,
+        password,
+      });
+      return { admin, created: true };
+    } catch (err) {
+      return {
+        error: err instanceof Error ? err.message : "Não foi possível criar o administrador.",
+        status: 400,
+      };
+    }
+  }
+
+  const admin = verifyAdminCredentials(login, password);
+  if (!admin) {
+    return { error: "Usuário ou senha incorretos.", status: 401 };
+  }
+  return { admin, created: false };
+}
+
 export function verifyAdminCredentials(login: string, password: string): PublicAdmin | null {
   const key = normalizeLogin(login);
   const file = readFileAdmins().find((row) => row.login === key);
