@@ -743,7 +743,7 @@ export function AlertsWorkbench() {
               />
             ) : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
-                Clique em um município no mapa ou na lista para ver o {product.short.toLowerCase()}, a
+                Clique em um município no mapa ou na lista para ver {product.label.toLowerCase()}, a
                 cota do boletim e a classificação do operador.
               </p>
             )}
