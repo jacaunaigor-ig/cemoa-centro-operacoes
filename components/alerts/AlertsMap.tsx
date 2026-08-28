@@ -13,11 +13,13 @@ import type {
 import type { RiskLevel } from "@/lib/types";
 import { RISK_COLORS, RISK_LABELS } from "@/lib/risk";
 import {
-  AMAZONAS_BOUNDS,
   AMAZONAS_CENTER,
   OSM_ATTRIBUTION,
   OSM_BASEMAP_ID,
   OSM_TILE_URL,
+  fitMapToAmazonas,
+  mapCenterInAmazonas,
+  scheduleAmazonasFit,
 } from "@/lib/map";
 import { HYDRO_RIOS, normalizeMunicipio } from "@/lib/hydrology";
 import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
@@ -184,31 +186,19 @@ export const AlertsMap = forwardRef<
     };
   }
 
-  function fitLayer(map: LeafletMap, animate: boolean) {
-    try {
-      const bounds = layerRef.current?.getBounds();
-      if (bounds?.isValid()) {
-        map.fitBounds(bounds.pad(0.04), { animate, padding: [16, 16] });
-        return;
-      }
-    } catch {
-      /* fall through */
-    }
-    map.setView(AMAZONAS_CENTER, 6, { animate });
-  }
-
   useImperativeHandle(ref, () => ({
     finishPolygon,
     cancelDraw: clearDraw,
     fitAmazonas: () => {
       const map = mapRef.current;
-      if (map) fitLayer(map, true);
+      if (map) fitMapToAmazonas(map, true);
     },
   }));
 
   useEffect(() => {
     let cancelled = false;
     let resizeObs: ResizeObserver | undefined;
+    let cancelFit: (() => void) | undefined;
 
     async function boot() {
       const L = leafletNamespace(await import("leaflet"));
@@ -224,8 +214,7 @@ export const AlertsMap = forwardRef<
         zoomControl: true,
         minZoom: 5,
         maxZoom: 18,
-        maxBounds: L.latLngBounds(AMAZONAS_BOUNDS).pad(0.18),
-        maxBoundsViscosity: 0.7,
+        worldCopyJump: false,
       }).setView(AMAZONAS_CENTER, 6);
 
       const tiles = L.tileLayer(OSM_TILE_URL, {
@@ -238,6 +227,7 @@ export const AlertsMap = forwardRef<
       }).addTo(map);
       tilesRef.current = tiles;
       mapRef.current = map;
+      cancelFit = scheduleAmazonasFit(map, L);
 
       map.createPane("flowPane");
       const flowPane = map.getPane("flowPane");
@@ -319,8 +309,6 @@ export const AlertsMap = forwardRef<
           },
         }).addTo(map);
         layerRef.current = layer;
-        map.invalidateSize();
-        fitLayer(map, false);
       } catch (err) {
         reportClientError(
           err instanceof Error ? err.message : "Falha no GeoJSON",
@@ -350,24 +338,11 @@ export const AlertsMap = forwardRef<
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
 
-      let fitted = Boolean(layerRef.current && map.getSize().x > 40);
-      const fitWhenReady = () => {
-        map.invalidateSize();
-        const size = map.getSize();
-        if (size.x < 40 || size.y < 40) return;
-        fitLayer(map, false);
-        fitted = true;
-      };
-
       resizeObs = new ResizeObserver(() => {
-        const before = map.getSize();
         map.invalidateSize();
-        const after = map.getSize();
-        if (!fitted && after.x > 40 && after.y > 40) fitWhenReady();
-        else if (before.x < 40 && after.x > 40) fitWhenReady();
+        if (!mapCenterInAmazonas(map)) fitMapToAmazonas(map, false);
       });
       if (hostRef.current) resizeObs.observe(hostRef.current);
-      requestAnimationFrame(fitWhenReady);
 
       map.on("dblclick", (ev) => {
         if (!stateRef.current.drawMode) return;
@@ -379,6 +354,7 @@ export const AlertsMap = forwardRef<
     void boot();
     return () => {
       cancelled = true;
+      cancelFit?.();
       resizeObs?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;

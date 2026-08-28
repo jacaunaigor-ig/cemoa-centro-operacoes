@@ -21,7 +21,15 @@ import {
   statusAtivo,
   statusMapa,
 } from "@/lib/hydrology";
-import { AMAZONAS_BOUNDS, AMAZONAS_CENTER, OSM_ATTRIBUTION, OSM_BASEMAP_ID, OSM_TILE_URL } from "@/lib/map";
+import {
+  AMAZONAS_CENTER,
+  OSM_ATTRIBUTION,
+  OSM_BASEMAP_ID,
+  OSM_TILE_URL,
+  fitMapToAmazonas,
+  mapCenterInAmazonas,
+  scheduleAmazonasFit,
+} from "@/lib/map";
 import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
 import "leaflet/dist/leaflet.css";
@@ -138,24 +146,14 @@ export const StationsMap = forwardRef<
   useImperativeHandle(ref, () => ({
     fitAmazonas: () => {
       const map = mapRef.current;
-      const layer = layerRef.current;
-      if (!map) return;
-      try {
-        const bounds = layer?.getBounds();
-        if (bounds?.isValid()) {
-          map.fitBounds(bounds.pad(0.04), { animate: true, padding: [16, 16] });
-          return;
-        }
-      } catch {
-        /* fall through */
-      }
-      map.setView(AMAZONAS_CENTER, 6);
+      if (map) fitMapToAmazonas(map, true);
     },
   }));
 
   useEffect(() => {
     let cancelled = false;
     let resizeObs: ResizeObserver | undefined;
+    let cancelFit: (() => void) | undefined;
 
     async function boot() {
       const L = leafletNamespace(await import("leaflet"));
@@ -172,8 +170,7 @@ export const StationsMap = forwardRef<
         minZoom: 5,
         maxZoom: 18,
         preferCanvas: false,
-        maxBounds: L.latLngBounds(AMAZONAS_BOUNDS).pad(0.18),
-        maxBoundsViscosity: 0.7,
+        worldCopyJump: false,
       }).setView(AMAZONAS_CENTER, 6);
 
       const tiles = L.tileLayer(OSM_TILE_URL, {
@@ -186,6 +183,7 @@ export const StationsMap = forwardRef<
       }).addTo(map);
       tilesRef.current = tiles;
       mapRef.current = map;
+      cancelFit = scheduleAmazonasFit(map, L);
 
       map.createPane("flowPane");
       const flowPane = map.getPane("flowPane");
@@ -258,13 +256,6 @@ export const StationsMap = forwardRef<
           },
         }).addTo(map);
         layerRef.current = layer;
-        map.invalidateSize();
-        const bounds = layer.getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds.pad(0.04), { animate: false, padding: [16, 16] });
-        } else {
-          map.setView(AMAZONAS_CENTER, 6, { animate: false });
-        }
       } catch (err) {
         reportClientError(
           err instanceof Error ? err.message : "Falha no GeoJSON",
@@ -294,38 +285,17 @@ export const StationsMap = forwardRef<
       if (!stateRef.current.showRivers) map.removeLayer(rios);
       if (stateRef.current.onlyRisk) map.removeLayer(tiles);
 
-      let fitted = Boolean(layerRef.current && map.getSize().x > 40);
-      const fitWhenReady = () => {
-        map.invalidateSize();
-        const size = map.getSize();
-        if (size.x < 40 || size.y < 40) return;
-        const layer = layerRef.current;
-        if (layer) {
-          const bounds = layer.getBounds();
-          if (bounds.isValid()) {
-            map.fitBounds(bounds.pad(0.04), { animate: false, padding: [16, 16] });
-            fitted = true;
-            return;
-          }
-        }
-        map.setView(AMAZONAS_CENTER, 6, { animate: false });
-        fitted = true;
-      };
-
       resizeObs = new ResizeObserver(() => {
-        const before = map.getSize();
         map.invalidateSize();
-        const after = map.getSize();
-        if (!fitted && after.x > 40 && after.y > 40) fitWhenReady();
-        else if (before.x < 40 && after.x > 40) fitWhenReady();
+        if (!mapCenterInAmazonas(map)) fitMapToAmazonas(map, false);
       });
       if (hostRef.current) resizeObs.observe(hostRef.current);
-      requestAnimationFrame(fitWhenReady);
     }
 
     void boot();
     return () => {
       cancelled = true;
+      cancelFit?.();
       resizeObs?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;
