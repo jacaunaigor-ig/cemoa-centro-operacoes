@@ -35,6 +35,29 @@ export const BACIA_TO_CALHA: Record<string, string> = {
   Negro: "Negro",
 };
 
+export const CALHA_TO_BACIA: Record<string, string> = {
+  "Alto Solimões": "Alto Solimões",
+  Juruá: "Juruá",
+  Purus: "Purus",
+  Madeira: "Madeira",
+  "Médio Solimões": "Médio Solimões",
+  "Médio Amazonas": "Médio Amazonas",
+  Negro: "Rio Negro",
+  "Baixo Amazonas": "Médio Amazonas",
+  "Baixo Solimões": "Médio Solimões",
+};
+
+export function normalizeMunicipio(s: string) {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const HYDRO_STATUS_COLORS: Record<HydroStatus | "SL", string> = {
   NORMAL: "#66BB6A",
   MODERADO: "#FFEB3B",

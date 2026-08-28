@@ -29,8 +29,12 @@ export function AppShell({
     return () => clearInterval(id);
   }, []);
 
-  const qs = params.toString();
-  const suffix = qs ? `?${qs}` : "";
+  const shared = new URLSearchParams();
+  for (const key of ["municipio", "bacia", "calha"] as const) {
+    const value = params.get(key);
+    if (value) shared.set(key, value);
+  }
+  const suffix = shared.toString() ? `?${shared.toString()}` : "";
 
   return (
     <div className="flex min-h-dvh flex-col">

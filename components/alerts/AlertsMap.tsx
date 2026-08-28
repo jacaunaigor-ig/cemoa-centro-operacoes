@@ -4,14 +4,23 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type {
   CircleMarker,
   GeoJSON as GeoJSONType,
+  LayerGroup,
   Map as LeafletMap,
   PathOptions,
   Polyline,
+  TileLayer,
 } from "leaflet";
 import type { RiskLevel } from "@/lib/types";
 import { RISK_COLORS, RISK_LABELS } from "@/lib/risk";
-import { OSM_BASEMAP_ID } from "@/lib/map";
-import { addOsmTiles, leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
+import {
+  AMAZONAS_BOUNDS,
+  AMAZONAS_CENTER,
+  OSM_ATTRIBUTION,
+  OSM_BASEMAP_ID,
+  OSM_TILE_URL,
+} from "@/lib/map";
+import { HYDRO_RIOS, normalizeMunicipio } from "@/lib/hydrology";
+import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
 import "leaflet/dist/leaflet.css";
 
@@ -27,6 +36,7 @@ type Muni = {
 export type AlertsMapHandle = {
   finishPolygon: () => void;
   cancelDraw: () => void;
+  fitAmazonas: () => void;
 };
 
 export const AlertsMap = forwardRef<
@@ -38,6 +48,10 @@ export const AlertsMap = forwardRef<
     basin: string | null;
     adminMode: boolean;
     drawMode: boolean;
+    opacity: number;
+    showNames: boolean;
+    showRivers: boolean;
+    onlyRisk: boolean;
     onSelect: (nome: string, bacia: string) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
     onPolygonComplete: (points: Array<{ lat: number; lng: number }>) => void;
@@ -50,6 +64,10 @@ export const AlertsMap = forwardRef<
     basin,
     adminMode,
     drawMode,
+    opacity,
+    showNames,
+    showRivers,
+    onlyRisk,
     onSelect,
     onPaint,
     onPolygonComplete,
@@ -59,21 +77,51 @@ export const AlertsMap = forwardRef<
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
+  const tilesRef = useRef<TileLayer | null>(null);
   const layerRef = useRef<GeoJSONType | null>(null);
+  const riversRef = useRef<LayerGroup | null>(null);
+  const namesRef = useRef<LayerGroup | null>(null);
   const drawLineRef = useRef<Polyline | null>(null);
   const drawDotsRef = useRef<CircleMarker[]>([]);
   const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const onSelectRef = useRef(onSelect);
   const onPaintRef = useRef(onPaint);
   const onPolygonRef = useRef(onPolygonComplete);
-  const stateRef = useRef({ municipios, selected, filter, basin, adminMode, drawMode });
+  const stateRef = useRef({
+    municipios,
+    selected,
+    filter,
+    basin,
+    adminMode,
+    drawMode,
+    opacity,
+  });
 
   useEffect(() => {
     onSelectRef.current = onSelect;
     onPaintRef.current = onPaint;
     onPolygonRef.current = onPolygonComplete;
-    stateRef.current = { municipios, selected, filter, basin, adminMode, drawMode };
-  }, [onSelect, onPaint, onPolygonComplete, municipios, selected, filter, basin, adminMode, drawMode]);
+    stateRef.current = {
+      municipios,
+      selected,
+      filter,
+      basin,
+      adminMode,
+      drawMode,
+      opacity,
+    };
+  }, [
+    onSelect,
+    onPaint,
+    onPolygonComplete,
+    municipios,
+    selected,
+    filter,
+    basin,
+    adminMode,
+    drawMode,
+    opacity,
+  ]);
 
   function clearDraw() {
     verticesRef.current = [];
@@ -115,7 +163,48 @@ export const AlertsMap = forwardRef<
     }
   }
 
-  useImperativeHandle(ref, () => ({ finishPolygon, cancelDraw: clearDraw }));
+  function styleFor(feature?: GeoJSON.Feature): PathOptions {
+    const nome = String(feature?.properties?.nome ?? "");
+    const { municipios: list, selected: sel, filter: f, basin: b, opacity: op } =
+      stateRef.current;
+    const m = list.find((item) => item.nome === nome);
+    const risco = m?.risco ?? "BAIXO";
+    const matchLevel = f === "TODOS" || risco === f;
+    const matchBasin = !b || m?.bacia === b;
+    const match = matchLevel && matchBasin;
+    const isSel = sel === nome;
+    const fill = Math.max(0.12, Math.min(0.92, op / 100));
+    return {
+      color: isSel ? "#ffffff" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
+      weight: isSel ? 2.8 : match ? 1.1 : 0.7,
+      opacity: match || isSel ? 1 : 0.28,
+      fillColor: RISK_COLORS[risco],
+      fillOpacity: isSel ? Math.min(0.95, fill + 0.12) : match ? fill : 0.08,
+      className: "muni-path",
+    };
+  }
+
+  function fitLayer(map: LeafletMap, animate: boolean) {
+    try {
+      const bounds = layerRef.current?.getBounds();
+      if (bounds?.isValid()) {
+        map.fitBounds(bounds.pad(0.04), { animate, padding: [16, 16] });
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+    map.setView(AMAZONAS_CENTER, 6, { animate });
+  }
+
+  useImperativeHandle(ref, () => ({
+    finishPolygon,
+    cancelDraw: clearDraw,
+    fitAmazonas: () => {
+      const map = mapRef.current;
+      if (map) fitLayer(map, true);
+    },
+  }));
 
   useEffect(() => {
     let cancelled = false;
@@ -135,30 +224,63 @@ export const AlertsMap = forwardRef<
         zoomControl: true,
         minZoom: 5,
         maxZoom: 18,
-      }).setView([-4.2, -64.6], 6);
+        maxBounds: L.latLngBounds(AMAZONAS_BOUNDS).pad(0.18),
+        maxBoundsViscosity: 0.7,
+      }).setView(AMAZONAS_CENTER, 6);
 
-      addOsmTiles(L, map);
+      const tiles = L.tileLayer(OSM_TILE_URL, {
+        attribution: OSM_ATTRIBUTION,
+        maxZoom: 19,
+        minZoom: 2,
+        tileSize: 256,
+        errorTileUrl:
+          "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      }).addTo(map);
+      tilesRef.current = tiles;
       mapRef.current = map;
 
-      const styleFor = (feature?: GeoJSON.Feature): PathOptions => {
-        const nome = String(feature?.properties?.nome ?? "");
-        const { municipios: list, selected: sel, filter: f, basin: b } =
-          stateRef.current;
-        const m = list.find((item) => item.nome === nome);
-        const risco = m?.risco ?? "BAIXO";
-        const matchLevel = f === "TODOS" || risco === f;
-        const matchBasin = !b || m?.bacia === b;
-        const match = matchLevel && matchBasin;
-        const isSel = sel === nome;
-        return {
-          color: isSel ? "#ffffff" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
-          weight: isSel ? 2.6 : match ? 1.1 : 0.7,
-          opacity: match || isSel ? 1 : 0.35,
-          fillColor: RISK_COLORS[risco],
-          fillOpacity: isSel ? 0.92 : match ? 0.78 : 0.12,
-          className: "muni-path",
-        };
-      };
+      map.createPane("flowPane");
+      const flowPane = map.getPane("flowPane");
+      if (flowPane) {
+        flowPane.style.zIndex = "455";
+        flowPane.style.pointerEvents = "none";
+      }
+      const flowRenderer = L.svg({ pane: "flowPane" });
+      const rios = L.layerGroup();
+      const byNorm = new Map(
+        stateRef.current.municipios.map(
+          (s) => [normalizeMunicipio(s.nome), s] as const,
+        ),
+      );
+      for (const rio of HYDRO_RIOS) {
+        const coords = rio.municipios
+          .map((nome) => byNorm.get(normalizeMunicipio(nome)))
+          .filter((s): s is Muni => Boolean(s))
+          .map((s) => [s.lat, s.lon] as [number, number]);
+        if (coords.length < 2) continue;
+        L.polyline(coords, {
+          renderer: flowRenderer,
+          pane: "flowPane",
+          color: rio.cor,
+          weight: 5.2,
+          opacity: 0.28,
+          interactive: false,
+          className: `river-flow-base flow-${rio.id}`,
+        }).addTo(rios);
+        L.polyline(coords, {
+          renderer: flowRenderer,
+          pane: "flowPane",
+          color: "#0b1220",
+          weight: 2.6,
+          opacity: 0.9,
+          dashArray: "10 18",
+          lineCap: "round",
+          interactive: false,
+          className: `river-flow-animated flow-${rio.id}`,
+        }).addTo(rios);
+      }
+      rios.addTo(map);
+      riversRef.current = rios;
 
       try {
         const geo = await fetch("/geo/amazonas-municipios.json").then((r) => {
@@ -197,7 +319,8 @@ export const AlertsMap = forwardRef<
           },
         }).addTo(map);
         layerRef.current = layer;
-        map.fitBounds(layer.getBounds().pad(0.04));
+        map.invalidateSize();
+        fitLayer(map, false);
       } catch (err) {
         reportClientError(
           err instanceof Error ? err.message : "Falha no GeoJSON",
@@ -205,14 +328,52 @@ export const AlertsMap = forwardRef<
         );
       }
 
+      const names = L.layerGroup();
+      for (const s of stateRef.current.municipios) {
+        const marker = L.circleMarker([s.lat, s.lon], {
+          radius: 1,
+          opacity: 0,
+          fillOpacity: 0,
+          interactive: false,
+        });
+        marker.bindTooltip(s.nome, {
+          permanent: true,
+          direction: "center",
+          className: "hydro-muni-label",
+          opacity: 1,
+          offset: [0, 0],
+        });
+        names.addLayer(marker);
+      }
+      namesRef.current = names;
+      if (showNames) names.addTo(map);
+      if (!showRivers) map.removeLayer(rios);
+      if (onlyRisk) map.removeLayer(tiles);
+
+      let fitted = Boolean(layerRef.current && map.getSize().x > 40);
+      const fitWhenReady = () => {
+        map.invalidateSize();
+        const size = map.getSize();
+        if (size.x < 40 || size.y < 40) return;
+        fitLayer(map, false);
+        fitted = true;
+      };
+
+      resizeObs = new ResizeObserver(() => {
+        const before = map.getSize();
+        map.invalidateSize();
+        const after = map.getSize();
+        if (!fitted && after.x > 40 && after.y > 40) fitWhenReady();
+        else if (before.x < 40 && after.x > 40) fitWhenReady();
+      });
+      if (hostRef.current) resizeObs.observe(hostRef.current);
+      requestAnimationFrame(fitWhenReady);
+
       map.on("dblclick", (ev) => {
         if (!stateRef.current.drawMode) return;
         ev.originalEvent.preventDefault();
         finishPolygon();
       });
-
-      resizeObs = new ResizeObserver(() => map.invalidateSize());
-      if (hostRef.current) resizeObs.observe(hostRef.current);
     }
 
     void boot();
@@ -222,37 +383,21 @@ export const AlertsMap = forwardRef<
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
+      riversRef.current = null;
+      namesRef.current = null;
+      tilesRef.current = null;
     };
-    // Map is remounted via key={OSM_BASEMAP_ID} when the basemap identity changes.
+    // Map is remounted via key={OSM_BASEMAP_ID}. Draw/paint handlers read stateRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const layer = layerRef.current;
-    if (!layer) return;
-    layer.setStyle((feature) => {
-      const nome = String(feature?.properties?.nome ?? "");
-      const m = municipios.find((item) => item.nome === nome);
-      const risco = m?.risco ?? "BAIXO";
-      const matchLevel = filter === "TODOS" || risco === filter;
-      const matchBasin = !basin || m?.bacia === basin;
-      const match = matchLevel && matchBasin;
-      const isSel = selected === nome;
-      return {
-        color: isSel ? "#ffffff" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
-        weight: isSel ? 2.6 : match ? 1.1 : 0.7,
-        opacity: match || isSel ? 1 : 0.35,
-        fillColor: RISK_COLORS[risco],
-        fillOpacity: isSel ? 0.92 : match ? 0.78 : 0.12,
-        className: "muni-path",
-      };
-    });
-
+    layerRef.current?.setStyle((feature) => styleFor(feature));
     if (selected && !adminMode) {
       const m = municipios.find((item) => item.nome === selected);
       if (m && mapRef.current) mapRef.current.panTo([m.lat, m.lon], { animate: true });
     }
-  }, [municipios, selected, filter, basin, adminMode]);
+  }, [municipios, selected, filter, basin, adminMode, opacity]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -264,10 +409,41 @@ export const AlertsMap = forwardRef<
     }
   }, [drawMode]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    const tiles = tilesRef.current;
+    if (!map || !tiles) return;
+    if (onlyRisk) {
+      if (map.hasLayer(tiles)) map.removeLayer(tiles);
+    } else if (!map.hasLayer(tiles)) tiles.addTo(map);
+  }, [onlyRisk]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const rios = riversRef.current;
+    if (!map || !rios) return;
+    if (showRivers) {
+      if (!map.hasLayer(rios)) rios.addTo(map);
+    } else if (map.hasLayer(rios)) map.removeLayer(rios);
+  }, [showRivers]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const names = namesRef.current;
+    if (!map || !names) return;
+    if (showNames) {
+      if (!map.hasLayer(names)) names.addTo(map);
+    } else if (map.hasLayer(names)) map.removeLayer(names);
+  }, [showNames]);
+
   return (
     <div
       ref={hostRef}
-      className={adminMode || drawMode ? "absolute inset-0 cursor-crosshair" : "absolute inset-0"}
+      className={
+        adminMode || drawMode
+          ? "hydro-map absolute inset-0 cursor-crosshair"
+          : "hydro-map absolute inset-0"
+      }
       data-basemap={OSM_BASEMAP_ID}
       role="presentation"
     />

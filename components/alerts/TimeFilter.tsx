@@ -31,7 +31,7 @@ export function TimeFilter({
           className={cn(
             "rounded-lg px-3 py-1.5 text-xs font-bold",
             value === opt.id
-              ? "bg-white/10 text-text"
+              ? "bg-brand text-white"
               : "text-text-mute hover:text-text",
           )}
           aria-pressed={value === opt.id}

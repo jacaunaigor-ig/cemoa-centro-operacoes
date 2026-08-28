@@ -13,7 +13,6 @@ import {
 import { AppShell } from "@/components/shared/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Popover,
   PopoverContent,
@@ -37,6 +36,8 @@ import { StationsMap, type StationsMapHandle } from "@/components/hydrology/Stat
 import { NoReadingPanel } from "@/components/hydrology/NoReadingPanel";
 import { HydroTicker } from "@/components/hydrology/HydroTicker";
 import { HydroDetail } from "@/components/hydrology/HydroDetail";
+import { KpiCard } from "@/components/shared/KpiCard";
+import { MapToolButton } from "@/components/shared/MapToolButton";
 import { cn } from "@/lib/utils";
 
 const POLL_MS = 12_000;
@@ -208,7 +209,7 @@ export function HydrologyWorkbench() {
           </Card>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-            <Kpi
+            <KpiCard
               label="Municípios"
               value={loading ? "—" : String(kpis.total)}
               sub="Total monitorado"
@@ -219,7 +220,7 @@ export function HydrologyWorkbench() {
               }
               loading={loading}
             />
-            <Kpi
+            <KpiCard
               label="Baixo"
               value={loading ? "—" : String(kpis.baixo)}
               sub={pct(kpis.baixo)}
@@ -228,7 +229,7 @@ export function HydrologyWorkbench() {
               onClick={() => setQuery({ status: "NORMAL", municipio: null })}
               loading={loading}
             />
-            <Kpi
+            <KpiCard
               label="Moderado"
               value={loading ? "—" : String(kpis.moderado)}
               sub={pct(kpis.moderado)}
@@ -237,7 +238,7 @@ export function HydrologyWorkbench() {
               onClick={() => setQuery({ status: "MODERADO", municipio: null })}
               loading={loading}
             />
-            <Kpi
+            <KpiCard
               label="Alto"
               value={loading ? "—" : String(kpis.alto)}
               sub={pct(kpis.alto)}
@@ -246,7 +247,7 @@ export function HydrologyWorkbench() {
               onClick={() => setQuery({ status: "ALTO", municipio: null })}
               loading={loading}
             />
-            <Kpi
+            <KpiCard
               label="Com leitura"
               value={loading ? "—" : String(kpis.comLeitura)}
               sub={pct(kpis.comLeitura)}
@@ -256,7 +257,7 @@ export function HydrologyWorkbench() {
               onClick={() => setQuery({ status: "COM_LEITURA", municipio: null })}
               loading={loading}
             />
-            <Kpi
+            <KpiCard
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
               sub={pct(kpis.semLeitura)}
@@ -391,31 +392,31 @@ export function HydrologyWorkbench() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-64 p-2">
-                    <MapTool
+                    <MapToolButton
                       active={onlyRisk}
                       onClick={() => setOnlyRisk((v) => !v)}
                       icon={<Layers className="size-3.5" />}
                     >
                       Somente risco
-                    </MapTool>
-                    <MapTool
+                    </MapToolButton>
+                    <MapToolButton
                       onClick={() => mapRef.current?.fitAmazonas()}
                       icon={<MapPinned className="size-3.5" />}
                     >
                       Ajustar ao Amazonas
-                    </MapTool>
-                    <MapTool
+                    </MapToolButton>
+                    <MapToolButton
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
                     >
                       {showNames ? "Ocultar nomes dos municípios" : "Mostrar nomes dos municípios"}
-                    </MapTool>
-                    <MapTool
+                    </MapToolButton>
+                    <MapToolButton
                       active={showRivers}
                       onClick={() => setShowRivers((v) => !v)}
                     >
                       {showRivers ? "Ocultar rios" : "Mostrar rios"}
-                    </MapTool>
+                    </MapToolButton>
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
                       <input
@@ -489,78 +490,6 @@ export function HydrologyWorkbench() {
         </div>
       </div>
     </AppShell>
-  );
-}
-
-function Kpi({
-  label,
-  value,
-  sub,
-  accent,
-  icon,
-  loading,
-  active,
-  onClick,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  accent: string;
-  icon?: React.ReactNode;
-  loading: boolean;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative overflow-hidden rounded-xl border bg-panel px-3 py-3 text-left shadow-[0_1px_2px_rgba(0,0,0,.3)]",
-        active ? "border-brand/55 bg-brand/8" : "border-border hover:border-border-strong",
-      )}
-    >
-      <span className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} />
-      <div className="flex items-start justify-between pl-1">
-        <small className="text-[10px] font-bold tracking-[0.08em] text-text-dim uppercase">
-          {label}
-        </small>
-        <span className="text-text-mute">{icon}</span>
-      </div>
-      {loading ? (
-        <Skeleton className="mt-2 h-8 w-16" />
-      ) : (
-        <p className="mt-1 font-mono text-2xl font-bold">{value}</p>
-      )}
-      <p className="text-[10px] text-text-mute">{sub}</p>
-    </button>
-  );
-}
-
-function MapTool({
-  active,
-  onClick,
-  icon,
-  children,
-}: {
-  active?: boolean;
-  onClick: () => void;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-semibold",
-        active ? "bg-brand/15 text-brand-2" : "text-text-dim hover:bg-white/5 hover:text-text",
-      )}
-      aria-pressed={active}
-    >
-      {icon}
-      {children}
-    </button>
   );
 }
 
