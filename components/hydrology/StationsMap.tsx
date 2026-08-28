@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { RISK_COLORS, RISK_LABELS, isActiveAlert, maxRisk, riskRank } from "@/lib/risk";
 import type { HydroStation, RiskLevel } from "@/lib/types";
+import { OSM_ATTRIBUTION, OSM_TILE_URL } from "@/lib/map";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -46,11 +47,11 @@ export function StationsMap({
       const map = L.map(hostRef.current, {
         zoomControl: true,
         minZoom: 5,
-        maxZoom: 12,
-      }).setView([-4.2, -64.6], 6);
+        maxZoom: 18,
+      }).setView([-4.2, -64.6], 7);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      L.tileLayer(OSM_TILE_URL, {
+        attribution: OSM_ATTRIBUTION,
         maxZoom: 19,
       }).addTo(map);
       mapRef.current = map;
@@ -78,7 +79,7 @@ export function StationsMap({
             "></span>`,
           });
 
-        if (zoom < 6.4) {
+        if (zoom < 6) {
           const group = L.layerGroup();
           const byBasin = new Map<string, HydroStation[]>();
           for (const s of visible) {

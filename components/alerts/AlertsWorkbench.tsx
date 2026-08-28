@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { AlertTriangle, MapPinned, ShieldAlert, Siren } from "lucide-react";
@@ -10,14 +10,18 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { filterAlertsByWindow } from "@/lib/live-state";
+import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { RISK_COLORS, RISK_LABELS, riskRank } from "@/lib/risk";
 import type { AlertsPayload, RiskLevel, TimeWindow } from "@/lib/types";
-import { AlertsMap } from "@/components/alerts/AlertsMap";
+import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { InteractiveLegend } from "@/components/alerts/InteractiveLegend";
 import { TimeFilter } from "@/components/alerts/TimeFilter";
+import { AdminToolbar } from "@/components/alerts/AdminToolbar";
+import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 
 const POLL_MS = 8000;
+const STORAGE_KEY = "cemoa_admin_overrides_v1";
 
 export function AlertsWorkbench() {
   const router = useRouter();
@@ -32,8 +36,33 @@ export function AlertsWorkbench() {
   const [data, setData] = useState<AlertsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
+  const [adminMode, setAdminMode] = useState(false);
+  const [drawMode, setDrawMode] = useState(false);
+  const [paintLevel, setPaintLevel] = useState<RiskLevel>("ALTO");
+  const [editorOpen, setEditorOpen] = useState(false);
+  const mapApi = useRef<AlertsMapHandle>(null);
+  const hydrated = useRef(false);
   const prevRef = useRef<AlertsPayload | null>(null);
   const firstRef = useRef(true);
+
+  const persistOverrides = useCallback(async (updates: Record<string, RiskLevel>, replace = false) => {
+    await fetch("/api/alerts/overrides", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ updates, replace }),
+    });
+    try {
+      const current = {
+        ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as Record<string, RiskLevel>),
+        ...updates,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(replace ? updates : current));
+    } catch {
+      /* ignore quota */
+    }
+    const payload = await fetchJson<AlertsPayload>("/api/alerts");
+    setData(payload);
+  }, []);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -41,6 +70,24 @@ export function AlertsWorkbench() {
 
     async function load() {
       try {
+        if (!hydrated.current) {
+          hydrated.current = true;
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+              const updates = JSON.parse(raw) as Record<string, RiskLevel>;
+              if (Object.keys(updates).length) {
+                await fetch("/api/alerts/overrides", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ updates, replace: true }),
+                });
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         const payload = await fetchJson<AlertsPayload>("/api/alerts");
         if (cancelled) return;
         setData(payload);
@@ -75,6 +122,8 @@ export function AlertsWorkbench() {
 
     for (const alert of data.alerts) {
       const old = prev.alerts.find((item) => item.id === alert.id);
+      const row = data.municipios.find((m) => m.id === alert.municipioId);
+      if (row?.fonte === "admin") continue;
       if (!old) {
         toast.custom(() => (
           <ToastCard
@@ -113,6 +162,8 @@ export function AlertsWorkbench() {
     return base;
   }, [data]);
 
+  const overrideCount = data?.municipios.filter((m) => m.fonte === "admin").length ?? 0;
+
   function setQuery(next: Record<string, string | null>) {
     const usp = new URLSearchParams(params.toString());
     for (const [key, value] of Object.entries(next)) {
@@ -121,6 +172,37 @@ export function AlertsWorkbench() {
     }
     const qs = usp.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
+  async function paintMunicipio(id: string, nome: string, baciaName: string) {
+    await persistOverrides({ [id]: paintLevel });
+    setQuery({ municipio: nome, bacia: baciaName });
+    toast.success(`${nome}: ${RISK_LABELS[paintLevel]}`);
+  }
+
+  async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
+    if (!data) return;
+    const ring = latLngsToRing(points);
+    const updates: Record<string, RiskLevel> = {};
+    for (const m of data.municipios) {
+      if (pointInRing(m.lon, m.lat, ring)) updates[m.id] = paintLevel;
+    }
+    const n = Object.keys(updates).length;
+    if (!n) {
+      toast.error("Nenhum município dentro do polígono.");
+      return;
+    }
+    await persistOverrides(updates);
+    toast.success(`${n} município(s) classificados como ${RISK_LABELS[paintLevel]}.`);
+    setDrawMode(false);
+  }
+
+  async function restoreLive() {
+    await fetch("/api/alerts/overrides", { method: "DELETE" });
+    localStorage.removeItem(STORAGE_KEY);
+    const payload = await fetchJson<AlertsPayload>("/api/alerts");
+    setData(payload);
+    toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
   }
 
   const loading = !data && !error;
@@ -142,7 +224,9 @@ export function AlertsWorkbench() {
               />
             </div>
             <p className="text-xs text-text-mute">
-              Clique em um nível de risco para filtrar o mapa. A lista à esquerda mostra os alertas ativos na janela selecionada.
+              {adminMode
+                ? "Modo classificação: clique no município (ou desenhe um polígono) para aplicar o nível selecionado."
+                : "Clique em um nível de risco para filtrar o mapa. Use Classificar para alterar municípios no clique ou em lote."}
             </p>
           </div>
           <TimeFilter value={windowFilter} onChange={setWindowFilter} />
@@ -220,16 +304,39 @@ export function AlertsWorkbench() {
               {loading ? <MapSkeleton /> : null}
               {data ? (
                 <AlertsMap
+                  ref={mapApi}
                   municipios={data.municipios}
                   selected={selected}
                   filter={activeFilter}
                   basin={bacia}
+                  adminMode={adminMode}
+                  drawMode={drawMode}
                   onSelect={(nome, basinName) =>
                     setQuery({ municipio: nome, bacia: basinName })
                   }
+                  onPaint={paintMunicipio}
+                  onPolygonComplete={(pts) => void applyPolygon(pts)}
                 />
               ) : null}
             </div>
+            <AdminToolbar
+              enabled={adminMode}
+              drawMode={drawMode}
+              paintLevel={paintLevel}
+              overrideCount={overrideCount}
+              onToggle={() => {
+                setAdminMode((v) => !v);
+                setDrawMode(false);
+              }}
+              onDraw={() => {
+                setAdminMode(true);
+                setDrawMode((v) => !v);
+              }}
+              onPaintLevel={setPaintLevel}
+              onOpenBatch={() => setEditorOpen(true)}
+              onRestore={() => void restoreLive()}
+              onFinishPolygon={() => mapApi.current?.finishPolygon()}
+            />
             {bacia ? (
               <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs">
                 <span>
@@ -247,6 +354,13 @@ export function AlertsWorkbench() {
           </Card>
         </div>
       </div>
+
+      <RiskEditorDialog
+        open={editorOpen}
+        rows={data?.municipios ?? []}
+        onClose={() => setEditorOpen(false)}
+        onApply={(updates) => void persistOverrides(updates)}
+      />
     </AppShell>
   );
 }

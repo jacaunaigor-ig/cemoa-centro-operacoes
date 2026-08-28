@@ -168,6 +168,17 @@ export function HydrologyWorkbench() {
           </div>
 
           <Card className="relative flex min-h-[420px] flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
+              <span>Mapa-base © OpenStreetMap</span>
+              <a
+                href="https://www.openstreetmap.org/"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-focus hover:underline"
+              >
+                openstreetmap.org
+              </a>
+            </div>
             <div className="relative min-h-[360px] flex-1">
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">

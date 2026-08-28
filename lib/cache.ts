@@ -2,6 +2,11 @@ type Entry<T> = { at: number; data: T };
 
 const store = new Map<string, Entry<unknown>>();
 
+export function invalidate(key?: string) {
+  if (key) store.delete(key);
+  else store.clear();
+}
+
 export function cached<T>(key: string, ttlMs: number, factory: () => T): { data: T; cache: "HIT" | "MISS" } {
   const hit = store.get(key) as Entry<T> | undefined;
   const now = Date.now();

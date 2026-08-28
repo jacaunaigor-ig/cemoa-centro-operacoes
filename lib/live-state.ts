@@ -1,4 +1,5 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
+import { getOverride } from "@/lib/overrides";
 import { isActiveAlert, maxRisk, riskFromCota, riskRank } from "@/lib/risk";
 import type {
   AlertsPayload,
@@ -76,8 +77,10 @@ export function buildAlertsPayload(now = Date.now()): Omit<AlertsPayload, "cache
   const lookback = 2 * POLL_MS;
   const alerts: RainAlert[] = [];
   const municipios = MUNICIPALITIES.map((m) => {
-    const risco = rainRiskAt(m.id, m.riscoChuvaBase, now);
-    const previous = rainRiskAt(m.id, m.riscoChuvaBase, now - lookback);
+    const live = rainRiskAt(m.id, m.riscoChuvaBase, now);
+    const admin = getOverride(m.id);
+    const risco = admin ?? live;
+    const previous = admin ?? rainRiskAt(m.id, m.riscoChuvaBase, now - lookback);
     const issuedAt = isActiveAlert(risco) ? issuedAtFor(m.id, risco, now) : null;
     if (isActiveAlert(risco) && issuedAt) {
       alerts.push({
@@ -103,6 +106,7 @@ export function buildAlertsPayload(now = Date.now()): Omit<AlertsPayload, "cache
       lat: m.lat,
       risco,
       issuedAt,
+      fonte: (admin ? "admin" : "monitor") as "admin" | "monitor",
     };
   });
 

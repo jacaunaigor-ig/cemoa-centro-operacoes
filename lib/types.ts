@@ -65,6 +65,7 @@ export type AlertsPayload = {
     lat: number;
     risco: RiskLevel;
     issuedAt: number | null;
+    fonte: "admin" | "monitor";
   }>;
 };
 
