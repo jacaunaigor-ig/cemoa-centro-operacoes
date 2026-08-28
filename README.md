@@ -49,6 +49,14 @@ Abra [http://127.0.0.1:43127](http://127.0.0.1:43127). O horário operacional é
 
 Query strings compartilhadas: `municipio`, `bacia`, `calha`. No painel também: `risco`, `tipo`. No boletim: `modo`, `status`.
 
+## Desktop, mobile e Admin
+
+O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs e ficha do município; sem lista, PNG, lote ou polígono).
+
+**Admin** só existe no Desktop. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
+
+No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
+
 ## Empilhar
 
 Next.js (App Router), TypeScript, Tailwind CSS, componentes no padrão shadcn/ui, Leaflet. Mapa-base via proxy local de tiles OpenStreetMap (`/tiles/osm/...`) — sem Carto.

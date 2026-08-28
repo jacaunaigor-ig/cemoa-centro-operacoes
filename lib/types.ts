@@ -127,6 +127,7 @@ export type HydroStation = {
   limitesEnchente: HydroLimites;
   semLeitura: boolean;
   semEstacao: boolean;
+  editadoPorOperador?: boolean;
 };
 
 export type HydrologyPayload = {

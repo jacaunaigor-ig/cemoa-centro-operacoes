@@ -24,15 +24,19 @@ import {
   BACIA_TO_CALHA,
   CALHAS,
   HYDRO_STATUS_COLORS,
+  HYDRO_STATUS_LABELS,
   PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
   normalizeMunicipio,
+  statusAtivo,
   statusMapa,
 } from "@/lib/hydrology";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import type {
   HydroMode,
+  HydroStation,
+  HydroStatus,
   HydroStatusFilter,
   HydrologyPayload,
 } from "@/lib/types";
@@ -45,9 +49,16 @@ import { KpiCard } from "@/components/shared/KpiCard";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
+import { useOpsMode } from "@/components/shared/OpsMode";
+import { AdminToolbar } from "@/components/alerts/AdminToolbar";
+import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
+import { latLngsToRing, pointInRing } from "@/lib/geo";
+import { toast } from "sonner";
+import type { HydroPatch } from "@/lib/hydro-overrides";
 import { cn } from "@/lib/utils";
 
 const POLL_MS = 12_000;
+const HYDRO_STORAGE = "cemoa_hydro_overrides_v1";
 
 function parseModo(value: string | null): HydroMode {
   return value === "enchente" ? "enchente" : "vazante";
@@ -77,6 +88,7 @@ export function HydrologyWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const { admin, isMobile } = useOpsMode();
   const selected = params.get("municipio");
   const modo = parseModo(params.get("modo"));
   const status = parseStatus(params.get("status"));
@@ -89,13 +101,36 @@ export function HydrologyWorkbench() {
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
   const [opacity, setOpacity] = useState(58);
+  const [paintArmed, setPaintArmed] = useState(true);
+  const [drawMode, setDrawMode] = useState(false);
+  const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
+  const [editorOpen, setEditorOpen] = useState(false);
   const mapRef = useRef<StationsMapHandle>(null);
+  const hydrated = useRef(false);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
     async function load() {
       try {
+        if (!hydrated.current) {
+          hydrated.current = true;
+          try {
+            const raw = localStorage.getItem(HYDRO_STORAGE);
+            if (raw) {
+              const updates = JSON.parse(raw) as Record<string, HydroPatch>;
+              if (Object.keys(updates).length) {
+                await fetch("/api/hydrology/overrides", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ updates, replace: true }),
+                });
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
         const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
         if (cancelled) return;
         setData(payload);
@@ -147,13 +182,76 @@ export function HydrologyWorkbench() {
     null;
   const pct = (n: number) =>
     kpis.total ? `${((n / kpis.total) * 100).toFixed(1).replace(".", ",")}% do total` : "0%";
+  const overrideCount = catalog.filter((s) => s.editadoPorOperador).length;
+  const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
+
+  async function persistHydro(updates: Record<string, HydroPatch>, replace = false) {
+    await fetch("/api/hydrology/overrides", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ updates, replace }),
+    });
+    try {
+      const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
+        string,
+        HydroPatch
+      >;
+      const next: Record<string, HydroPatch> = replace ? {} : { ...current };
+      for (const [id, patch] of Object.entries(updates)) {
+        next[id] = { ...(replace ? {} : current[id]), ...patch };
+      }
+      localStorage.setItem(HYDRO_STORAGE, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+    const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
+    setData(payload);
+  }
+
+  async function paintStation(station: HydroStation) {
+    await persistHydro({ [station.id]: { [statusKey]: paintLevel } });
+    setQuery({
+      municipio: station.municipio,
+      bacia: station.bacia,
+      calha: station.calha,
+    });
+    toast.success(`${station.municipio}: ${HYDRO_STATUS_LABELS[paintLevel]}`);
+  }
+
+  async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
+    if (!data) return;
+    const ring = latLngsToRing(points);
+    const updates: Record<string, HydroPatch> = {};
+    for (const s of data.stations) {
+      if (pointInRing(s.lon, s.lat, ring)) updates[s.id] = { [statusKey]: paintLevel };
+    }
+    const n = Object.keys(updates).length;
+    if (!n) {
+      toast.error("Nenhum município dentro do polígono.");
+      return;
+    }
+    await persistHydro(updates);
+    toast.success(`${n} município(s) com status ${HYDRO_STATUS_LABELS[paintLevel]}.`);
+    setDrawMode(false);
+  }
+
+  async function restoreHydro() {
+    await fetch("/api/hydrology/overrides", { method: "DELETE" });
+    localStorage.removeItem(HYDRO_STORAGE);
+    const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
+    setData(payload);
+    toast.success("Cotas e status do operador removidos.");
+  }
 
   async function exportMapPng() {
     if (!data) throw new Error("Mapa ainda não carregou");
     const byNome = new Map(catalog.map((s) => [s.municipio, s]));
     const byNorm = new Map(catalog.map((s) => [normalizeMunicipio(s.municipio), s]));
     const counts = { NORMAL: 0, MODERADO: 0, ALTO: 0, SL: 0 };
-    for (const s of catalog) counts[statusMapa(s, modo)] += 1;
+    for (const s of catalog) {
+      counts[statusAtivo(s, modo)] += 1;
+      if (s.semLeitura) counts.SL += 1;
+    }
     const modoLabel = modo === "vazante" ? "Estiagem" : "Inundação";
     await exportInstitutionalPng({
       title: "Boletim Hidrológico",
@@ -163,15 +261,19 @@ export function HydrologyWorkbench() {
       ),
       colorFor: (nome) => {
         const station = byNome.get(nome) ?? byNorm.get(normalizeMunicipio(nome));
-        return HYDRO_STATUS_COLORS[statusMapa(station, modo)];
+        return HYDRO_STATUS_COLORS[statusMapa(station, modo, "Todos")];
       },
       legendTitle: "Níveis de risco",
-      legendItems: PNG_HYDRO_ITEMS.map((item) => ({
+      legendItems: PNG_HYDRO_ITEMS.filter((item) => item.key !== "SL").map((item) => ({
         ...item,
         color: HYDRO_STATUS_COLORS[item.key],
         count: counts[item.key] ?? 0,
       })),
       footerSources: "Fontes de monitoramento: CEMOA · ANA · SGB · SEMA",
+      extraNote: {
+        title: "Sem cota do dia",
+        text: `${counts.SL} município(s) sem leitura no recorte. O status operacional (Baixo, Moderado ou Alto) permanece pintado no mapa.`,
+      },
     });
   }
 
@@ -185,8 +287,8 @@ export function HydrologyWorkbench() {
             </h2>
             <p className="text-xs text-text-mute">
               Cotas fluviométricas das 62 sedes municipais do Amazonas. Referência{" "}
-              {data?.referencia ?? "—"}. Escala operacional de estiagem e inundação: Baixo,
-              Moderado e Alto.
+              {data?.referencia ?? "—"}. Moderado e Alto permanecem pintados mesmo sem cota do
+              dia. Cinza só no filtro Sem leitura.
             </p>
           </div>
         </div>
@@ -313,7 +415,15 @@ export function HydrologyWorkbench() {
           </div>
         ) : null}
 
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
+        <div
+          className={cn(
+            "grid min-h-0 flex-1 gap-3",
+            isMobile
+              ? "grid-cols-1"
+              : "xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden",
+          )}
+        >
+          {isMobile ? null : (
           <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
             {status === "SL" ? (
               <NoReadingPanel
@@ -359,6 +469,7 @@ export function HydrologyWorkbench() {
               }}
             />
           </div>
+          )}
 
           <Card className="relative flex h-full min-h-[420px] flex-col overflow-hidden xl:min-h-0">
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
@@ -376,7 +487,9 @@ export function HydrologyWorkbench() {
                 OpenStreetMap
               </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                <ExportPngButton onExport={exportMapPng} disabled={!data} />
+                {isMobile ? null : (
+                  <ExportPngButton onExport={exportMapPng} disabled={!data} />
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -489,9 +602,13 @@ export function HydrologyWorkbench() {
                   showNames={showNames}
                   showRivers={showRivers}
                   onlyRisk={onlyRisk}
+                  adminMode={admin && paintArmed}
+                  drawMode={admin && drawMode}
                   onSelect={(s) =>
                     setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha })
                   }
+                  onPaint={(s) => void paintStation(s)}
+                  onPolygonComplete={(pts) => void applyPolygon(pts)}
                 />
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
@@ -503,28 +620,58 @@ export function HydrologyWorkbench() {
                   <LegendDot color="#66BB6A" label="Baixo" />
                   <LegendDot color="#FFEB3B" label="Moderado" />
                   <LegendDot color="#FF9800" label="Alto" />
-                  <LegendDot color="#7c8fab" label="Sem leitura" />
+                  {status === "SL" ? (
+                    <LegendDot color="#7c8fab" label="Sem leitura" />
+                  ) : null}
                 </ul>
               </div>
             </div>
 
-            <HydroTicker stations={catalog} modo={modo} />
+            {isMobile ? null : <HydroTicker stations={catalog} modo={modo} />}
+
+            <AdminToolbar
+              enabled={admin}
+              drawMode={drawMode}
+              paintArmed={paintArmed}
+              paintLevel={paintLevel}
+              levels={["NORMAL", "MODERADO", "ALTO"]}
+              labels={HYDRO_STATUS_LABELS}
+              colors={HYDRO_STATUS_COLORS}
+              overrideCount={overrideCount}
+              paintHint="Clique para atualizar o status no mapa"
+              onDraw={() => setDrawMode((v) => !v)}
+              onPaintArmed={setPaintArmed}
+              onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}
+              onOpenBatch={() => setEditorOpen(true)}
+              onRestore={() => void restoreHydro()}
+              onFinishPolygon={() => mapRef.current?.finishPolygon()}
+            />
 
             {selectedStation ? (
               <HydroDetail
                 station={selectedStation}
                 modo={modo}
+                admin={admin}
+                compact={isMobile}
                 onClose={() => setQuery({ municipio: null })}
+                onSave={(patch) => void persistHydro({ [selectedStation.id]: patch }).then(() => toast.success("Cota e status atualizados."))}
               />
             ) : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
-                Clique em um município no mapa ou na lista para ver cota, variação, limiares de
-                estiagem e inundação e a série dos últimos dias.
+                Clique em um município no mapa{isMobile ? "" : " ou na lista"} para ver cota, variação e
+                limiares de estiagem e inundação.
               </p>
             )}
           </Card>
         </div>
       </div>
+      <HydroEditorDialog
+        open={editorOpen}
+        rows={catalog}
+        modo={modo}
+        onClose={() => setEditorOpen(false)}
+        onApply={(updates) => void persistHydro(updates)}
+      />
     </AppShell>
   );
 }

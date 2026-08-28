@@ -7,10 +7,12 @@ import {
   useRef,
 } from "react";
 import type {
+  CircleMarker,
   GeoJSON as GeoJSONType,
   LayerGroup,
   Map as LeafletMap,
   PathOptions,
+  Polyline,
   TileLayer,
 } from "leaflet";
 import type { HydroMode, HydroStation, HydroStatusFilter } from "@/lib/types";
@@ -36,6 +38,8 @@ import "leaflet/dist/leaflet.css";
 
 export type StationsMapHandle = {
   fitAmazonas: () => void;
+  finishPolygon: () => void;
+  cancelDraw: () => void;
 };
 
 export const StationsMap = forwardRef<
@@ -50,7 +54,11 @@ export const StationsMap = forwardRef<
     showNames: boolean;
     showRivers: boolean;
     onlyRisk: boolean;
+    adminMode?: boolean;
+    drawMode?: boolean;
     onSelect: (station: HydroStation) => void;
+    onPaint?: (station: HydroStation) => void;
+    onPolygonComplete?: (points: Array<{ lat: number; lng: number }>) => void;
   }
 >(function StationsMap(
   {
@@ -63,7 +71,11 @@ export const StationsMap = forwardRef<
     showNames,
     showRivers,
     onlyRisk,
+    adminMode = false,
+    drawMode = false,
     onSelect,
+    onPaint,
+    onPolygonComplete,
   },
   ref,
 ) {
@@ -74,7 +86,12 @@ export const StationsMap = forwardRef<
   const layerRef = useRef<GeoJSONType | null>(null);
   const riversRef = useRef<LayerGroup | null>(null);
   const namesRef = useRef<LayerGroup | null>(null);
+  const drawLineRef = useRef<Polyline | null>(null);
+  const drawDotsRef = useRef<CircleMarker[]>([]);
+  const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const onSelectRef = useRef(onSelect);
+  const onPaintRef = useRef(onPaint);
+  const onPolygonRef = useRef(onPolygonComplete);
   const stateRef = useRef({
     stations,
     selected,
@@ -82,13 +99,14 @@ export const StationsMap = forwardRef<
     status,
     modo,
     opacity,
-    showNames,
-    showRivers,
-    onlyRisk,
+    adminMode,
+    drawMode,
   });
 
   useEffect(() => {
     onSelectRef.current = onSelect;
+    onPaintRef.current = onPaint;
+    onPolygonRef.current = onPolygonComplete;
     stateRef.current = {
       stations,
       selected,
@@ -96,9 +114,8 @@ export const StationsMap = forwardRef<
       status,
       modo,
       opacity,
-      showNames,
-      showRivers,
-      onlyRisk,
+      adminMode,
+      drawMode,
     };
   }, [
     stations,
@@ -107,10 +124,11 @@ export const StationsMap = forwardRef<
     status,
     modo,
     opacity,
-    showNames,
-    showRivers,
-    onlyRisk,
+    adminMode,
+    drawMode,
     onSelect,
+    onPaint,
+    onPolygonComplete,
   ]);
 
   function isVisible(station: HydroStation | undefined) {
@@ -127,9 +145,10 @@ export const StationsMap = forwardRef<
 
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
     const nome = String(feature?.properties?.nome ?? "");
-    const { stations: list, selected: sel, opacity: op } = stateRef.current;
+    const { stations: list, selected: sel, opacity: op, status: filter, modo: m } =
+      stateRef.current;
     const station = list.find((s) => s.municipio === nome);
-    const st = statusMapa(station, stateRef.current.modo);
+    const st = statusMapa(station, m, filter);
     const match = isVisible(station);
     const isSel = sel === nome;
     const fill = Math.max(0.12, Math.min(0.92, op / 100));
@@ -143,11 +162,53 @@ export const StationsMap = forwardRef<
     };
   }
 
+  function clearDraw() {
+    verticesRef.current = [];
+    drawLineRef.current?.remove();
+    drawLineRef.current = null;
+    drawDotsRef.current.forEach((d) => d.remove());
+    drawDotsRef.current = [];
+  }
+
+  function finishPolygon() {
+    const pts = verticesRef.current;
+    if (pts.length >= 3) onPolygonRef.current?.(pts);
+    clearDraw();
+  }
+
+  function addVertex(lat: number, lng: number) {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    verticesRef.current = [...verticesRef.current, { lat, lng }];
+    const last = verticesRef.current.at(-1);
+    if (!last) return;
+    const dot = L.circleMarker([last.lat, last.lng], {
+      radius: 5,
+      color: "#ff6a1f",
+      fillColor: "#ffb020",
+      fillOpacity: 1,
+      weight: 2,
+    }).addTo(map);
+    drawDotsRef.current.push(dot);
+    const latlngs = verticesRef.current.map((p) => [p.lat, p.lng] as [number, number]);
+    if (drawLineRef.current) drawLineRef.current.setLatLngs(latlngs);
+    else {
+      drawLineRef.current = L.polyline(latlngs, {
+        color: "#ff6a1f",
+        weight: 2.5,
+        dashArray: "6 4",
+      }).addTo(map);
+    }
+  }
+
   useImperativeHandle(ref, () => ({
     fitAmazonas: () => {
       const map = mapRef.current;
       if (map) fitMapToAmazonas(map, true);
     },
+    finishPolygon,
+    cancelDraw: clearDraw,
   }));
 
   useEffect(() => {
@@ -169,7 +230,6 @@ export const StationsMap = forwardRef<
         zoomControl: true,
         minZoom: 5,
         maxZoom: 18,
-        preferCanvas: false,
         worldCopyJump: false,
       }).setView(AMAZONAS_CENTER, 6);
 
@@ -237,17 +297,31 @@ export const StationsMap = forwardRef<
           style: styleFor,
           onEachFeature: (feature, lyr) => {
             const nome = String(feature.properties?.nome ?? "");
-            lyr.on("click", () => {
+            lyr.on("click", (ev) => {
+              const { adminMode: admin, drawMode: drawing } = stateRef.current;
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
+              if (drawing) {
+                addVertex(ev.latlng.lat, ev.latlng.lng);
+                return;
+              }
+              if (admin && s) {
+                onPaintRef.current?.(s);
+                return;
+              }
               if (s) onSelectRef.current(s);
             });
             lyr.on("mouseover", () => {
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
-              const st = statusMapa(s, stateRef.current.modo);
+              const st = statusMapa(s, stateRef.current.modo, stateRef.current.status);
+              const prefix = stateRef.current.adminMode ? "Editar · " : "";
               lyr
                 .bindTooltip(
-                  `<strong>${nome}</strong><br/>${s?.calha ?? ""} · ${HYDRO_STATUS_LABELS[st]}${
-                    s?.cota != null ? `<br/>Cota ${s.cota.toFixed(2)} m` : "<br/>Sem leitura"
+                  `<strong>${prefix}${nome}</strong><br/>${s?.calha ?? ""} · ${HYDRO_STATUS_LABELS[st]}${
+                    s?.semLeitura
+                      ? "<br/>Sem cota do dia"
+                      : s?.cota != null
+                        ? `<br/>Cota ${s.cota.toFixed(2)} m`
+                        : ""
                   }`,
                   { sticky: true },
                 )
@@ -281,9 +355,9 @@ export const StationsMap = forwardRef<
         names.addLayer(marker);
       }
       namesRef.current = names;
-      if (stateRef.current.showNames) names.addTo(map);
-      if (!stateRef.current.showRivers) map.removeLayer(rios);
-      if (stateRef.current.onlyRisk) map.removeLayer(tiles);
+      if (showNames) names.addTo(map);
+      if (!showRivers) map.removeLayer(rios);
+      if (onlyRisk) map.removeLayer(tiles);
 
       resizeObs = new ResizeObserver(() => {
         const before = map.getSize().y;
@@ -295,6 +369,12 @@ export const StationsMap = forwardRef<
         }
       });
       if (hostRef.current) resizeObs.observe(hostRef.current);
+
+      map.on("dblclick", (ev) => {
+        if (!stateRef.current.drawMode) return;
+        ev.originalEvent.preventDefault();
+        finishPolygon();
+      });
     }
 
     void boot();
@@ -309,19 +389,27 @@ export const StationsMap = forwardRef<
       namesRef.current = null;
       tilesRef.current = null;
     };
-    // Map is remounted via key={OSM_BASEMAP_ID} when the basemap identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     layerRef.current?.setStyle((feature) => styleFor(feature));
-    if (selected) {
+    if (selected && !adminMode) {
       const s = stations.find((item) => item.municipio === selected);
       if (s && mapRef.current) mapRef.current.panTo([s.lat, s.lon], { animate: true });
     }
-    // styleFor reads the latest filters from stateRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stations, selected, calha, status, modo, opacity]);
+  }, [stations, selected, calha, status, modo, opacity, adminMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (drawMode) map.doubleClickZoom.disable();
+    else {
+      map.doubleClickZoom.enable();
+      clearDraw();
+    }
+  }, [drawMode]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -329,9 +417,7 @@ export const StationsMap = forwardRef<
     if (!map || !tiles) return;
     if (onlyRisk) {
       if (map.hasLayer(tiles)) map.removeLayer(tiles);
-    } else if (!map.hasLayer(tiles)) {
-      tiles.addTo(map);
-    }
+    } else if (!map.hasLayer(tiles)) tiles.addTo(map);
   }, [onlyRisk]);
 
   useEffect(() => {
@@ -340,9 +426,7 @@ export const StationsMap = forwardRef<
     if (!map || !rios) return;
     if (showRivers) {
       if (!map.hasLayer(rios)) rios.addTo(map);
-    } else if (map.hasLayer(rios)) {
-      map.removeLayer(rios);
-    }
+    } else if (map.hasLayer(rios)) map.removeLayer(rios);
   }, [showRivers]);
 
   useEffect(() => {
@@ -351,15 +435,17 @@ export const StationsMap = forwardRef<
     if (!map || !names) return;
     if (showNames) {
       if (!map.hasLayer(names)) names.addTo(map);
-    } else if (map.hasLayer(names)) {
-      map.removeLayer(names);
-    }
+    } else if (map.hasLayer(names)) map.removeLayer(names);
   }, [showNames]);
 
   return (
     <div
       ref={hostRef}
-      className="hydro-map absolute inset-0"
+      className={
+        adminMode || drawMode
+          ? "hydro-map absolute inset-0 cursor-crosshair"
+          : "hydro-map absolute inset-0"
+      }
       data-basemap={OSM_BASEMAP_ID}
       role="presentation"
     />

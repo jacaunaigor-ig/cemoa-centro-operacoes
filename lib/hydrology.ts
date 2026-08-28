@@ -178,8 +178,10 @@ export function statusAtivo(station: HydroStation, modo: HydroMode): HydroStatus
 export function statusMapa(
   station: HydroStation | undefined,
   modo: HydroMode,
+  filter: HydroStatusFilter = "Todos",
 ): HydroStatus | "SL" {
-  if (!station || station.semLeitura) return "SL";
+  if (!station) return "NORMAL";
+  if (filter === "SL" && station.semLeitura) return "SL";
   return statusAtivo(station, modo);
 }
 

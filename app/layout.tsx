@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { OpsModeProvider } from "@/components/shared/OpsMode";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -36,9 +37,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a className="skip-link" href="#conteudo">
           Ir para o conteúdo
         </a>
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        <OpsModeProvider>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </OpsModeProvider>
         <Toaster
           theme="dark"
           position="top-right"

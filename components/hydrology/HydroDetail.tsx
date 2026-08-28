@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
 import { Sparkline } from "@/components/hydrology/Sparkline";
 import {
+  HYDRO_STATUS_LABELS,
   limitesDoModo,
   projecaoLinear,
   rotuloSituacao,
@@ -13,16 +16,24 @@ import {
   statusAtivo,
   tendenciaTexto,
 } from "@/lib/hydrology";
-import type { HydroMode, HydroStation } from "@/lib/types";
+import type { HydroPatch } from "@/lib/hydro-overrides";
+import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export function HydroDetail({
   station,
   modo,
+  admin = false,
+  compact = false,
   onClose,
+  onSave,
 }: {
   station: HydroStation;
   modo: HydroMode;
+  admin?: boolean;
+  compact?: boolean;
   onClose: () => void;
+  onSave?: (patch: HydroPatch) => void;
 }) {
   const rec = rotuloSituacao(station);
   const sit = situacaoLeitura(station);
@@ -32,7 +43,12 @@ export function HydroDetail({
   const leituraDoDia = sit.atual;
 
   return (
-    <section className="max-h-[min(52vh,480px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3">
+    <section
+      className={cn(
+        "overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
+        compact ? "max-h-[46vh]" : "max-h-[min(52vh,480px)]",
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
@@ -49,6 +65,10 @@ export function HydroDetail({
       </div>
 
       <p className="mt-2 text-sm font-semibold">{tendenciaTexto(station.tendencia)}</p>
+
+      {admin && onSave ? (
+        <HydroAdminForm key={station.id} station={station} onSave={onSave} />
+      ) : null}
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Metric
@@ -103,48 +123,52 @@ export function HydroDetail({
         </span>
         <Sparkline
           values={station.cotas}
-          status={station.semLeitura ? "SL" : statusAtivo(station, modo)}
+          status={statusAtivo(station, modo)}
           width={140}
           height={32}
         />
       </div>
 
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead className="text-[10px] tracking-wide text-text-mute uppercase">
-            <tr>
-              <th className="py-1 pr-2">Dia</th>
-              {station.dias.map((d) => (
-                <th key={d} className="py-1 pr-2 font-mono">
-                  {d}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="py-1 pr-2 text-text-mute">Cota (m)</td>
-              {station.cotas.map((c, i) => (
-                <td key={station.dias[i] ?? i} className="py-1 pr-2 font-mono">
-                  {c == null ? "—" : c.toFixed(2)}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {compact ? null : (
+        <>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="text-[10px] tracking-wide text-text-mute uppercase">
+                <tr>
+                  <th className="py-1 pr-2">Dia</th>
+                  {station.dias.map((d) => (
+                    <th key={d} className="py-1 pr-2 font-mono">
+                      {d}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="py-1 pr-2 text-text-mute">Cota (m)</td>
+                  {station.cotas.map((c, i) => (
+                    <td key={station.dias[i] ?? i} className="py-1 pr-2 font-mono">
+                      {c == null ? "—" : c.toFixed(2)}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-      {proj ? (
-        <p className="mt-2 text-[11px] text-text-mute">
-          Projeção linear (3 / 5 / 7 dias):{" "}
-          <span className="font-mono text-text-dim">
-            {fmt(proj.d3)} · {fmt(proj.d5)} · {fmt(proj.d7)}
-          </span>
-        </p>
-      ) : (
-        <p className="mt-2 text-[11px] text-text-mute">
-          Série insuficiente para projetar a cota.
-        </p>
+          {proj ? (
+            <p className="mt-2 text-[11px] text-text-mute">
+              Projeção linear (3 / 5 / 7 dias):{" "}
+              <span className="font-mono text-text-dim">
+                {fmt(proj.d3)} · {fmt(proj.d5)} · {fmt(proj.d7)}
+              </span>
+            </p>
+          ) : (
+            <p className="mt-2 text-[11px] text-text-mute">
+              Série insuficiente para projetar a cota.
+            </p>
+          )}
+        </>
       )}
 
       <Link
@@ -154,6 +178,94 @@ export function HydroDetail({
         Abrir alerta de chuva neste município
       </Link>
     </section>
+  );
+}
+
+function HydroAdminForm({
+  station,
+  onSave,
+}: {
+  station: HydroStation;
+  onSave: (patch: HydroPatch) => void;
+}) {
+  const [cota, setCota] = useState(station.cota != null ? String(station.cota) : "");
+  const [vazante, setVazante] = useState<HydroStatus>(station.statusVazante);
+  const [enchente, setEnchente] = useState<HydroStatus>(station.statusEnchente);
+  const [semCota, setSemCota] = useState(station.semLeitura);
+
+  return (
+    <form
+      className="mt-3 rounded-xl border border-brand/35 bg-brand/8 p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const n = Number(cota.replace(",", "."));
+        onSave({
+          cota: semCota || !Number.isFinite(n) ? null : n,
+          semLeitura: semCota || !cota.trim(),
+          statusVazante: vazante,
+          statusEnchente: enchente,
+        });
+      }}
+    >
+      <p className="text-[10px] font-black tracking-[0.12em] text-brand-2 uppercase">
+        Atualizar cota e status
+      </p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+        <label className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Cota (m)
+          <Input
+            value={cota}
+            onChange={(e) => {
+              setCota(e.target.value);
+              setSemCota(e.target.value.trim() === "");
+            }}
+            inputMode="decimal"
+            disabled={semCota}
+            className="mt-1"
+            aria-label="Cota em metros"
+          />
+        </label>
+        <label className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Estiagem
+          <select
+            className="hydro-select mt-1"
+            value={vazante}
+            onChange={(e) => setVazante(e.target.value as HydroStatus)}
+          >
+            {(["NORMAL", "MODERADO", "ALTO"] as const).map((s) => (
+              <option key={s} value={s}>
+                {HYDRO_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Inundação
+          <select
+            className="hydro-select mt-1"
+            value={enchente}
+            onChange={(e) => setEnchente(e.target.value as HydroStatus)}
+          >
+            {(["NORMAL", "MODERADO", "ALTO"] as const).map((s) => (
+              <option key={s} value={s}>
+                {HYDRO_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label className="mt-2 flex items-center gap-2 text-xs text-text-dim">
+        <input
+          type="checkbox"
+          checked={semCota}
+          onChange={(e) => setSemCota(e.target.checked)}
+        />
+        Sem cota do dia (o status permanece pintado no mapa)
+      </label>
+      <Button type="submit" size="sm" className="mt-2">
+        Salvar cota e status
+      </Button>
+    </form>
   );
 }
 

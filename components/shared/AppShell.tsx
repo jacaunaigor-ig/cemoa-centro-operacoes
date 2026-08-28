@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Activity, Droplets, Info, Radio } from "lucide-react";
+import { Activity, Droplets, Info, Monitor, Radio, Shield, Smartphone } from "lucide-react";
 import { cn, formatAmazonTime } from "@/lib/utils";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { useEffect, useState } from "react";
 
 export function AppShell({
@@ -20,6 +21,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
+  const { layout, admin, isMobile, setLayout, setAdmin } = useOpsMode();
   const [clock, setClock] = useState("--:--:--");
 
   useEffect(() => {
@@ -37,17 +39,24 @@ export function AppShell({
   const suffix = shared.toString() ? `?${shared.toString()}` : "";
 
   return (
-    <div className="flex h-dvh max-xl:h-auto max-xl:min-h-dvh flex-col overflow-hidden max-xl:overflow-visible">
-      <header className="relative z-20 flex flex-wrap items-center gap-3 border-b border-border bg-panel/90 px-3 py-2.5 backdrop-blur-xl sm:px-5">
+    <div
+      className={cn(
+        "flex flex-col",
+        isMobile
+          ? "min-h-dvh"
+          : "h-dvh max-xl:h-auto max-xl:min-h-dvh overflow-hidden max-xl:overflow-visible",
+      )}
+    >
+      <header className="relative z-20 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 py-2 backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-2.5">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand to-transparent" />
-        <Link href="/" className="flex min-w-0 items-center gap-3">
-          <CemoaMark />
+        <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <CemoaMark compact={isMobile} />
           <div className="min-w-0">
             <p className="text-[10px] font-bold tracking-[0.14em] text-brand-2 uppercase">
               Defesa Civil do Amazonas
             </p>
-            <h1 className="truncate text-base font-black tracking-tight sm:text-lg">
-              CEMOA · Centro de Operações
+            <h1 className="truncate text-sm font-black tracking-tight sm:text-lg">
+              {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
             </h1>
           </div>
         </Link>
@@ -60,51 +69,118 @@ export function AppShell({
             href={`/${suffix}`}
             active={pathname === "/"}
             icon={<Radio className="size-3.5" />}
+            compact={isMobile}
           >
-            Painel de Alertas
+            {isMobile ? "Alertas" : "Painel de Alertas"}
           </NavTab>
           <NavTab
             href={`/boletim${suffix}`}
             active={pathname.startsWith("/boletim")}
             icon={<Droplets className="size-3.5" />}
+            compact={isMobile}
           >
-            Boletim Hidrológico
+            {isMobile ? "Boletim" : "Boletim Hidrológico"}
           </NavTab>
         </nav>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-1 text-right">
-          <div>
-            <small className="block font-mono text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-              Horário de Manaus
-            </small>
-            <strong className="font-mono text-sm">{clock}</strong>
-          </div>
-          <InfoTooltip
-            label="Sobre a sincronização"
-            title="Sincronizado"
-            body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} Sem Supabase neste recorte: a série é gerada de forma determinística a partir da malha municipal do CEMOA.`}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+          <div
+            className="flex rounded-lg border border-border bg-bg/60 p-0.5"
+            role="group"
+            aria-label="Modo de visualização"
           >
             <button
               type="button"
-              className="flex items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"
-              aria-label="Sobre a sincronização"
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold",
+                layout === "desktop" ? "bg-brand text-white" : "text-text-mute hover:text-text",
+              )}
+              aria-pressed={layout === "desktop"}
+              onClick={() => setLayout("desktop")}
             >
-              <span className="live-dot" aria-hidden />
-              <span>
-                <small className="flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-                  {syncLabel}
-                  <Info className="size-3.5 text-text-mute" aria-hidden />
-                </small>
-                <strong className="flex items-center gap-1 text-xs font-semibold text-live">
-                  <Activity className="size-3.5" />
-                  Ao vivo
-                </strong>
-              </span>
+              <Monitor className="size-3.5" />
+              <span className="hidden sm:inline">Desktop</span>
             </button>
-          </InfoTooltip>
+            <button
+              type="button"
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold",
+                layout === "mobile" ? "bg-brand text-white" : "text-text-mute hover:text-text",
+              )}
+              aria-pressed={layout === "mobile"}
+              onClick={() => setLayout("mobile")}
+            >
+              <Smartphone className="size-3.5" />
+              <span className="hidden sm:inline">Mobile</span>
+            </button>
+          </div>
+          {layout === "desktop" ? (
+            <button
+              type="button"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-black tracking-wide uppercase",
+                admin
+                  ? "border-brand/60 bg-brand text-white"
+                  : "border-border bg-panel-2 text-text-mute hover:text-text",
+              )}
+              aria-pressed={admin}
+              onClick={() => setAdmin(!admin)}
+            >
+              <Shield className="size-3.5" />
+              Admin
+            </button>
+          ) : null}
+          {!isMobile ? (
+            <div className="text-right">
+              <small className="block font-mono text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
+                Horário de Manaus
+              </small>
+              <strong className="font-mono text-sm">{clock}</strong>
+            </div>
+          ) : (
+            <strong className="font-mono text-xs">{clock}</strong>
+          )}
+          {!isMobile ? (
+            <InfoTooltip
+              label="Sobre a sincronização"
+              title="Sincronizado"
+              body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} Sem Supabase neste recorte: a série é gerada de forma determinística a partir da malha municipal do CEMOA.`}
+            >
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/5"
+                aria-label="Sobre a sincronização"
+              >
+                <span className="live-dot" aria-hidden />
+                <span>
+                  <small className="flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
+                    {syncLabel}
+                    <Info className="size-3.5 text-text-mute" aria-hidden />
+                  </small>
+                  <strong className="flex items-center gap-1 text-xs font-semibold text-live">
+                    <Activity className="size-3.5" />
+                    Ao vivo
+                  </strong>
+                </span>
+              </button>
+            </InfoTooltip>
+          ) : (
+            <span className="live-dot" aria-label="Ao vivo" />
+          )}
         </div>
       </header>
-      <div id="conteudo" className="flex min-h-0 flex-1 flex-col overflow-hidden max-xl:overflow-visible">
+      {admin ? (
+        <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
+          Modo Admin — cotas, status, alertas, seleção em lote e polígonos. Indisponível no mobile.
+        </div>
+      ) : null}
+      <div
+        id="conteudo"
+        className={cn(
+          "flex min-h-0 flex-1 flex-col",
+          isMobile ? "" : "overflow-hidden max-xl:overflow-visible",
+        )}
+      >
         {children}
       </div>
     </div>
@@ -115,11 +191,13 @@ function NavTab({
   href,
   active,
   icon,
+  compact,
   children,
 }: {
   href: string;
   active: boolean;
   icon: React.ReactNode;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -127,6 +205,7 @@ function NavTab({
       href={href}
       className={cn(
         "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold sm:flex-none",
+        compact && "px-2 py-1.5",
         active
           ? "bg-brand text-white shadow"
           : "text-text-dim hover:bg-white/5 hover:text-text",
@@ -139,11 +218,11 @@ function NavTab({
   );
 }
 
-function CemoaMark() {
+function CemoaMark({ compact }: { compact?: boolean }) {
   return (
     <svg
       viewBox="0 0 48 48"
-      className="size-11 shrink-0"
+      className={compact ? "size-8 shrink-0" : "size-11 shrink-0"}
       role="img"
       aria-label="Brasão CEMOA"
     >

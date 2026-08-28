@@ -1,5 +1,6 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { getOverride } from "@/lib/overrides";
+import { applyHydroOverride } from "@/lib/hydro-overrides";
 import {
   ALERT_PRODUCTS,
   isAlertActive,
@@ -226,7 +227,7 @@ export function buildAlertsPayload(
 }
 
 export function buildHydrologyPayload(now = Date.now()): Omit<HydrologyPayload, "cache"> {
-  const stations = catalogStations();
+  const stations = catalogStations().map(applyHydroOverride);
   return {
     generatedAt: now,
     source: `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,

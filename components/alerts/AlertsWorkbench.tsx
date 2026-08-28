@@ -18,6 +18,7 @@ import { KpiCard } from "@/components/shared/KpiCard";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,7 @@ import {
 } from "@/lib/alert-types";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { BACIA_TO_CALHA, CALHA_TO_BACIA } from "@/lib/hydrology";
+import { cn } from "@/lib/utils";
 import type { AlertsPayload, HydrologyPayload, TimeWindow } from "@/lib/types";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
@@ -105,6 +107,7 @@ export function AlertsWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const { admin, isMobile } = useOpsMode();
   const selected = params.get("municipio");
   const bacia = parseBacia(params.get("bacia"), params.get("calha"));
   const tipo = parseAlertType(params.get("tipo"));
@@ -116,7 +119,7 @@ export function AlertsWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
   const [busca, setBusca] = useState("");
-  const [adminMode, setAdminMode] = useState(false);
+  const [paintArmed, setPaintArmed] = useState(true);
   const [drawMode, setDrawMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [editorOpen, setEditorOpen] = useState(false);
@@ -405,16 +408,20 @@ export function AlertsWorkbench() {
             <h2 className="text-lg font-black tracking-tight sm:text-xl">
               Painel de Alertas
             </h2>
+            {isMobile ? null : (
             <InfoTooltip
               label={`Metodologia — ${product.label}`}
               title={`Metodologia — ${product.label}`}
               body={METHOD_BODY[tipo]}
             />
+            )}
           </div>
           <p className="text-xs text-text-mute">
-            {adminMode
-              ? "Modo classificação: clique no município (ou desenhe um polígono) para aplicar o nível selecionado."
-              : "Quatro produtos do CEMOA no mesmo recorte dos 62 municípios. KPIs, bacia e município compartilhados com o boletim. Clique em um nível para filtrar o mapa."}
+            {admin
+              ? "Modo Admin: clique no município (ou desenhe um polígono) para aplicar o nível e enviar o alerta."
+              : isMobile
+                ? "Versão mobile — mapa, tipo de alerta e município selecionado."
+                : "Quatro produtos do CEMOA no mesmo recorte dos 62 municípios. KPIs, bacia e município compartilhados com o boletim. Clique em um nível para filtrar o mapa."}
           </p>
         </div>
 
@@ -497,7 +504,13 @@ export function AlertsWorkbench() {
           </div>
         ) : null}
 
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden">
+        <div className={cn(
+          "grid min-h-0 flex-1 gap-3",
+          isMobile
+            ? "grid-cols-1"
+            : "xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:overflow-hidden",
+        )}>
+          {isMobile ? null : (
           <AlertList
             municipios={visibleMunicipios}
             catalog={catalog}
@@ -542,6 +555,7 @@ export function AlertsWorkbench() {
               setQuery({ risco: null, bacia: null, calha: null, municipio: null });
             }}
           />
+          )}
 
           <Card className="relative flex h-full min-h-[420px] flex-col overflow-hidden xl:min-h-0">
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
@@ -559,7 +573,9 @@ export function AlertsWorkbench() {
                 OpenStreetMap
               </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                <ExportPngButton onExport={exportMapPng} disabled={!ready} />
+                {isMobile ? null : (
+                  <ExportPngButton onExport={exportMapPng} disabled={!ready} />
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -668,8 +684,8 @@ export function AlertsWorkbench() {
                   selected={selected}
                   filter={activeFilter}
                   basin={bacia}
-                  adminMode={adminMode}
-                  drawMode={drawMode}
+                  adminMode={admin && paintArmed}
+                  drawMode={admin && drawMode}
                   opacity={opacity}
                   showNames={showNames}
                   showRivers={showRivers}
@@ -704,22 +720,18 @@ export function AlertsWorkbench() {
               </div>
             </div>
 
-            <AlertTicker alerts={filteredAlerts} />
+            {isMobile ? null : <AlertTicker alerts={filteredAlerts} />}
 
             <AdminToolbar
-              enabled={adminMode}
+              enabled={admin}
               drawMode={drawMode}
+              paintArmed={paintArmed}
               paintLevel={paintLevel}
               levels={product.levels}
               overrideCount={overrideCount}
-              onToggle={() => {
-                setAdminMode((v) => !v);
-                setDrawMode(false);
-              }}
-              onDraw={() => {
-                setAdminMode(true);
-                setDrawMode((v) => !v);
-              }}
+              paintHint="Clique no município para aplicar o nível e enviar o alerta"
+              onDraw={() => setDrawMode((v) => !v)}
+              onPaintArmed={setPaintArmed}
               onPaintLevel={(level) =>
                 setPaintByTipo((prev) => ({ ...prev, [tipo]: level }))
               }

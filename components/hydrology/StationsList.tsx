@@ -182,7 +182,7 @@ export function StationsList({
                             <HydroStatusBadge status={st} missing={s.semLeitura} />
                           </div>
                           <p className="truncate text-[11px] text-text-mute">
-                            {s.calha} · {s.semLeitura ? "SL" : `${s.cota?.toFixed(2)} m`}
+                            {s.calha} · {s.semLeitura ? "sem cota do dia" : `${s.cota?.toFixed(2)} m`}
                           </p>
                           <div className="mt-1 flex items-center gap-2 text-xs">
                             <TrendIcon trend={s.tendencia} />
@@ -209,7 +209,7 @@ export function StationsList({
                         </div>
                         <Sparkline
                           values={s.cotas}
-                          status={s.semLeitura ? "SL" : st}
+                          status={st}
                         />
                       </button>
                     </li>
