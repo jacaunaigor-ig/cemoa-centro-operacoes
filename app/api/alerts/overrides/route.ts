@@ -9,6 +9,10 @@ import {
 } from "@/lib/overrides";
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
+import {
+  deleteRemoteAlertOverrides,
+  upsertRemoteAlertOverrides,
+} from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +44,7 @@ export async function POST(request: Request) {
     }
     if (body.replace) replaceOverrides(tipo, updates);
     else mergeOverrides(tipo, updates);
+    await upsertRemoteAlertOverrides(tipo, updates);
     invalidate(`alerts:${tipo}`);
     invalidate("alerts");
     return NextResponse.json({ ok: true, tipo, overrides: getOverrides(tipo) });
@@ -55,6 +60,7 @@ export async function DELETE(request: Request) {
   const tipoRaw = url.searchParams.get("tipo");
   const tipo = tipoRaw ? parseAlertType(tipoRaw) : undefined;
   clearOverrides(tipo);
+  await deleteRemoteAlertOverrides(tipo);
   invalidate("alerts");
   for (const t of ["CHUVA", "ALAGAMENTO", "MOVIMENTO", "INCENDIO"]) invalidate(`alerts:${t}`);
   return NextResponse.json({ ok: true, overrides: tipo ? getOverrides(tipo) : {} });

@@ -2,6 +2,7 @@
 
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import type { RainAlert } from "@/lib/types";
+import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 
 export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
   const items = [...alerts].sort((a, b) => a.bacia.localeCompare(b.bacia, "pt-BR"));
@@ -19,6 +20,7 @@ export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
           >
             {LEVEL_LABELS[e.risco] ?? e.risco}
           </span>
+          <AlertCountdown expiresAt={e.expiresAt} variant="row" />
           {e.agravado ? (
             <span className="text-[10px] font-bold text-risco-severo">Agravamento</span>
           ) : e.novo ? (

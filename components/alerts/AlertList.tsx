@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { RiskBadge } from "@/components/shared/RiskBadge";
+import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
 import { BACIAS } from "@/lib/risk";
 import {
@@ -54,6 +55,7 @@ export function AlertList({
     risco: AlertLevel;
     fonte: "admin" | "monitor";
     issuedAt: number | null;
+    expiresAt?: number | null;
   }>;
   catalog: Array<{ id: string; nome: string; bacia: string }>;
   alerts: RainAlert[];
@@ -252,7 +254,10 @@ export function AlertList({
                           className="flex w-full items-center justify-between gap-2 text-left"
                         >
                           <span className="truncate font-bold">{m.nome}</span>
-                          <RiskBadge level={m.risco} />
+                          <span className="flex shrink-0 items-center gap-1.5">
+                            <AlertCountdown expiresAt={m.expiresAt ?? alert?.expiresAt} variant="row" />
+                            <RiskBadge level={m.risco} />
+                          </span>
                         </button>
                         <p className="truncate text-[11px] text-text-mute">
                           {m.bacia}

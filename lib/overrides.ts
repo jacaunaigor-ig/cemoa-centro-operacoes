@@ -2,7 +2,12 @@ import type { AlertType } from "@/lib/alert-types";
 import { ALERT_TYPES, AIR_LEVELS, parseAlertType, productOf } from "@/lib/alert-types";
 import { RISK_LEVELS, type RiskLevel } from "@/lib/types";
 
-const overrides = new Map<string, string>();
+export type OverrideEntry = {
+  level: string;
+  issuedAt: number;
+};
+
+const overrides = new Map<string, OverrideEntry>();
 
 function keyFor(tipo: AlertType, id: string) {
   return `${tipo}:${id}`;
@@ -12,36 +17,65 @@ function isLevelForType(tipo: AlertType, value: string) {
   return productOf(tipo).levels.includes(value);
 }
 
+function parseEntry(value: unknown): OverrideEntry | null {
+  if (typeof value === "string") {
+    return { level: value, issuedAt: Date.now() };
+  }
+  if (value && typeof value === "object") {
+    const row = value as { level?: unknown; issuedAt?: unknown };
+    if (typeof row.level !== "string") return null;
+    const issuedAt = typeof row.issuedAt === "number" ? row.issuedAt : Date.now();
+    return { level: row.level, issuedAt };
+  }
+  return null;
+}
+
 export function overrideKey(tipo: AlertType, id: string) {
   return keyFor(tipo, id);
 }
 
 export function getOverrides(tipo?: AlertType): Record<string, string> {
-  if (!tipo) return Object.fromEntries(overrides);
   const out: Record<string, string> = {};
-  const prefix = `${tipo}:`;
   for (const [key, value] of overrides) {
-    if (key.startsWith(prefix)) out[key.slice(prefix.length)] = value;
+    if (!tipo) out[key] = value.level;
+    else if (key.startsWith(`${tipo}:`)) out[key.slice(tipo.length + 1)] = value.level;
+  }
+  return out;
+}
+
+export function getOverrideEntries(tipo?: AlertType): Record<string, OverrideEntry> {
+  const out: Record<string, OverrideEntry> = {};
+  for (const [key, value] of overrides) {
+    if (!tipo) out[key] = value;
+    else if (key.startsWith(`${tipo}:`)) out[key.slice(tipo.length + 1)] = value;
   }
   return out;
 }
 
 export function getOverride(id: string, tipo: AlertType = "CHUVA"): string | undefined {
+  return overrides.get(keyFor(tipo, id))?.level;
+}
+
+export function getOverrideEntry(id: string, tipo: AlertType = "CHUVA"): OverrideEntry | undefined {
   return overrides.get(keyFor(tipo, id));
 }
 
-export function mergeOverrides(tipo: AlertType, updates: Record<string, string>) {
+export function mergeOverrides(
+  tipo: AlertType,
+  updates: Record<string, string>,
+  issuedAt = Date.now(),
+) {
   for (const [id, level] of Object.entries(updates)) {
-    if (isLevelForType(tipo, level)) overrides.set(keyFor(tipo, id), level);
+    if (isLevelForType(tipo, level)) overrides.set(keyFor(tipo, id), { level, issuedAt });
   }
 }
 
-export function replaceOverrides(tipo: AlertType, next: Record<string, string>) {
+export function replaceOverrides(tipo: AlertType, next: Record<string, string>, issuedAt = Date.now()) {
   const prefix = `${tipo}:`;
   for (const key of [...overrides.keys()]) {
     if (key.startsWith(prefix)) overrides.delete(key);
   }
-  mergeOverrides(tipo, next);
+  mergeOverrides(tipo, next, issuedAt);
 }
 
 export function clearOverrides(tipo?: AlertType) {
@@ -63,23 +97,22 @@ export function overrideCount(tipo?: AlertType) {
   return n;
 }
 
-/** Accepts v1 `{id: RiskLevel}` or v2 `{ "TIPO:id": level }` / `{ tipo, updates }`. */
+/** Accepts v1 `{id: RiskLevel}` or v2 `{ "TIPO:id": level | {level, issuedAt} }`. */
 export function hydrateOverrideRecord(
   raw: Record<string, unknown>,
   fallbackTipo: AlertType = "CHUVA",
 ) {
-  const updates: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw)) {
-    if (typeof value !== "string") continue;
+    const entry = parseEntry(value);
+    if (!entry) continue;
     if (key.includes(":")) {
       const [tipoRaw, id] = key.split(":");
       const tipo = parseAlertType(tipoRaw);
-      if (id && isLevelForType(tipo, value)) updates[key] = value;
-    } else if (isLevelForType(fallbackTipo, value)) {
-      updates[keyFor(fallbackTipo, key)] = value;
+      if (id && isLevelForType(tipo, entry.level)) overrides.set(key, entry);
+    } else if (isLevelForType(fallbackTipo, entry.level)) {
+      overrides.set(keyFor(fallbackTipo, key), entry);
     }
   }
-  for (const [key, value] of Object.entries(updates)) overrides.set(key, value);
 }
 
 export function serializeOverrides() {

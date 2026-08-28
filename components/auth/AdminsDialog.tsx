@@ -169,7 +169,7 @@ export function AdminsDialog() {
       open={adminsOpen}
       onClose={closeAdmins}
       wide
-      title="Administradores"
+      title="Equipe de operadores"
       description="Quem entra aqui pode classificar alertas e atualizar cotas. Associe um Gmail para entrar sem senha."
     >
       <ul className="mb-4 space-y-2">

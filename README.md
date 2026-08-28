@@ -53,19 +53,25 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 
 Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 municípios) e `calha` (calha fluviométrica do boletim). Os dois recortes não são o mesmo mapa — Japurá no painel não vira Médio Solimões no boletim; Baixo Solimões no boletim não vira Médio Solimões no painel. No painel também: `risco`, `tipo`. No boletim: `modo`, `status`.
 
-## Desktop, mobile e Admin
+## Desktop, mobile e operador
 
-O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs e ficha do município; lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No painel de alertas, os níveis de risco são botões de filtro com contagem; a lista e o mapa se destacam mutuamente ao passar o mouse; a ficha do município abre sobre o mapa.
+O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado.
 
-**Admin** só existe no Desktop e exige login. Clique em **Admin** (ou **Criar Admin** na primeira vez) para autenticar. Sem sessão, as APIs de alteração respondem 401. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
+Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
-**Admin** só existe no Desktop e exige login. Clique em **Admin** (ou **Criar Admin** na primeira vez) para autenticar. Sem sessão, as APIs de alteração respondem 401. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
+**Operador** só no Desktop. O fluxo agora é separado:
 
-Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). Dá para ter vários administradores: quem já entrou abre o ícone de pessoas no cabeçalho, cria outro usuário e, se quiser, troca a própria senha.
+1. **Entrar** (ou **Criar operador** na primeira vez) — autentica.
+2. **Edição** — liga/desliga as ferramentas do mapa sem sair da conta.
+3. **Sair** — encerra a sessão.
 
-### Primeiro administrador
+Com a edição ligada, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile a edição fica oculta.
 
-Na primeira execução, **Criar Admin** pede nome, usuário e senha (mínimo 10 caracteres, com letras e números). O cadastro fica em `data/admins.json` (fora do git). Em desenvolvimento, se o login falhar porque outro usuário foi gravado neste computador, use **Redefinir acesso local** no diálogo — isso apaga o cadastro local e cria o seu.
+Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). Quem já entrou abre o ícone de pessoas para gerenciar a equipe e, se quiser, troca a própria senha.
+
+### Primeiro operador
+
+Na primeira execução, **Criar operador** pede nome, usuário e senha (mínimo 10 caracteres, com letras e números). O cadastro fica em `data/admins.json` (fora do git). Em desenvolvimento, se o login falhar porque outro usuário foi gravado neste computador, use **Redefinir acesso local**.
 
 Em produção (Vercel), defina:
 
@@ -76,11 +82,34 @@ CEMOA_ADMIN_PASSWORD=senha-forte-aqui
 CEMOA_ADMIN_NAME=Igor
 ```
 
-`CEMOA_SESSION_SECRET` é obrigatório em produção (mínimo 16 caracteres). O usuário do ambiente não se apaga pela interface. Contas extras criadas no painel persistem no arquivo local; no serverless elas podem não sobreviver a um reciclo — use o ambiente para a conta permanente.
+`CEMOA_SESSION_SECRET` é obrigatório em produção (mínimo 16 caracteres). O usuário do ambiente não se apaga pela interface. Contas extras em arquivo local **não sobrevivem** a um reciclo no serverless.
+
+### Persistência recomendada: Supabase
+
+O cadastro em arquivo e as classificações em memória servem para desenvolvimento. Em produção, o caminho certo é **Supabase** (Postgres + Auth + RLS):
+
+- os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel
+- vários operadores veem o mesmo mapa
+- Auth com e-mail/senha ou Google, sem OAuth artesanal
+- políticas RLS: só `admin`/`operator` escrevem; o painel público só lê
+
+1. Crie um projeto em [supabase.com](https://supabase.com).
+2. Rode `supabase/schema.sql` no SQL Editor.
+3. Defina no Vercel:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...   # só no servidor, nunca no browser
+```
+
+Com essas variáveis, o painel grava `alert_overrides` e `hydro_overrides` no Postgres. Sem elas, continua o modo local (cookie + memória).
+
+Auth nativo do Supabase (trocar o cookie `cemoa_sess` por sessão Supabase) é o próximo passo, depois que o projeto e as tabelas existirem. Até lá, o login local continua valendo e as classificações já persistem no banco quando as chaves estão presentes.
 
 ### Entrar com Gmail
 
-O modo Admin pode usar **Google / Gmail** junto com usuário e senha.
+O login pode usar **Google / Gmail** junto com usuário e senha.
 
 1. Crie um cliente OAuth 2.0 (tipo Web) no [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
 2. URI de redirecionamento: `https://SEU-DOMINIO/api/auth/google/callback` (local: `http://127.0.0.1:43127/api/auth/google/callback`).
@@ -92,7 +121,7 @@ GOOGLE_CLIENT_SECRET=....
 CEMOA_GOOGLE_EMAILS=seu.nome@gmail.com
 ```
 
-`CEMOA_GOOGLE_EMAILS` (opcional, separados por vírgula) autoriza esses Gmails mesmo sem cadastro prévio. Sem essa lista, o **primeiro** Gmail vira o primeiro administrador; os próximos precisam ser cadastrados (nome + Gmail) ou associar a conta pelo botão **Associar meu Gmail**.
+`CEMOA_GOOGLE_EMAILS` (opcional, separados por vírgula) autoriza esses Gmails mesmo sem cadastro prévio. Sem essa lista, o **primeiro** Gmail vira o primeiro operador; os próximos precisam ser cadastrados (nome + Gmail) ou associar a conta pelo botão **Associar meu Gmail**.
 
 Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acrescente `CEMOA_GOOGLE_DOMAIN=suaempresa.com`.
 

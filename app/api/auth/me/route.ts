@@ -13,6 +13,7 @@ export async function GET() {
     needsSetup: needsSetup(),
     googleEnabled: isGoogleConfigured(),
     allowReset: allowLocalReset(),
+    supabase: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)),
     user,
   });
 }

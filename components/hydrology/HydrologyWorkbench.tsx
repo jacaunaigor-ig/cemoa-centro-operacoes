@@ -141,7 +141,7 @@ export function HydrologyWorkbench() {
                   body: JSON.stringify({ updates, replace: true }),
                 });
                 if (res.status === 401) {
-                  toast.error("Entre no modo Admin para sincronizar as cotas locais.");
+                  toast.error("Entre como operador para sincronizar as cotas locais.");
                 } else if (!res.ok) {
                   toast.error("Não foi possível sincronizar as cotas gravadas neste computador.");
                 }
@@ -249,7 +249,7 @@ export function HydrologyWorkbench() {
       body: JSON.stringify({ updates, replace }),
     });
     if (res.status === 401) {
-      toast.error("Entre no modo Admin para alterar cotas e status.");
+      toast.error("Entre como operador para alterar cotas e status.");
       return;
     }
     if (!res.ok) {
@@ -313,7 +313,7 @@ export function HydrologyWorkbench() {
       credentials: "same-origin",
     });
     if (res.status === 401) {
-      toast.error("Entre no modo Admin para restaurar o monitoramento.");
+      toast.error("Entre como operador para restaurar o monitoramento.");
       return;
     }
     localStorage.removeItem(HYDRO_STORAGE);

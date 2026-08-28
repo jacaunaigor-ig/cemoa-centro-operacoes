@@ -1,5 +1,6 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
-import { getOverride } from "@/lib/overrides";
+import { getOverrideEntry } from "@/lib/overrides";
+import { alertExpiresAt, alertTtlMs } from "@/lib/alert-validity";
 import { applyHydroOverride } from "@/lib/hydro-overrides";
 import {
   ALERT_PRODUCTS,
@@ -113,10 +114,10 @@ function liveLevel(tipo: AlertType, muniId: string, baseRain: RiskLevel, bacia: 
 }
 
 function issuedAtFor(muniId: string, tipo: AlertType, risco: string, now: number) {
-  if (!isAlertActive(tipo, risco)) return now;
-  const span = 20 * HOUR;
-  const offset = hash32(`${muniId}:${tipo}:${risco}`) % span;
-  return now - (3_600_000 + offset);
+  const ttl = alertTtlMs(risco);
+  if (!ttl) return now;
+  const elapsed = hash32(`${muniId}:${tipo}:${risco}`) % ttl;
+  return now - elapsed;
 }
 
 function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string) {
@@ -168,10 +169,13 @@ export function buildAlertsPayload(
   const alerts: RainAlert[] = [];
   const municipios = MUNICIPALITIES.map((m) => {
     const live = liveLevel(tipo, m.id, m.riscoChuvaBase, m.bacia, now);
-    const admin = getOverride(m.id, tipo);
-    const risco = (admin ?? live) as AlertLevel;
-    const previous = (admin ?? liveLevel(tipo, m.id, m.riscoChuvaBase, m.bacia, now - lookback)) as AlertLevel;
-    const issuedAt = isAlertActive(tipo, risco) ? issuedAtFor(m.id, tipo, risco, now) : null;
+    const admin = getOverrideEntry(m.id, tipo);
+    const risco = (admin?.level ?? live) as AlertLevel;
+    const previous = (admin?.level ?? liveLevel(tipo, m.id, m.riscoChuvaBase, m.bacia, now - lookback)) as AlertLevel;
+    const issuedAt = isAlertActive(tipo, risco)
+      ? admin?.issuedAt ?? issuedAtFor(m.id, tipo, risco, now)
+      : null;
+    const expiresAt = issuedAt ? alertExpiresAt(issuedAt, risco) : null;
     if (isAlertActive(tipo, risco) && issuedAt) {
       alerts.push({
         id: `${tipo.toLowerCase()}-${m.id}`,
@@ -180,6 +184,7 @@ export function buildAlertsPayload(
         bacia: m.bacia,
         risco,
         issuedAt,
+        expiresAt,
         updatedAt: previous !== risco ? now - POLL_MS / 2 : issuedAt,
         previousRisco: previous,
         agravado: levelRank(tipo, risco) > levelRank(tipo, previous),
@@ -196,6 +201,7 @@ export function buildAlertsPayload(
       lat: m.lat,
       risco,
       issuedAt,
+      expiresAt,
       fonte: (admin ? "admin" : "monitor") as "admin" | "monitor",
     };
   });

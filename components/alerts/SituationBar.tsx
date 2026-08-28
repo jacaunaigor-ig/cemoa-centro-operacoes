@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { BadgeCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function SituationBar({
   ativosActive,
   criticosActive,
   monitoradosActive,
+  urgent,
 }: {
   ativos: number;
   criticos: number;
@@ -37,6 +39,7 @@ export function SituationBar({
   ativosActive: boolean;
   criticosActive: boolean;
   monitoradosActive: boolean;
+  urgent?: { municipio: string; risco: string; expiresAt: number | null } | null;
 }) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -74,6 +77,12 @@ export function SituationBar({
           active={monitoradosActive}
           accent="#5eb4ff"
           onClick={onMonitorados}
+        />
+        <AlertCountdown
+          variant="hero"
+          expiresAt={urgent?.expiresAt}
+          municipio={urgent?.municipio}
+          risco={urgent?.risco}
         />
         <div className="ml-auto flex items-center gap-2 sm:ml-2">
           <div className="text-right">

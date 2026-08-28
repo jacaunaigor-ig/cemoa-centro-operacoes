@@ -92,15 +92,15 @@ function parseLevel(value: string | null, levels: readonly string[]): string | "
   return "TODOS";
 }
 
-function readLocalOverrides(): Record<string, string> {
+function readLocalOverrides(): Record<string, unknown> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_V2) || "{}") as Record<string, string>;
+    return JSON.parse(localStorage.getItem(STORAGE_V2) || "{}") as Record<string, unknown>;
   } catch {
     return {};
   }
 }
 
-function writeLocalOverrides(next: Record<string, string>) {
+function writeLocalOverrides(next: Record<string, unknown>) {
   localStorage.setItem(STORAGE_V2, JSON.stringify(next));
 }
 
@@ -115,8 +115,9 @@ function rememberLocalOverrides(
       if (key.startsWith(`${tipo}:`)) delete current[key];
     }
   }
+  const issuedAt = Date.now();
   for (const [id, level] of Object.entries(updates)) {
-    current[`${tipo}:${id}`] = level;
+    current[`${tipo}:${id}`] = { level, issuedAt };
   }
   writeLocalOverrides(current);
 }
@@ -198,7 +199,7 @@ export function AlertsWorkbench() {
         body: JSON.stringify({ tipo, updates, replace }),
       });
       if (res.status === 401) {
-        toast.error("Entre no modo Admin para alterar o mapa.");
+        toast.error("Entre como operador para alterar o mapa.");
         return;
       }
       if (!res.ok) {
@@ -226,13 +227,14 @@ export function AlertsWorkbench() {
         const v1raw = localStorage.getItem(STORAGE_V1);
         const grouped: Partial<Record<AlertType, Record<string, string>>> = {};
         if (v2raw) {
-          const all = JSON.parse(v2raw) as Record<string, string>;
+          const all = JSON.parse(v2raw) as Record<string, unknown>;
           for (const [key, value] of Object.entries(all)) {
             if (!key.includes(":")) continue;
             const [tipoRaw, id] = key.split(":");
             const t = parseAlertType(tipoRaw);
             if (!id) continue;
-            (grouped[t] ??= {})[id] = value;
+            const level = typeof value === "string" ? value : (value as { level?: string } | null)?.level;
+            if (typeof level === "string") (grouped[t] ??= {})[id] = level;
           }
         } else if (v1raw) {
           grouped.CHUVA = JSON.parse(v1raw) as Record<string, string>;
@@ -247,7 +249,7 @@ export function AlertsWorkbench() {
             body: JSON.stringify({ tipo: t, updates, replace: true }),
           });
           if (res.status === 401) {
-            toast.error("Entre no modo Admin para sincronizar as classificações locais.");
+            toast.error("Entre como operador para sincronizar as classificações locais.");
             return;
           }
           if (!res.ok) {
@@ -460,6 +462,19 @@ export function AlertsWorkbench() {
     filteredAlerts.find((a) => a.municipio === selected) ??
     null;
   const selectedHydro = estacaoDoMunicipio(selected, hydroStations);
+  const urgentAlert = useMemo(() => {
+    const list = filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
+      (a) => matchMunicipioGeo(a.municipio, a.bacia, geo) && a.expiresAt,
+    );
+    if (!list.length) return null;
+    list.sort(
+      (a, b) =>
+        levelRank(tipo, b.risco) - levelRank(tipo, a.risco) ||
+        (a.expiresAt ?? 0) - (b.expiresAt ?? 0),
+    );
+    const top = list[0];
+    return { municipio: top.municipio, risco: top.risco, expiresAt: top.expiresAt };
+  }, [data, windowFilter, geo, tipo]);
   const mudancas = useMemo(
     () =>
       filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
@@ -567,7 +582,7 @@ export function AlertsWorkbench() {
       credentials: "same-origin",
     });
     if (res.status === 401) {
-      toast.error("Entre no modo Admin para restaurar o monitoramento.");
+      toast.error("Entre como operador para restaurar o monitoramento.");
       return;
     }
     try {
@@ -634,6 +649,7 @@ export function AlertsWorkbench() {
                 ativosActive={activeFilter === "ATIVOS"}
                 criticosActive={activeFilter === criticoKey}
                 monitoradosActive={activeFilter === "TODOS" && !bacia && !calha && !selected}
+                urgent={urgentAlert}
               />
             </div>
             {isMobile ? null : (
@@ -646,7 +662,7 @@ export function AlertsWorkbench() {
           </div>
           <p className="text-xs text-text-mute">
             {admin
-              ? "Modo Admin: clique no município (ou desenhe um polígono) para aplicar o nível e enviar o alerta."
+              ? "Modo edição: clique no município (ou desenhe um polígono) para aplicar o nível e enviar o alerta."
               : "Toque em um município no mapa ou na lista para abrir a ficha com risco, cota e classificação."}
           </p>
         </div>
@@ -921,6 +937,7 @@ export function AlertsWorkbench() {
                     risco={selectedRow.risco}
                     fonte={selectedRow.fonte}
                     issuedAt={selectedRow.issuedAt}
+                    expiresAt={selectedRow.expiresAt ?? selectedAlert?.expiresAt}
                     alert={selectedAlert}
                     hydro={selectedHydro}
                     productLabel={product.label}

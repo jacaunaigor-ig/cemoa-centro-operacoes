@@ -9,6 +9,7 @@ import {
 } from "@/lib/hydro-overrides";
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
+import { deleteRemoteHydroOverrides, upsertRemoteHydroOverrides } from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
     }
     if (body.replace) replaceHydroOverrides(updates);
     else mergeHydroOverrides(updates);
+    await upsertRemoteHydroOverrides(updates);
     invalidate("hydrology");
     return NextResponse.json({ ok: true, overrides: getHydroOverrides() });
   } catch {
@@ -64,6 +66,7 @@ export async function DELETE(request: Request) {
   const gate = await requireAdmin(request);
   if (!gate.ok) return gate.response;
   clearHydroOverrides();
+  await deleteRemoteHydroOverrides();
   invalidate("hydrology");
   return NextResponse.json({ ok: true, overrides: {} });
 }

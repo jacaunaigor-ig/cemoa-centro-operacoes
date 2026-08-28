@@ -6,8 +6,10 @@ import {
   Activity,
   Droplets,
   Info,
+  LogIn,
   LogOut,
   Monitor,
+  Pencil,
   Radio,
   Shield,
   Smartphone,
@@ -141,27 +143,28 @@ export function AppShell({
           </div>
           {layout === "desktop" ? (
             <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black tracking-wide uppercase transition-colors duration-200 touch-manipulation",
-                  admin
-                    ? "border-brand/60 bg-brand text-white"
-                    : "border-border bg-panel-2 text-text-mute hover:text-text",
-                )}
-                aria-pressed={admin}
-                onClick={() => setAdmin(!admin)}
-              >
-                <Shield className="size-3.5" />
-                {session ? "Admin" : needsSetup ? "Criar Admin" : "Admin"}
-              </button>
               {session ? (
                 <>
                   <button
                     type="button"
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black tracking-wide uppercase transition-colors duration-200 touch-manipulation",
+                      admin
+                        ? "border-brand/60 bg-brand text-white"
+                        : "border-border bg-panel-2 text-text-mute hover:text-text",
+                    )}
+                    aria-pressed={admin}
+                    onClick={() => setAdmin(!admin)}
+                    title="Liga ou desliga a edição do mapa (classificar alertas e cotas)"
+                  >
+                    <Pencil className="size-3.5" />
+                    Edição
+                  </button>
+                  <button
+                    type="button"
                     className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-dim transition-colors hover:text-text"
                     onClick={openAdmins}
-                    title="Administradores"
+                    title="Equipe de operadores"
                   >
                     <Users className="size-3.5" />
                     <span className="hidden lg:inline max-w-[9rem] truncate">{session.name}</span>
@@ -176,7 +179,16 @@ export function AppShell({
                     <LogOut className="size-3.5" />
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel-2 px-2.5 py-1.5 text-[10px] font-black tracking-wide text-text-mute uppercase transition-colors hover:text-text"
+                  onClick={() => setAdmin(true)}
+                >
+                  {needsSetup ? <Shield className="size-3.5" /> : <LogIn className="size-3.5" />}
+                  {needsSetup ? "Criar operador" : "Entrar"}
+                </button>
+              )}
             </div>
           ) : null}
           {!isMobile ? (
@@ -220,8 +232,8 @@ export function AppShell({
       </header>
       {admin ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
-          Modo Admin autenticado
-          {session ? ` · ${session.name}` : ""} — cotas, status, alertas, lote e polígonos.
+          Modo edição
+          {session ? ` · ${session.name}` : ""} — classifica alertas, edita cotas e desenha polígonos.
           Indisponível no mobile.
         </div>
       ) : null}

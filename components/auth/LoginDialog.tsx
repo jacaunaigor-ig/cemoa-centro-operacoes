@@ -111,16 +111,16 @@ export function LoginDialog() {
       title={
         resetLocal
           ? "Redefinir administrador local"
-          : creating
-            ? "Criar administrador e entrar"
-            : "Entrar no modo Admin"
+            : creating
+            ? "Criar operador e entrar"
+            : "Entrar como operador"
       }
       description={
         resetLocal
           ? "Apaga o administrador gravado neste computador e cria o seu. Use a mesma senha no próximo login."
           : creating
-            ? "Cadastre o usuário e a senha que você vai usar daqui pra frente. Mínimo 10 caracteres, com letras e números."
-            : "Use o usuário e a senha que você cadastrou neste computador."
+            ? "Cadastre o usuário e a senha do operador. Mínimo 10 caracteres, com letras e números."
+            : "Use o usuário e a senha do operador. A edição do mapa só liga depois do login."
       }
     >
       <form

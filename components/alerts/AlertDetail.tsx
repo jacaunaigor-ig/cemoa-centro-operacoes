@@ -9,6 +9,7 @@ import {
   UserRoundCheck,
   X,
 } from "lucide-react";
+import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
@@ -23,6 +24,7 @@ export function AlertDetail({
   risco,
   fonte,
   issuedAt,
+  expiresAt,
   alert,
   hydro,
   productLabel,
@@ -34,6 +36,7 @@ export function AlertDetail({
   risco: AlertLevel;
   fonte: "admin" | "monitor";
   issuedAt: number | null;
+  expiresAt?: number | null;
   alert: RainAlert | null;
   hydro: HydroStation | null;
   productLabel: string;
@@ -97,6 +100,10 @@ export function AlertDetail({
           icon={<Siren className="size-3.5" />}
           label="Ação"
           value={riskActionFor(risco)}
+        />
+        <AlertCountdown
+          expiresAt={alert?.expiresAt ?? expiresAt}
+          label="Cronômetro do alerta"
         />
         {!overlay ? (
           <Metric

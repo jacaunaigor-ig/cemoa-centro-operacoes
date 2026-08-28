@@ -43,6 +43,7 @@ export type RainAlert = {
   bacia: string;
   risco: AlertLevel;
   issuedAt: number;
+  expiresAt: number | null;
   updatedAt: number;
   previousRisco: AlertLevel;
   agravado: boolean;
@@ -72,6 +73,7 @@ export type AlertsPayload = {
     lat: number;
     risco: AlertLevel;
     issuedAt: number | null;
+    expiresAt: number | null;
     fonte: "admin" | "monitor";
   }>;
 };
