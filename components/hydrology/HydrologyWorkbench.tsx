@@ -7,6 +7,7 @@ import { Droplets, RadioTower, Waves } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OSM_BASEMAP_ID } from "@/lib/map";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { RISK_COLORS, RISK_LABELS, isActiveAlert, maxRisk, riskFromCota } from "@/lib/risk";
 import type { HydroStation, HydrologyPayload } from "@/lib/types";
@@ -187,6 +188,7 @@ export function HydrologyWorkbench() {
               ) : null}
               {data ? (
                 <StationsMap
+                  key={OSM_BASEMAP_ID}
                   stations={viewStations}
                   selected={selected}
                   basin={bacia}

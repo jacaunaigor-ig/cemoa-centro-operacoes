@@ -10,7 +10,8 @@ import type {
 } from "leaflet";
 import type { RiskLevel } from "@/lib/types";
 import { RISK_COLORS, RISK_LABELS } from "@/lib/risk";
-import { OSM_ATTRIBUTION, OSM_TILE_URL } from "@/lib/map";
+import { OSM_BASEMAP_ID } from "@/lib/map";
+import { addOsmTiles, leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
 import "leaflet/dist/leaflet.css";
 
@@ -121,11 +122,14 @@ export const AlertsMap = forwardRef<
     let resizeObs: ResizeObserver | undefined;
 
     async function boot() {
-      const leafletMod = await import("leaflet");
-      const L = ((leafletMod as unknown as { default?: typeof import("leaflet") }).default ??
-        leafletMod) as typeof import("leaflet");
+      const L = leafletNamespace(await import("leaflet"));
       leafletRef.current = L;
-      if (cancelled || !hostRef.current || mapRef.current) return;
+      if (cancelled || !hostRef.current) return;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      resetLeafletHost(hostRef.current);
 
       const map = L.map(hostRef.current, {
         zoomControl: true,
@@ -133,10 +137,7 @@ export const AlertsMap = forwardRef<
         maxZoom: 18,
       }).setView([-4.2, -64.6], 6);
 
-      L.tileLayer(OSM_TILE_URL, {
-        attribution: OSM_ATTRIBUTION,
-        maxZoom: 19,
-      }).addTo(map);
+      addOsmTiles(L, map);
       mapRef.current = map;
 
       const styleFor = (feature?: GeoJSON.Feature): PathOptions => {
@@ -222,7 +223,7 @@ export const AlertsMap = forwardRef<
       mapRef.current = null;
       layerRef.current = null;
     };
-    // addVertex/finishPolygon read refs; boot once
+    // Map is remounted via key={OSM_BASEMAP_ID} when the basemap identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -267,6 +268,7 @@ export const AlertsMap = forwardRef<
     <div
       ref={hostRef}
       className={adminMode || drawMode ? "absolute inset-0 cursor-crosshair" : "absolute inset-0"}
+      data-basemap={OSM_BASEMAP_ID}
       role="presentation"
     />
   );

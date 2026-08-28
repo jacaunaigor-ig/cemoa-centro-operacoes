@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { filterAlertsByWindow } from "@/lib/live-state";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
+import { OSM_BASEMAP_ID } from "@/lib/map";
 import { RISK_COLORS, RISK_LABELS, riskRank } from "@/lib/risk";
 import type { AlertsPayload, RiskLevel, TimeWindow } from "@/lib/types";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
@@ -304,6 +305,7 @@ export function AlertsWorkbench() {
               {loading ? <MapSkeleton /> : null}
               {data ? (
                 <AlertsMap
+                  key={OSM_BASEMAP_ID}
                   ref={mapApi}
                   municipios={data.municipios}
                   selected={selected}

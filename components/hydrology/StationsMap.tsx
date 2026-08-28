@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { RISK_COLORS, RISK_LABELS, isActiveAlert, maxRisk, riskRank } from "@/lib/risk";
 import type { HydroStation, RiskLevel } from "@/lib/types";
-import { OSM_ATTRIBUTION, OSM_TILE_URL } from "@/lib/map";
+import { OSM_BASEMAP_ID } from "@/lib/map";
+import { addOsmTiles, leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -40,9 +41,14 @@ export function StationsMap({
     let resizeObs: ResizeObserver | undefined;
 
     async function boot() {
-      const L = (await import("leaflet")).default;
+      const L = leafletNamespace(await import("leaflet"));
       await import("leaflet.markercluster");
-      if (cancelled || !hostRef.current || mapRef.current) return;
+      if (cancelled || !hostRef.current) return;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      resetLeafletHost(hostRef.current);
 
       const map = L.map(hostRef.current, {
         zoomControl: true,
@@ -50,10 +56,7 @@ export function StationsMap({
         maxZoom: 18,
       }).setView([-4.2, -64.6], 7);
 
-      L.tileLayer(OSM_TILE_URL, {
-        attribution: OSM_ATTRIBUTION,
-        maxZoom: 19,
-      }).addTo(map);
+      addOsmTiles(L, map);
       mapRef.current = map;
 
       const paint = () => {
@@ -188,5 +191,5 @@ export function StationsMap({
     }
   }, [stations, selected, basin]);
 
-  return <div ref={hostRef} className="absolute inset-0" role="presentation" />;
+  return <div ref={hostRef} className="absolute inset-0" data-basemap={OSM_BASEMAP_ID} role="presentation" />;
 }
