@@ -59,7 +59,7 @@ Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess
 
 ### Primeiro administrador
 
-Na primeira execução, **Criar Admin** pede nome, usuário e senha (mínimo 10 caracteres, com letras e números). O cadastro fica em `data/admins.json` (fora do git).
+Na primeira execução, **Criar Admin** pede nome, usuário e senha (mínimo 10 caracteres, com letras e números). O cadastro fica em `data/admins.json` (fora do git). Em desenvolvimento, se o login falhar porque outro usuário foi gravado neste computador, use **Redefinir acesso local** no diálogo — isso apaga o cadastro local e cria o seu.
 
 Em produção (Vercel), defina:
 

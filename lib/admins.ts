@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
   dummyPasswordCheck,
@@ -85,8 +85,7 @@ function readStoreFrom(file: string): AdminRecord[] {
 }
 
 function readFileAdmins(): AdminRecord[] {
-  const primary = readStoreFrom(FILE_PATH);
-  if (primary.length) return primary;
+  if (existsSync(FILE_PATH)) return readStoreFrom(FILE_PATH);
   return readStoreFrom(TMP_FALLBACK);
 }
 
@@ -94,20 +93,23 @@ function writeFileAdmins(admins: AdminRecord[]) {
   const payload = `${JSON.stringify({ admins }, null, 2)}\n`;
   const targets = [FILE_PATH, TMP_FALLBACK];
   let lastError: unknown;
+  let wrote = 0;
   for (const target of targets) {
     try {
       mkdirSync(path.dirname(target), { recursive: true });
       const tmp = `${target}.${process.pid}.tmp`;
       writeFileSync(tmp, payload, { mode: 0o600 });
       renameSync(tmp, target);
-      return;
+      wrote += 1;
     } catch (err) {
       lastError = err;
     }
   }
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("Não foi possível gravar administradores.");
+  if (wrote === 0) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("Não foi possível gravar administradores.");
+  }
 }
 
 function toPublic(row: AdminRecord): PublicAdmin {
@@ -172,16 +174,42 @@ function findFileByEmail(email: string): AdminRecord | undefined {
   );
 }
 
+export function allowLocalReset(): boolean {
+  return process.env.NODE_ENV !== "production";
+}
+
 export function enterWithCredentials(input: {
   name?: string;
   login: string;
   password: string;
   email?: string;
+  reset?: boolean;
 }): { admin: PublicAdmin; created: boolean } | { error: string; status: number } {
   const login = typeof input.login === "string" ? input.login : "";
   const password = typeof input.password === "string" ? input.password.trim() : "";
   if (!login || !password) {
     return { error: "Informe usuário e senha.", status: 400 };
+  }
+
+  if (input.reset) {
+    if (!allowLocalReset()) {
+      return { error: "Redefinir acesso só vale neste computador (não em produção).", status: 403 };
+    }
+    writeFileAdmins([]);
+    try {
+      const admin = createAdmin({
+        name: (input.name && input.name.trim()) || login,
+        login,
+        password,
+        email: input.email,
+      });
+      return { admin, created: true };
+    } catch (err) {
+      return {
+        error: err instanceof Error ? err.message : "Não foi possível redefinir o administrador.",
+        status: 400,
+      };
+    }
   }
 
   const existing = verifyAdminCredentials(login, password);
@@ -192,11 +220,21 @@ export function enterWithCredentials(input: {
     (row) => row.login === key || (row.email && row.email === normalizeEmail(login)),
   );
   if (known || envLogin() === key) {
-    return { error: "Usuário ou senha incorretos.", status: 401 };
+    return {
+      error: allowLocalReset()
+        ? "Usuário ou senha incorretos. Se este computador ainda não tem o seu acesso, use Redefinir acesso local."
+        : "Usuário ou senha incorretos.",
+      status: 401,
+    };
   }
 
   if (!needsSetup()) {
-    return { error: "Usuário ou senha incorretos.", status: 401 };
+    return {
+      error: allowLocalReset()
+        ? "Já existe um administrador neste computador. Entre com o usuário e a senha cadastrados, ou use Redefinir acesso local."
+        : "Usuário ou senha incorretos.",
+      status: 401,
+    };
   }
 
   try {

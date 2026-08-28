@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { needsSetup } from "@/lib/admins";
+import { allowLocalReset, needsSetup } from "@/lib/admins";
 import { isGoogleConfigured } from "@/lib/google";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +12,7 @@ export async function GET() {
     authenticated: Boolean(user),
     needsSetup: needsSetup(),
     googleEnabled: isGoogleConfigured(),
+    allowReset: allowLocalReset(),
     user,
   });
 }

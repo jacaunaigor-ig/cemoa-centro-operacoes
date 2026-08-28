@@ -28,6 +28,7 @@ type OpsMode = {
   authLoading: boolean;
   needsSetup: boolean;
   googleEnabled: boolean;
+  allowReset: boolean;
   authError: string | null;
   loginOpen: boolean;
   adminsOpen: boolean;
@@ -84,6 +85,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<SessionUser | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [allowReset, setAllowReset] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -96,6 +98,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         user?: SessionUser | null;
         needsSetup?: boolean;
         googleEnabled?: boolean;
+        allowReset?: boolean;
       },
       gen: number,
     ) => {
@@ -103,6 +106,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       setSession(data.user ?? null);
       setNeedsSetup(Boolean(data.needsSetup));
       setGoogleEnabled(Boolean(data.googleEnabled));
+      if (typeof data.allowReset === "boolean") setAllowReset(data.allowReset);
       if (!data.user) {
         sessionStorage.removeItem(TOOLS_KEY);
         emit(toolsListeners);
@@ -119,6 +123,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         user?: SessionUser | null;
         needsSetup?: boolean;
         googleEnabled?: boolean;
+        allowReset?: boolean;
       };
       applyAuth(data, gen);
     } catch {
@@ -144,6 +149,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
           user?: SessionUser | null;
           needsSetup?: boolean;
           googleEnabled?: boolean;
+          allowReset?: boolean;
         };
         if (cancelled) return;
         applyAuth(data, gen);
@@ -236,6 +242,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       authLoading,
       needsSetup,
       googleEnabled,
+      allowReset,
       authError,
       loginOpen,
       adminsOpen,
@@ -258,6 +265,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       authLoading,
       needsSetup,
       googleEnabled,
+      allowReset,
       authError,
       loginOpen,
       adminsOpen,
@@ -280,6 +288,7 @@ const FALLBACK: OpsMode = {
   authLoading: true,
   needsSetup: false,
   googleEnabled: false,
+  allowReset: true,
   authError: null,
   loginOpen: false,
   adminsOpen: false,

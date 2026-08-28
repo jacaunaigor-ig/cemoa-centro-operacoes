@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   assertSameOrigin,
+  attachSessionCookie,
   checkLoginRateLimit,
   clearLoginFailures,
   clientIp,
   recordLoginFailure,
-  setSessionCookie,
 } from "@/lib/auth";
 import { enterWithCredentials } from "@/lib/admins";
 
@@ -45,10 +45,10 @@ export async function POST(request: Request) {
   }
 
   clearLoginFailures(ip);
-  await setSessionCookie(result.admin);
-  return NextResponse.json({
+  const response = NextResponse.json({
     ok: true,
     created: result.created,
     user: { id: result.admin.id, login: result.admin.login, name: result.admin.name },
   });
+  return attachSessionCookie(response, result.admin, request);
 }

@@ -6,44 +6,71 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/shared/Modal";
 import { useOpsMode } from "@/components/shared/OpsMode";
 
+function field(form: FormData, ...keys: string[]): string {
+  for (const key of keys) {
+    const value = form.get(key);
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
 export function LoginDialog() {
-  const { loginOpen, needsSetup, googleEnabled, authError, closeLogin, completeLogin } =
-    useOpsMode();
-  const [name, setName] = useState("");
-  const [login, setLogin] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const {
+    loginOpen,
+    needsSetup,
+    googleEnabled,
+    allowReset,
+    authError,
+    closeLogin,
+    completeLogin,
+  } = useOpsMode();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [forceCreate, setForceCreate] = useState(false);
-  const creating = needsSetup || forceCreate;
+  const [resetLocal, setResetLocal] = useState(false);
+  const creating = needsSetup || forceCreate || resetLocal;
 
-  async function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const form = new FormData(event.currentTarget);
+    const name = field(form, "name");
+    const login = field(form, "username", "login", "usuario");
+    const password = String(form.get("password") ?? form.get("senha") ?? "");
+    const confirm = String(form.get("confirm") ?? "");
+
+    if (!login || !password) {
+      setError("Informe usuário e senha.");
+      return;
+    }
     if (creating && confirm && password !== confirm) {
       setError("As senhas não coincidem.");
       return;
     }
+
     setBusy(true);
     try {
       const res = await fetch("/api/auth/enter", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, login, password }),
+        body: JSON.stringify({
+          name,
+          login,
+          password,
+          reset: resetLocal || undefined,
+        }),
       });
       const data = (await res.json()) as {
         error?: string;
-        user?: { id: string; login: string; name: string };
+        user?: { id: string; login: string; name: string; email?: string | null };
       };
       if (!res.ok || !data.user) {
         setError(data.error ?? "Não foi possível entrar.");
         return;
       }
-      setPassword("");
-      setConfirm("");
       setForceCreate(false);
+      setResetLocal(false);
       completeLogin(data.user);
     } catch {
       setError("Falha de rede. Tente de novo.");
@@ -55,6 +82,7 @@ export function LoginDialog() {
   function handleClose() {
     setError(null);
     setForceCreate(false);
+    setResetLocal(false);
     closeLogin();
   }
 
@@ -62,43 +90,49 @@ export function LoginDialog() {
     <Modal
       open={loginOpen}
       onClose={handleClose}
-      title={creating ? "Criar administrador e entrar" : "Entrar no modo Admin"}
+      title={
+        resetLocal
+          ? "Redefinir administrador local"
+          : creating
+            ? "Criar administrador e entrar"
+            : "Entrar no modo Admin"
+      }
       description={
-        creating
-          ? "Entre com Gmail ou crie usuário e senha. Depois use os mesmos dados para entrar."
-          : "Use o Gmail associado ou o usuário e a senha que você cadastrou."
+        resetLocal
+          ? "Apaga o administrador gravado neste computador e cria o seu. Use a mesma senha no próximo login."
+          : creating
+            ? "Cadastre o usuário e a senha que você vai usar daqui pra frente. Mínimo 10 caracteres, com letras e números."
+            : "Use o usuário e a senha que você cadastrou neste computador."
       }
     >
-      <form className="grid gap-3" onSubmit={(e) => void submit(e)}>
+      <form
+        key={`${loginOpen}-${creating}-${resetLocal}`}
+        className="grid gap-3"
+        autoComplete="on"
+        onSubmit={(e) => void submit(e)}
+      >
         {googleEnabled ? (
-          <a
-            href="/api/auth/google"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
-          >
-            <GoogleMark />
-            Continuar com Gmail
-          </a>
-        ) : (
-          <p className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-[11px] text-text-mute">
-            Entrar com Gmail fica disponível depois de configurar{" "}
-            <code className="text-text-dim">GOOGLE_CLIENT_ID</code> e{" "}
-            <code className="text-text-dim">GOOGLE_CLIENT_SECRET</code>. Enquanto isso, use usuário e
-            senha.
-          </p>
-        )}
-        <div className="flex items-center gap-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          <span className="h-px flex-1 bg-border" />
-          ou
-          <span className="h-px flex-1 bg-border" />
-        </div>
+          <>
+            <a
+              href="/api/auth/google"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
+            >
+              <GoogleMark />
+              Continuar com Gmail
+            </a>
+            <div className="flex items-center gap-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+              <span className="h-px flex-1 bg-border" />
+              ou
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        ) : null}
         {creating ? (
           <label className="grid gap-1 text-xs font-semibold">
             Nome
             <Input
               name="name"
               autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
               placeholder="Ex.: Igor Silva"
               minLength={2}
               autoFocus
@@ -110,8 +144,6 @@ export function LoginDialog() {
           <Input
             name="username"
             autoComplete="username"
-            value={login}
-            onChange={(e) => setLogin(e.target.value)}
             placeholder="ex.: igor"
             required
             minLength={3}
@@ -124,8 +156,6 @@ export function LoginDialog() {
             name="password"
             type="password"
             autoComplete={creating ? "new-password" : "current-password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
             minLength={creating ? 10 : 1}
           />
@@ -137,36 +167,40 @@ export function LoginDialog() {
               name="confirm"
               type="password"
               autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
               required
               minLength={10}
             />
           </label>
         ) : null}
-        {creating ? (
+        {creating && !resetLocal ? (
           <p className="text-[11px] text-text-mute">
-            Mínimo 10 caracteres, com letras e números. Esta senha é a que você vai usar no próximo login.
+            Esta senha é a que você vai usar no próximo login. Ela não fica visível depois de
+            gravada.
           </p>
-        ) : needsSetup ? (
+        ) : null}
+        {!creating && allowReset ? (
           <button
             type="button"
             className="text-left text-[11px] font-semibold text-focus hover:underline"
             onClick={() => {
-              setForceCreate(true);
+              setResetLocal(true);
+              setForceCreate(false);
               setError(null);
             }}
           >
-            Primeiro acesso? Criar usuário e senha
+            Primeiro acesso neste computador? Redefinir acesso local
           </button>
         ) : null}
         {error || authError ? (
-          <p role="alert" className="rounded-lg border border-risco-severo/40 bg-risco-severo/10 px-3 py-2 text-xs">
+          <p
+            role="alert"
+            className="rounded-lg border border-risco-severo/40 bg-risco-severo/10 px-3 py-2 text-xs"
+          >
             {error ?? authError}
           </p>
         ) : null}
         <Button type="submit" disabled={busy}>
-          {busy ? "Aguarde…" : creating ? "Criar e entrar" : "Entrar"}
+          {busy ? "Aguarde…" : resetLocal ? "Redefinir e entrar" : creating ? "Criar e entrar" : "Entrar"}
         </Button>
       </form>
     </Modal>

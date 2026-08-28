@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   assertSameOrigin,
+  attachSessionCookie,
   checkLoginRateLimit,
   clearLoginFailures,
   clientIp,
   recordLoginFailure,
-  setSessionCookie,
 } from "@/lib/auth";
 import { enterWithCredentials } from "@/lib/admins";
 
@@ -23,7 +23,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: limited }, { status: 429 });
   }
 
-  let body: { name?: unknown; login?: unknown; usuario?: unknown; password?: unknown; senha?: unknown };
+  let body: {
+    name?: unknown;
+    login?: unknown;
+    usuario?: unknown;
+    password?: unknown;
+    senha?: unknown;
+    reset?: unknown;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -45,15 +52,20 @@ export async function POST(request: Request) {
   const name = typeof body.name === "string" ? body.name : "";
   const email = login.includes("@") ? login : undefined;
 
-  const result = enterWithCredentials({ name, login, password, email });
+  const result = enterWithCredentials({
+    name,
+    login,
+    password,
+    email,
+    reset: body.reset === true,
+  });
   if ("error" in result) {
     if (result.status === 401) recordLoginFailure(ip);
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
   clearLoginFailures(ip);
-  await setSessionCookie(result.admin);
-  return NextResponse.json({
+  const response = NextResponse.json({
     ok: true,
     created: result.created,
     user: {
@@ -63,4 +75,5 @@ export async function POST(request: Request) {
       email: result.admin.email,
     },
   });
+  return attachSessionCookie(response, result.admin, request);
 }

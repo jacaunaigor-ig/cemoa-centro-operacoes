@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession, setSessionCookie } from "@/lib/auth";
+import { attachSessionCookie, getSession } from "@/lib/auth";
 import { enterWithGoogle, linkGoogleToAdmin } from "@/lib/admins";
 import { consumeOauthState, fetchGoogleProfile } from "@/lib/google";
 
@@ -38,16 +38,16 @@ export async function GET(request: Request) {
       if ("error" in linked) {
         return redirectHome(request, { authError: linked.error });
       }
-      await setSessionCookie(linked.admin);
-      return redirectHome(request, { auth: "ok", linked: "gmail" });
+      const response = redirectHome(request, { auth: "ok", linked: "gmail" });
+      return attachSessionCookie(response, linked.admin, request);
     }
 
     const result = enterWithGoogle(profile);
     if ("error" in result) {
       return redirectHome(request, { authError: result.error });
     }
-    await setSessionCookie(result.admin);
-    return redirectHome(request, { auth: "ok" });
+    const response = redirectHome(request, { auth: "ok" });
+    return attachSessionCookie(response, result.admin, request);
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Não foi possível entrar com o Gmail.";

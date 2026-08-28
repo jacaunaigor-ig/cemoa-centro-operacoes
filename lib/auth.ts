@@ -21,6 +21,37 @@ export type SessionUser = {
   email: string | null;
 };
 
+export function cookieSecure(request?: Request): boolean {
+  const proto = request?.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  if (proto === "https") return true;
+  if (proto === "http") return false;
+  return false;
+}
+
+export function sessionCookieOptions(request?: Request) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: cookieSecure(request),
+    path: "/",
+    maxAge: SESSION_TTL_SEC,
+  };
+}
+
+export function attachSessionCookie(
+  response: NextResponse,
+  admin: PublicAdmin,
+  request?: Request,
+) {
+  response.cookies.set(SESSION_COOKIE, createSessionToken(admin), sessionCookieOptions(request));
+  return response;
+}
+
+export function attachClearSessionCookie(response: NextResponse, request?: Request) {
+  response.cookies.set(SESSION_COOKIE, "", { ...sessionCookieOptions(request), maxAge: 0 });
+  return response;
+}
+
 const loginAttempts = new Map<string, { n: number; reset: number }>();
 
 function sessionSecret(): string {
@@ -77,28 +108,21 @@ export function createSessionToken(admin: PublicAdmin): string {
   });
 }
 
-export async function setSessionCookie(admin: PublicAdmin) {
+export async function setSessionCookie(admin: PublicAdmin, request?: Request) {
   const jar = await cookies();
   jar.set({
     name: SESSION_COOKIE,
     value: createSessionToken(admin),
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_TTL_SEC,
+    ...sessionCookieOptions(request),
   });
 }
 
-export async function clearSessionCookie() {
+export async function clearSessionCookie(request?: Request) {
   const jar = await cookies();
   jar.set({
     name: SESSION_COOKIE,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
+    ...sessionCookieOptions(request),
     maxAge: 0,
   });
 }
@@ -183,7 +207,7 @@ export function assertSameOrigin(request: Request): boolean {
     }
   }
 
-  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.NODE_ENV === "production" && !site) return false;
   const referer = request.headers.get("referer");
   if (!referer) return true;
   try {
