@@ -115,8 +115,8 @@ export function RiskHelpButton({
                 ))}
               </div>
             ) : (
-            <>
-            <div className="grid gap-2.5 p-4 sm:grid-cols-2">
+              <>
+                <div className="grid gap-2.5 p-4 sm:grid-cols-2">
               {RISK_LEGEND_COPY.map((item) => (
                 <article
                   key={item.level}
@@ -201,8 +201,8 @@ export function RiskHelpButton({
                 A classificação considera a concentração de material particulado fino com diâmetro ≤
                 2,5 micrômetros, expressa em µg/m³ — microgramas por metro cúbico de ar.
               </p>
-            </div>
-            </>
+                </div>
+              </>
             )}
           </section>
         </div>
