@@ -54,25 +54,10 @@ export function AlertsMap({
         maxZoom: 11,
       }).setView([-4.2, -64.6], 6);
 
-      const carto = L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        {
-          attribution: "&copy; OpenStreetMap &copy; CARTO",
-          subdomains: "abcd",
-        },
-      );
-      const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap",
-      });
-      let fellBack = false;
-      carto.on("tileerror", () => {
-        if (fellBack) return;
-        fellBack = true;
-        map.removeLayer(carto);
-        osm.addTo(map);
-        reportClientError("Falha nos tiles CARTO; fallback OSM ativado", "AlertsMap");
-      });
-      carto.addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
       mapRef.current = map;
 
       const styleFor = (feature?: GeoJSON.Feature): PathOptions => {
