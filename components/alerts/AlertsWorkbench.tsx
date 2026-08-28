@@ -4,9 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
+  ChevronDown,
+  ChevronUp,
   CloudRain,
   Flame,
   Layers,
+  List,
   MapPinned,
   Mountain,
   Settings2,
@@ -41,6 +44,7 @@ import {
   PNG_AIR_ITEMS,
   PNG_RISK_ITEMS,
   defaultPaintLevel,
+  isAlertActive,
   levelLabel,
   levelRank,
   parseAlertType,
@@ -58,6 +62,7 @@ import { AlertTicker } from "@/components/alerts/AlertTicker";
 import { TimeFilter } from "@/components/alerts/TimeFilter";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
+import { SituationBar } from "@/components/alerts/SituationBar";
 
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -82,6 +87,7 @@ const METHOD_BODY: Record<AlertType, string> = {
 };
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
+  if (value === "ATIVOS") return "ATIVOS";
   if (value && levels.includes(value)) return value;
   return "TODOS";
 }
@@ -162,6 +168,9 @@ export function AlertsWorkbench() {
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
   const [opacity, setOpacity] = useState(58);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [mobileListOpen, setMobileListOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const mapApi = useRef<AlertsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
@@ -291,6 +300,32 @@ export function AlertsWorkbench() {
     };
   }, [tipo, session]);
 
+  async function refreshNow() {
+    setRefreshing(true);
+    try {
+      if (STATIC_DEPLOY) {
+        hydrateClientOverrides();
+        setData(localAlerts(tipo));
+        setHydro(localHydro());
+        setError(null);
+        return;
+      }
+      const [payload, hydroPayload] = await Promise.all([
+        fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
+        fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
+      ]);
+      setData(payload);
+      if (hydroPayload) setHydro(hydroPayload);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
+      setError(message);
+      reportClientError(message, "Painel de Alertas");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   useEffect(() => {
     if (!data || data.tipo !== tipo) return;
     if (firstRef.current) {
@@ -364,16 +399,24 @@ export function AlertsWorkbench() {
   const filteredAlerts = useMemo(() => {
     if (!data) return [];
     let list = filterAlertsByWindow(data.alerts, windowFilter, data.generatedAt);
-    if (activeFilter !== "TODOS") list = list.filter((a) => a.risco === activeFilter);
+    if (activeFilter === "ATIVOS") {
+      list = list.filter((a) => isAlertActive(tipo, a.risco));
+    } else if (activeFilter !== "TODOS") {
+      list = list.filter((a) => a.risco === activeFilter);
+    }
     list = list.filter((a) => matchMunicipioGeo(a.municipio, a.bacia, geo));
     if (selected) list = list.filter((a) => a.municipio === selected);
     return list;
-  }, [data, windowFilter, activeFilter, geo, selected]);
+  }, [data, windowFilter, activeFilter, geo, selected, tipo]);
 
   const visibleMunicipios = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     return catalog.filter((m) => {
-      if (activeFilter !== "TODOS" && m.risco !== activeFilter) return false;
+      if (activeFilter === "ATIVOS") {
+        if (!isAlertActive(tipo, m.risco)) return false;
+      } else if (activeFilter !== "TODOS" && m.risco !== activeFilter) {
+        return false;
+      }
       if (!matchMunicipioGeo(m.nome, m.bacia, geo)) return false;
       if (selected && m.nome !== selected) return false;
       if (
@@ -385,17 +428,21 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, geo, selected, busca]);
+  }, [catalog, activeFilter, geo, selected, busca, tipo]);
 
   const counts = useMemo(() => {
-    const acc: Record<string, number> = { TODOS: 0 };
+    const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0 };
     for (const level of product.levels) acc[level] = 0;
     for (const m of scopedCatalog) {
       acc[m.risco] = (acc[m.risco] ?? 0) + 1;
       acc.TODOS += 1;
+      if (isAlertActive(tipo, m.risco)) acc.ATIVOS += 1;
     }
     return acc;
-  }, [scopedCatalog, product.levels]);
+  }, [scopedCatalog, product.levels, tipo]);
+
+  const criticoKey = product.scale === "ar" ? "MUITO_RUIM" : "SEVERO";
+  const criticoLabel = product.scale === "ar" ? "Muito Ruim" : "Severos";
 
   const pct = (n: number) =>
     counts.TODOS
@@ -422,6 +469,50 @@ export function AlertsWorkbench() {
     [data, windowFilter, geo],
   );
   const ProductIcon = PRODUCT_ICONS[tipo];
+  const listNode = (
+    <AlertList
+      municipios={visibleMunicipios}
+      catalog={catalog}
+      alerts={filteredAlerts}
+      hydro={hydroStations}
+      selected={selected}
+      hovered={hovered}
+      bacia={bacia}
+      risco={activeFilter}
+      tipo={tipo}
+      levels={product.levels}
+      counts={counts}
+      busca={busca}
+      loading={loading}
+      onSelect={(nome, basinName) => {
+        setHovered(null);
+        setQuery(geoForNome(nome, basinName));
+        if (isMobile) setMobileListOpen(false);
+      }}
+      onHover={setHovered}
+      onBacia={(next) =>
+        setQuery({
+          bacia: next,
+          calha: null,
+          municipio: null,
+        })
+      }
+      onRisco={(next) => setQuery({ risco: next === "TODOS" ? null : next })}
+      onBusca={setBusca}
+      onMunicipio={(nome) => {
+        if (!nome) {
+          setQuery({ municipio: null });
+          return;
+        }
+        const row = catalog.find((m) => m.nome === nome);
+        setQuery(geoForNome(nome, row?.bacia));
+      }}
+      onLimpar={() => {
+        setBusca("");
+        setQuery({ risco: null, bacia: null, calha: null, municipio: null });
+      }}
+    />
+  );
 
   function geoForNome(nome: string, baciaName?: string | null) {
     const station = estacaoDoMunicipio(nome, hydroStations);
@@ -522,25 +613,41 @@ export function AlertsWorkbench() {
   return (
     <AppShell cache={data?.cache} source={data?.source}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
-        <div className="shrink-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-black tracking-tight sm:text-xl">
-              Painel de Alertas
-            </h2>
+        <div className="shrink-0 space-y-2">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <SituationBar
+                ativos={counts.ATIVOS ?? 0}
+                criticos={counts[criticoKey] ?? 0}
+                criticoLabel={criticoLabel}
+                monitorados={counts.TODOS ?? 0}
+                generatedAt={data?.generatedAt ?? null}
+                source={product.sources.replaceAll(" · ", ", ")}
+                loading={loading}
+                refreshing={refreshing}
+                onRefresh={() => void refreshNow()}
+                onAtivos={() => setQuery({ risco: "ATIVOS", municipio: null })}
+                onCriticos={() => setQuery({ risco: criticoKey, municipio: null })}
+                onMonitorados={() =>
+                  setQuery({ risco: null, bacia: null, calha: null, municipio: null })
+                }
+                ativosActive={activeFilter === "ATIVOS"}
+                criticosActive={activeFilter === criticoKey}
+                monitoradosActive={activeFilter === "TODOS" && !bacia && !calha && !selected}
+              />
+            </div>
             {isMobile ? null : (
-            <InfoTooltip
-              label={`Metodologia — ${product.label}`}
-              title={`Metodologia — ${product.label}`}
-              body={METHOD_BODY[tipo]}
-            />
+              <InfoTooltip
+                label={`Metodologia — ${product.label}`}
+                title={`Metodologia — ${product.label}`}
+                body={METHOD_BODY[tipo]}
+              />
             )}
           </div>
           <p className="text-xs text-text-mute">
             {admin
               ? "Modo Admin: clique no município (ou desenhe um polígono) para aplicar o nível e enviar o alerta."
-              : isMobile
-                ? "Versão mobile — mapa, tipo de alerta e município selecionado."
-                : "Quatro produtos do CEMOA no mesmo recorte dos 62 municípios. KPIs, bacia e município compartilhados com o boletim. Clique em um nível para filtrar o mapa."}
+              : "Toque em um município no mapa ou na lista para abrir a ficha com risco, cota e classificação."}
           </p>
         </div>
 
@@ -629,42 +736,10 @@ export function AlertsWorkbench() {
             ? "grid-cols-1"
             : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {isMobile ? null : (
-          <AlertList
-            municipios={visibleMunicipios}
-            catalog={catalog}
-            alerts={filteredAlerts}
-            hydro={hydroStations}
-            selected={selected}
-            bacia={bacia}
-            risco={activeFilter}
-            tipo={tipo}
-            levels={product.levels}
-            busca={busca}
-            loading={loading}
-            onSelect={(nome, basinName) => setQuery(geoForNome(nome, basinName))}
-            onBacia={(next) =>
-              setQuery({
-                bacia: next,
-                calha: null,
-                municipio: null,
-              })
-            }
-            onRisco={(next) => setQuery({ risco: next === "TODOS" ? null : next })}
-            onBusca={setBusca}
-            onMunicipio={(nome) => {
-              if (!nome) {
-                setQuery({ municipio: null });
-                return;
-              }
-              const row = catalog.find((m) => m.nome === nome);
-              setQuery(geoForNome(nome, row?.bacia));
-            }}
-            onLimpar={() => {
-              setBusca("");
-              setQuery({ risco: null, bacia: null, calha: null, municipio: null });
-            }}
-          />
+          {isMobile ? (
+            mobileListOpen ? <div className="max-h-[min(52vh,520px)]">{listNode}</div> : null
+          ) : (
+            listNode
           )}
 
           <Card className="relative flex h-full min-h-[min(58dvh,640px)] flex-col overflow-hidden lg:min-h-0">
@@ -684,7 +759,20 @@ export function AlertsWorkbench() {
                 OpenStreetMap
               </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                {isMobile ? null : (
+                {isMobile ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="min-h-11"
+                    aria-expanded={mobileListOpen}
+                    onClick={() => setMobileListOpen((v) => !v)}
+                  >
+                    <List className="size-3.5" />
+                    Lista
+                    {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                  </Button>
+                ) : (
                   <ExportPngButton onExport={exportMapPng} disabled={!ready} />
                 )}
                 <Popover>
@@ -798,6 +886,7 @@ export function AlertsWorkbench() {
                   ref={mapApi}
                   municipios={data.municipios}
                   selected={selected}
+                  hovered={hovered}
                   filter={activeFilter}
                   basin={bacia}
                   calhaNomes={nomesCalha ? [...nomesCalha] : null}
@@ -807,7 +896,11 @@ export function AlertsWorkbench() {
                   showNames={showNames}
                   showRivers={showRivers}
                   onlyRisk={onlyRisk}
-                  onSelect={(nome, basinName) => setQuery(geoForNome(nome, basinName))}
+                  onSelect={(nome, basinName) => {
+                    setHovered(null);
+                    setQuery(geoForNome(nome, basinName));
+                  }}
+                  onHover={setHovered}
                   onPaint={paintMunicipio}
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
                   onGeoError={setGeoError}
@@ -819,18 +912,56 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
-              <div className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
+              {selectedRow ? (
+                <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),22rem)] sm:top-3">
+                  <AlertDetail
+                    overlay
+                    nome={selectedRow.nome}
+                    bacia={selectedRow.bacia}
+                    risco={selectedRow.risco}
+                    fonte={selectedRow.fonte}
+                    issuedAt={selectedRow.issuedAt}
+                    alert={selectedAlert}
+                    hydro={selectedHydro}
+                    productLabel={product.label}
+                    tipo={tipo}
+                    onClose={() => setQuery({ municipio: null })}
+                  />
+                </div>
+              ) : (
+                <p className="pointer-events-none absolute right-2 top-12 z-[1100] max-w-[16rem] rounded-lg border border-border bg-panel/88 px-2.5 py-1.5 text-[11px] text-text-mute backdrop-blur sm:top-3">
+                  Selecione um município no mapa ou na lista para abrir risco, cota e classificação.
+                </p>
+              )}
+              <div className="pointer-events-auto absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
                 <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
-                  {product.legendTitle}
+                  {product.legendTitle} · filtrar
                 </div>
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
-                    <li key={level} className="flex items-center gap-1.5 text-text">
-                      <span
-                        className="size-2.5 rounded-sm"
-                        style={{ background: LEVEL_COLORS[level] }}
-                      />
-                      {LEVEL_LABELS[level] ?? level}
+                    <li key={level}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setQuery({
+                            risco: activeFilter === level ? null : level,
+                            municipio: null,
+                          })
+                        }
+                        className={cn(
+                          "flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-text hover:bg-white/10",
+                          activeFilter === level && "bg-white/12 font-bold",
+                        )}
+                      >
+                        <span
+                          className="size-2.5 rounded-sm"
+                          style={{ background: LEVEL_COLORS[level] }}
+                        />
+                        {LEVEL_LABELS[level] ?? level}
+                        <span className="ml-auto font-mono text-text-mute">
+                          {counts[level] ?? 0}
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -856,26 +987,6 @@ export function AlertsWorkbench() {
               onRestore={() => void restoreLive()}
               onFinishPolygon={() => mapApi.current?.finishPolygon()}
             />
-
-            {selectedRow ? (
-              <AlertDetail
-                nome={selectedRow.nome}
-                bacia={selectedRow.bacia}
-                risco={selectedRow.risco}
-                fonte={selectedRow.fonte}
-                issuedAt={selectedRow.issuedAt}
-                alert={selectedAlert}
-                hydro={selectedHydro}
-                productLabel={product.label}
-                tipo={tipo}
-                onClose={() => setQuery({ municipio: null })}
-              />
-            ) : (
-              <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
-                Clique em um município no mapa ou na lista para ver {product.label.toLowerCase()}, a
-                cota do boletim e a classificação do operador.
-              </p>
-            )}
           </Card>
         </div>
       </div>

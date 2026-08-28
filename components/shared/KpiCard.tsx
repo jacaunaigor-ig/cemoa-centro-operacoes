@@ -26,13 +26,20 @@ export function KpiCard({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
+      title={`${label}: ${value}. Clique para filtrar o mapa.`}
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-panel px-3 py-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.3)] transition-[border-color,background-color,transform] duration-200 touch-manipulation sm:py-3",
-        active ? "border-brand/55 bg-brand/8" : "border-border hover:border-border-strong",
+        "group relative cursor-pointer overflow-hidden rounded-xl border bg-panel px-3 py-2.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.3)] transition-[border-color,background-color,transform,box-shadow] duration-200 touch-manipulation sm:min-h-[5.75rem] sm:py-3",
+        "hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(0,0,0,.35)]",
+        active ? "bg-brand/8" : "hover:bg-white/4",
       )}
+      style={{
+        borderColor: active ? accent : undefined,
+        boxShadow: active ? `inset 0 0 0 1px ${accent}` : undefined,
+      }}
     >
-      <span className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} />
-      <div className="flex items-start justify-between pl-1">
+      <span className="absolute inset-y-0 left-0 w-1.5" style={{ background: accent }} />
+      <div className="flex items-start justify-between pl-1.5">
         <small className="text-[10px] font-bold tracking-[0.08em] text-text-dim uppercase">
           {label}
         </small>
@@ -41,9 +48,17 @@ export function KpiCard({
       {loading ? (
         <Skeleton className="mt-2 h-8 w-16" />
       ) : (
-        <p className="mt-1 font-mono text-xl font-bold sm:text-2xl">{value}</p>
+        <p className="mt-1 pl-1.5 font-mono text-xl font-bold sm:text-2xl">{value}</p>
       )}
-      <p className="text-[10px] text-text-mute">{sub}</p>
+      <p className="pl-1.5 text-[10px] text-text-mute">{sub}</p>
+      <span
+        className={cn(
+          "mt-1 block pl-1.5 text-[9px] font-bold tracking-[0.08em] uppercase",
+          active ? "text-brand-2" : "text-text-mute/80 group-hover:text-text-dim",
+        )}
+      >
+        {active ? "Filtro ativo" : "Clique para filtrar"}
+      </span>
     </button>
   );
 }

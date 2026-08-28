@@ -55,7 +55,9 @@ Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 munic
 
 ## Desktop, mobile e Admin
 
-O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs e ficha do município; sem lista, PNG, lote ou polígono). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado.
+O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs e ficha do município; lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No painel de alertas, os níveis de risco são botões de filtro com contagem; a lista e o mapa se destacam mutuamente ao passar o mouse; a ficha do município abre sobre o mapa.
+
+**Admin** só existe no Desktop e exige login. Clique em **Admin** (ou **Criar Admin** na primeira vez) para autenticar. Sem sessão, as APIs de alteração respondem 401. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
 
 **Admin** só existe no Desktop e exige login. Clique em **Admin** (ou **Criar Admin** na primeira vez) para autenticar. Sem sessão, as APIs de alteração respondem 401. Com o modo ligado, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile o Admin fica oculto.
 

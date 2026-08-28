@@ -39,3 +39,12 @@ export function formatRelative(ts: number, now = Date.now()) {
   const days = Math.round(hours / 24);
   return `há ${days}d`;
 }
+
+export function withAlpha(hex: string, alpha: number) {
+  const raw = hex.replace("#", "");
+  if (raw.length !== 6) return hex;
+  const r = Number.parseInt(raw.slice(0, 2), 16);
+  const g = Number.parseInt(raw.slice(2, 4), 16);
+  const b = Number.parseInt(raw.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

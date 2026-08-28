@@ -6,6 +6,7 @@ import type {
   GeoJSON as GeoJSONType,
   LayerGroup,
   Map as LeafletMap,
+  Path,
   PathOptions,
   Polyline,
   TileLayer,
@@ -56,7 +57,9 @@ export const AlertsMap = forwardRef<
     showNames: boolean;
     showRivers: boolean;
     onlyRisk: boolean;
+    hovered?: string | null;
     onSelect: (nome: string, bacia: string) => void;
+    onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
     onPolygonComplete: (points: Array<{ lat: number; lng: number }>) => void;
     onGeoError?: (message: string | null) => void;
@@ -74,7 +77,9 @@ export const AlertsMap = forwardRef<
     showNames,
     showRivers,
     onlyRisk,
+    hovered,
     onSelect,
+    onHover,
     onPaint,
     onPolygonComplete,
     onGeoError,
@@ -92,12 +97,14 @@ export const AlertsMap = forwardRef<
   const drawDotsRef = useRef<CircleMarker[]>([]);
   const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const onSelectRef = useRef(onSelect);
+  const onHoverRef = useRef(onHover);
   const onPaintRef = useRef(onPaint);
   const onPolygonRef = useRef(onPolygonComplete);
   const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     municipios,
     selected,
+    hovered: hovered ?? null,
     filter,
     basin,
     calhaNomes: calhaNomes ?? null,
@@ -108,12 +115,14 @@ export const AlertsMap = forwardRef<
 
   useEffect(() => {
     onSelectRef.current = onSelect;
+    onHoverRef.current = onHover;
     onPaintRef.current = onPaint;
     onPolygonRef.current = onPolygonComplete;
     onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       municipios,
       selected,
+      hovered: hovered ?? null,
       filter,
       basin,
       calhaNomes: calhaNomes ?? null,
@@ -123,11 +132,13 @@ export const AlertsMap = forwardRef<
     };
   }, [
     onSelect,
+    onHover,
     onPaint,
     onPolygonComplete,
     onGeoError,
     municipios,
     selected,
+    hovered,
     filter,
     basin,
     calhaNomes,
@@ -178,22 +189,39 @@ export const AlertsMap = forwardRef<
 
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
     const nome = String(feature?.properties?.nome ?? "");
-    const { municipios: list, selected: sel, filter: f, basin: b, calhaNomes: names, opacity: op } =
-      stateRef.current;
+    const {
+      municipios: list,
+      selected: sel,
+      hovered: hov,
+      filter: f,
+      basin: b,
+      calhaNomes: names,
+      opacity: op,
+    } = stateRef.current;
     const m = list.find((item) => item.nome === nome);
     const risco = m?.risco ?? "BAIXO";
-    const matchLevel = f === "TODOS" || risco === f;
+    const matchLevel =
+      f === "TODOS" || f === "ATIVOS"
+        ? f === "TODOS" || (risco !== "BAIXO" && risco !== "BOA")
+        : risco === f;
     const matchBasin = !b || m?.bacia === b;
     const matchCalha = !names || names.length === 0 || names.includes(nome);
     const match = matchLevel && matchBasin && matchCalha;
     const isSel = sel === nome;
+    const isHov = hov === nome;
     const fill = Math.max(0.12, Math.min(0.92, op / 100));
     return {
-      color: isSel ? "#ffffff" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
-      weight: isSel ? 2.8 : match ? 1.1 : 0.7,
-      opacity: match || isSel ? 1 : 0.28,
+      color: isSel ? "#ffffff" : isHov ? "#ffb020" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
+      weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.1 : 0.7,
+      opacity: match || isSel || isHov ? 1 : 0.28,
       fillColor: LEVEL_COLORS[risco] ?? "#7c8fab",
-      fillOpacity: isSel ? Math.min(0.95, fill + 0.12) : match ? fill : 0.08,
+      fillOpacity: isSel
+        ? Math.min(0.95, fill + 0.12)
+        : isHov
+          ? Math.min(0.92, fill + 0.18)
+          : match
+            ? fill
+            : 0.08,
       className: "muni-path",
     };
   }
@@ -311,12 +339,18 @@ export const AlertsMap = forwardRef<
             lyr.on("mouseover", () => {
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
               const prefix = stateRef.current.adminMode ? "Classificar · " : "";
+              (lyr as Path).bringToFront();
+              onHoverRef.current?.(nome);
               lyr
                 .bindTooltip(
                   `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}`,
                   { sticky: true },
                 )
                 .openTooltip();
+            });
+            lyr.on("mouseout", () => {
+              lyr.closeTooltip();
+              onHoverRef.current?.(null);
             });
           },
         }).addTo(map);
@@ -389,12 +423,21 @@ export const AlertsMap = forwardRef<
   }, []);
 
   useEffect(() => {
-    layerRef.current?.setStyle((feature) => styleFor(feature));
+    const layer = layerRef.current;
+    layer?.setStyle((feature) => styleFor(feature));
+    const focus = hovered || selected;
+    if (focus && layer) {
+      layer.eachLayer((lyr) => {
+        const feature = (lyr as Path & { feature?: GeoJSON.Feature }).feature;
+        const nome = String(feature?.properties?.nome ?? "");
+        if (nome === focus) (lyr as Path).bringToFront();
+      });
+    }
     if (selected && !adminMode) {
       const m = municipios.find((item) => item.nome === selected);
       if (m && mapRef.current) mapRef.current.panTo([m.lat, m.lon], { animate: true });
     }
-  }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity]);
+  }, [municipios, selected, hovered, filter, basin, calhaNomes, adminMode, opacity]);
 
   useEffect(() => {
     const map = mapRef.current;

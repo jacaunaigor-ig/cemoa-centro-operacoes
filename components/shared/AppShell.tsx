@@ -80,6 +80,9 @@ export function AppShell({
             <h1 className="truncate text-sm font-black tracking-tight sm:text-lg">
               {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
             </h1>
+            <span className="mt-0.5 inline-flex items-center rounded-full border border-live/30 bg-live/10 px-1.5 py-px text-[8px] font-black tracking-[0.1em] text-live uppercase">
+              Dados oficiais
+            </span>
           </div>
         </Link>
 
