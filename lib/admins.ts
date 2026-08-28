@@ -184,28 +184,35 @@ export function enterWithCredentials(input: {
     return { error: "Informe usuário e senha.", status: 400 };
   }
 
-  if (needsSetup()) {
-    try {
-      const admin = createAdmin({
-        name: (input.name && input.name.trim()) || login,
-        login,
-        password,
-        email: input.email,
-      });
-      return { admin, created: true };
-    } catch (err) {
-      return {
-        error: err instanceof Error ? err.message : "Não foi possível criar o administrador.",
-        status: 400,
-      };
-    }
-  }
+  const existing = verifyAdminCredentials(login, password);
+  if (existing) return { admin: existing, created: false };
 
-  const admin = verifyAdminCredentials(login, password);
-  if (!admin) {
+  const key = normalizeLogin(login);
+  const known = readFileAdmins().some(
+    (row) => row.login === key || (row.email && row.email === normalizeEmail(login)),
+  );
+  if (known || envLogin() === key) {
     return { error: "Usuário ou senha incorretos.", status: 401 };
   }
-  return { admin, created: false };
+
+  if (!needsSetup()) {
+    return { error: "Usuário ou senha incorretos.", status: 401 };
+  }
+
+  try {
+    const admin = createAdmin({
+      name: (input.name && input.name.trim()) || login,
+      login,
+      password,
+      email: input.email,
+    });
+    return { admin, created: true };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Não foi possível criar o administrador.",
+      status: 400,
+    };
+  }
 }
 
 export function verifyAdminCredentials(login: string, password: string): PublicAdmin | null {

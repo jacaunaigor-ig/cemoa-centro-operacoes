@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -87,15 +88,18 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const [adminsOpen, setAdminsOpen] = useState(false);
+  const authGen = useRef(0);
 
-  const refreshAuth = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
-      const data = (await res.json()) as {
+  const applyAuth = useCallback(
+    (
+      data: {
         user?: SessionUser | null;
         needsSetup?: boolean;
         googleEnabled?: boolean;
-      };
+      },
+      gen: number,
+    ) => {
+      if (gen !== authGen.current) return;
       setSession(data.user ?? null);
       setNeedsSetup(Boolean(data.needsSetup));
       setGoogleEnabled(Boolean(data.googleEnabled));
@@ -103,15 +107,30 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem(TOOLS_KEY);
         emit(toolsListeners);
       }
+    },
+    [],
+  );
+
+  const refreshAuth = useCallback(async () => {
+    const gen = authGen.current;
+    try {
+      const res = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+      const data = (await res.json()) as {
+        user?: SessionUser | null;
+        needsSetup?: boolean;
+        googleEnabled?: boolean;
+      };
+      applyAuth(data, gen);
     } catch {
-      setSession(null);
+      /* keep the current session if /me fails */
     } finally {
-      setAuthLoading(false);
+      if (gen === authGen.current) setAuthLoading(false);
     }
-  }, []);
+  }, [applyAuth]);
 
   useEffect(() => {
     let cancelled = false;
+    const gen = authGen.current;
     const params = new URLSearchParams(window.location.search);
     const error = params.get("authError");
     const authOk = params.get("auth") === "ok";
@@ -127,9 +146,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
           googleEnabled?: boolean;
         };
         if (cancelled) return;
-        setSession(data.user ?? null);
-        setNeedsSetup(Boolean(data.needsSetup));
-        setGoogleEnabled(Boolean(data.googleEnabled));
+        applyAuth(data, gen);
+        if (gen !== authGen.current) return;
         if (error) {
           setAuthError(error);
           setLoginOpen(true);
@@ -139,10 +157,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
           emit(toolsListeners);
           setLoginOpen(false);
         }
-        if (!data.user) {
-          sessionStorage.removeItem(TOOLS_KEY);
-          emit(toolsListeners);
-        }
         if (error || authOk) {
           params.delete("authError");
           params.delete("auth");
@@ -151,15 +165,15 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
           window.history.replaceState({}, "", next);
         }
       } catch {
-        if (!cancelled) setSession(null);
+        /* keep optimistic login if /me fails */
       } finally {
-        if (!cancelled) setAuthLoading(false);
+        if (!cancelled && gen === authGen.current) setAuthLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyAuth]);
 
   const setLayout = useCallback((next: LayoutMode) => {
     localStorage.setItem(LAYOUT_KEY, next);
@@ -174,7 +188,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     (on: boolean) => {
       if (on) {
         if (!session) {
-          setLoginOpen(true);
+          void refreshAuth().finally(() => setLoginOpen(true));
           return;
         }
         sessionStorage.setItem(TOOLS_KEY, "1");
@@ -183,18 +197,22 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       }
       emit(toolsListeners);
     },
-    [session],
+    [session, refreshAuth],
   );
 
   const completeLogin = useCallback((user: SessionUser) => {
+    authGen.current += 1;
     setSession(user);
     setNeedsSetup(false);
+    setAuthError(null);
     setLoginOpen(false);
+    setAuthLoading(false);
     sessionStorage.setItem(TOOLS_KEY, "1");
     emit(toolsListeners);
   }, []);
 
   const logout = useCallback(async () => {
+    authGen.current += 1;
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
     } catch {
@@ -223,7 +241,9 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       adminsOpen,
       setLayout,
       setAdmin,
-      openLogin: () => setLoginOpen(true),
+      openLogin: () => {
+        void refreshAuth().finally(() => setLoginOpen(true));
+      },
       closeLogin: () => setLoginOpen(false),
       openAdmins: () => setAdminsOpen(true),
       closeAdmins: () => setAdminsOpen(false),
