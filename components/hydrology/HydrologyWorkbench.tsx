@@ -21,8 +21,6 @@ import {
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import { fetchJson, reportClientError } from "@/lib/client";
 import {
-  BACIA_TO_CALHA,
-  CALHAS,
   HYDRO_STATUS_COLORS,
   HYDRO_STATUS_LABELS,
   PNG_HYDRO_ITEMS,
@@ -32,6 +30,7 @@ import {
   statusAtivo,
   statusMapa,
 } from "@/lib/hydrology";
+import { parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import type {
   HydroMode,
@@ -77,11 +76,8 @@ function parseStatus(value: string | null): HydroStatusFilter {
   return "Todos";
 }
 
-function parseCalha(value: string | null, bacia: string | null): string | null {
-  if (value && (CALHAS as readonly string[]).includes(value)) return value;
-  if (bacia && (CALHAS as readonly string[]).includes(bacia)) return bacia;
-  if (bacia && BACIA_TO_CALHA[bacia]) return BACIA_TO_CALHA[bacia];
-  return null;
+function parseCalha(value: string | null): string | null {
+  return parseSharedCalha(value);
 }
 
 export function HydrologyWorkbench() {
@@ -92,10 +88,12 @@ export function HydrologyWorkbench() {
   const selected = params.get("municipio");
   const modo = parseModo(params.get("modo"));
   const status = parseStatus(params.get("status"));
-  const calha = parseCalha(params.get("calha"), params.get("bacia"));
+  const calha = parseCalha(params.get("calha"));
+  const bacia = parseSharedBacia(params.get("bacia"));
 
   const [data, setData] = useState<HydrologyPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
@@ -122,12 +120,17 @@ export function HydrologyWorkbench() {
             if (raw) {
               const updates = JSON.parse(raw) as Record<string, HydroPatch>;
               if (Object.keys(updates).length) {
-                await fetch("/api/hydrology/overrides", {
+                const res = await fetch("/api/hydrology/overrides", {
                   method: "POST",
                   credentials: "same-origin",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ updates, replace: true }),
                 });
+                if (res.status === 401) {
+                  toast.error("Entre no modo Admin para sincronizar as cotas locais.");
+                } else if (!res.ok) {
+                  toast.error("Não foi possível sincronizar as cotas gravadas neste computador.");
+                }
               }
             }
           } catch {
@@ -165,26 +168,43 @@ export function HydrologyWorkbench() {
   }
 
   const catalog = useMemo(() => data?.stations ?? [], [data]);
+  const geoStations = useMemo(
+    () =>
+      filtrarEstacoes(catalog, {
+        modo,
+        calha,
+        bacia,
+        status: "Todos",
+        municipio: null,
+        busca: "",
+      }),
+    [catalog, modo, calha, bacia],
+  );
   const visible = useMemo(
     () =>
       filtrarEstacoes(catalog, {
         modo,
         calha,
+        bacia,
         status,
         municipio: selected,
         busca,
       }),
-    [catalog, modo, calha, status, selected, busca],
+    [catalog, modo, calha, bacia, status, selected, busca],
   );
 
-  const kpis = useMemo(() => contarStatus(catalog, modo), [catalog, modo]);
+  const kpis = useMemo(() => contarStatus(geoStations, modo), [geoStations, modo]);
   const loading = !data && !error;
   const selectedStation =
     catalog.find((s) => s.municipio === selected) ??
     catalog.find((s) => s.municipioBoletim === selected) ??
     null;
   const pct = (n: number) =>
-    kpis.total ? `${((n / kpis.total) * 100).toFixed(1).replace(".", ",")}% do total` : "0%";
+    kpis.total
+      ? `${((n / kpis.total) * 100).toFixed(1).replace(".", ",")}% ${
+          geoStations.length === catalog.length ? "do total" : "do recorte"
+        }`
+      : "0%";
   const overrideCount = catalog.filter((s) => s.editadoPorOperador).length;
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
 
@@ -367,9 +387,9 @@ export function HydrologyWorkbench() {
             <KpiCard
               label="Municípios"
               value={loading ? "—" : String(kpis.total)}
-              sub="Total monitorado"
+              sub={geoStations.length === catalog.length ? "Total monitorado" : "No recorte"}
               accent="#5eb4ff"
-              active={status === "Todos" && !calha && !selected}
+              active={status === "Todos" && !calha && !bacia && !selected}
               onClick={() =>
                 setQuery({ status: null, calha: null, municipio: null, bacia: null })
               }
@@ -462,7 +482,7 @@ export function HydrologyWorkbench() {
               onSelect={(s) =>
                 setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha })
               }
-              onCalha={(next) => setQuery({ calha: next, bacia: next })}
+              onCalha={(next) => setQuery({ calha: next, bacia: null, municipio: null })}
               onStatus={(next) => setQuery({ status: next === "Todos" ? null : next })}
               onBusca={setBusca}
               onMunicipio={(nome) => {
@@ -494,7 +514,8 @@ export function HydrologyWorkbench() {
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
-                Monitoramento ativo · {kpis.total} municípios
+                Monitoramento ativo · {kpis.total} município{kpis.total === 1 ? "" : "s"}
+                {calha ? ` · calha ${calha}` : bacia ? ` · bacia ${bacia}` : ""}
               </span>
               <span className="hidden sm:inline">· ANA · SGB · SEMA</span>
               <a
@@ -523,6 +544,11 @@ export function HydrologyWorkbench() {
                     <p className="mb-2 text-xs font-bold text-text">
                       Alterações nas últimas 24h
                     </p>
+                    {(data?.mudancas24h ?? []).length === 0 ? (
+                      <p className="text-xs text-text-mute">
+                        Nenhuma alteração hidrológica nas últimas 24h neste recorte.
+                      </p>
+                    ) : (
                     <ul className="space-y-1.5">
                       {(data?.mudancas24h ?? []).map((m) => (
                         <li
@@ -544,6 +570,7 @@ export function HydrologyWorkbench() {
                         </li>
                       ))}
                     </ul>
+                    )}
                   </PopoverContent>
                 </Popover>
                 <Popover>
@@ -608,6 +635,11 @@ export function HydrologyWorkbench() {
                   Carregando estações e mapa-base…
                 </div>
               ) : null}
+              {error && !data ? (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel px-6 text-center text-sm text-text-mute">
+                  Sem dados para desenhar o mapa. Nova tentativa automática em instantes.
+                </div>
+              ) : null}
               {data ? (
                 <StationsMap
                   ref={mapRef}
@@ -615,6 +647,7 @@ export function HydrologyWorkbench() {
                   stations={catalog}
                   selected={selected}
                   calha={calha}
+                  bacia={bacia}
                   status={status}
                   modo={modo}
                   opacity={opacity}
@@ -628,9 +661,18 @@ export function HydrologyWorkbench() {
                   }
                   onPaint={(s) => void paintStation(s)}
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
+                  onGeoError={setGeoError}
                 />
               ) : null}
-              <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
+              {geoError ? (
+                <div className="absolute inset-x-3 top-14 z-[1200] rounded-lg border border-risco-severo/40 bg-panel/95 px-3 py-2 text-xs text-text">
+                  {geoError} O mapa-base continua visível.
+                </div>
+              ) : null}
+              <RiskHelpButton
+                variant="boletim"
+                className="pointer-events-auto absolute left-16 top-3 z-[1100]"
+              />
               <div className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
                 <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
                   {modo === "vazante" ? "Estiagem" : "Inundação"}
@@ -646,7 +688,7 @@ export function HydrologyWorkbench() {
               </div>
             </div>
 
-            {isMobile ? null : <HydroTicker stations={catalog} modo={modo} />}
+            {isMobile ? null : <HydroTicker stations={visible} modo={modo} />}
 
             <AdminToolbar
               enabled={admin}

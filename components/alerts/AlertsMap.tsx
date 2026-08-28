@@ -48,6 +48,7 @@ export const AlertsMap = forwardRef<
     selected: string | null;
     filter: string;
     basin: string | null;
+    calhaNomes?: string[] | null;
     adminMode: boolean;
     drawMode: boolean;
     opacity: number;
@@ -57,6 +58,7 @@ export const AlertsMap = forwardRef<
     onSelect: (nome: string, bacia: string) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
     onPolygonComplete: (points: Array<{ lat: number; lng: number }>) => void;
+    onGeoError?: (message: string | null) => void;
   }
 >(function AlertsMap(
   {
@@ -64,6 +66,7 @@ export const AlertsMap = forwardRef<
     selected,
     filter,
     basin,
+    calhaNomes,
     adminMode,
     drawMode,
     opacity,
@@ -73,6 +76,7 @@ export const AlertsMap = forwardRef<
     onSelect,
     onPaint,
     onPolygonComplete,
+    onGeoError,
   },
   ref,
 ) {
@@ -89,11 +93,13 @@ export const AlertsMap = forwardRef<
   const onSelectRef = useRef(onSelect);
   const onPaintRef = useRef(onPaint);
   const onPolygonRef = useRef(onPolygonComplete);
+  const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     municipios,
     selected,
     filter,
     basin,
+    calhaNomes: calhaNomes ?? null,
     adminMode,
     drawMode,
     opacity,
@@ -103,11 +109,13 @@ export const AlertsMap = forwardRef<
     onSelectRef.current = onSelect;
     onPaintRef.current = onPaint;
     onPolygonRef.current = onPolygonComplete;
+    onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       municipios,
       selected,
       filter,
       basin,
+      calhaNomes: calhaNomes ?? null,
       adminMode,
       drawMode,
       opacity,
@@ -116,10 +124,12 @@ export const AlertsMap = forwardRef<
     onSelect,
     onPaint,
     onPolygonComplete,
+    onGeoError,
     municipios,
     selected,
     filter,
     basin,
+    calhaNomes,
     adminMode,
     drawMode,
     opacity,
@@ -167,13 +177,14 @@ export const AlertsMap = forwardRef<
 
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
     const nome = String(feature?.properties?.nome ?? "");
-    const { municipios: list, selected: sel, filter: f, basin: b, opacity: op } =
+    const { municipios: list, selected: sel, filter: f, basin: b, calhaNomes: names, opacity: op } =
       stateRef.current;
     const m = list.find((item) => item.nome === nome);
     const risco = m?.risco ?? "BAIXO";
     const matchLevel = f === "TODOS" || risco === f;
     const matchBasin = !b || m?.bacia === b;
-    const match = matchLevel && matchBasin;
+    const matchCalha = !names || names.length === 0 || names.includes(nome);
+    const match = matchLevel && matchBasin && matchCalha;
     const isSel = sel === nome;
     const fill = Math.max(0.12, Math.min(0.92, op / 100));
     return {
@@ -309,10 +320,14 @@ export const AlertsMap = forwardRef<
           },
         }).addTo(map);
         layerRef.current = layer;
+        onGeoErrorRef.current?.(null);
       } catch (err) {
         reportClientError(
           err instanceof Error ? err.message : "Falha no GeoJSON",
           "AlertsMap",
+        );
+        onGeoErrorRef.current?.(
+          "Não foi possível carregar a malha municipal.",
         );
       }
 
@@ -378,7 +393,7 @@ export const AlertsMap = forwardRef<
       const m = municipios.find((item) => item.nome === selected);
       if (m && mapRef.current) mapRef.current.panTo([m.lat, m.lon], { animate: true });
     }
-  }, [municipios, selected, filter, basin, adminMode, opacity]);
+  }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -81,6 +81,7 @@ export function StationsList({
               ["Todos", "Todos"],
               ["ALTO", "Alto"],
               ["MODERADO", "Moderado"],
+              ["NORMAL", "Baixo"],
               ["SL", "SL"],
             ] as const
           ).map(([value, label]) => (
@@ -198,7 +199,7 @@ export function StationsList({
                               {rec.texto}
                             </span>
                             <Link
-                              href={`/?municipio=${encodeURIComponent(s.municipio)}&bacia=${encodeURIComponent(s.bacia)}`}
+                              href={`/?municipio=${encodeURIComponent(s.municipio)}&bacia=${encodeURIComponent(s.bacia)}&calha=${encodeURIComponent(s.calha)}`}
                               onClick={(e) => e.stopPropagation()}
                               className="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-focus hover:underline"
                             >

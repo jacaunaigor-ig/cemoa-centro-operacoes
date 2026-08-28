@@ -264,6 +264,7 @@ export function filtrarEstacoes(
   filtros: {
     modo: HydroMode;
     calha: string | null;
+    bacia?: string | null;
     status: HydroStatusFilter;
     municipio: string | null;
     busca: string;
@@ -281,6 +282,7 @@ export function filtrarEstacoes(
           ? !isSL
           : st === filtros.status);
     const matchCalha = !filtros.calha || e.calha === filtros.calha;
+    const matchBacia = !filtros.bacia || e.bacia === filtros.bacia;
     const matchMunicipio =
       !filtros.municipio ||
       e.municipio === filtros.municipio ||
@@ -291,7 +293,7 @@ export function filtrarEstacoes(
       e.municipioBoletim.toLowerCase().includes(busca) ||
       e.calha.toLowerCase().includes(busca) ||
       e.estacao.toLowerCase().includes(busca);
-    return matchStatus && matchCalha && matchMunicipio && matchBusca;
+    return matchStatus && matchCalha && matchBacia && matchMunicipio && matchBusca;
   });
 }
 

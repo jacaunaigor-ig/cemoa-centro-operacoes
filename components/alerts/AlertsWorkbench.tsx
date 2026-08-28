@@ -30,7 +30,6 @@ import { fetchJson, reportClientError } from "@/lib/client";
 import { filterAlertsByWindow } from "@/lib/live-state";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
-import { BACIAS } from "@/lib/risk";
 import {
   ALERT_PRODUCTS,
   ALERT_TYPES,
@@ -46,7 +45,7 @@ import {
   type AlertType,
 } from "@/lib/alert-types";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
-import { BACIA_TO_CALHA, CALHA_TO_BACIA } from "@/lib/hydrology";
+import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
 import type { AlertsPayload, HydrologyPayload, TimeWindow } from "@/lib/types";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
@@ -84,13 +83,6 @@ function parseLevel(value: string | null, levels: readonly string[]): string | "
   return "TODOS";
 }
 
-function parseBacia(bacia: string | null, calha: string | null): string | null {
-  if (bacia && (BACIAS as readonly string[]).includes(bacia)) return bacia;
-  if (calha && CALHA_TO_BACIA[calha]) return CALHA_TO_BACIA[calha];
-  if (bacia) return bacia;
-  return null;
-}
-
 function readLocalOverrides(): Record<string, string> {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_V2) || "{}") as Record<string, string>;
@@ -109,7 +101,8 @@ export function AlertsWorkbench() {
   const params = useSearchParams();
   const { admin, isMobile, session } = useOpsMode();
   const selected = params.get("municipio");
-  const bacia = parseBacia(params.get("bacia"), params.get("calha"));
+  const bacia = parseSharedBacia(params.get("bacia"));
+  const calha = parseSharedCalha(params.get("calha"));
   const tipo = parseAlertType(params.get("tipo"));
   const product = productOf(tipo);
   const activeFilter = parseLevel(params.get("risco"), product.levels);
@@ -117,6 +110,7 @@ export function AlertsWorkbench() {
   const [data, setData] = useState<AlertsPayload | null>(null);
   const [hydro, setHydro] = useState<HydrologyPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
   const [busca, setBusca] = useState("");
   const [paintArmed, setPaintArmed] = useState(true);
@@ -194,12 +188,20 @@ export function AlertsWorkbench() {
         for (const t of ALERT_TYPES) {
           const updates = grouped[t];
           if (!updates || !Object.keys(updates).length) continue;
-          await fetch("/api/alerts/overrides", {
+          const res = await fetch("/api/alerts/overrides", {
             method: "POST",
             credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tipo: t, updates, replace: true }),
           });
+          if (res.status === 401) {
+            toast.error("Entre no modo Admin para sincronizar as classificações locais.");
+            return;
+          }
+          if (!res.ok) {
+            toast.error("Não foi possível sincronizar as classificações gravadas neste computador.");
+            return;
+          }
         }
       } catch {
         /* ignore */
@@ -249,27 +251,36 @@ export function AlertsWorkbench() {
     prevRef.current = data;
     if (!prev || prev.tipo !== data.tipo) return;
 
+    const novos: string[] = [];
+    const agravos: string[] = [];
     for (const alert of data.alerts) {
       const old = prev.alerts.find((item) => item.id === alert.id);
       const row = data.municipios.find((m) => m.id === alert.municipioId);
       if (row?.fonte === "admin") continue;
-      if (!old) {
-        toast.custom(() => (
-          <ToastCard
-            tone="novo"
-            title={`Novo alerta em ${alert.municipio}`}
-            body={`${levelLabel(alert.risco)} · ${alert.bacia}`}
-          />
-        ));
-      } else if (levelRank(tipo, alert.risco) > levelRank(tipo, old.risco)) {
-        toast.custom(() => (
-          <ToastCard
-            tone="agravo"
-            title={`Agravamento em ${alert.municipio}`}
-            body={`${levelLabel(old.risco)} → ${levelLabel(alert.risco)}`}
-          />
-        ));
+      if (!old) novos.push(`${alert.municipio} (${levelLabel(alert.risco)})`);
+      else if (levelRank(tipo, alert.risco) > levelRank(tipo, old.risco)) {
+        agravos.push(`${alert.municipio}: ${levelLabel(old.risco)} → ${levelLabel(alert.risco)}`);
       }
+    }
+    if (novos.length + agravos.length > 3) {
+      toast.custom(() => (
+        <ToastCard
+          tone={agravos.length ? "agravo" : "novo"}
+          title={`${novos.length} novo(s) e ${agravos.length} agravamento(s)`}
+          body="Veja a lista e o mapa do recorte atual."
+        />
+      ));
+      return;
+    }
+    for (const title of novos) {
+      toast.custom(() => (
+        <ToastCard tone="novo" title={`Novo alerta em ${title.split(" (")[0]}`} body={title} />
+      ));
+    }
+    for (const body of agravos) {
+      toast.custom(() => (
+        <ToastCard tone="agravo" title="Agravamento" body={body} />
+      ));
     }
   }, [data, tipo]);
 
@@ -284,22 +295,35 @@ export function AlertsWorkbench() {
   }
 
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
-  const hydroStations = hydro?.stations ?? [];
+  const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
+  const nomesCalha = useMemo(
+    () => nomesNaCalha(calha, hydroStations),
+    [calha, hydroStations],
+  );
+  const geo = useMemo(
+    () => ({ bacia, nomesCalha }),
+    [bacia, nomesCalha],
+  );
+
+  const scopedCatalog = useMemo(
+    () => catalog.filter((m) => matchMunicipioGeo(m.nome, m.bacia, geo)),
+    [catalog, geo],
+  );
 
   const filteredAlerts = useMemo(() => {
     if (!data) return [];
     let list = filterAlertsByWindow(data.alerts, windowFilter, data.generatedAt);
     if (activeFilter !== "TODOS") list = list.filter((a) => a.risco === activeFilter);
-    if (bacia) list = list.filter((a) => a.bacia === bacia);
+    list = list.filter((a) => matchMunicipioGeo(a.municipio, a.bacia, geo));
     if (selected) list = list.filter((a) => a.municipio === selected);
     return list;
-  }, [data, windowFilter, activeFilter, bacia, selected]);
+  }, [data, windowFilter, activeFilter, geo, selected]);
 
   const visibleMunicipios = useMemo(() => {
     const needle = busca.trim().toLowerCase();
     return catalog.filter((m) => {
       if (activeFilter !== "TODOS" && m.risco !== activeFilter) return false;
-      if (bacia && m.bacia !== bacia) return false;
+      if (!matchMunicipioGeo(m.nome, m.bacia, geo)) return false;
       if (selected && m.nome !== selected) return false;
       if (
         needle &&
@@ -310,20 +334,24 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, bacia, selected, busca]);
+  }, [catalog, activeFilter, geo, selected, busca]);
 
   const counts = useMemo(() => {
     const acc: Record<string, number> = { TODOS: 0 };
     for (const level of product.levels) acc[level] = 0;
-    for (const m of catalog) {
+    for (const m of scopedCatalog) {
       acc[m.risco] = (acc[m.risco] ?? 0) + 1;
       acc.TODOS += 1;
     }
     return acc;
-  }, [catalog, product.levels]);
+  }, [scopedCatalog, product.levels]);
 
   const pct = (n: number) =>
-    counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(1).replace(".", ",")}% do total` : "0%";
+    counts.TODOS
+      ? `${((n / counts.TODOS) * 100).toFixed(1).replace(".", ",")}% ${
+          scopedCatalog.length === catalog.length ? "do total" : "do recorte"
+        }`
+      : "0%";
 
   const overrideCount = catalog.filter((m) => m.fonte === "admin").length;
   const ready = Boolean(data && data.tipo === tipo);
@@ -333,23 +361,29 @@ export function AlertsWorkbench() {
     data?.alerts.find((a) => a.municipio === selected) ??
     filteredAlerts.find((a) => a.municipio === selected) ??
     null;
-  const selectedHydro = hydroStations.find((s) => s.municipio === selected) ?? null;
+  const selectedHydro = estacaoDoMunicipio(selected, hydroStations);
   const mudancas = useMemo(
     () =>
       filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
-        (a) => a.novo || a.agravado,
+        (a) =>
+          (a.novo || a.agravado) && matchMunicipioGeo(a.municipio, a.bacia, geo),
       ),
-    [data, windowFilter],
+    [data, windowFilter, geo],
   );
   const ProductIcon = PRODUCT_ICONS[tipo];
 
+  function geoForNome(nome: string, baciaName?: string | null) {
+    const station = estacaoDoMunicipio(nome, hydroStations);
+    return {
+      municipio: nome,
+      bacia: baciaName || station?.bacia || null,
+      calha: station?.calha ?? null,
+    };
+  }
+
   async function paintMunicipio(id: string, nome: string, baciaName: string) {
     await persistOverrides({ [id]: paintLevel });
-    setQuery({
-      municipio: nome,
-      bacia: baciaName,
-      calha: BACIA_TO_CALHA[baciaName] ?? baciaName,
-    });
+    setQuery(geoForNome(nome, baciaName));
     toast.success(`${nome}: ${levelLabel(paintLevel)}`);
   }
 
@@ -490,9 +524,9 @@ export function AlertsWorkbench() {
             <KpiCard
               label="Municípios"
               value={loading ? "—" : String(counts.TODOS)}
-              sub="Total monitorado"
+              sub={scopedCatalog.length === catalog.length ? "Total monitorado" : "No recorte"}
               accent="#5eb4ff"
-              active={activeFilter === "TODOS" && !bacia && !selected}
+              active={activeFilter === "TODOS" && !bacia && !calha && !selected}
               onClick={() =>
                 setQuery({ risco: null, bacia: null, calha: null, municipio: null })
               }
@@ -542,17 +576,12 @@ export function AlertsWorkbench() {
             levels={product.levels}
             busca={busca}
             loading={loading}
-            onSelect={(nome, basinName) =>
-              setQuery({
-                municipio: nome,
-                bacia: basinName,
-                calha: BACIA_TO_CALHA[basinName] ?? basinName,
-              })
-            }
+            onSelect={(nome, basinName) => setQuery(geoForNome(nome, basinName))}
             onBacia={(next) =>
               setQuery({
                 bacia: next,
-                calha: next ? BACIA_TO_CALHA[next] ?? next : null,
+                calha: null,
+                municipio: null,
               })
             }
             onRisco={(next) => setQuery({ risco: next === "TODOS" ? null : next })}
@@ -563,11 +592,7 @@ export function AlertsWorkbench() {
                 return;
               }
               const row = catalog.find((m) => m.nome === nome);
-              setQuery({
-                municipio: nome,
-                bacia: row?.bacia ?? bacia,
-                calha: row ? BACIA_TO_CALHA[row.bacia] ?? row.bacia : null,
-              });
+              setQuery(geoForNome(nome, row?.bacia));
             }}
             onLimpar={() => {
               setBusca("");
@@ -580,7 +605,8 @@ export function AlertsWorkbench() {
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
-                Monitoramento ativo · {counts.TODOS} municípios
+                Monitoramento ativo · {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
+                {calha ? ` · calha ${calha}` : bacia ? ` · bacia ${bacia}` : ""}
               </span>
               <span className="hidden sm:inline">· {product.sources}</span>
               <a
@@ -695,6 +721,11 @@ export function AlertsWorkbench() {
                   Carregando malha municipal e mapa-base…
                 </div>
               ) : null}
+              {error && !ready ? (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel px-6 text-center text-sm text-text-mute">
+                  Sem dados para desenhar o mapa. Nova tentativa automática em alguns segundos.
+                </div>
+              ) : null}
               {ready && data ? (
                 <AlertsMap
                   key={`${OSM_BASEMAP_ID}-${tipo}`}
@@ -703,22 +734,23 @@ export function AlertsWorkbench() {
                   selected={selected}
                   filter={activeFilter}
                   basin={bacia}
+                  calhaNomes={nomesCalha ? [...nomesCalha] : null}
                   adminMode={admin && paintArmed}
                   drawMode={admin && drawMode}
                   opacity={opacity}
                   showNames={showNames}
                   showRivers={showRivers}
                   onlyRisk={onlyRisk}
-                  onSelect={(nome, basinName) =>
-                    setQuery({
-                      municipio: nome,
-                      bacia: basinName,
-                      calha: BACIA_TO_CALHA[basinName] ?? basinName,
-                    })
-                  }
+                  onSelect={(nome, basinName) => setQuery(geoForNome(nome, basinName))}
                   onPaint={paintMunicipio}
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
+                  onGeoError={setGeoError}
                 />
+              ) : null}
+              {geoError ? (
+                <div className="absolute inset-x-3 top-14 z-[1200] rounded-lg border border-risco-severo/40 bg-panel/95 px-3 py-2 text-xs text-text">
+                  {geoError} O mapa-base continua visível.
+                </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
               <div className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">

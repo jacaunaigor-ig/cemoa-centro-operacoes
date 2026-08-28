@@ -9,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { BACIAS } from "@/lib/risk";
 import { isAlertActive, LEVEL_LABELS, type AlertType } from "@/lib/alert-types";
-import { BACIA_TO_CALHA } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 
@@ -58,7 +57,11 @@ export function AlertList({
   onLimpar: () => void;
 }) {
   const alertByMuni = new Map(alerts.map((a) => [a.municipio, a]));
-  const hydroByMuni = new Map(hydro.map((s) => [s.municipio, s]));
+  const hydroByMuni = new Map<string, (typeof hydro)[number]>();
+  for (const s of hydro) {
+    hydroByMuni.set(s.municipio, s);
+    if (s.municipioBoletim) hydroByMuni.set(s.municipioBoletim, s);
+  }
   const grouped: Array<{ bacia: string; items: typeof municipios }> = [];
   for (const m of [...municipios].sort((a, b) => {
     const baciaComp = a.bacia.localeCompare(b.bacia, "pt-BR");
@@ -175,7 +178,7 @@ export function AlertList({
                 {group.items.map((m) => {
                   const alert = alertByMuni.get(m.nome);
                   const cota = hydroByMuni.get(m.nome);
-                  const calha = BACIA_TO_CALHA[m.bacia] ?? m.bacia;
+                  const calhaHref = cota?.calha;
                   return (
                     <li key={m.id} className="border-b border-border">
                       <button
@@ -208,7 +211,7 @@ export function AlertList({
                               : ""}
                           </span>
                           <Link
-                            href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}&calha=${encodeURIComponent(calha)}`}
+                            href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}${calhaHref ? `&calha=${encodeURIComponent(calhaHref)}` : ""}`}
                             onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1 font-semibold text-focus hover:underline"
                           >

@@ -172,7 +172,7 @@ export function HydroDetail({
       )}
 
       <Link
-        href={`/?municipio=${encodeURIComponent(station.municipio)}&bacia=${encodeURIComponent(station.bacia)}`}
+        href={`/?municipio=${encodeURIComponent(station.municipio)}&bacia=${encodeURIComponent(station.bacia)}&calha=${encodeURIComponent(station.calha)}`}
         className="mt-3 inline-block text-xs font-bold text-focus hover:underline"
       >
         Abrir alerta de chuva neste município

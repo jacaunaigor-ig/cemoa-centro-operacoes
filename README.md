@@ -47,7 +47,7 @@ Abra [http://127.0.0.1:43127](http://127.0.0.1:43127). O horário operacional é
 | `/api/hydrology` | JSON das estações e cotas |
 | `/api/logs` | Log de erros de mapa/dados no front |
 
-Query strings compartilhadas: `municipio`, `bacia`, `calha`. No painel também: `risco`, `tipo`. No boletim: `modo`, `status`.
+Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 municípios) e `calha` (calha fluviométrica do boletim). Os dois recortes não são o mesmo mapa — Japurá no painel não vira Médio Solimões no boletim; Baixo Solimões no boletim não vira Médio Solimões no painel. No painel também: `risco`, `tipo`. No boletim: `modo`, `status`.
 
 ## Desktop, mobile e Admin
 

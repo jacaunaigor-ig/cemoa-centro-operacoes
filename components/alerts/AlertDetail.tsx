@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
 import { riskActionFor, type AlertType } from "@/lib/alert-types";
-import { BACIA_TO_CALHA, statusAtivo } from "@/lib/hydrology";
+import { statusAtivo } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert } from "@/lib/types";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
 
@@ -32,7 +32,7 @@ export function AlertDetail({
   tipo?: AlertType;
   onClose: () => void;
 }) {
-  const calha = BACIA_TO_CALHA[bacia] ?? bacia;
+  const calha = hydro?.calha ?? null;
 
   return (
     <section className="max-h-[min(42vh,380px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3">
@@ -111,7 +111,7 @@ export function AlertDetail({
       ) : null}
 
       <Link
-        href={`/boletim?municipio=${encodeURIComponent(nome)}&bacia=${encodeURIComponent(bacia)}&calha=${encodeURIComponent(calha)}`}
+        href={`/boletim?municipio=${encodeURIComponent(nome)}&bacia=${encodeURIComponent(bacia)}${calha ? `&calha=${encodeURIComponent(calha)}` : ""}`}
         className="mt-3 inline-block text-xs font-bold text-focus hover:underline"
       >
         Abrir boletim hidrológico neste município

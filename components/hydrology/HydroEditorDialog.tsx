@@ -166,6 +166,7 @@ export function HydroEditorDialog({
           </Button>
           <Button
             type="button"
+            disabled={Object.keys(draftStatus).length === 0 && Object.keys(draftCota).length === 0}
             onClick={() => {
               const updates: Record<string, HydroPatch> = {};
               const ids = new Set([...Object.keys(draftStatus), ...Object.keys(draftCota)]);

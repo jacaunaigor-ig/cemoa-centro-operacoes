@@ -3,9 +3,16 @@
 import { useEffect, useState } from "react";
 import { AIR_RANGES, RISK_LEGEND_COPY } from "@/lib/alert-types";
 import { RISK_COLORS } from "@/lib/risk";
+import { HYDRO_STATUS_COLORS, PNG_HYDRO_ITEMS } from "@/lib/hydrology";
 import { cn } from "@/lib/utils";
 
-export function RiskHelpButton({ className }: { className?: string }) {
+export function RiskHelpButton({
+  className,
+  variant = "alertas",
+}: {
+  className?: string;
+  variant?: "alertas" | "boletim";
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -65,13 +72,17 @@ export function RiskHelpButton({ className }: { className?: string }) {
             <header className="flex items-start justify-between gap-3 border-b border-border bg-panel-2/80 px-5 py-4">
               <div>
                 <small className="text-[10px] font-black tracking-[0.12em] text-focus uppercase">
-                  Referência para comunicação de alertas
+                  {variant === "boletim"
+                    ? "Referência do boletim hidrológico"
+                    : "Referência para comunicação de alertas"}
                 </small>
                 <h2 id="risk-help-title" className="mt-1 text-xl font-black">
-                  Entenda os níveis de risco
+                  {variant === "boletim" ? "Estiagem e inundação" : "Entenda os níveis de risco"}
                 </h2>
                 <p className="text-xs text-text-mute">
-                  Referência: art. 12 da Portaria MIDR nº 2.458/2026.
+                  {variant === "boletim"
+                    ? "Baixo, Moderado e Alto pintam o município mesmo sem cota do dia. Cinza só no filtro Sem leitura."
+                    : "Referência: art. 12 da Portaria MIDR nº 2.458/2026."}
                 </p>
               </div>
               <button
@@ -84,6 +95,27 @@ export function RiskHelpButton({ className }: { className?: string }) {
               </button>
             </header>
 
+            {variant === "boletim" ? (
+              <div className="grid gap-2.5 p-4 sm:grid-cols-2">
+                {PNG_HYDRO_ITEMS.map((item) => (
+                  <article
+                    key={item.key}
+                    className="rounded-xl border border-border bg-white/4 p-3.5"
+                    style={{ borderLeft: `3px solid ${HYDRO_STATUS_COLORS[item.key]}` }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <i
+                        className="size-2.5 rounded-full"
+                        style={{ background: HYDRO_STATUS_COLORS[item.key] }}
+                      />
+                      <strong className="text-sm">{item.title}</strong>
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-text-dim">{item.text}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+            <>
             <div className="grid gap-2.5 p-4 sm:grid-cols-2">
               {RISK_LEGEND_COPY.map((item) => (
                 <article
@@ -170,6 +202,8 @@ export function RiskHelpButton({ className }: { className?: string }) {
                 2,5 micrômetros, expressa em µg/m³ — microgramas por metro cúbico de ar.
               </p>
             </div>
+            </>
+            )}
           </section>
         </div>
       ) : null}

@@ -48,6 +48,7 @@ export const StationsMap = forwardRef<
     stations: HydroStation[];
     selected: string | null;
     calha: string | null;
+    bacia?: string | null;
     status: HydroStatusFilter;
     modo: HydroMode;
     opacity: number;
@@ -59,12 +60,14 @@ export const StationsMap = forwardRef<
     onSelect: (station: HydroStation) => void;
     onPaint?: (station: HydroStation) => void;
     onPolygonComplete?: (points: Array<{ lat: number; lng: number }>) => void;
+    onGeoError?: (message: string | null) => void;
   }
 >(function StationsMap(
   {
     stations,
     selected,
     calha,
+    bacia,
     status,
     modo,
     opacity,
@@ -76,6 +79,7 @@ export const StationsMap = forwardRef<
     onSelect,
     onPaint,
     onPolygonComplete,
+    onGeoError,
   },
   ref,
 ) {
@@ -92,10 +96,12 @@ export const StationsMap = forwardRef<
   const onSelectRef = useRef(onSelect);
   const onPaintRef = useRef(onPaint);
   const onPolygonRef = useRef(onPolygonComplete);
+  const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     stations,
     selected,
     calha,
+    bacia: bacia ?? null,
     status,
     modo,
     opacity,
@@ -107,10 +113,12 @@ export const StationsMap = forwardRef<
     onSelectRef.current = onSelect;
     onPaintRef.current = onPaint;
     onPolygonRef.current = onPolygonComplete;
+    onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       stations,
       selected,
       calha,
+      bacia: bacia ?? null,
       status,
       modo,
       opacity,
@@ -121,6 +129,7 @@ export const StationsMap = forwardRef<
     stations,
     selected,
     calha,
+    bacia,
     status,
     modo,
     opacity,
@@ -129,12 +138,14 @@ export const StationsMap = forwardRef<
     onSelect,
     onPaint,
     onPolygonComplete,
+    onGeoError,
   ]);
 
   function isVisible(station: HydroStation | undefined) {
     if (!station) return false;
-    const { calha: c, status: st, modo: m } = stateRef.current;
+    const { calha: c, bacia: basin, status: st, modo: m } = stateRef.current;
     if (c && station.calha !== c) return false;
+    if (basin && station.bacia !== basin) return false;
     if (st === "SL") return station.semLeitura;
     if (st === "COM_LEITURA") return !station.semLeitura;
     if (st === "NORMAL" || st === "MODERADO" || st === "ALTO") {
@@ -330,11 +341,13 @@ export const StationsMap = forwardRef<
           },
         }).addTo(map);
         layerRef.current = layer;
+        onGeoErrorRef.current?.(null);
       } catch (err) {
         reportClientError(
           err instanceof Error ? err.message : "Falha no GeoJSON",
           "StationsMap",
         );
+        onGeoErrorRef.current?.("Não foi possível carregar a malha municipal.");
       }
 
       const names = L.layerGroup();
@@ -399,7 +412,7 @@ export const StationsMap = forwardRef<
       if (s && mapRef.current) mapRef.current.panTo([s.lat, s.lon], { animate: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stations, selected, calha, status, modo, opacity, adminMode]);
+  }, [stations, selected, calha, bacia, status, modo, opacity, adminMode]);
 
   useEffect(() => {
     const map = mapRef.current;
