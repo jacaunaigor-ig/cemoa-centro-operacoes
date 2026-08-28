@@ -5,32 +5,41 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RISK_COLORS, RISK_LABELS, RISK_LEVELS } from "@/lib/risk";
-import type { RiskLevel } from "@/lib/types";
+import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import { cn } from "@/lib/utils";
 
 type Row = {
   id: string;
   nome: string;
   bacia: string;
-  risco: RiskLevel;
+  risco: string;
   fonte: "admin" | "monitor";
 };
 
 export function RiskEditorDialog({
   open,
   rows,
+  levels,
+  productLabel,
   onClose,
   onApply,
 }: {
   open: boolean;
   rows: Row[];
+  levels: readonly string[];
+  productLabel: string;
   onClose: () => void;
-  onApply: (updates: Record<string, RiskLevel>) => void;
+  onApply: (updates: Record<string, string>) => void;
 }) {
+  const fallbackBatch = levels.includes("ALTO")
+    ? "ALTO"
+    : levels.includes("RUIM")
+      ? "RUIM"
+      : (levels[1] ?? levels[0] ?? "MODERADO");
   const [query, setQuery] = useState("");
-  const [draft, setDraft] = useState<Record<string, RiskLevel>>({});
-  const [batchLevel, setBatchLevel] = useState<RiskLevel>("MODERADO");
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [batchLevel, setBatchLevel] = useState(fallbackBatch);
+  const effectiveBatch = levels.includes(batchLevel) ? batchLevel : fallbackBatch;
 
   const merged = useMemo(() => {
     return rows.map((row) => ({ ...row, risco: draft[row.id] ?? row.risco }));
@@ -49,10 +58,11 @@ export function RiskEditorDialog({
   }, [merged, query]);
 
   const counts = useMemo(() => {
-    const acc = { BAIXO: 0, MODERADO: 0, ALTO: 0, SEVERO: 0, EXTREMO: 0 };
-    for (const row of merged) acc[row.risco] += 1;
+    const acc: Record<string, number> = {};
+    for (const level of levels) acc[level] = 0;
+    for (const row of merged) acc[row.risco] = (acc[row.risco] ?? 0) + 1;
     return acc;
-  }, [merged]);
+  }, [merged, levels]);
 
   if (!open) return null;
 
@@ -78,7 +88,8 @@ export function RiskEditorDialog({
               Classificação em lote
             </h2>
             <p className="text-xs text-text-mute">
-              Ajuste o risco de chuva intensa por município. As alterações só entram no mapa ao aplicar.
+              Ajuste o nível de {productLabel.toLowerCase()} por município. As alterações só
+              entram no mapa ao aplicar.
             </p>
           </div>
           <button
@@ -100,14 +111,14 @@ export function RiskEditorDialog({
             aria-label="Buscar no editor"
           />
           <select
-            value={batchLevel}
-            onChange={(e) => setBatchLevel(e.target.value as RiskLevel)}
+            value={effectiveBatch}
+            onChange={(e) => setBatchLevel(e.target.value)}
             className="h-9 rounded-lg border border-border bg-panel-2 px-2 text-xs font-bold"
             aria-label="Nível para aplicar aos visíveis"
           >
-            {RISK_LEVELS.map((level) => (
+            {levels.map((level) => (
               <option key={level} value={level}>
-                {RISK_LABELS[level]}
+                {LEVEL_LABELS[level] ?? level}
               </option>
             ))}
           </select>
@@ -117,7 +128,7 @@ export function RiskEditorDialog({
             variant="secondary"
             onClick={() => {
               const next = { ...draft };
-              for (const row of visible) next[row.id] = batchLevel;
+              for (const row of visible) next[row.id] = effectiveBatch;
               setDraft(next);
             }}
           >
@@ -126,10 +137,11 @@ export function RiskEditorDialog({
         </div>
 
         <div className="flex flex-wrap gap-2 border-b border-border px-4 py-2 text-[11px]">
-          {RISK_LEVELS.map((level) => (
+          {levels.map((level) => (
             <span key={level} className="inline-flex items-center gap-1.5 text-text-dim">
-              <i className="size-2.5 rounded-full" style={{ background: RISK_COLORS[level] }} />
-              {RISK_LABELS[level]}: <strong className="font-mono text-text">{counts[level]}</strong>
+              <i className="size-2.5 rounded-full" style={{ background: LEVEL_COLORS[level] }} />
+              {LEVEL_LABELS[level] ?? level}:{" "}
+              <strong className="font-mono text-text">{counts[level] ?? 0}</strong>
             </span>
           ))}
         </div>
@@ -140,7 +152,7 @@ export function RiskEditorDialog({
               <tr>
                 <th className="px-4 py-2">Município</th>
                 <th className="px-4 py-2">Bacia</th>
-                <th className="px-4 py-2">Risco</th>
+                <th className="px-4 py-2">Nível</th>
               </tr>
             </thead>
             <tbody>
@@ -157,17 +169,15 @@ export function RiskEditorDialog({
                     <select
                       value={row.risco}
                       onChange={(e) =>
-                        setDraft((prev) => ({ ...prev, [row.id]: e.target.value as RiskLevel }))
+                        setDraft((prev) => ({ ...prev, [row.id]: e.target.value }))
                       }
-                      className={cn(
-                        "h-8 rounded-lg border bg-panel-2 px-2 text-xs font-bold",
-                      )}
-                      style={{ borderColor: RISK_COLORS[row.risco] }}
-                      aria-label={`Risco de ${row.nome}`}
+                      className={cn("h-8 rounded-lg border bg-panel-2 px-2 text-xs font-bold")}
+                      style={{ borderColor: LEVEL_COLORS[row.risco] }}
+                      aria-label={`Nível de ${row.nome}`}
                     >
-                      {RISK_LEVELS.map((level) => (
+                      {levels.map((level) => (
                         <option key={level} value={level}>
-                          {RISK_LABELS[level]}
+                          {LEVEL_LABELS[level] ?? level}
                         </option>
                       ))}
                     </select>
@@ -180,7 +190,8 @@ export function RiskEditorDialog({
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">
           <p className="text-[11px] text-text-mute">
-            {visible.length} município(s) na busca · {Object.keys(draft).length} alteração(ões) pendente(s)
+            {visible.length} município(s) na busca · {Object.keys(draft).length} alteração(ões)
+            pendente(s)
           </p>
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={onClose}>

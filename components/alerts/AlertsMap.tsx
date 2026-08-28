@@ -10,8 +10,8 @@ import type {
   Polyline,
   TileLayer,
 } from "leaflet";
-import type { RiskLevel } from "@/lib/types";
-import { RISK_COLORS, RISK_LABELS } from "@/lib/risk";
+import type { AlertLevel } from "@/lib/types";
+import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import {
   AMAZONAS_CENTER,
   OSM_ATTRIBUTION,
@@ -32,7 +32,7 @@ type Muni = {
   bacia: string;
   lon: number;
   lat: number;
-  risco: RiskLevel;
+  risco: AlertLevel;
 };
 
 export type AlertsMapHandle = {
@@ -46,7 +46,7 @@ export const AlertsMap = forwardRef<
   {
     municipios: Muni[];
     selected: string | null;
-    filter: RiskLevel | "TODOS";
+    filter: string;
     basin: string | null;
     adminMode: boolean;
     drawMode: boolean;
@@ -180,7 +180,7 @@ export const AlertsMap = forwardRef<
       color: isSel ? "#ffffff" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
       weight: isSel ? 2.8 : match ? 1.1 : 0.7,
       opacity: match || isSel ? 1 : 0.28,
-      fillColor: RISK_COLORS[risco],
+      fillColor: LEVEL_COLORS[risco] ?? "#7c8fab",
       fillOpacity: isSel ? Math.min(0.95, fill + 0.12) : match ? fill : 0.08,
       className: "muni-path",
     };
@@ -301,7 +301,7 @@ export const AlertsMap = forwardRef<
               const prefix = stateRef.current.adminMode ? "Classificar · " : "";
               lyr
                 .bindTooltip(
-                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${RISK_LABELS[m?.risco ?? "BAIXO"]}`,
+                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}`,
                   { sticky: true },
                 )
                 .openTooltip();

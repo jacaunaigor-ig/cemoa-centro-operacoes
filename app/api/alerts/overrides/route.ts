@@ -1,42 +1,56 @@
 import { NextResponse } from "next/server";
-import { RISK_LEVELS, type RiskLevel } from "@/lib/types";
+import { parseAlertType, productOf, type AlertType } from "@/lib/alert-types";
 import {
   clearOverrides,
   getOverrides,
   mergeOverrides,
   replaceOverrides,
+  serializeOverrides,
 } from "@/lib/overrides";
 import { invalidate } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
-function isRisk(value: unknown): value is RiskLevel {
-  return typeof value === "string" && (RISK_LEVELS as readonly string[]).includes(value);
+function parseTipo(value: unknown): AlertType {
+  return parseAlertType(typeof value === "string" ? value : null);
 }
 
-export function GET() {
-  return NextResponse.json({ overrides: getOverrides() });
+export function GET(request: Request) {
+  const url = new URL(request.url);
+  const tipo = parseAlertType(url.searchParams.get("tipo"));
+  return NextResponse.json({ tipo, overrides: getOverrides(tipo), all: serializeOverrides() });
 }
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { updates?: Record<string, unknown>; replace?: boolean };
+    const body = (await request.json()) as {
+      tipo?: string;
+      updates?: Record<string, unknown>;
+      replace?: boolean;
+    };
+    const tipo = parseTipo(body.tipo);
+    const product = productOf(tipo);
     const raw = body.updates ?? {};
-    const updates: Record<string, RiskLevel> = {};
+    const updates: Record<string, string> = {};
     for (const [id, value] of Object.entries(raw)) {
-      if (isRisk(value)) updates[id] = value;
+      if (typeof value === "string" && product.levels.includes(value)) updates[id] = value;
     }
-    if (body.replace) replaceOverrides(updates);
-    else mergeOverrides(updates);
+    if (body.replace) replaceOverrides(tipo, updates);
+    else mergeOverrides(tipo, updates);
+    invalidate(`alerts:${tipo}`);
     invalidate("alerts");
-    return NextResponse.json({ ok: true, overrides: getOverrides() });
+    return NextResponse.json({ ok: true, tipo, overrides: getOverrides(tipo) });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 }
 
-export function DELETE() {
-  clearOverrides();
+export function DELETE(request: Request) {
+  const url = new URL(request.url);
+  const tipoRaw = url.searchParams.get("tipo");
+  const tipo = tipoRaw ? parseAlertType(tipoRaw) : undefined;
+  clearOverrides(tipo);
   invalidate("alerts");
-  return NextResponse.json({ ok: true, overrides: {} });
+  for (const t of ["CHUVA", "ALAGAMENTO", "MOVIMENTO", "INCENDIO"]) invalidate(`alerts:${t}`);
+  return NextResponse.json({ ok: true, overrides: tipo ? getOverrides(tipo) : {} });
 }

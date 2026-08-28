@@ -23,9 +23,14 @@ import { fetchJson, reportClientError } from "@/lib/client";
 import {
   BACIA_TO_CALHA,
   CALHAS,
+  HYDRO_STATUS_COLORS,
+  PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
+  normalizeMunicipio,
+  statusMapa,
 } from "@/lib/hydrology";
+import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import type {
   HydroMode,
   HydroStatusFilter,
@@ -38,6 +43,8 @@ import { HydroTicker } from "@/components/hydrology/HydroTicker";
 import { HydroDetail } from "@/components/hydrology/HydroDetail";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { MapToolButton } from "@/components/shared/MapToolButton";
+import { RiskHelpButton } from "@/components/shared/RiskHelp";
+import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { cn } from "@/lib/utils";
 
 const POLL_MS = 12_000;
@@ -140,6 +147,33 @@ export function HydrologyWorkbench() {
     null;
   const pct = (n: number) =>
     kpis.total ? `${((n / kpis.total) * 100).toFixed(1).replace(".", ",")}% do total` : "0%";
+
+  async function exportMapPng() {
+    if (!data) throw new Error("Mapa ainda não carregou");
+    const byNome = new Map(catalog.map((s) => [s.municipio, s]));
+    const byNorm = new Map(catalog.map((s) => [normalizeMunicipio(s.municipio), s]));
+    const counts = { NORMAL: 0, MODERADO: 0, ALTO: 0, SL: 0 };
+    for (const s of catalog) counts[statusMapa(s, modo)] += 1;
+    const modoLabel = modo === "vazante" ? "Estiagem" : "Inundação";
+    await exportInstitutionalPng({
+      title: "Boletim Hidrológico",
+      productLegend: `${modoLabel} — cotas fluviométricas das 62 sedes municipais`,
+      filename: pngFilename(
+        `boletim_hidrologico_${modo === "vazante" ? "estiagem" : "inundacao"}`,
+      ),
+      colorFor: (nome) => {
+        const station = byNome.get(nome) ?? byNorm.get(normalizeMunicipio(nome));
+        return HYDRO_STATUS_COLORS[statusMapa(station, modo)];
+      },
+      legendTitle: "Níveis de risco",
+      legendItems: PNG_HYDRO_ITEMS.map((item) => ({
+        ...item,
+        color: HYDRO_STATUS_COLORS[item.key],
+        count: counts[item.key] ?? 0,
+      })),
+      footerSources: "Fontes de monitoramento: CEMOA · ANA · SGB · SEMA",
+    });
+  }
 
   return (
     <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
@@ -342,6 +376,7 @@ export function HydrologyWorkbench() {
                 OpenStreetMap
               </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
+                <ExportPngButton onExport={exportMapPng} disabled={!data} />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -459,6 +494,7 @@ export function HydrologyWorkbench() {
                   }
                 />
               ) : null}
+              <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
               <div className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
                 <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
                   {modo === "vazante" ? "Estiagem" : "Inundação"}

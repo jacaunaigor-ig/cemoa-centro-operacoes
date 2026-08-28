@@ -5,14 +5,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   CloudRain,
+  Flame,
   Layers,
   MapPinned,
+  Mountain,
   Settings2,
+  Waves,
 } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { MapToolButton } from "@/components/shared/MapToolButton";
+import { RiskHelpButton } from "@/components/shared/RiskHelp";
+import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +29,24 @@ import { fetchJson, reportClientError } from "@/lib/client";
 import { filterAlertsByWindow } from "@/lib/live-state";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
-import { BACIAS, RISK_COLORS, RISK_LABELS, RISK_LEVELS, riskRank } from "@/lib/risk";
+import { BACIAS } from "@/lib/risk";
+import {
+  ALERT_PRODUCTS,
+  ALERT_TYPES,
+  LEVEL_COLORS,
+  LEVEL_LABELS,
+  PNG_AIR_ITEMS,
+  PNG_RISK_ITEMS,
+  defaultPaintLevel,
+  levelLabel,
+  levelRank,
+  parseAlertType,
+  productOf,
+  type AlertType,
+} from "@/lib/alert-types";
+import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { BACIA_TO_CALHA, CALHA_TO_BACIA } from "@/lib/hydrology";
-import type { AlertsPayload, HydrologyPayload, RiskLevel, TimeWindow } from "@/lib/types";
+import type { AlertsPayload, HydrologyPayload, TimeWindow } from "@/lib/types";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
@@ -36,12 +56,29 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 
 const POLL_MS = 8000;
-const STORAGE_KEY = "cemoa_admin_overrides_v1";
+const STORAGE_V1 = "cemoa_admin_overrides_v1";
+const STORAGE_V2 = "cemoa_admin_overrides_v2";
 
-function parseRisco(value: string | null): RiskLevel | "TODOS" {
-  if (value && (RISK_LEVELS as readonly string[]).includes(value)) {
-    return value as RiskLevel;
-  }
+const PRODUCT_ICONS = {
+  CHUVA: CloudRain,
+  ALAGAMENTO: Waves,
+  MOVIMENTO: Mountain,
+  INCENDIO: Flame,
+} as const;
+
+const METHOD_BODY: Record<AlertType, string> = {
+  CHUVA:
+    "Classificação operacional CEMOA em cinco níveis (Baixo a Extremo), cruzando previsões INMET/CPTEC, imagens CENSIPAM e impacto esperado sobre municípios. Nível Baixo é monitoramento; Moderado exige atenção; Alto, preparação; Severo, ação iminente; Extremo, ação imediata de proteção da vida. A classificação do operador sobrepõe o monitoramento automático.",
+  ALAGAMENTO:
+    "Risco de alagamento urbano, em igarapés e planícies inundáveis, na mesma escala da Portaria MIDR nº 2.458/2026 (Baixo a Extremo). Deriva da chuva intensa e da drenagem local. A classificação do operador sobrepõe o monitoramento automático.",
+  MOVIMENTO:
+    "Risco de deslizamento e instabilidade de encostas, com ênfase nas bacias do oeste do estado. Escala Baixo a Extremo da Portaria MIDR nº 2.458/2026. A classificação do operador sobrepõe o monitoramento automático.",
+  INCENDIO:
+    "Incêndio em áreas não protegidas com reflexos na qualidade do ar. Escala própria por concentração de MP2,5 (µg/m³): Boa (0–15), Moderada (15–50), Ruim (50–75), Muito Ruim (75–125) e Péssima (>125). Não segue o art. 12 da Portaria MIDR nº 2.458/2026.",
+};
+
+function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
+  if (value && levels.includes(value)) return value;
   return "TODOS";
 }
 
@@ -52,13 +89,27 @@ function parseBacia(bacia: string | null, calha: string | null): string | null {
   return null;
 }
 
+function readLocalOverrides(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_V2) || "{}") as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+function writeLocalOverrides(next: Record<string, string>) {
+  localStorage.setItem(STORAGE_V2, JSON.stringify(next));
+}
+
 export function AlertsWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const selected = params.get("municipio");
   const bacia = parseBacia(params.get("bacia"), params.get("calha"));
-  const activeFilter = parseRisco(params.get("risco"));
+  const tipo = parseAlertType(params.get("tipo"));
+  const product = productOf(tipo);
+  const activeFilter = parseLevel(params.get("risco"), product.levels);
 
   const [data, setData] = useState<AlertsPayload | null>(null);
   const [hydro, setHydro] = useState<HydrologyPayload | null>(null);
@@ -67,7 +118,7 @@ export function AlertsWorkbench() {
   const [busca, setBusca] = useState("");
   const [adminMode, setAdminMode] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
-  const [paintLevel, setPaintLevel] = useState<RiskLevel>("ALTO");
+  const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [editorOpen, setEditorOpen] = useState(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
@@ -77,52 +128,78 @@ export function AlertsWorkbench() {
   const hydrated = useRef(false);
   const prevRef = useRef<AlertsPayload | null>(null);
   const firstRef = useRef(true);
+  const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
 
-  const persistOverrides = useCallback(async (updates: Record<string, RiskLevel>, replace = false) => {
-    await fetch("/api/alerts/overrides", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ updates, replace }),
-    });
-    try {
-      const current = {
-        ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") as Record<string, RiskLevel>),
-        ...updates,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(replace ? updates : current));
-    } catch {
-      /* ignore quota */
-    }
-    const payload = await fetchJson<AlertsPayload>("/api/alerts");
-    setData(payload);
-  }, []);
+  const persistOverrides = useCallback(
+    async (updates: Record<string, string>, replace = false) => {
+      await fetch("/api/alerts/overrides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo, updates, replace }),
+      });
+      try {
+        const current = readLocalOverrides();
+        if (replace) {
+          for (const key of Object.keys(current)) {
+            if (key.startsWith(`${tipo}:`)) delete current[key];
+          }
+        }
+        for (const [id, level] of Object.entries(updates)) {
+          current[`${tipo}:${id}`] = level;
+        }
+        writeLocalOverrides(current);
+      } catch {
+        /* ignore quota */
+      }
+      const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
+      setData(payload);
+    },
+    [tipo, setData],
+  );
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
 
+    async function hydrateLocal() {
+      try {
+        const v2raw = localStorage.getItem(STORAGE_V2);
+        const v1raw = localStorage.getItem(STORAGE_V1);
+        const grouped: Partial<Record<AlertType, Record<string, string>>> = {};
+        if (v2raw) {
+          const all = JSON.parse(v2raw) as Record<string, string>;
+          for (const [key, value] of Object.entries(all)) {
+            if (!key.includes(":")) continue;
+            const [tipoRaw, id] = key.split(":");
+            const t = parseAlertType(tipoRaw);
+            if (!id) continue;
+            (grouped[t] ??= {})[id] = value;
+          }
+        } else if (v1raw) {
+          grouped.CHUVA = JSON.parse(v1raw) as Record<string, string>;
+        }
+        for (const t of ALERT_TYPES) {
+          const updates = grouped[t];
+          if (!updates || !Object.keys(updates).length) continue;
+          await fetch("/api/alerts/overrides", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tipo: t, updates, replace: true }),
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     async function load() {
       try {
         if (!hydrated.current) {
           hydrated.current = true;
-          try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-              const updates = JSON.parse(raw) as Record<string, RiskLevel>;
-              if (Object.keys(updates).length) {
-                await fetch("/api/alerts/overrides", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ updates, replace: true }),
-                });
-              }
-            }
-          } catch {
-            /* ignore */
-          }
+          await hydrateLocal();
         }
         const [payload, hydroPayload] = await Promise.all([
-          fetchJson<AlertsPayload>("/api/alerts"),
+          fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         ]);
         if (cancelled) return;
@@ -144,10 +221,10 @@ export function AlertsWorkbench() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [tipo]);
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || data.tipo !== tipo) return;
     if (firstRef.current) {
       firstRef.current = false;
       prevRef.current = data;
@@ -155,7 +232,7 @@ export function AlertsWorkbench() {
     }
     const prev = prevRef.current;
     prevRef.current = data;
-    if (!prev) return;
+    if (!prev || prev.tipo !== data.tipo) return;
 
     for (const alert of data.alerts) {
       const old = prev.alerts.find((item) => item.id === alert.id);
@@ -166,20 +243,20 @@ export function AlertsWorkbench() {
           <ToastCard
             tone="novo"
             title={`Novo alerta em ${alert.municipio}`}
-            body={`${RISK_LABELS[alert.risco]} · ${alert.bacia}`}
+            body={`${levelLabel(alert.risco)} · ${alert.bacia}`}
           />
         ));
-      } else if (riskRank(alert.risco) > riskRank(old.risco)) {
+      } else if (levelRank(tipo, alert.risco) > levelRank(tipo, old.risco)) {
         toast.custom(() => (
           <ToastCard
             tone="agravo"
             title={`Agravamento em ${alert.municipio}`}
-            body={`${RISK_LABELS[old.risco]} → ${RISK_LABELS[alert.risco]}`}
+            body={`${levelLabel(old.risco)} → ${levelLabel(alert.risco)}`}
           />
         ));
       }
     }
-  }, [data]);
+  }, [data, tipo]);
 
   function setQuery(next: Record<string, string | null>) {
     const usp = new URLSearchParams(params.toString());
@@ -221,19 +298,21 @@ export function AlertsWorkbench() {
   }, [catalog, activeFilter, bacia, selected, busca]);
 
   const counts = useMemo(() => {
-    const base = { TODOS: 0, BAIXO: 0, MODERADO: 0, ALTO: 0, SEVERO: 0, EXTREMO: 0 };
+    const acc: Record<string, number> = { TODOS: 0 };
+    for (const level of product.levels) acc[level] = 0;
     for (const m of catalog) {
-      base[m.risco] += 1;
-      base.TODOS += 1;
+      acc[m.risco] = (acc[m.risco] ?? 0) + 1;
+      acc.TODOS += 1;
     }
-    return base;
-  }, [catalog]);
+    return acc;
+  }, [catalog, product.levels]);
 
   const pct = (n: number) =>
     counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(1).replace(".", ",")}% do total` : "0%";
 
   const overrideCount = catalog.filter((m) => m.fonte === "admin").length;
-  const loading = !data && !error;
+  const ready = Boolean(data && data.tipo === tipo);
+  const loading = !ready && !error;
   const selectedRow = catalog.find((m) => m.nome === selected) ?? null;
   const selectedAlert =
     data?.alerts.find((a) => a.municipio === selected) ??
@@ -247,6 +326,7 @@ export function AlertsWorkbench() {
       ),
     [data, windowFilter],
   );
+  const ProductIcon = PRODUCT_ICONS[tipo];
 
   async function paintMunicipio(id: string, nome: string, baciaName: string) {
     await persistOverrides({ [id]: paintLevel });
@@ -255,13 +335,13 @@ export function AlertsWorkbench() {
       bacia: baciaName,
       calha: BACIA_TO_CALHA[baciaName] ?? baciaName,
     });
-    toast.success(`${nome}: ${RISK_LABELS[paintLevel]}`);
+    toast.success(`${nome}: ${levelLabel(paintLevel)}`);
   }
 
   async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
     if (!data) return;
     const ring = latLngsToRing(points);
-    const updates: Record<string, RiskLevel> = {};
+    const updates: Record<string, string> = {};
     for (const m of data.municipios) {
       if (pointInRing(m.lon, m.lat, ring)) updates[m.id] = paintLevel;
     }
@@ -271,16 +351,50 @@ export function AlertsWorkbench() {
       return;
     }
     await persistOverrides(updates);
-    toast.success(`${n} município(s) classificados como ${RISK_LABELS[paintLevel]}.`);
+    toast.success(`${n} município(s) classificados como ${levelLabel(paintLevel)}.`);
     setDrawMode(false);
   }
 
   async function restoreLive() {
-    await fetch("/api/alerts/overrides", { method: "DELETE" });
-    localStorage.removeItem(STORAGE_KEY);
-    const payload = await fetchJson<AlertsPayload>("/api/alerts");
+    await fetch(`/api/alerts/overrides?tipo=${tipo}`, { method: "DELETE" });
+    try {
+      const current = readLocalOverrides();
+      for (const key of Object.keys(current)) {
+        if (key.startsWith(`${tipo}:`)) delete current[key];
+      }
+      writeLocalOverrides(current);
+    } catch {
+      /* ignore */
+    }
+    const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
     setData(payload);
     toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
+  }
+
+  async function exportMapPng() {
+    if (!data) throw new Error("Mapa ainda não carregou");
+    const colorByNome = new Map(data.municipios.map((m) => [m.nome, LEVEL_COLORS[m.risco] ?? "#7c8fab"]));
+    const itemsSource = product.scale === "ar" ? PNG_AIR_ITEMS : PNG_RISK_ITEMS;
+    await exportInstitutionalPng({
+      title: "Painel de Alertas",
+      productLegend: `${product.label} — ${product.subtitle}`,
+      filename: pngFilename("painel_alertas_cemoa"),
+      colorFor: (nome) => colorByNome.get(nome) ?? "#7c8fab",
+      legendTitle: product.scale === "ar" ? "Qualidade do ar (µg/m³)" : "Níveis de risco",
+      legendItems: itemsSource.map((item) => ({
+        ...item,
+        color: LEVEL_COLORS[item.key] ?? "#7c8fab",
+        count: counts[item.key] ?? 0,
+      })),
+      footerSources: `Fontes de monitoramento: ${product.sources}`,
+      extraNote:
+        tipo === "INCENDIO"
+          ? {
+              title: "MP2,5 — MATERIAL PARTICULADO FINO",
+              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³ (microgramas por metro cúbico de ar). Incêndio em áreas não protegidas com reflexos na qualidade do ar.",
+            }
+          : undefined,
+    });
   }
 
   return (
@@ -292,35 +406,55 @@ export function AlertsWorkbench() {
               Painel de Alertas
             </h2>
             <InfoTooltip
-              label="Metodologia do risco de chuva intensa"
-              title="Metodologia — Risco de Chuva Intensa"
-              body="Classificação operacional CEMOA em cinco níveis (Baixo a Extremo), cruzando previsões INMET/CPTEC, imagens CENSIPAM e impacto esperado sobre municípios. Nível Baixo é monitoramento; Moderado exige atenção; Alto, preparação; Severo, ação iminente; Extremo, ação imediata de proteção da vida. A classificação do operador sobrepõe o monitoramento automático."
+              label={`Metodologia — ${product.label}`}
+              title={`Metodologia — ${product.label}`}
+              body={METHOD_BODY[tipo]}
             />
           </div>
           <p className="text-xs text-text-mute">
             {adminMode
               ? "Modo classificação: clique no município (ou desenhe um polígono) para aplicar o nível selecionado."
-              : "Mesmo recorte do boletim hidrológico: KPIs, calha/bacia e município compartilhados. Clique em um nível para filtrar o mapa."}
+              : "Quatro produtos do CEMOA no mesmo recorte dos 62 municípios. KPIs, bacia e município compartilhados com o boletim. Clique em um nível para filtrar o mapa."}
           </p>
         </div>
 
         <section
-          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]"
-          aria-label="Resumo de chuva intensa"
+          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]"
+          aria-label={`Resumo de ${product.short}`}
         >
           <Card className="flex flex-col justify-between gap-3 p-3 sm:p-4">
             <div className="flex items-start gap-3">
               <span className="grid size-10 place-items-center rounded-xl bg-focus/15 text-focus">
-                <CloudRain className="size-5" />
+                <ProductIcon className="size-5" />
               </span>
-              <div>
+              <div className="min-w-0 flex-1">
                 <small className="text-[10px] font-bold tracking-[0.1em] text-text-mute uppercase">
-                  Status de risco
+                  Tipo de alerta
                 </small>
-                <p className="text-lg font-black">Chuva intensa</p>
-                <p className="text-xs text-text-mute">
-                  Escala de cinco níveis · janela {windowFilter === "hoje" ? "de hoje" : windowFilter}
-                </p>
+                <label className="mt-1 block">
+                  <span className="sr-only">Selecionar tipo de alerta</span>
+                  <select
+                    className="hydro-select mt-0.5 font-black"
+                    value={tipo}
+                    onChange={(e) => {
+                      const next = parseAlertType(e.target.value);
+                      setEditorOpen(false);
+                      setDrawMode(false);
+                      setQuery({
+                        tipo: next === "CHUVA" ? null : next,
+                        risco: null,
+                      });
+                    }}
+                    aria-label="Tipo de alerta"
+                  >
+                    {ALERT_TYPES.map((id) => (
+                      <option key={id} value={id}>
+                        {ALERT_PRODUCTS[id].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="mt-1 text-xs text-text-mute">{product.subtitle}</p>
               </div>
             </div>
             <TimeFilter value={windowFilter} onChange={setWindowFilter} />
@@ -338,13 +472,13 @@ export function AlertsWorkbench() {
               }
               loading={loading}
             />
-            {RISK_LEVELS.map((level) => (
+            {product.levels.map((level) => (
               <KpiCard
                 key={level}
-                label={RISK_LABELS[level]}
-                value={loading ? "—" : String(counts[level])}
-                sub={pct(counts[level])}
-                accent={RISK_COLORS[level]}
+                label={LEVEL_LABELS[level] ?? level}
+                value={loading ? "—" : String(counts[level] ?? 0)}
+                sub={pct(counts[level] ?? 0)}
+                accent={LEVEL_COLORS[level]}
                 active={activeFilter === level}
                 onClick={() => setQuery({ risco: level, municipio: null })}
                 loading={loading}
@@ -372,6 +506,8 @@ export function AlertsWorkbench() {
             selected={selected}
             bacia={bacia}
             risco={activeFilter}
+            tipo={tipo}
+            levels={product.levels}
             busca={busca}
             loading={loading}
             onSelect={(nome, basinName) =>
@@ -413,7 +549,7 @@ export function AlertsWorkbench() {
                 <span className="live-dot" />
                 Monitoramento ativo · {counts.TODOS} municípios
               </span>
-              <span className="hidden sm:inline">· INMET · CENSIPAM · CPTEC</span>
+              <span className="hidden sm:inline">· {product.sources}</span>
               <a
                 href="https://www.openstreetmap.org/"
                 target="_blank"
@@ -423,6 +559,7 @@ export function AlertsWorkbench() {
                 OpenStreetMap
               </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
+                <ExportPngButton onExport={exportMapPng} disabled={!ready} />
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -452,8 +589,8 @@ export function AlertsWorkbench() {
                             </span>
                             <b className="text-text">
                               {m.novo
-                                ? `Novo · ${RISK_LABELS[m.risco]}`
-                                : `${RISK_LABELS[m.previousRisco]} → ${RISK_LABELS[m.risco]}`}
+                                ? `Novo · ${levelLabel(m.risco)}`
+                                : `${levelLabel(m.previousRisco)} → ${levelLabel(m.risco)}`}
                             </b>
                           </li>
                         ))}
@@ -523,9 +660,9 @@ export function AlertsWorkbench() {
                   Carregando malha municipal e mapa-base…
                 </div>
               ) : null}
-              {data ? (
+              {ready && data ? (
                 <AlertsMap
-                  key={OSM_BASEMAP_ID}
+                  key={`${OSM_BASEMAP_ID}-${tipo}`}
                   ref={mapApi}
                   municipios={data.municipios}
                   selected={selected}
@@ -548,18 +685,19 @@ export function AlertsWorkbench() {
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
                 />
               ) : null}
+              <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
               <div className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
                 <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
-                  Chuva intensa
+                  {product.legendTitle}
                 </div>
                 <ul className="space-y-0.5">
-                  {RISK_LEVELS.map((level) => (
+                  {product.levels.map((level) => (
                     <li key={level} className="flex items-center gap-1.5 text-text">
                       <span
                         className="size-2.5 rounded-sm"
-                        style={{ background: RISK_COLORS[level] }}
+                        style={{ background: LEVEL_COLORS[level] }}
                       />
-                      {RISK_LABELS[level]}
+                      {LEVEL_LABELS[level] ?? level}
                     </li>
                   ))}
                 </ul>
@@ -572,6 +710,7 @@ export function AlertsWorkbench() {
               enabled={adminMode}
               drawMode={drawMode}
               paintLevel={paintLevel}
+              levels={product.levels}
               overrideCount={overrideCount}
               onToggle={() => {
                 setAdminMode((v) => !v);
@@ -581,7 +720,9 @@ export function AlertsWorkbench() {
                 setAdminMode(true);
                 setDrawMode((v) => !v);
               }}
-              onPaintLevel={setPaintLevel}
+              onPaintLevel={(level) =>
+                setPaintByTipo((prev) => ({ ...prev, [tipo]: level }))
+              }
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreLive()}
               onFinishPolygon={() => mapApi.current?.finishPolygon()}
@@ -596,12 +737,14 @@ export function AlertsWorkbench() {
                 issuedAt={selectedRow.issuedAt}
                 alert={selectedAlert}
                 hydro={selectedHydro}
+                productLabel={product.label}
+                tipo={tipo}
                 onClose={() => setQuery({ municipio: null })}
               />
             ) : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
-                Clique em um município no mapa ou na lista para ver o risco de chuva, a cota do
-                boletim e a classificação do operador.
+                Clique em um município no mapa ou na lista para ver o {product.short.toLowerCase()}, a
+                cota do boletim e a classificação do operador.
               </p>
             )}
           </Card>
@@ -611,6 +754,8 @@ export function AlertsWorkbench() {
       <RiskEditorDialog
         open={editorOpen}
         rows={data?.municipios ?? []}
+        levels={product.levels}
+        productLabel={product.label}
         onClose={() => setEditorOpen(false)}
         onApply={(updates) => void persistOverrides(updates)}
       />
@@ -631,7 +776,7 @@ function ToastCard({
     <div className="flex min-w-[280px] items-start gap-3 rounded-xl border border-border bg-panel-2 p-3 shadow-2xl">
       <span
         className="mt-0.5 size-2.5 rounded-full"
-        style={{ background: tone === "agravo" ? RISK_COLORS.SEVERO : RISK_COLORS.ALTO }}
+        style={{ background: tone === "agravo" ? LEVEL_COLORS.SEVERO : LEVEL_COLORS.ALTO }}
       />
       <div>
         <p className="text-sm font-bold text-text">{title}</p>

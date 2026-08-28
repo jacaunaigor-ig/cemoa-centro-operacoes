@@ -72,6 +72,33 @@ export const HYDRO_STATUS_LABELS: Record<HydroStatus | "SL", string> = {
   SL: "Sem leitura",
 };
 
+export const PNG_HYDRO_ITEMS: Array<{
+  key: HydroStatus | "SL";
+  title: string;
+  text: string;
+}> = [
+  {
+    key: "NORMAL",
+    title: "Baixo – Monitoramento",
+    text: "Situação dentro da normalidade, sem expectativa de impactos significativos à população.",
+  },
+  {
+    key: "MODERADO",
+    title: "Moderado – Atenção",
+    text: "Possibilidade de evolução para situação de desastre, com impactos localizados ou restritos a grupos mais vulneráveis.",
+  },
+  {
+    key: "ALTO",
+    title: "Alto – Preparação",
+    text: "Risco relevante de desastre, com possibilidade de danos materiais, interrupção de serviços ou impacto à proteção da população.",
+  },
+  {
+    key: "SL",
+    title: "Sem leitura",
+    text: "Estação sem cota no recorte operacional; o município permanece no monitoramento até nova medição.",
+  },
+];
+
 export const HYDRO_PILL_CLASS: Record<HydroStatus | "SL", string> = {
   NORMAL: "bg-risco-baixo/18 text-risco-baixo border-risco-baixo/35",
   MODERADO: "bg-risco-moderado/18 text-risco-moderado border-risco-moderado/40",

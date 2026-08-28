@@ -1,14 +1,18 @@
-import { RISK_ACTIONS, RISK_LABELS } from "@/lib/risk";
-import type { RiskLevel } from "@/lib/types";
+import { levelLabel, riskActionFor } from "@/lib/alert-types";
+import type { AlertLevel } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const variant: Record<RiskLevel, "baixo" | "moderado" | "alto" | "severo" | "extremo"> = {
+const variant: Record<string, "baixo" | "moderado" | "alto" | "severo" | "extremo"> = {
   BAIXO: "baixo",
+  BOA: "baixo",
   MODERADO: "moderado",
   ALTO: "alto",
+  RUIM: "alto",
   SEVERO: "severo",
+  MUITO_RUIM: "severo",
   EXTREMO: "extremo",
+  PESSIMA: "extremo",
 };
 
 export function RiskBadge({
@@ -16,14 +20,14 @@ export function RiskBadge({
   showAction = false,
   className,
 }: {
-  level: RiskLevel;
+  level: AlertLevel | string;
   showAction?: boolean;
   className?: string;
 }) {
   return (
-    <Badge variant={variant[level]} className={cn(className)}>
-      {RISK_LABELS[level]}
-      {showAction ? ` · ${RISK_ACTIONS[level]}` : ""}
+    <Badge variant={variant[level] ?? "default"} className={cn(className)}>
+      {levelLabel(level)}
+      {showAction ? ` · ${riskActionFor(level)}` : ""}
     </Badge>
   );
 }

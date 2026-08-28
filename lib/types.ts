@@ -10,6 +10,12 @@ export type RiskLevel = (typeof RISK_LEVELS)[number];
 
 export type TimeWindow = "1h" | "6h" | "hoje" | "24h";
 
+export type AlertProductId = "CHUVA" | "ALAGAMENTO" | "MOVIMENTO" | "INCENDIO";
+
+export type AirLevel = "BOA" | "MODERADO" | "RUIM" | "MUITO_RUIM" | "PESSIMA";
+
+export type AlertLevel = RiskLevel | AirLevel;
+
 export type Trend = "subida" | "descida" | "estavel";
 
 export type Municipality = {
@@ -35,13 +41,13 @@ export type RainAlert = {
   municipioId: string;
   municipio: string;
   bacia: string;
-  risco: RiskLevel;
+  risco: AlertLevel;
   issuedAt: number;
   updatedAt: number;
-  previousRisco: RiskLevel;
+  previousRisco: AlertLevel;
   agravado: boolean;
   novo: boolean;
-  tipo: "CHUVA";
+  tipo: AlertProductId;
   resumo: string;
 };
 
@@ -49,10 +55,11 @@ export type AlertsPayload = {
   generatedAt: number;
   source: string;
   cache: "HIT" | "MISS";
+  tipo: AlertProductId;
   stats: {
     ativos: number;
     municipiosEmAlerta: number;
-    maiorRisco: RiskLevel;
+    maiorRisco: AlertLevel;
     agravamentos: number;
     novos: number;
   };
@@ -63,7 +70,7 @@ export type AlertsPayload = {
     bacia: string;
     lon: number;
     lat: number;
-    risco: RiskLevel;
+    risco: AlertLevel;
     issuedAt: number | null;
     fonte: "admin" | "monitor";
   }>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { RISK_COLORS, RISK_LABELS } from "@/lib/risk";
+import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import type { RainAlert } from "@/lib/types";
 
 export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
@@ -8,7 +8,7 @@ export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
 
   const row = (suffix: string) =>
     items.map((e) => {
-      const color = RISK_COLORS[e.risco];
+      const color = LEVEL_COLORS[e.risco] ?? "#7c8fab";
       return (
         <span key={`${e.id}-${suffix}`} className="ticker-item">
           <strong className="text-brand-2">{e.bacia}</strong>
@@ -17,7 +17,7 @@ export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
             className="rounded-full border px-1.5 py-0.5 text-[10px] font-bold uppercase"
             style={{ borderColor: `${color}88`, color }}
           >
-            {RISK_LABELS[e.risco]}
+            {LEVEL_LABELS[e.risco] ?? e.risco}
           </span>
           {e.agravado ? (
             <span className="text-[10px] font-bold text-risco-severo">Agravamento</span>

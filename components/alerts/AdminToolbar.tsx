@@ -2,14 +2,15 @@
 
 import { Check, Pencil, Pentagon, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RISK_COLORS, RISK_LABELS, RISK_LEVELS } from "@/lib/risk";
-import type { RiskLevel } from "@/lib/types";
+import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
+import type { AlertLevel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function AdminToolbar({
   enabled,
   drawMode,
   paintLevel,
+  levels,
   overrideCount,
   onToggle,
   onDraw,
@@ -20,11 +21,12 @@ export function AdminToolbar({
 }: {
   enabled: boolean;
   drawMode: boolean;
-  paintLevel: RiskLevel;
+  paintLevel: string;
+  levels: readonly string[];
   overrideCount: number;
   onToggle: () => void;
   onDraw: () => void;
-  onPaintLevel: (level: RiskLevel) => void;
+  onPaintLevel: (level: string) => void;
   onOpenBatch: () => void;
   onRestore: () => void;
   onFinishPolygon: () => void;
@@ -71,7 +73,7 @@ export function AdminToolbar({
         role="group"
         aria-label="Nível aplicado no clique ou no polígono"
       >
-        {RISK_LEVELS.map((level) => (
+        {levels.map((level) => (
           <button
             key={level}
             type="button"
@@ -82,20 +84,20 @@ export function AdminToolbar({
             )}
             style={
               paintLevel === level
-                ? { background: RISK_COLORS[level], borderColor: RISK_COLORS[level] }
+                ? { background: LEVEL_COLORS[level], borderColor: LEVEL_COLORS[level] }
                 : undefined
             }
             aria-pressed={paintLevel === level}
           >
-            {RISK_LABELS[level]}
+            {LEVEL_LABELS[level] ?? level}
           </button>
         ))}
       </div>
       <span className="ml-auto text-[11px] text-text-mute">
         {enabled
           ? drawMode
-            ? `Clique para vértices · duplo clique aplica ${RISK_LABELS[paintLevel]}`
-            : `Clique no município para aplicar ${RISK_LABELS[paintLevel]}`
+            ? `Clique para vértices · duplo clique aplica ${LEVEL_LABELS[paintLevel] ?? paintLevel}`
+            : `Clique no município para aplicar ${LEVEL_LABELS[paintLevel] ?? paintLevel}`
           : `${overrideCount} município(s) classificado(s) pelo operador`}
       </span>
       <Button type="button" size="sm" variant="ghost" onClick={onRestore} disabled={overrideCount === 0}>

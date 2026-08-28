@@ -5,9 +5,9 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
-import { RISK_ACTIONS } from "@/lib/risk";
+import { riskActionFor, type AlertType } from "@/lib/alert-types";
 import { BACIA_TO_CALHA, statusAtivo } from "@/lib/hydrology";
-import type { HydroStation, RainAlert, RiskLevel } from "@/lib/types";
+import type { AlertLevel, HydroStation, RainAlert } from "@/lib/types";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
 
 export function AlertDetail({
@@ -18,15 +18,18 @@ export function AlertDetail({
   issuedAt,
   alert,
   hydro,
+  productLabel,
   onClose,
 }: {
   nome: string;
   bacia: string;
-  risco: RiskLevel;
+  risco: AlertLevel;
   fonte: "admin" | "monitor";
   issuedAt: number | null;
   alert: RainAlert | null;
   hydro: HydroStation | null;
+  productLabel: string;
+  tipo?: AlertType;
   onClose: () => void;
 }) {
   const calha = BACIA_TO_CALHA[bacia] ?? bacia;
@@ -36,7 +39,7 @@ export function AlertDetail({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
-            Detalhe de chuva intensa
+            Detalhe · {productLabel}
           </p>
           <h3 className="text-base font-black">{nome}</h3>
           <p className="text-xs text-text-mute">{bacia}</p>
@@ -55,7 +58,7 @@ export function AlertDetail({
 
       <p className="mt-2 text-sm text-text-dim">
         {alert?.resumo ??
-          `Condição de ${RISK_ACTIONS[risco].toLowerCase()} para chuva intensa em ${nome}.`}
+          `Condição de ${riskActionFor(risco).toLowerCase()} para ${productLabel.toLowerCase()} em ${nome}.`}
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -73,7 +76,7 @@ export function AlertDetail({
           label="Emitido"
           value={issuedAt ? formatAmazonDateTime(issuedAt) : "Sem alerta ativo"}
         />
-        <Metric label="Ação" value={RISK_ACTIONS[risco]} />
+        <Metric label="Ação" value={riskActionFor(risco)} />
       </div>
 
       {hydro ? (

@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RiskBadge } from "@/components/shared/RiskBadge";
-import { BACIAS, RISK_LABELS, isActiveAlert } from "@/lib/risk";
+import { BACIAS } from "@/lib/risk";
+import { isAlertActive, LEVEL_LABELS, type AlertType } from "@/lib/alert-types";
 import { BACIA_TO_CALHA } from "@/lib/hydrology";
-import type { HydroStation, RainAlert, RiskLevel } from "@/lib/types";
+import type { AlertLevel, HydroStation, RainAlert } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 
 export function AlertList({
@@ -20,6 +21,8 @@ export function AlertList({
   selected,
   bacia,
   risco,
+  tipo,
+  levels,
   busca,
   loading,
   onSelect,
@@ -33,7 +36,7 @@ export function AlertList({
     id: string;
     nome: string;
     bacia: string;
-    risco: RiskLevel;
+    risco: AlertLevel;
     fonte: "admin" | "monitor";
     issuedAt: number | null;
   }>;
@@ -42,12 +45,14 @@ export function AlertList({
   hydro: HydroStation[];
   selected: string | null;
   bacia: string | null;
-  risco: RiskLevel | "TODOS";
+  risco: string | "TODOS";
+  tipo: AlertType;
+  levels: readonly string[];
   busca: string;
   loading: boolean;
   onSelect: (nome: string, bacia: string) => void;
   onBacia: (bacia: string | null) => void;
-  onRisco: (risco: RiskLevel | "TODOS") => void;
+  onRisco: (risco: string | "TODOS") => void;
   onBusca: (q: string) => void;
   onMunicipio: (nome: string | null) => void;
   onLimpar: () => void;
@@ -84,22 +89,16 @@ export function AlertList({
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
-          {(
-            [
-              ["TODOS", "Todos"],
-              ["EXTREMO", "Extremo"],
-              ["SEVERO", "Severo"],
-              ["ALTO", "Alto"],
-              ["MODERADO", "Moderado"],
-              ["BAIXO", "Baixo"],
-            ] as const
-          ).map(([value, label]) => (
+          <Chip active={risco === "TODOS"} onClick={() => onRisco("TODOS")}>
+            Todos
+          </Chip>
+          {[...levels].reverse().map((value) => (
             <Chip
               key={value}
               active={risco === value}
               onClick={() => onRisco(value)}
             >
-              {label}
+              {LEVEL_LABELS[value] ?? value}
             </Chip>
           ))}
         </div>
@@ -199,8 +198,8 @@ export function AlertList({
                           <span>
                             {alert
                               ? `${alert.novo ? "Novo" : alert.agravado ? "Agravamento" : "Alerta"} · ${formatRelative(alert.updatedAt)}`
-                              : isActiveAlert(m.risco)
-                                ? RISK_LABELS[m.risco]
+                              : isAlertActive(tipo, m.risco)
+                                ? LEVEL_LABELS[m.risco] ?? m.risco
                                 : "Monitoramento"}
                             {cota
                               ? cota.semLeitura
