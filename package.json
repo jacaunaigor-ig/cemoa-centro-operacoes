@@ -6,7 +6,8 @@
     "dev": "next dev --port 43127 --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --port 43127 --hostname 127.0.0.1",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:pages": "node scripts/build-pages.mjs"
   },
   "dependencies": {
     "@radix-ui/react-popover": "^1.1.23",

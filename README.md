@@ -39,6 +39,8 @@ npm run dev
 
 Abra [http://127.0.0.1:43127](http://127.0.0.1:43127). O horário operacional é o de Manaus (UTC−4).
 
+Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-operacoes/](https://jacaunaigor-ig.github.io/cemoa-centro-operacoes/).
+
 ## Rotas
 
 | Caminho | Produto |

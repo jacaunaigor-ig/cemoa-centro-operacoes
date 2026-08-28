@@ -10,6 +10,12 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { STATIC_DEPLOY, withBase } from "@/lib/site";
+import {
+  clearLocalSession,
+  localNeedsSetup,
+  readLocalSession,
+} from "@/lib/local-auth";
 
 export type LayoutMode = "desktop" | "mobile";
 
@@ -118,7 +124,19 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const refreshAuth = useCallback(async () => {
     const gen = authGen.current;
     try {
-      const res = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+      if (STATIC_DEPLOY) {
+        applyAuth(
+          {
+            user: readLocalSession(),
+            needsSetup: localNeedsSetup(),
+            googleEnabled: false,
+            allowReset: true,
+          },
+          gen,
+        );
+        return;
+      }
+      const res = await fetch(withBase("/api/auth/me"), { credentials: "same-origin", cache: "no-store" });
       const data = (await res.json()) as {
         user?: SessionUser | null;
         needsSetup?: boolean;
@@ -141,7 +159,20 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     const authOk = params.get("auth") === "ok";
     (async () => {
       try {
-        const res = await fetch("/api/auth/me", {
+        if (STATIC_DEPLOY) {
+          if (cancelled) return;
+          applyAuth(
+            {
+              user: readLocalSession(),
+              needsSetup: localNeedsSetup(),
+              googleEnabled: false,
+              allowReset: true,
+            },
+            gen,
+          );
+          return;
+        }
+        const res = await fetch(withBase("/api/auth/me"), {
           credentials: "same-origin",
           cache: "no-store",
         });
@@ -220,7 +251,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     authGen.current += 1;
     try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      if (STATIC_DEPLOY) clearLocalSession();
+      else await fetch(withBase("/api/auth/logout"), { method: "POST", credentials: "same-origin" });
     } catch {
       /* still clear locally */
     }

@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/shared/Modal";
 import { useOpsMode } from "@/components/shared/OpsMode";
+import { STATIC_DEPLOY, withBase } from "@/lib/site";
+import {
+  createLocalAdmin,
+  deleteLocalAdmin,
+  listLocalAdmins,
+  readLocalSession,
+  updateLocalPassword,
+} from "@/lib/local-auth";
 
 type AdminRow = {
   id: string;
@@ -30,7 +38,14 @@ export function AdminsDialog() {
   const [next, setNext] = useState("");
 
   async function load() {
-    const res = await fetch("/api/auth/admins", { credentials: "same-origin" });
+    if (STATIC_DEPLOY) {
+      const me = readLocalSession();
+      setAdmins(listLocalAdmins());
+      setMe(me?.id ?? null);
+      setError(null);
+      return;
+    }
+    const res = await fetch(withBase("/api/auth/admins"), { credentials: "same-origin" });
     const data = (await res.json()) as { admins?: AdminRow[]; me?: string; error?: string };
     if (!res.ok) {
       setError(data.error ?? "Não foi possível listar administradores.");
@@ -52,7 +67,20 @@ export function AdminsDialog() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/admins", {
+      if (STATIC_DEPLOY) {
+        const result = await createLocalAdmin({ name, login, password, email });
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        setName("");
+        setLogin("");
+        setPassword("");
+        setEmail("");
+        await load();
+        return;
+      }
+      const res = await fetch(withBase("/api/auth/admins"), {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +105,17 @@ export function AdminsDialog() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/auth/admins?id=${encodeURIComponent(id)}`, {
+      if (STATIC_DEPLOY) {
+        const meId = readLocalSession()?.id ?? "";
+        const result = deleteLocalAdmin(id, meId);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        await load();
+        return;
+      }
+      const res = await fetch(withBase(`/api/auth/admins?id=${encodeURIComponent(id)}`), {
         method: "DELETE",
         credentials: "same-origin",
       });
@@ -97,7 +135,18 @@ export function AdminsDialog() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/password", {
+      if (STATIC_DEPLOY) {
+        const meId = readLocalSession()?.id ?? "";
+        const result = await updateLocalPassword(meId, current, next);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        setCurrent("");
+        setNext("");
+        return;
+      }
+      const res = await fetch(withBase("/api/auth/password"), {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -202,7 +251,7 @@ export function AdminsDialog() {
 
       {googleEnabled && session && !session.id.startsWith("env:") ? (
         <a
-          href="/api/auth/google?link=1"
+          href={withBase("/api/auth/google?link=1")}
           className="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-xs font-semibold text-neutral-900 hover:bg-neutral-100"
         >
           Associar meu Gmail

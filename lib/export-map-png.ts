@@ -1,3 +1,5 @@
+import { withBase } from "@/lib/site";
+
 type Ring = number[][];
 type Geom =
   | { type: "Polygon"; coordinates: Ring[] }
@@ -113,7 +115,7 @@ export function pngFilename(prefix: string) {
 }
 
 export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
-  const geo = (await fetch("/geo/amazonas-municipios.json").then((r) => {
+  const geo = (await fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
     if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
     return r.json();
   })) as FeatureCollection;

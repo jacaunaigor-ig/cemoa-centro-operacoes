@@ -43,6 +43,7 @@ next-env.d.ts
 # local uploads / agent scratch
 /uploads/
 /agent-tools/
+/.pages-skip/
 
 # admin credentials (never commit)
 /data/admins.json

@@ -27,7 +27,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { fetchJson, reportClientError } from "@/lib/client";
-import { filterAlertsByWindow } from "@/lib/live-state";
+import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow } from "@/lib/live-state";
+import { clearOverrides, hydrateOverrideRecord, mergeOverrides, replaceOverrides } from "@/lib/overrides";
+import { mergeHydroOverrides } from "@/lib/hydro-overrides";
+import { STATIC_DEPLOY } from "@/lib/site";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
@@ -95,6 +98,44 @@ function writeLocalOverrides(next: Record<string, string>) {
   localStorage.setItem(STORAGE_V2, JSON.stringify(next));
 }
 
+function rememberLocalOverrides(
+  tipo: AlertType,
+  updates: Record<string, string>,
+  replace: boolean,
+) {
+  const current = readLocalOverrides();
+  if (replace) {
+    for (const key of Object.keys(current)) {
+      if (key.startsWith(`${tipo}:`)) delete current[key];
+    }
+  }
+  for (const [id, level] of Object.entries(updates)) {
+    current[`${tipo}:${id}`] = level;
+  }
+  writeLocalOverrides(current);
+}
+
+function hydrateClientOverrides() {
+  try {
+    const v2raw = localStorage.getItem(STORAGE_V2);
+    const v1raw = localStorage.getItem(STORAGE_V1);
+    if (v2raw) hydrateOverrideRecord(JSON.parse(v2raw) as Record<string, unknown>);
+    else if (v1raw) hydrateOverrideRecord(JSON.parse(v1raw) as Record<string, unknown>, "CHUVA");
+    const hydroRaw = localStorage.getItem("cemoa_hydro_overrides_v1");
+    if (hydroRaw) mergeHydroOverrides(JSON.parse(hydroRaw) as Record<string, import("@/lib/hydro-overrides").HydroPatch>);
+  } catch {
+    /* ignore */
+  }
+}
+
+function localAlerts(tipo: AlertType): AlertsPayload {
+  return { ...buildAlertsPayload(Date.now(), tipo), cache: "MISS" };
+}
+
+function localHydro(): HydrologyPayload {
+  return { ...buildHydrologyPayload(), cache: "MISS" };
+}
+
 export function AlertsWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
@@ -130,6 +171,17 @@ export function AlertsWorkbench() {
 
   const persistOverrides = useCallback(
     async (updates: Record<string, string>, replace = false) => {
+      if (STATIC_DEPLOY) {
+        if (replace) replaceOverrides(tipo, updates);
+        else mergeOverrides(tipo, updates);
+        try {
+          rememberLocalOverrides(tipo, updates, replace);
+        } catch {
+          /* ignore quota */
+        }
+        setData(localAlerts(tipo));
+        return;
+      }
       const res = await fetch("/api/alerts/overrides", {
         method: "POST",
         credentials: "same-origin",
@@ -145,16 +197,7 @@ export function AlertsWorkbench() {
         return;
       }
       try {
-        const current = readLocalOverrides();
-        if (replace) {
-          for (const key of Object.keys(current)) {
-            if (key.startsWith(`${tipo}:`)) delete current[key];
-          }
-        }
-        for (const [id, level] of Object.entries(updates)) {
-          current[`${tipo}:${id}`] = level;
-        }
-        writeLocalOverrides(current);
+        rememberLocalOverrides(tipo, updates, replace);
       } catch {
         /* ignore quota */
       }
@@ -211,6 +254,14 @@ export function AlertsWorkbench() {
     async function load() {
       try {
         if (!hydrated.current) hydrated.current = true;
+        if (STATIC_DEPLOY) {
+          hydrateClientOverrides();
+          if (cancelled) return;
+          setData(localAlerts(tipo));
+          setHydro(localHydro());
+          setError(null);
+          return;
+        }
         if (session && !localPushed.current) {
           localPushed.current = true;
           await hydrateLocal();
@@ -405,6 +456,21 @@ export function AlertsWorkbench() {
   }
 
   async function restoreLive() {
+    if (STATIC_DEPLOY) {
+      clearOverrides(tipo);
+      try {
+        const current = readLocalOverrides();
+        for (const key of Object.keys(current)) {
+          if (key.startsWith(`${tipo}:`)) delete current[key];
+        }
+        writeLocalOverrides(current);
+      } catch {
+        /* ignore */
+      }
+      setData(localAlerts(tipo));
+      toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
+      return;
+    }
     const res = await fetch(`/api/alerts/overrides?tipo=${tipo}`, {
       method: "DELETE",
       credentials: "same-origin",

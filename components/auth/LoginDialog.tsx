@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/shared/Modal";
 import { useOpsMode } from "@/components/shared/OpsMode";
+import { STATIC_DEPLOY, withBase } from "@/lib/site";
+import { enterLocal } from "@/lib/local-auth";
 
 function field(form: FormData, ...keys: string[]): string {
   for (const key of keys) {
@@ -50,7 +52,23 @@ export function LoginDialog() {
 
     setBusy(true);
     try {
-      const res = await fetch("/api/auth/enter", {
+      if (STATIC_DEPLOY) {
+        const result = await enterLocal({
+          name,
+          login,
+          password,
+          reset: resetLocal || undefined,
+        });
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+        setForceCreate(false);
+        setResetLocal(false);
+        completeLogin(result.user);
+        return;
+      }
+      const res = await fetch(withBase("/api/auth/enter"), {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -114,7 +132,7 @@ export function LoginDialog() {
         {googleEnabled ? (
           <>
             <a
-              href="/api/auth/google"
+              href={withBase("/api/auth/google")}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
             >
               <GoogleMark />

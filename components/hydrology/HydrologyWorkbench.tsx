@@ -20,6 +20,10 @@ import {
 } from "@/components/ui/popover";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import { fetchJson, reportClientError } from "@/lib/client";
+import { buildHydrologyPayload } from "@/lib/live-state";
+import { STATIC_DEPLOY } from "@/lib/site";
+import { toast } from "sonner";
+import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 import {
   HYDRO_STATUS_COLORS,
   HYDRO_STATUS_LABELS,
@@ -52,8 +56,6 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
-import { toast } from "sonner";
-import type { HydroPatch } from "@/lib/hydro-overrides";
 import { cn } from "@/lib/utils";
 
 const POLL_MS = 12_000;
@@ -113,6 +115,18 @@ export function HydrologyWorkbench() {
     async function load() {
       try {
         if (!hydrated.current) hydrated.current = true;
+        if (STATIC_DEPLOY) {
+          try {
+            const raw = localStorage.getItem(HYDRO_STORAGE);
+            if (raw) mergeHydroOverrides(JSON.parse(raw) as Record<string, HydroPatch>);
+          } catch {
+            /* ignore */
+          }
+          if (cancelled) return;
+          setData({ ...buildHydrologyPayload(), cache: "MISS" });
+          setError(null);
+          return;
+        }
         if (session && !localPushed.current) {
           localPushed.current = true;
           try {
@@ -209,6 +223,25 @@ export function HydrologyWorkbench() {
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
 
   async function persistHydro(updates: Record<string, HydroPatch>, replace = false) {
+    if (STATIC_DEPLOY) {
+      if (replace) replaceHydroOverrides(updates);
+      else mergeHydroOverrides(updates);
+      try {
+        const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
+          string,
+          HydroPatch
+        >;
+        const next: Record<string, HydroPatch> = replace ? {} : { ...current };
+        for (const [id, patch] of Object.entries(updates)) {
+          next[id] = { ...(replace ? {} : current[id]), ...patch };
+        }
+        localStorage.setItem(HYDRO_STORAGE, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      setData({ ...buildHydrologyPayload(), cache: "MISS" });
+      return;
+    }
     const res = await fetch("/api/hydrology/overrides", {
       method: "POST",
       credentials: "same-origin",
@@ -268,6 +301,13 @@ export function HydrologyWorkbench() {
   }
 
   async function restoreHydro() {
+    if (STATIC_DEPLOY) {
+      clearHydroOverrides();
+      localStorage.removeItem(HYDRO_STORAGE);
+      setData({ ...buildHydrologyPayload(), cache: "MISS" });
+      toast.success("Cotas e status do operador removidos.");
+      return;
+    }
     const res = await fetch("/api/hydrology/overrides", {
       method: "DELETE",
       credentials: "same-origin",

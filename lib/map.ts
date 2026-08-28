@@ -1,10 +1,14 @@
-/** Same-origin OSM proxy — never Carto, no API key. */
-export const OSM_TILE_URL = "/tiles/osm/{z}/{x}/{y}";
+import { STATIC_DEPLOY, withBase } from "@/lib/site";
+
+/** Same-origin OSM proxy in Node; direct OSM tiles on GitHub Pages. Never Carto. */
+export const OSM_TILE_URL = STATIC_DEPLOY
+  ? "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  : withBase("/tiles/osm/{z}/{x}/{y}");
 
 export const OSM_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
 
-export const OSM_BASEMAP_ID = "osm-local-proxy-v3";
+export const OSM_BASEMAP_ID = STATIC_DEPLOY ? "osm-github-pages-v1" : "osm-local-proxy-v3";
 
 /** Southwest → northeast, used to keep the maps on Amazonas. */
 export const AMAZONAS_CENTER: [number, number] = [-3.9, -64.5];

@@ -24,6 +24,7 @@ import {
 import { HYDRO_RIOS, normalizeMunicipio } from "@/lib/hydrology";
 import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
+import { withBase } from "@/lib/site";
 import "leaflet/dist/leaflet.css";
 
 type Muni = {
@@ -284,7 +285,7 @@ export const AlertsMap = forwardRef<
       riversRef.current = rios;
 
       try {
-        const geo = await fetch("/geo/amazonas-municipios.json").then((r) => {
+        const geo = await fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
           if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
           return r.json();
         });
