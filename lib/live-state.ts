@@ -131,7 +131,21 @@ function cotaAt(m: (typeof MUNICIPALITIES)[number], at: number) {
   const wave = Math.sin(day / 6 + phase) * (1.15 + basinBias);
   const pulse = Math.sin(day * 2.2 + phase * 0.4) * 0.22;
   const tickNoise = (hash32(`${m.id}:${Math.floor(at / POLL_MS)}`) % 80) / 400 - 0.1;
-  const base = m.cotaAtencao - 1.35;
+  const extra =
+    m.nome === "Manaus"
+      ? 4.1
+      : m.nome === "Tabatinga"
+        ? 2.6
+        : m.nome === "Humaitá"
+          ? 3.1
+          : m.nome === "Itacoatiara"
+            ? 2.0
+            : m.bacia === "Madeira"
+              ? 1.7
+              : m.bacia === "Alto Solimões"
+                ? 1.4
+                : 0.35;
+  const base = m.cotaAtencao - 1.05 + extra;
   return Math.max(0.4, Number((base + wave + pulse + tickNoise).toFixed(2)));
 }
 
