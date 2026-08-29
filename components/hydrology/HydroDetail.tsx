@@ -6,11 +6,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
-import { Sparkline } from "@/components/hydrology/Sparkline";
+import { CotaChart } from "@/components/hydrology/CotaChart";
 import {
   HYDRO_STATUS_LABELS,
   limitesDoModo,
-  projecaoLinear,
   rotuloSituacao,
   situacaoLeitura,
   statusAtivo,
@@ -39,14 +38,13 @@ export function HydroDetail({
   const sit = situacaoLeitura(station);
   const vazante = limitesDoModo(station, "vazante");
   const enchente = limitesDoModo(station, "enchente");
-  const proj = projecaoLinear(station);
   const leituraDoDia = sit.atual;
 
   return (
     <section
       className={cn(
         "overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
-        compact ? "max-h-[46vh]" : "max-h-[min(52vh,480px)]",
+        compact ? "max-h-[52vh]" : "max-h-[min(62vh,560px)]",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -121,54 +119,53 @@ export function HydroDetail({
         >
           {rec.texto}
         </span>
-        <Sparkline
-          values={station.cotas}
+      </div>
+
+      <div className="mt-2">
+        <CotaChart
+          station={station}
           status={statusAtivo(station, modo)}
-          width={140}
-          height={32}
+          compact={compact}
+          limites={[
+            {
+              label: modo === "vazante" ? "Moderado" : "Moderado",
+              value: (modo === "vazante" ? vazante.moderado : enchente.moderado) ?? NaN,
+              color: "#FFEB3B",
+            },
+            {
+              label: "Alto",
+              value: (modo === "vazante" ? vazante.alto : enchente.alto) ?? NaN,
+              color: "#FF9800",
+            },
+          ].filter((l) => Number.isFinite(l.value))}
         />
       </div>
 
       {compact ? null : (
-        <>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="text-[10px] tracking-wide text-text-mute uppercase">
-                <tr>
-                  <th className="py-1 pr-2">Dia</th>
-                  {station.dias.map((d) => (
-                    <th key={d} className="py-1 pr-2 font-mono">
-                      {d}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="py-1 pr-2 text-text-mute">Cota (m)</td>
-                  {station.cotas.map((c, i) => (
-                    <td key={station.dias[i] ?? i} className="py-1 pr-2 font-mono">
-                      {c == null ? "—" : c.toFixed(2)}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {proj ? (
-            <p className="mt-2 text-[11px] text-text-mute">
-              Projeção linear (3 / 5 / 7 dias):{" "}
-              <span className="font-mono text-text-dim">
-                {fmt(proj.d3)} · {fmt(proj.d5)} · {fmt(proj.d7)}
-              </span>
-            </p>
-          ) : (
-            <p className="mt-2 text-[11px] text-text-mute">
-              Série insuficiente para projetar a cota.
-            </p>
-          )}
-        </>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="text-[10px] tracking-wide text-text-mute uppercase">
+              <tr>
+                <th className="py-1 pr-2">Dia</th>
+                {station.dias.map((d) => (
+                  <th key={d} className="py-1 pr-2 font-mono">
+                    {d}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="py-1 pr-2 text-text-mute">Cota (m)</td>
+                {station.cotas.map((c, i) => (
+                  <td key={station.dias[i] ?? i} className="py-1 pr-2 font-mono">
+                    {c == null ? "—" : c.toFixed(2)}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
       )}
 
       <Link
@@ -267,10 +264,6 @@ function HydroAdminForm({
       </Button>
     </form>
   );
-}
-
-function fmt(v: number | null) {
-  return v == null ? "—" : `${v.toFixed(2)} m`;
 }
 
 function Metric({

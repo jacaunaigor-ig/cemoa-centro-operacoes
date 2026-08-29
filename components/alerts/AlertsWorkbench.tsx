@@ -16,7 +16,6 @@ import {
   Waves,
 } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
-import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
@@ -75,17 +74,6 @@ const PRODUCT_ICONS = {
   MOVIMENTO: Mountain,
   INCENDIO: Flame,
 } as const;
-
-const METHOD_BODY: Record<AlertType, string> = {
-  CHUVA:
-    "Classificação operacional CEMOA em cinco níveis (Baixo a Extremo), cruzando previsões INMET/CPTEC, imagens CENSIPAM e impacto esperado sobre municípios. Nível Baixo é monitoramento; Moderado exige atenção; Alto, preparação; Severo, ação iminente; Extremo, ação imediata de proteção da vida. A classificação do operador sobrepõe o monitoramento automático.",
-  ALAGAMENTO:
-    "Risco de alagamento urbano, em igarapés e planícies inundáveis, na mesma escala da Portaria MIDR nº 2.458/2026 (Baixo a Extremo). Deriva da chuva intensa e da drenagem local. A classificação do operador sobrepõe o monitoramento automático.",
-  MOVIMENTO:
-    "Risco de deslizamento e instabilidade de encostas, com ênfase nas bacias do oeste do estado. Escala Baixo a Extremo da Portaria MIDR nº 2.458/2026. A classificação do operador sobrepõe o monitoramento automático.",
-  INCENDIO:
-    "Incêndio em áreas não protegidas com reflexos na qualidade do ar. Escala própria por concentração de MP2,5 (µg/m³): Boa (0–15), Moderada (15–50), Ruim (50–75), Muito Ruim (75–125) e Péssima (>125). Não segue o art. 12 da Portaria MIDR nº 2.458/2026.",
-};
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
   if (value === "ATIVOS") return "ATIVOS";
@@ -444,9 +432,6 @@ export function AlertsWorkbench() {
     return acc;
   }, [scopedCatalog, product.levels, tipo]);
 
-  const criticoKey = product.scale === "ar" ? "MUITO_RUIM" : "SEVERO";
-  const criticoLabel = product.scale === "ar" ? "Muito Ruim" : "Severos";
-
   const pct = (n: number) =>
     counts.TODOS
       ? `${((n / counts.TODOS) * 100).toFixed(1).replace(".", ",")}% ${
@@ -630,94 +615,51 @@ export function AlertsWorkbench() {
     <AppShell cache={data?.cache} source={data?.source}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
         <div className="shrink-0 space-y-2">
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <SituationBar
-                ativos={counts.ATIVOS ?? 0}
-                criticos={counts[criticoKey] ?? 0}
-                criticoLabel={criticoLabel}
-                monitorados={counts.TODOS ?? 0}
-                generatedAt={data?.generatedAt ?? null}
-                source={product.sources.replaceAll(" · ", ", ")}
-                loading={loading}
-                refreshing={refreshing}
-                onRefresh={() => void refreshNow()}
-                onAtivos={() => setQuery({ risco: "ATIVOS", municipio: null })}
-                onCriticos={() => setQuery({ risco: criticoKey, municipio: null })}
-                onMonitorados={() =>
-                  setQuery({ risco: null, bacia: null, calha: null, municipio: null })
-                }
-                ativosActive={activeFilter === "ATIVOS"}
-                criticosActive={activeFilter === criticoKey}
-                monitoradosActive={activeFilter === "TODOS" && !bacia && !calha && !selected}
-                urgent={urgentAlert}
-              />
-              <div className="mt-2">
-                <MeteoAvisoDutyCard />
-              </div>
-            </div>
-            {isMobile ? null : (
-              <InfoTooltip
-                label={`Metodologia — ${product.label}`}
-                title={`Metodologia — ${product.label}`}
-                body={METHOD_BODY[tipo]}
-              />
-            )}
-          </div>
-          <p className="text-xs text-text-mute">
-            {admin
-              ? "Modo edição: clique no município (ou desenhe um polígono) para aplicar o nível e enviar o alerta."
-              : "Toque em um município no mapa ou na lista para abrir a ficha com risco, cota e classificação."}
-          </p>
-        </div>
+          <SituationBar
+            generatedAt={data?.generatedAt ?? null}
+            loading={loading}
+            refreshing={refreshing}
+            onRefresh={() => void refreshNow()}
+            urgent={urgentAlert}
+          >
+            <MeteoAvisoDutyCard />
+          </SituationBar>
 
-        <section
-          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]"
-          aria-label={`Resumo de ${product.short}`}
-        >
-          <Card className="flex flex-col justify-between gap-3 p-3 sm:p-4">
-            <div className="flex items-start gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-focus/15 text-focus">
-                <ProductIcon className="size-5" />
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex min-w-0 items-center gap-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/15 text-focus">
+                <ProductIcon className="size-4" />
               </span>
-              <div className="min-w-0 flex-1">
-                <small className="text-[10px] font-bold tracking-[0.1em] text-text-mute uppercase">
-                  Tipo de alerta
-                </small>
-                <label className="mt-1 block">
-                  <span className="sr-only">Selecionar tipo de alerta</span>
-                  <select
-                    className="hydro-select mt-0.5 font-black"
-                    value={tipo}
-                    onChange={(e) => {
-                      const next = parseAlertType(e.target.value);
-                      setEditorOpen(false);
-                      setDrawMode(false);
-                      setQuery({
-                        tipo: next === "CHUVA" ? null : next,
-                        risco: null,
-                      });
-                    }}
-                    aria-label="Tipo de alerta"
-                  >
-                    {ALERT_TYPES.map((id) => (
-                      <option key={id} value={id}>
-                        {ALERT_PRODUCTS[id].label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className="mt-1 text-xs text-text-mute">{product.subtitle}</p>
-              </div>
-            </div>
+              <select
+                className="hydro-select max-w-[16rem] font-bold"
+                value={tipo}
+                onChange={(e) => {
+                  const next = parseAlertType(e.target.value);
+                  setEditorOpen(false);
+                  setDrawMode(false);
+                  setQuery({
+                    tipo: next === "CHUVA" ? null : next,
+                    risco: null,
+                  });
+                }}
+                aria-label="Tipo de alerta"
+              >
+                {ALERT_TYPES.map((id) => (
+                  <option key={id} value={id}>
+                    {ALERT_PRODUCTS[id].label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <TimeFilter value={windowFilter} onChange={setWindowFilter} />
-          </Card>
+          </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
             <KpiCard
+              compact
               label="Municípios"
               value={loading ? "—" : String(counts.TODOS)}
-              sub={scopedCatalog.length === catalog.length ? "Total monitorado" : "No recorte"}
+              sub={scopedCatalog.length === catalog.length ? "Total" : "No recorte"}
               accent="#5eb4ff"
               active={activeFilter === "TODOS" && !bacia && !calha && !selected}
               onClick={() =>
@@ -727,6 +669,7 @@ export function AlertsWorkbench() {
             />
             {product.levels.map((level) => (
               <KpiCard
+                compact
                 key={level}
                 label={LEVEL_LABELS[level] ?? level}
                 value={loading ? "—" : String(counts[level] ?? 0)}
@@ -738,7 +681,7 @@ export function AlertsWorkbench() {
               />
             ))}
           </div>
-        </section>
+        </div>
 
         {error ? (
           <div
@@ -766,18 +709,9 @@ export function AlertsWorkbench() {
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
-                Monitoramento ativo · {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
-                {calha ? ` · calha ${calha}` : bacia ? ` · bacia ${bacia}` : ""}
+                {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
+                {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
               </span>
-              <span className="hidden sm:inline">· {product.sources}</span>
-              <a
-                href="https://www.openstreetmap.org/"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-focus hover:underline"
-              >
-                OpenStreetMap
-              </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 {isMobile ? (
                   <Button
@@ -933,7 +867,7 @@ export function AlertsWorkbench() {
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
               {selectedRow ? (
-                <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),22rem)] sm:top-3">
+                <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),28rem)] sm:top-2">
                   <AlertDetail
                     overlay
                     nome={selectedRow.nome}
@@ -949,11 +883,7 @@ export function AlertsWorkbench() {
                     onClose={() => setQuery({ municipio: null })}
                   />
                 </div>
-              ) : (
-                <p className="pointer-events-none absolute right-2 top-12 z-[1100] max-w-[16rem] rounded-lg border border-border bg-panel/88 px-2.5 py-1.5 text-[11px] text-text-mute backdrop-blur sm:top-3">
-                  Selecione um município no mapa ou na lista para abrir risco, cota e classificação.
-                </p>
-              )}
+              ) : null}
               <div className="pointer-events-auto absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
                 <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
                   {product.legendTitle} · filtrar

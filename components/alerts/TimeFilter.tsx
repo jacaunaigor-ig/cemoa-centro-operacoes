@@ -4,8 +4,8 @@ import type { TimeWindow } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const OPTIONS: Array<{ id: TimeWindow; label: string }> = [
-  { id: "1h", label: "Última 1h" },
-  { id: "6h", label: "Últimas 6h" },
+  { id: "1h", label: "1h" },
+  { id: "6h", label: "6h" },
   { id: "hoje", label: "Hoje" },
   { id: "24h", label: "24h" },
 ];

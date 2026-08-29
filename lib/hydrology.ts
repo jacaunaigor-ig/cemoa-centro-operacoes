@@ -226,7 +226,24 @@ export function rotuloSituacao(station: HydroStation) {
   return { texto: `Dado de ${s.data}`, classe: "desatualizado" as const };
 }
 
-export function projecaoLinear(station: HydroStation) {
+export type HydroProjecaoPonto = {
+  dias: 3 | 5 | 7;
+  label: string;
+  x: number;
+  y: number | null;
+};
+
+export type HydroProjecao = {
+  d3: number | null;
+  d5: number | null;
+  d7: number | null;
+  slope: number;
+  xBase: number;
+  origem: { x: number; y: number };
+  pontos: HydroProjecaoPonto[];
+};
+
+export function projecaoLinear(station: HydroStation): HydroProjecao | null {
   const serie = station.cotas;
   const pontos: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < serie.length; i++) {
@@ -251,12 +268,28 @@ export function projecaoLinear(station: HydroStation) {
   const slope = (n * sxy - sx * sy) / den;
   const intercept = (sy - slope * sx) / n;
   if (!Number.isFinite(slope) || !Number.isFinite(intercept)) return null;
-  const xBase = usados[usados.length - 1].x;
+  const origem = usados[usados.length - 1];
+  const xBase = origem.x;
   const prever = (dias: number) => {
     const valor = intercept + slope * (xBase + dias);
     return Number.isFinite(valor) && valor >= 0 ? valor : null;
   };
-  return { d3: prever(3), d5: prever(5), d7: prever(7), slope };
+  const d3 = prever(3);
+  const d5 = prever(5);
+  const d7 = prever(7);
+  return {
+    d3,
+    d5,
+    d7,
+    slope,
+    xBase,
+    origem,
+    pontos: [
+      { dias: 3, label: "+3", x: xBase + 3, y: d3 },
+      { dias: 5, label: "+5", x: xBase + 5, y: d5 },
+      { dias: 7, label: "+7", x: xBase + 7, y: d7 },
+    ],
+  };
 }
 
 export function filtrarEstacoes(

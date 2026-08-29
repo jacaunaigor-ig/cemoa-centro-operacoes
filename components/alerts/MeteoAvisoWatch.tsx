@@ -26,7 +26,7 @@ import {
   type MeteoAviso,
 } from "@/lib/meteo-aviso";
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
-import { cn, formatAmazonDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { formatCountdown, remainingMs } from "@/lib/alert-validity";
 
 const STORAGE_KEY = "cemoa_meteo_aviso_v1";
@@ -248,7 +248,7 @@ export function MeteoAvisoDutyCard() {
     <>
       <div
         className={cn(
-          "flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5",
+          "inline-flex min-h-11 max-w-full flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1",
           tone === "expired" && "border-risco-severo/70 bg-risco-severo/12",
           tone === "urgent" && "border-risco-severo/50 bg-risco-severo/10",
           tone === "warn" && "border-risco-alto/50 bg-risco-alto/10",
@@ -256,55 +256,37 @@ export function MeteoAvisoDutyCard() {
           tone === "idle" && "border-border bg-panel",
         )}
       >
-        <span className="grid size-10 place-items-center rounded-xl bg-focus/15 text-focus">
-          <CloudSun className="size-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold tracking-[0.1em] text-text-mute uppercase">
-            Aviso meteorológico do plantão · ciclo de 6 h
+        <CloudSun className="size-4 shrink-0 text-focus" />
+        <div className="min-w-0 leading-tight">
+          <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
+            Plantão · 6 h
           </p>
           {aviso ? (
-            <>
-              <strong
-                className={cn(
-                  "block font-mono text-xl tabular-nums tracking-wider",
-                  tone === "urgent" && "text-risco-severo",
-                  tone === "expired" && "text-risco-severo",
-                  tone === "warn" && "text-risco-alto",
-                  tone === "ok" && "text-live",
-                )}
-              >
-                {clock}
-              </strong>
-              <p className="text-[11px] text-text-mute">
-                {tone === "expired"
-                  ? "Vencido — emitir o próximo"
-                  : "até o próximo aviso"}
-                {" · "}
-                emitido {formatAmazonDateTime(aviso.issuedAt)} por {aviso.issuedBy}
-                {aviso.note ? ` · ${aviso.note}` : ""}
-              </p>
-            </>
+            <strong
+              className={cn(
+                "block font-mono text-sm tabular-nums tracking-wide",
+                tone === "urgent" && "text-risco-severo",
+                tone === "expired" && "text-risco-severo",
+                tone === "warn" && "text-risco-alto",
+                tone === "ok" && "text-live",
+              )}
+            >
+              {clock}
+            </strong>
           ) : (
-            <>
-              <strong className="block text-sm">Nenhum aviso emitido neste plantão</strong>
-              <p className="text-[11px] text-text-mute">
-                O cronômetro de 6 h começa no primeiro Aviso Meteorológico. O painel avisa quando o
-                prazo estiver perto de expirar.
-              </p>
-            </>
+            <strong className="block text-xs">Sem aviso</strong>
           )}
         </div>
         {canEmit ? (
           <Button
             type="button"
             size="sm"
-            className="min-h-11"
+            className="min-h-8"
             disabled={emitting}
             onClick={() => setOpen(true)}
           >
             <Megaphone className="size-3.5" />
-            {aviso ? "Emitir próximo aviso" : "Emitir primeiro aviso"}
+            {aviso ? "Emitir" : "Emitir aviso"}
           </Button>
         ) : null}
       </div>

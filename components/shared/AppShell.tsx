@@ -73,7 +73,7 @@ export function AppShell({
             : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
         )}
       >
-      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl sm:gap-3 sm:px-4 sm:pb-2.5">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] backdrop-blur-xl sm:gap-3 sm:px-4">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand to-transparent" />
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
@@ -84,7 +84,7 @@ export function AppShell({
             <h1 className="truncate text-sm font-black tracking-tight sm:text-lg">
               {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
             </h1>
-            <span className="mt-0.5 inline-flex items-center rounded-full border border-live/30 bg-live/10 px-1.5 py-px text-[8px] font-black tracking-[0.1em] text-live uppercase">
+            <span className="mt-0.5 hidden items-center rounded-full border border-live/30 bg-live/10 px-1.5 py-px text-[8px] font-black tracking-[0.1em] text-live uppercase sm:inline-flex">
               Dados oficiais
             </span>
           </div>

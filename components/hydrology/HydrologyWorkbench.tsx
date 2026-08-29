@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  Droplets,
   Layers,
   MapPinned,
   RadioTower,
@@ -359,75 +358,46 @@ export function HydrologyWorkbench() {
   return (
     <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
-        <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-black tracking-tight sm:text-xl">
-              Boletim Hidrológico
-            </h2>
-            <p className="text-xs text-text-mute">
-              Cotas fluviométricas das 62 sedes municipais do Amazonas. Referência{" "}
-              {data?.referencia ?? "—"}. Moderado e Alto permanecem pintados mesmo sem cota do
-              dia. Cinza só no filtro Sem leitura.
-            </p>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <h2 className="text-base font-black tracking-tight sm:text-lg">Boletim Hidrológico</h2>
+          <span className="text-[11px] text-text-mute">
+            Ref. {data?.referencia ?? "—"}
+          </span>
+          <div
+            className="ml-auto flex rounded-lg border border-border bg-bg/60 p-0.5"
+            role="group"
+            aria-label="Tipo de risco"
+          >
+            <button
+              type="button"
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-bold",
+                modo === "vazante" ? "bg-brand text-white" : "text-text-dim hover:text-text",
+              )}
+              onClick={() => setQuery({ modo: "vazante" })}
+            >
+              Estiagem
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-bold",
+                modo === "enchente" ? "bg-brand text-white" : "text-text-dim hover:text-text",
+              )}
+              onClick={() => setQuery({ modo: "enchente" })}
+            >
+              Inundação
+            </button>
           </div>
         </div>
 
-        <section
-          className="grid shrink-0 gap-2 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]"
-          aria-label="Resumo do boletim"
-        >
-          <Card className="flex flex-col justify-between gap-3 p-3 sm:p-4">
-            <div className="flex items-start gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-focus/15 text-focus">
-                <Droplets className="size-5" />
-              </span>
-              <div>
-                <small className="text-[10px] font-bold tracking-[0.1em] text-text-mute uppercase">
-                  Status de risco
-                </small>
-                <p className="text-lg font-black">
-                  {modo === "vazante" ? "Estiagem" : "Inundação"}
-                </p>
-                <p className="text-xs text-text-mute">
-                  {modo === "vazante"
-                    ? "Condições de vazante monitoradas"
-                    : "Condições de enchente monitoradas"}
-                </p>
-              </div>
-            </div>
-            <div
-              className="grid grid-cols-2 rounded-xl border border-border bg-bg/50 p-1"
-              role="group"
-              aria-label="Tipo de risco"
-            >
-              <button
-                type="button"
-                className={cn(
-                  "rounded-lg px-3 py-2 text-xs font-bold",
-                  modo === "vazante" ? "bg-brand text-white" : "text-text-dim hover:text-text",
-                )}
-                onClick={() => setQuery({ modo: "vazante" })}
-              >
-                Estiagem
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "rounded-lg px-3 py-2 text-xs font-bold",
-                  modo === "enchente" ? "bg-brand text-white" : "text-text-dim hover:text-text",
-                )}
-                onClick={() => setQuery({ modo: "enchente" })}
-              >
-                Inundação
-              </button>
-            </div>
-          </Card>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <section className="shrink-0" aria-label="Resumo do boletim">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
             <KpiCard
+              compact
               label="Municípios"
               value={loading ? "—" : String(kpis.total)}
-              sub={geoStations.length === catalog.length ? "Total monitorado" : "No recorte"}
+              sub={geoStations.length === catalog.length ? "Total" : "No recorte"}
               accent="#5eb4ff"
               active={status === "Todos" && !calha && !bacia && !selected}
               onClick={() =>
@@ -436,6 +406,7 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
             <KpiCard
+              compact
               label="Baixo"
               value={loading ? "—" : String(kpis.baixo)}
               sub={pct(kpis.baixo)}
@@ -445,6 +416,7 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
             <KpiCard
+              compact
               label="Moderado"
               value={loading ? "—" : String(kpis.moderado)}
               sub={pct(kpis.moderado)}
@@ -454,6 +426,7 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
             <KpiCard
+              compact
               label="Alto"
               value={loading ? "—" : String(kpis.alto)}
               sub={pct(kpis.alto)}
@@ -463,6 +436,7 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
             <KpiCard
+              compact
               label="Com leitura"
               value={loading ? "—" : String(kpis.comLeitura)}
               sub={pct(kpis.comLeitura)}
@@ -473,6 +447,7 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
             <KpiCard
+              compact
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
               sub={pct(kpis.semLeitura)}
@@ -554,18 +529,9 @@ export function HydrologyWorkbench() {
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
-                Monitoramento ativo · {kpis.total} município{kpis.total === 1 ? "" : "s"}
-                {calha ? ` · calha ${calha}` : bacia ? ` · bacia ${bacia}` : ""}
+                {kpis.total} município{kpis.total === 1 ? "" : "s"}
+                {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
               </span>
-              <span className="hidden sm:inline">· ANA · SGB · SEMA</span>
-              <a
-                href="https://www.openstreetmap.org/"
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-focus hover:underline"
-              >
-                OpenStreetMap
-              </a>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 {isMobile ? null : (
                   <ExportPngButton onExport={exportMapPng} disabled={!data} />

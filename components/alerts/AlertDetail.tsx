@@ -1,22 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Clock,
-  Droplets,
-  Shield,
-  Siren,
-  UserRoundCheck,
-  X,
-} from "lucide-react";
+import { Droplets, X } from "lucide-react";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
+import { CotaChart } from "@/components/hydrology/CotaChart";
 import { riskActionFor, type AlertType } from "@/lib/alert-types";
-import { statusAtivo } from "@/lib/hydrology";
+import { statusAtivo, tendenciaTexto } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert } from "@/lib/types";
-import { cn, formatAmazonDateTime, formatRelative } from "@/lib/utils";
+import { cn, formatRelative } from "@/lib/utils";
 
 export function AlertDetail({
   nome,
@@ -45,21 +39,25 @@ export function AlertDetail({
   onClose: () => void;
 }) {
   const calha = hydro?.calha ?? null;
+  const variacao =
+    hydro?.variacao != null
+      ? `${hydro.variacao >= 0 ? "+" : ""}${hydro.variacao.toFixed(2)} m`
+      : null;
 
   return (
     <section
       className={cn(
         overlay
-          ? "max-h-[min(52vh,420px)] overflow-y-auto rounded-xl border border-border bg-panel/95 p-3 shadow-2xl backdrop-blur-md"
-          : "max-h-[min(42vh,380px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
+          ? "max-h-[min(78vh,640px)] overflow-y-auto rounded-xl border border-border bg-panel/96 p-3 shadow-2xl backdrop-blur-md"
+          : "max-h-[min(52vh,520px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
-            Ficha do município · {productLabel}
+            Ficha · {productLabel}
           </p>
-          <h3 className="text-base font-black">{nome}</h3>
+          <h3 className="truncate text-base font-black">{nome}</h3>
           <p className="text-xs text-text-mute">{bacia}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar detalhe">
@@ -67,66 +65,38 @@ export function AlertDetail({
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <RiskBadge level={risco} showAction />
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-mute">
-          {fonte === "admin" ? (
-            <UserRoundCheck className="size-3.5 text-brand-2" />
-          ) : (
-            <Shield className="size-3.5 text-focus" />
-          )}
-          {fonte === "admin" ? "Classificação do operador" : "Monitoramento automático"}
+        <span className="text-[11px] text-text-mute">
+          {fonte === "admin" ? "Operador" : "Monitor"}
+          {alert ? ` · ${formatRelative(alert.updatedAt)}` : issuedAt ? ` · ${formatRelative(issuedAt)}` : ""}
         </span>
-      </div>
-
-      <p className="mt-2 text-sm text-text-dim">
-        {alert?.resumo ??
-          `Condição de ${riskActionFor(risco).toLowerCase()} para ${productLabel.toLowerCase()} em ${nome}.`}
-      </p>
-
-      <div className={cn("mt-3 grid gap-2", overlay ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3")}>
-        <Metric
-          icon={<Clock className="size-3.5" />}
-          label="Atualizado"
-          value={
-            alert
-              ? formatRelative(alert.updatedAt)
-              : issuedAt
-                ? formatRelative(issuedAt)
-                : "—"
-          }
-        />
-        <Metric
-          icon={<Siren className="size-3.5" />}
-          label="Ação"
-          value={riskActionFor(risco)}
-        />
         <AlertCountdown
+          variant="row"
           expiresAt={alert?.expiresAt ?? expiresAt}
           label="Cronômetro do alerta"
         />
-        {!overlay ? (
-          <Metric
-            icon={<Clock className="size-3.5" />}
-            label="Emitido"
-            value={issuedAt ? formatAmazonDateTime(issuedAt) : "Sem alerta ativo"}
-          />
-        ) : null}
       </div>
 
+      <p className="mt-2 text-[13px] leading-snug text-text-dim">
+        {alert?.resumo ??
+          `${riskActionFor(risco)} para ${productLabel.toLowerCase()} em ${nome}.`}
+      </p>
+
       {hydro ? (
-        <div className="mt-3 rounded-lg border border-border bg-bg/40 px-3 py-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-start gap-2">
-              <Droplets className="mt-0.5 size-4 text-focus" />
-              <div>
-                <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-                  Cota do boletim
-                </small>
-                <p className="font-mono text-sm font-bold">
-                  {hydro.semLeitura ? "Sem leitura" : `${hydro.cota?.toFixed(2)} m`}
-                </p>
-              </div>
+        <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+                Cota · {hydro.calha}
+              </small>
+              <p className="font-mono text-lg font-bold leading-tight">
+                {hydro.semLeitura ? "Sem leitura" : `${hydro.cota?.toFixed(2)} m`}
+              </p>
+              <p className="text-[11px] text-text-mute">
+                {tendenciaTexto(hydro.tendencia)}
+                {variacao ? ` · 24h ${variacao}` : ""}
+              </p>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <span className="inline-flex items-center gap-1 text-[10px] text-text-mute">
@@ -142,9 +112,21 @@ export function AlertDetail({
               </span>
             </div>
           </div>
-          <p className="mt-1 text-[11px] text-text-mute">
-            Estiagem e inundação · calha {hydro.calha}
-          </p>
+          <div className="mt-2">
+            <CotaChart
+              station={hydro}
+              status={statusAtivo(hydro, "enchente") === "NORMAL" ? hydro.statusVazante : hydro.statusEnchente}
+              compact
+              limites={[
+                hydro.limitesVazante.alto != null
+                  ? { label: "Estiagem alto", value: hydro.limitesVazante.alto, color: "#f2790f" }
+                  : null,
+                hydro.limitesEnchente.alto != null
+                  ? { label: "Inundação alto", value: hydro.limitesEnchente.alto, color: "#e21c2b" }
+                  : null,
+              ].filter((x): x is { label: string; value: number; color: string } => x != null)}
+            />
+          </div>
         </div>
       ) : (
         <p className="mt-3 text-[11px] text-text-mute">Sem estação hidrológica vinculada.</p>
@@ -152,33 +134,11 @@ export function AlertDetail({
 
       <Link
         href={`/boletim?municipio=${encodeURIComponent(nome)}&bacia=${encodeURIComponent(bacia)}${calha ? `&calha=${encodeURIComponent(calha)}` : ""}`}
-        className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-focus hover:underline"
+        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-focus hover:underline"
       >
         <Droplets className="size-3.5" />
         Abrir boletim hidrológico
       </Link>
     </section>
-  );
-}
-
-function Metric({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2">
-      <span className="mt-0.5 text-focus">{icon}</span>
-      <div className="min-w-0">
-        <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          {label}
-        </small>
-        <p className="text-sm font-bold">{value}</p>
-      </div>
-    </div>
   );
 }
