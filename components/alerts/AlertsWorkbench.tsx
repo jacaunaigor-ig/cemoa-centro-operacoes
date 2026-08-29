@@ -657,46 +657,70 @@ export function AlertsWorkbench() {
             refreshing={refreshing}
             onRefresh={() => void refreshNow()}
             urgent={urgentAlert}
+            tools={
+              <>
+                <label className="inline-flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/15 text-focus">
+                    <ProductIcon className="size-4" />
+                  </span>
+                  <select
+                    className={cn("hydro-select font-bold", isMobile ? "min-w-0 flex-1" : "w-[16.5rem]")}
+                    value={tipo}
+                    onChange={(e) => {
+                      const next = parseAlertType(e.target.value);
+                      setEditorOpen(false);
+                      setDrawMode(false);
+                      setQuery({
+                        tipo: next === "CHUVA" ? null : next,
+                        risco: null,
+                      });
+                    }}
+                    aria-label="Tipo de alerta"
+                  >
+                    {ALERT_TYPES.map((id) => (
+                      <option key={id} value={id}>
+                        {ALERT_PRODUCTS[id].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <TimeFilter value={windowFilter} onChange={setWindowFilter} />
+              </>
+            }
           >
             <MeteoAvisoDutyCard />
           </SituationBar>
 
-          <div className={cn("flex items-center gap-2", isMobile && "w-full")}>
-            <label className="inline-flex min-w-0 items-center gap-2">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/15 text-focus">
-                <ProductIcon className="size-4" />
-              </span>
-              <select
-                className={cn("hydro-select font-bold", isMobile ? "min-w-0 flex-1" : "max-w-[16rem]")}
-                value={tipo}
-                onChange={(e) => {
-                  const next = parseAlertType(e.target.value);
-                  setEditorOpen(false);
-                  setDrawMode(false);
-                  setQuery({
-                    tipo: next === "CHUVA" ? null : next,
-                    risco: null,
-                  });
-                }}
-                aria-label="Tipo de alerta"
-              >
-                {ALERT_TYPES.map((id) => (
-                  <option key={id} value={id}>
-                    {ALERT_PRODUCTS[id].label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <TimeFilter value={windowFilter} onChange={setWindowFilter} />
-          </div>
-          <RainfallStrip
-            rain={rain}
-            loading={!rain && !STATIC_DEPLOY}
-            filter={rainFilter}
-            onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
-          />
+          {isMobile ? (
+            <RainfallStrip
+              rain={rain}
+              loading={!rain && !STATIC_DEPLOY}
+              filter={rainFilter}
+              onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
+            />
+          ) : null}
 
-          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6")}>
+          <div
+            className={cn(
+              "grid",
+              isMobile
+                ? "grid-cols-3 gap-1.5"
+                : "grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-[minmax(20rem,1.35fr)_repeat(6,minmax(0,1fr))]",
+            )}
+          >
+            {!isMobile ? (
+              <div className="col-span-2 sm:col-span-3 xl:col-span-1">
+                <RainfallStrip
+                  className="h-full"
+                  rain={rain}
+                  loading={!rain && !STATIC_DEPLOY}
+                  filter={rainFilter}
+                  onFilter={(next) =>
+                    setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })
+                  }
+                />
+              </div>
+            ) : null}
             <KpiCard
               compact
               label="Municípios"

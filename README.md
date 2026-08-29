@@ -2,8 +2,8 @@
 
 Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
 
-- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha com Censo 2022 (incluindo crianças 0–14 e idosos 60+), áreas mapeadas de movimento de massa e gráfico de cota.
-- **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha com gráfico, limiares ANA/SGB e a mesma projeção linear.
+- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
+- **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
 Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. Não exige Supabase.
 
@@ -136,7 +136,9 @@ No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62
 
 O painel consulta a API pública do **CEMADEN** (`getJson2.php?uf=AM`): 95 pluviômetros automáticos em **58 dos 62** municípios. Sem estação nesta rede: Barcelos, Santa Isabel do Rio Negro, São Sebastião do Uatumã e Tefé.
 
-Cada município mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h**, em gráfico de barras (ficha e faixa geral). A ficha lista as estações (último valor + 1/6/24 h) e abre o gráfico oficial:
+A chuva CEMADEN fica no **Painel de Alertas** (faixa do topo, lista e ficha). O Boletim Hidrológico não mistura esses acumulados — a ficha de lá é só cota e limiar.
+
+Cada município no painel mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h**, em gráfico de barras (ficha e faixa geral). A ficha de alerta lista as estações (último valor + 1/6/24 h) e abre o gráfico oficial:
 
 `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
 

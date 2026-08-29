@@ -29,11 +29,13 @@ export function RainfallStrip({
   loading,
   filter,
   onFilter,
+  className,
 }: {
   rain: RainfallPayload | null;
   loading: boolean;
   filter: RainFilter;
   onFilter: (next: RainFilter) => void;
+  className?: string;
 }) {
   const cov = rain?.coverage;
   const picos = cov?.picos;
@@ -53,6 +55,7 @@ export function RainfallStrip({
     <div className={cn(
       "flex items-center gap-2 rounded-xl border border-border bg-panel shadow-[var(--shadow-card)]",
       isMobile ? "flex-nowrap px-2 py-1.5" : "flex-wrap px-3.5 py-2.5 gap-3",
+      className,
     )}>
       <div className="flex min-w-0 items-center gap-2">
       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/12 text-focus">

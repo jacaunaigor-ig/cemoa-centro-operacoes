@@ -5,10 +5,7 @@ import { Droplets, X } from "lucide-react";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
-import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
-import { CotaChart } from "@/components/hydrology/CotaChart";
 import { type AlertType } from "@/lib/alert-types";
-import { statusAtivo, tendenciaTexto } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
@@ -46,10 +43,6 @@ export function AlertDetail({
   onClose: () => void;
 }) {
   const calha = hydro?.calha ?? null;
-  const variacao =
-    hydro?.variacao != null
-      ? `${hydro.variacao >= 0 ? "+" : ""}${hydro.variacao.toFixed(2)} m`
-      : null;
 
   return (
     <section
@@ -99,61 +92,12 @@ export function AlertDetail({
 
       {municipioId ? <FichaTerritorio municipioId={municipioId} tipo={tipo} /> : null}
 
-      {hydro ? (
-        <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-                Cota · {hydro.calha}
-              </small>
-              <p className="font-mono text-lg font-bold leading-tight">
-                {hydro.semLeitura ? "Sem leitura" : `${hydro.cota?.toFixed(2)} m`}
-              </p>
-              <p className="text-[11px] text-text-mute">
-                {tendenciaTexto(hydro.tendencia)}
-                {variacao ? ` · 24h ${variacao}` : ""}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              <span className="inline-flex items-center gap-1 text-[10px] text-text-mute">
-                Estiagem
-                <HydroStatusBadge status={statusAtivo(hydro, "vazante")} missing={hydro.semLeitura} />
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-text-mute">
-                Inundação
-                <HydroStatusBadge
-                  status={statusAtivo(hydro, "enchente")}
-                  missing={hydro.semLeitura}
-                />
-              </span>
-            </div>
-          </div>
-          <div className="mt-2">
-            <CotaChart
-              station={hydro}
-              status={statusAtivo(hydro, "enchente") === "NORMAL" ? hydro.statusVazante : hydro.statusEnchente}
-              compact
-              limites={[
-                hydro.limitesVazante.alto != null
-                  ? { label: "Estiagem alto", value: hydro.limitesVazante.alto, color: "#f2790f" }
-                  : null,
-                hydro.limitesEnchente.alto != null
-                  ? { label: "Inundação alto", value: hydro.limitesEnchente.alto, color: "#e21c2b" }
-                  : null,
-              ].filter((x): x is { label: string; value: number; color: string } => x != null)}
-            />
-          </div>
-        </div>
-      ) : (
-        <p className="mt-3 text-xs text-text-mute">Sem estação hidrológica.</p>
-      )}
-
       <Link
         href={`/boletim?municipio=${encodeURIComponent(nome)}&bacia=${encodeURIComponent(bacia)}${calha ? `&calha=${encodeURIComponent(calha)}` : ""}`}
         className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-focus hover:underline"
       >
         <Droplets className="size-3.5" />
-        Boletim
+        Cota no boletim
       </Link>
     </section>
   );

@@ -276,14 +276,16 @@ export function AlertList({
                                 hasStation={Boolean(rain.byNome[m.nome])}
                               />
                             ) : null}
-                            <CotaPeek
-                              nome={m.nome}
-                              fonte={m.fonte}
-                              risco={m.risco}
-                              cota={cota}
-                              rain={rain?.byNome[m.nome]}
-                              hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
-                            />
+                            {!isMobile ? (
+                              <CotaPeek
+                                nome={m.nome}
+                                fonte={m.fonte}
+                                risco={m.risco}
+                                cota={cota}
+                                rain={rain?.byNome[m.nome]}
+                                hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
+                              />
+                            ) : null}
                             <Link
                               href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}${calhaHref ? `&calha=${encodeURIComponent(calhaHref)}` : ""}`}
                               className="inline-flex size-8 items-center justify-center rounded-md text-focus hover:bg-hover"

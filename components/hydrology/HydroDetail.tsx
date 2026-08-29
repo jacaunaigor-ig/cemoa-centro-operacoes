@@ -16,9 +16,8 @@ import {
   tendenciaTexto,
 } from "@/lib/hydrology";
 import type { HydroPatch } from "@/lib/hydro-overrides";
-import type { HydroMode, HydroStation, HydroStatus, RainfallMunicipio } from "@/lib/types";
+import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 
 export function HydroDetail({
@@ -26,7 +25,6 @@ export function HydroDetail({
   modo,
   admin = false,
   compact = false,
-  rain,
   onClose,
   onSave,
 }: {
@@ -34,7 +32,6 @@ export function HydroDetail({
   modo: HydroMode;
   admin?: boolean;
   compact?: boolean;
-  rain?: RainfallMunicipio | null;
   onClose: () => void;
   onSave?: (patch: HydroPatch) => void;
 }) {
@@ -173,17 +170,11 @@ export function HydroDetail({
         </div>
       )}
 
-      {rain === undefined ? null : rain ? (
-        <CemadenRainPanel rain={rain} />
-      ) : (
-        <p className="mt-3 text-[11px] text-text-mute">Sem pluviômetro público CEMADEN neste município.</p>
-      )}
-
       <Link
         href={`/?municipio=${encodeURIComponent(station.municipio)}&bacia=${encodeURIComponent(station.bacia)}&calha=${encodeURIComponent(station.calha)}`}
         className="mt-3 inline-block text-xs font-bold text-focus hover:underline"
       >
-        Abrir alerta de chuva neste município
+        Chuva no painel de alertas
       </Link>
     </section>
   );

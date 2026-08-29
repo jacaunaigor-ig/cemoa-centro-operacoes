@@ -14,6 +14,7 @@ export function SituationBar({
   refreshing,
   onRefresh,
   urgent,
+  tools,
   children,
 }: {
   generatedAt: number | null;
@@ -21,13 +22,24 @@ export function SituationBar({
   refreshing: boolean;
   onRefresh: () => void;
   urgent?: { municipio: string; risco: string; expiresAt: number | null } | null;
+  tools?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const { isMobile } = useOpsMode();
   return (
-    <div className={cn("flex flex-wrap items-center", isMobile ? "w-full justify-between gap-1.5" : "gap-3")}>
+    <div
+      className={cn(
+        "flex flex-wrap items-center",
+        isMobile ? "w-full justify-between gap-1.5" : "gap-3",
+      )}
+    >
       {!isMobile ? (
-        <SectionHeading className="mr-auto max-sm:hidden" title="Alertas" />
+        <SectionHeading compact className="shrink-0" title="Alertas" />
+      ) : null}
+      {tools ? (
+        <div className={cn("flex min-w-0 items-center gap-2", isMobile ? "w-full" : "min-w-[16rem] flex-1")}>
+          {tools}
+        </div>
       ) : null}
       {children}
       {urgent?.expiresAt ? (

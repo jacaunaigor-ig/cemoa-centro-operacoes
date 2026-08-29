@@ -5,11 +5,13 @@ export function SectionHeading({
   kicker,
   title,
   className,
+  compact,
   children,
 }: {
   kicker?: string;
   title: string;
   className?: string;
+  compact?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -20,7 +22,14 @@ export function SectionHeading({
             {kicker}
           </p>
         ) : null}
-        <h2 className="text-2xl font-bold tracking-tight text-text">{title}</h2>
+        <h2
+          className={cn(
+            "font-bold tracking-tight text-text",
+            compact ? "text-lg" : "text-2xl",
+          )}
+        >
+          {title}
+        </h2>
       </div>
       {children}
     </div>
