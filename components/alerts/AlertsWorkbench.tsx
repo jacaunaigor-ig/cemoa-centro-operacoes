@@ -686,7 +686,7 @@ export function AlertsWorkbench() {
             onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
           />
 
-          <div className={cn("grid grid-cols-2 xl:grid-cols-6", isMobile ? "gap-2 sm:grid-cols-3" : "gap-4 sm:grid-cols-3")}>
+          <div className={cn("grid", isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6")}>
             <KpiCard
               compact
               label="Municípios"

@@ -52,9 +52,20 @@ type OpsMode = {
 const Ctx = createContext<OpsMode | null>(null);
 const LAYOUT_KEY = "cemoa_layout_mode";
 const TOOLS_KEY = "cemoa_admin_tools";
+const NARROW_QUERY = "(max-width: 767px)";
 
 const layoutListeners = new Set<() => void>();
 const toolsListeners = new Set<() => void>();
+
+function subscribeNarrow(cb: () => void) {
+  const mq = window.matchMedia(NARROW_QUERY);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+
+function getNarrow() {
+  return window.matchMedia(NARROW_QUERY).matches;
+}
 
 function emit(listeners: Set<() => void>) {
   for (const listener of listeners) listener();
@@ -87,6 +98,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     getToolsOn,
     () => false,
   );
+  const narrow = useSyncExternalStore(subscribeNarrow, getNarrow, () => false);
 
   const [session, setSession] = useState<SessionUser | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -264,12 +276,13 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAuth]);
 
   const admin = layout === "desktop" && Boolean(session) && toolsOn;
+  const isMobile = layout === "mobile" || narrow;
 
   const value = useMemo<OpsMode>(
     () => ({
       layout,
       admin,
-      isMobile: layout === "mobile",
+      isMobile,
       session,
       authLoading,
       needsSetup,
@@ -293,6 +306,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     [
       layout,
       admin,
+      isMobile,
       session,
       authLoading,
       needsSetup,

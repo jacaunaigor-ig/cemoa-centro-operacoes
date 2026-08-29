@@ -26,7 +26,9 @@ export function SituationBar({
   const { isMobile } = useOpsMode();
   return (
     <div className={cn("flex flex-wrap items-center", isMobile ? "gap-2" : "gap-3")}>
-      {!isMobile ? <SectionHeading className="mr-auto" title="Alertas" /> : null}
+      {!isMobile ? (
+        <SectionHeading className="mr-auto max-sm:hidden" title="Alertas" />
+      ) : null}
       {children}
       {urgent?.expiresAt ? (
         <AlertCountdown

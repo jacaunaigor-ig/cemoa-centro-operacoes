@@ -393,7 +393,9 @@ export function HydrologyWorkbench() {
       )}>
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
           <div>
-            {!isMobile ? <h2 className="text-2xl font-bold tracking-tight">Boletim</h2> : null}
+            {!isMobile ? (
+              <h2 className="hidden text-2xl font-bold tracking-tight sm:block">Boletim</h2>
+            ) : null}
           </div>
           <span className="text-[11px] text-text-mute">
             Ref. {data?.referencia ?? "—"}
@@ -433,7 +435,7 @@ export function HydrologyWorkbench() {
         />
 
         <section className="shrink-0" aria-label="Resumo do boletim">
-          <div className={cn("grid grid-cols-2 xl:grid-cols-6", isMobile ? "gap-2 sm:grid-cols-3" : "gap-4 sm:grid-cols-3")}>
+          <div className={cn("grid", isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6")}>
             <KpiCard
               compact
               label="Municípios"
