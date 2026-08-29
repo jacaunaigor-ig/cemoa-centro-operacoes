@@ -13,7 +13,7 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 | --- | --- | --- |
 | `CHUVA` (padrão) | Baixo → Extremo | Risco de chuva intensa |
 | `ALAGAMENTO` | Baixo → Extremo | Risco de alagamento |
-| `MOVIMENTO` | Baixo → Extremo | Risco de movimento de massa |
+| `MOVIMENTO` | Baixo → Extremo | Deslizamento, movimento de massa e erosão de margem; só eleva onde há setor mapeado |
 | `INCENDIO` | Boa → Péssima | Incêndio em áreas não protegidas com reflexos na qualidade do ar (MP2,5 µg/m³) |
 
 A classificação de qualidade do ar não segue o art. 12 da Portaria MIDR nº 2.458/2026. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³.
