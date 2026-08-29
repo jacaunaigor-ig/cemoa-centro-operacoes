@@ -123,23 +123,19 @@ export function AlertList({
   return (
     <Card className="flex h-full min-h-[320px] flex-col overflow-hidden xl:min-h-0">
       <div className="space-y-3 border-b border-border p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-              Municípios por região
-            </h3>
-            <p className="mt-0.5 text-sm font-semibold text-text">
-              {loading
-                ? "Atualizando…"
-                : `${municipios.length} no recorte · clique no nível para filtrar`}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
+            Municípios
+            <span className="ml-1.5 font-mono text-text">
+              {loading ? "…" : municipios.length}
+            </span>
+          </h3>
           <button
             type="button"
             onClick={onLimpar}
             className="text-[11px] font-semibold text-focus hover:underline"
           >
-            ↻ Limpar
+            Limpar
           </button>
         </div>
         <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filtrar por nível de alerta">
@@ -169,27 +165,7 @@ export function AlertList({
           ))}
         </div>
         <label className="block text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
-          Município
-          <select
-            className="hydro-select mt-1"
-            value={selected ?? "Todos"}
-            onChange={(e) =>
-              onMunicipio(e.target.value === "Todos" ? null : e.target.value)
-            }
-            aria-label="Selecionar município"
-          >
-            <option value="Todos">Todos os 62 municípios</option>
-            {[...catalog]
-              .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
-              .map((s) => (
-                <option key={s.id} value={s.nome}>
-                  {s.nome}
-                </option>
-              ))}
-          </select>
-        </label>
-        <label className="block text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
-          Região / bacia
+          Região
           <select
             className="hydro-select mt-1"
             value={bacia ?? "Todas"}
@@ -209,7 +185,7 @@ export function AlertList({
         <Input
           value={busca}
           onChange={(e) => onBusca(e.target.value)}
-          placeholder="Buscar município ou região…"
+          placeholder="Buscar…"
           aria-label="Buscar município ou região"
         />
         {rain ? <RainRanking rows={ranking} tipo={tipo} onSelect={onSelect} /> : null}
@@ -282,17 +258,14 @@ export function AlertList({
                             <RiskBadge level={m.risco} />
                           </span>
                         </button>
-                        <p className="truncate text-[11px] text-text-mute">
-                          {m.bacia}
-                          {m.fonte === "admin" ? " · operador" : ""}
-                        </p>
-                        <div className="flex items-center justify-between gap-2 text-[11px] text-text-mute">
+                        <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
                           <span className="min-w-0 truncate">
+                            {m.fonte === "admin" ? "Operador · " : ""}
                             {alert
-                              ? `${alert.novo ? "Novo" : alert.agravado ? "Agravamento" : "Alerta"} · ${formatRelative(alert.updatedAt)}`
+                              ? `${alert.novo ? "Novo" : alert.agravado ? "Agravou" : "Alerta"} · ${formatRelative(alert.updatedAt)}`
                               : isAlertActive(tipo, m.risco)
                                 ? LEVEL_LABELS[m.risco] ?? m.risco
-                                : "Monitoramento"}
+                                : "Monitor"}
                           </span>
                           <div className="flex shrink-0 items-center gap-1">
                             {rain ? (
@@ -311,10 +284,11 @@ export function AlertList({
                             />
                             <Link
                               href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}${calhaHref ? `&calha=${encodeURIComponent(calhaHref)}` : ""}`}
-                              className="inline-flex items-center gap-1 font-semibold text-focus hover:underline"
+                              className="inline-flex size-8 items-center justify-center rounded-md text-focus hover:bg-hover"
+                              aria-label={`Cota de ${m.nome}`}
+                              title="Cota"
                             >
-                              <Droplets className="size-3" />
-                              Cota
+                              <Droplets className="size-3.5" />
                             </Link>
                           </div>
                         </div>
@@ -439,7 +413,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
+        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
         active ? "shadow" : "text-text-dim hover:text-text",
       )}
       style={

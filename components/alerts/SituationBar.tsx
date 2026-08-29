@@ -24,7 +24,7 @@ export function SituationBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <SectionHeading className="mr-auto" kicker="Operações" title="Painel de Alertas" />
+      <SectionHeading className="mr-auto" title="Alertas" />
       {children}
       {urgent?.expiresAt ? (
         <AlertCountdown

@@ -247,10 +247,10 @@ export function MeteoAvisoBanner() {
       <Bell className="size-4 shrink-0" />
       <span>
         {tone === "expired"
-          ? "Aviso Meteorológico vencido — o plantão precisa emitir o próximo agora."
+          ? "Aviso vencido — emitir o próximo agora."
           : tone === "urgent"
-            ? `Urgente: emitir o Aviso Meteorológico agora. Restam ${clock}.`
-            : `O Aviso Meteorológico vence em ${clock}. Prepare o próximo boletim do plantão.`}
+            ? `Emitir aviso agora. Restam ${clock}.`
+            : `Aviso vence em ${clock}.`}
       </span>
       {session ? (
         <Button

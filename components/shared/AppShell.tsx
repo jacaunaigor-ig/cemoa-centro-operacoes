@@ -76,9 +76,6 @@ export function AppShell({
             <h1 className="truncate text-sm font-bold tracking-tight sm:text-lg">
               {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
             </h1>
-            <span className="mt-0.5 hidden items-center rounded-full border border-live/30 bg-live/10 px-1.5 py-px text-[8px] font-black tracking-[0.1em] text-live uppercase sm:inline-flex">
-              Dados oficiais
-            </span>
           </div>
         </Link>
 
@@ -217,9 +214,7 @@ export function AppShell({
       </header>
       {admin ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
-          Modo edição
-          {session ? ` · ${session.name}` : ""} — classifica alertas, edita cotas e desenha polígonos.
-          Indisponível no mobile.
+          Edição{session ? ` · ${session.name}` : ""} — classifica alertas e cotas.
         </div>
       ) : null}
       <MeteoAvisoBanner />

@@ -71,19 +71,19 @@ export function StationsList({
   return (
     <Card className="flex h-full min-h-[320px] flex-1 flex-col overflow-hidden xl:min-h-0">
       <div className="space-y-2 border-b border-border p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold">Filtros</h3>
-            <p className="text-[11px] text-text-mute">
-              {loading ? "Atualizando…" : `${ordered.length} municípios no recorte`}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
+            Estações
+            <span className="ml-1.5 font-mono text-text">
+              {loading ? "…" : ordered.length}
+            </span>
+          </h3>
           <button
             type="button"
             onClick={onLimpar}
             className="text-[11px] font-semibold text-focus hover:underline"
           >
-            ↻ Limpar
+            Limpar
           </button>
         </div>
         <div className="flex flex-wrap gap-1">
@@ -106,26 +106,6 @@ export function StationsList({
           ))}
         </div>
         <label className="block text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
-          Município
-          <select
-            className="hydro-select mt-1"
-            value={selected ?? "Todos"}
-            onChange={(e) =>
-              onMunicipio(e.target.value === "Todos" ? null : e.target.value)
-            }
-            aria-label="Selecionar município"
-          >
-            <option value="Todos">Todos os 62 municípios</option>
-            {[...catalog]
-              .sort((a, b) => a.municipio.localeCompare(b.municipio, "pt-BR"))
-              .map((s) => (
-                <option key={s.id} value={s.municipio}>
-                  {s.municipio}
-                </option>
-              ))}
-          </select>
-        </label>
-        <label className="block text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
           Calha
           <select
             className="hydro-select mt-1"
@@ -146,7 +126,7 @@ export function StationsList({
         <Input
           value={busca}
           onChange={(e) => onBusca(e.target.value)}
-          placeholder="Buscar município ou estação…"
+          placeholder="Buscar…"
           aria-label="Buscar município ou estação"
         />
       </div>
@@ -199,8 +179,8 @@ export function StationsList({
                             <span className="truncate font-bold">{s.municipio}</span>
                             <HydroStatusBadge status={st} missing={s.semLeitura} />
                           </div>
-                          <p className="truncate text-[11px] text-text-mute">
-                            {s.calha} · {s.semLeitura ? "sem cota do dia" : `${s.cota?.toFixed(2)} m`}
+                          <p className="truncate text-xs text-text-mute">
+                            {s.semLeitura ? "Sem cota" : `${s.cota?.toFixed(2)} m`}
                             {rain ? (
                               <>
                                 {" · "}
@@ -221,7 +201,7 @@ export function StationsList({
                             <TrendIcon trend={s.tendencia} />
                             <span
                               className={cn(
-                                "text-[10px] font-semibold uppercase",
+                                "text-xs font-semibold",
                                 rec.classe === "atualizado" && "text-live",
                                 rec.classe === "sem-leitura" && "text-risco-alto",
                                 rec.classe === "sem-estacao" && "text-text-mute",
@@ -233,10 +213,11 @@ export function StationsList({
                             <Link
                               href={`/?municipio=${encodeURIComponent(s.municipio)}&bacia=${encodeURIComponent(s.bacia)}&calha=${encodeURIComponent(s.calha)}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-focus hover:underline"
+                              className="ml-auto inline-flex size-8 items-center justify-center rounded-md text-focus hover:bg-hover"
+                              aria-label={`Chuva em ${s.municipio}`}
+                              title="Chuva"
                             >
-                              <Radio className="size-3" />
-                              Ver chuva
+                              <Radio className="size-3.5" />
                             </Link>
                           </div>
                         </div>
@@ -283,23 +264,24 @@ function Chip({
 }
 
 function TrendIcon({ trend }: { trend: HydroTendencia }) {
+  const label = tendenciaTexto(trend);
   if (trend === "SUBINDO") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-risco-alto">
-        <TrendingUp className="size-3.5" /> {tendenciaTexto(trend)}
+      <span className="text-risco-alto" title={label} aria-label={label}>
+        <TrendingUp className="size-3.5" />
       </span>
     );
   }
   if (trend === "BAIXANDO" || trend === "VAZANTE") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-risco-baixo">
-        <TrendingDown className="size-3.5" /> {tendenciaTexto(trend)}
+      <span className="text-risco-baixo" title={label} aria-label={label}>
+        <TrendingDown className="size-3.5" />
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-[11px] text-text-mute">
-      <Minus className="size-3.5" /> {tendenciaTexto(trend)}
+    <span className="text-text-mute" title={label} aria-label={label}>
+      <Minus className="size-3.5" />
     </span>
   );
 }

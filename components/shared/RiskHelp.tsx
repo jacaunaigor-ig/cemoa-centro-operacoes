@@ -46,7 +46,7 @@ export function RiskHelpButton({
           className="grid size-8 place-items-center rounded-lg border border-focus/30 bg-focus/15 text-focus"
           aria-hidden
         >
-          <svg viewBox="0 0 24 24" className="size-4 fill-none stroke-white" strokeWidth="1.7">
+          <svg viewBox="0 0 24 24" className="size-4 fill-none stroke-current" strokeWidth="1.7">
             <path d="M12 3l8.5 4.8v8.4L12 21l-8.5-4.8V7.8L12 3z" />
             <path d="M12 8v8" />
             <path d="M12 5.8v.1" />

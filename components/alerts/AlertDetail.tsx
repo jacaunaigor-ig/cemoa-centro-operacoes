@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
 import { CotaChart } from "@/components/hydrology/CotaChart";
-import { riskActionFor, type AlertType } from "@/lib/alert-types";
+import { type AlertType } from "@/lib/alert-types";
 import { statusAtivo, tendenciaTexto } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
@@ -82,16 +82,15 @@ export function AlertDetail({
         />
       </div>
 
-      <p className="mt-2 text-[13px] leading-snug text-text-dim">
-        {alert?.resumo ??
-          `${riskActionFor(risco)} para ${productLabel.toLowerCase()} em ${nome}.`}
-      </p>
+      {alert?.resumo ? (
+        <p className="mt-2 text-[13px] leading-snug text-text-dim">{alert.resumo}</p>
+      ) : null}
 
       {rain === undefined ? null : rain ? (
         <CemadenRainPanel rain={rain} tipo={tipo} />
       ) : (
         <p className="mt-3 text-[11px] text-text-mute">
-          Sem pluviômetro público CEMADEN neste município.
+          Sem pluviômetro CEMADEN.
         </p>
       )}
 
@@ -141,7 +140,7 @@ export function AlertDetail({
           </div>
         </div>
       ) : (
-        <p className="mt-3 text-[11px] text-text-mute">Sem estação hidrológica vinculada.</p>
+        <p className="mt-3 text-xs text-text-mute">Sem estação hidrológica.</p>
       )}
 
       <Link
@@ -149,7 +148,7 @@ export function AlertDetail({
         className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-focus hover:underline"
       >
         <Droplets className="size-3.5" />
-        Abrir boletim hidrológico
+        Boletim
       </Link>
     </section>
   );

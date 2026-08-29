@@ -241,11 +241,7 @@ export function HydrologyWorkbench() {
     catalog.find((s) => s.municipioBoletim === selected) ??
     null;
   const pct = (n: number) =>
-    kpis.total
-      ? `${((n / kpis.total) * 100).toFixed(1).replace(".", ",")}% ${
-          geoStations.length === catalog.length ? "do total" : "do recorte"
-        }`
-      : "0%";
+    kpis.total ? `${((n / kpis.total) * 100).toFixed(0)}%` : "0%";
   const overrideCount = catalog.filter((s) => s.editadoPorOperador).length;
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
 
@@ -390,10 +386,7 @@ export function HydrologyWorkbench() {
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6">
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-text-mute uppercase">
-              Operações
-            </p>
-            <h2 className="text-2xl font-bold tracking-tight">Boletim Hidrológico</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Boletim</h2>
           </div>
           <span className="text-[11px] text-text-mute">
             Ref. {data?.referencia ?? "—"}
@@ -438,7 +431,7 @@ export function HydrologyWorkbench() {
               compact
               label="Municípios"
               value={loading ? "—" : String(kpis.total)}
-              sub={geoStations.length === catalog.length ? "Total" : "No recorte"}
+              sub={geoStations.length === catalog.length ? "Total" : "Recorte"}
               accent="#2563eb"
               active={status === "Todos" && !calha && !bacia && !selected}
               onClick={() =>
@@ -654,13 +647,13 @@ export function HydrologyWorkbench() {
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
                     >
-                      {showNames ? "Ocultar nomes dos municípios" : "Mostrar nomes dos municípios"}
+                      {showNames ? "Ocultar nomes" : "Mostrar nomes"}
                     </MapToolButton>
                     <MapToolButton
                       active={showRivers}
                       onClick={() => setShowRivers((v) => !v)}
                     >
-                      {showRivers ? "Ocultar rios" : "Mostrar rios"}
+                      {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
@@ -753,7 +746,7 @@ export function HydrologyWorkbench() {
               labels={HYDRO_STATUS_LABELS}
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}
-              paintHint="Clique para atualizar o status no mapa"
+              paintHint="Clique no município para classificar"
               onDraw={() => setDrawMode((v) => !v)}
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}

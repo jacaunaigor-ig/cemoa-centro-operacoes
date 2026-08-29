@@ -48,7 +48,7 @@ export function AlertCountdown({
         <Timer className="size-4 text-brand-2" />
         <div className="min-w-0">
           <small className="block text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
-            Cronômetro do alerta
+            Alerta
             {risco ? ` · ${LEVEL_LABELS[risco] ?? risco}` : ""}
           </small>
           <strong

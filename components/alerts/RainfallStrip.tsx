@@ -52,19 +52,19 @@ export function RainfallStrip({
       <CloudRain className="size-4 shrink-0 text-focus" />
       <div className="min-w-0 flex-1 leading-tight">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-          Pluviômetros CEMADEN · 1 h / 6 h / 24 h
+          CEMADEN
         </p>
         {loading && !rain ? (
-          <p className="text-xs text-text-mute">Consultando pluviômetros…</p>
+          <p className="text-xs text-text-mute">Consultando…</p>
         ) : rain?.error && !cov?.comEstacao ? (
-          <p className="text-xs text-risco-alto">Pluviômetros indisponíveis agora.</p>
+          <p className="text-xs text-risco-alto">Pluviômetros indisponíveis.</p>
         ) : (
           <p className="truncate text-xs text-text">
-            {cov?.comEstacao ?? 0}/{cov?.municipiosCemoa ?? 62} municípios
+            {cov?.comEstacao ?? 0}/{cov?.municipiosCemoa ?? 62}
             {destaque ? (
-              <span className="text-text-mute"> · maior {destaque}</span>
+              <span className="text-text-mute"> · pico {destaque}</span>
             ) : (
-              <span className="text-text-mute"> · sem chuva nas janelas 1 / 6 / 24 h</span>
+              <span className="text-text-mute"> · sem chuva</span>
             )}
           </p>
         )}
@@ -77,13 +77,13 @@ export function RainfallStrip({
           Todos
         </RainChip>
         <RainChip active={filter === "COM_LEITURA"} onClick={() => onFilter("COM_LEITURA")}>
-          Com leitura ({cov?.comLeitura ?? 0})
+          Leitura ({cov?.comLeitura ?? 0})
         </RainChip>
         <RainChip active={filter === "COM_CHUVA"} onClick={() => onFilter("COM_CHUVA")}>
-          Com chuva ({cov?.comChuva ?? 0})
+          Chuva ({cov?.comChuva ?? 0})
         </RainChip>
         <RainChip active={filter === "INTENSO"} onClick={() => onFilter("INTENSO")}>
-          ≥ {INTENSE_MM_PER_H} mm/h ({cov?.intenso1h ?? 0})
+          ≥{INTENSE_MM_PER_H} ({cov?.intenso1h ?? 0})
         </RainChip>
       </div>
       {hasRain(rain?.maior ?? null) ? (

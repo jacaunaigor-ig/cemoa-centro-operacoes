@@ -80,17 +80,26 @@ export function RainRanking({
   );
 
   return (
-    <div className="rounded-lg border border-border bg-bg/35 p-2">
-      <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-        Ranking de chuva · sugestão de envio
-      </p>
-      <p className="text-[11px] text-text-mute">
-        {rows.length === 0
-          ? "Nenhum município com chuva neste ciclo."
-          : canSuggest
-            ? `${actionable.length} para emitir ou elevar · ${rows.length} com chuva`
-            : `${rows.length} municípios com chuva (incêndio não usa limiar pluviométrico)`}
-      </p>
+    <div
+      className="rounded-lg border border-border bg-bg/35 p-2"
+      title={
+        canSuggest
+          ? "Sugestão de plantão — não pinta o mapa. Em Edição, classifique e envie o alerta."
+          : undefined
+      }
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Chuva
+        </p>
+        <p className="text-[11px] text-text-mute">
+          {rows.length === 0
+            ? "Sem chuva neste ciclo"
+            : canSuggest
+              ? `${actionable.length} emitir/elevar · ${rows.length} com chuva`
+              : `${rows.length} com chuva`}
+        </p>
+      </div>
 
       {top.length === 0 ? null : (
         <ol className="mt-1.5 max-h-44 space-y-0.5 overflow-auto">
@@ -133,11 +142,6 @@ export function RainRanking({
           })}
         </ol>
       )}
-      {canSuggest ? (
-        <p className="mt-1 text-[10px] text-text-mute">
-          Sugestão de plantão — não pinta o mapa. Em Edição, classifique e envie o alerta.
-        </p>
-      ) : null}
     </div>
   );
 }

@@ -458,11 +458,7 @@ export function AlertsWorkbench() {
   }, [scopedCatalog, product.levels, tipo]);
 
   const pct = (n: number) =>
-    counts.TODOS
-      ? `${((n / counts.TODOS) * 100).toFixed(1).replace(".", ",")}% ${
-          scopedCatalog.length === catalog.length ? "do total" : "do recorte"
-        }`
-      : "0%";
+    counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(0)}%` : "0%";
 
   const overrideCount = catalog.filter((m) => m.fonte === "admin").length;
   const ready = Boolean(data && data.tipo === tipo);
@@ -692,7 +688,7 @@ export function AlertsWorkbench() {
               compact
               label="Municípios"
               value={loading ? "—" : String(counts.TODOS)}
-              sub={scopedCatalog.length === catalog.length ? "Total" : "No recorte"}
+              sub={scopedCatalog.length === catalog.length ? "Total" : "Recorte"}
               accent="#2563eb"
               active={activeFilter === "TODOS" && !bacia && !calha && !selected}
               onClick={() =>
@@ -769,7 +765,7 @@ export function AlertsWorkbench() {
                       className="inline-flex items-center gap-1.5 rounded-full border border-border bg-panel-2 px-2.5 py-1 text-[11px] font-semibold text-text hover:border-border-strong"
                     >
                       <span className="size-1.5 rounded-full bg-risco-severo" />
-                      Alterações na janela
+                      Alterações
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-80">
@@ -830,13 +826,13 @@ export function AlertsWorkbench() {
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
                     >
-                      {showNames ? "Ocultar nomes dos municípios" : "Mostrar nomes dos municípios"}
+                      {showNames ? "Ocultar nomes" : "Mostrar nomes"}
                     </MapToolButton>
                     <MapToolButton
                       active={showRivers}
                       onClick={() => setShowRivers((v) => !v)}
                     >
-                      {showRivers ? "Ocultar rios" : "Mostrar rios"}
+                      {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
@@ -929,7 +925,7 @@ export function AlertsWorkbench() {
               ) : null}
               <div className="pointer-events-auto absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
                 <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
-                  {product.legendTitle} · filtrar
+                  {product.legendTitle}
                 </div>
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
@@ -987,7 +983,7 @@ export function AlertsWorkbench() {
               paintLevel={paintLevel}
               levels={product.levels}
               overrideCount={overrideCount}
-              paintHint="Clique no município para aplicar o nível e enviar o alerta"
+              paintHint="Clique no município para classificar"
               onDraw={() => setDrawMode((v) => !v)}
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) =>
