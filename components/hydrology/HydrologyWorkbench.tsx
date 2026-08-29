@@ -581,16 +581,16 @@ export function HydrologyWorkbench() {
                       className="inline-flex items-center gap-1.5 rounded-full border border-border bg-panel-2 px-2.5 py-1 text-[11px] font-semibold text-text hover:border-border-strong"
                     >
                       <span className="size-1.5 rounded-full bg-risco-moderado" />
-                      Alterações nas últimas 24h
+                      Alterações
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-80">
                     <p className="mb-2 text-xs font-bold text-text">
-                      Alterações nas últimas 24h
+                      Últimas 24 h
                     </p>
                     {(data?.mudancas24h ?? []).length === 0 ? (
                       <p className="text-xs text-text-mute">
-                        Nenhuma alteração hidrológica nas últimas 24h neste recorte.
+                        Nenhuma alteração neste recorte.
                       </p>
                     ) : (
                     <ul className="space-y-1.5">
@@ -776,8 +776,7 @@ export function HydrologyWorkbench() {
               />
             ) : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
-                Clique em um município no mapa{isMobile ? "" : " ou na lista"} para ver cota, variação e
-                limiares de estiagem e inundação.
+                Selecione um município.
               </p>
             )}
           </Card>
