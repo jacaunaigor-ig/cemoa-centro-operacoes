@@ -241,9 +241,9 @@ export function setLayerVisible(map: LeafletMap, layer: LayerGroup | null, on: b
 export function applyTerritoryVisibility(
   map: LeafletMap,
   layers: TerritoryLayers | null,
-  vis: TerritoryVisibility,
+  vis: TerritoryVisibility | null | undefined,
 ) {
-  if (!layers) return;
+  if (!layers || !vis) return;
   setLayerVisible(map, layers.sedes, vis.sedes);
   setLayerVisible(map, layers.rurais, vis.rurais);
   setLayerVisible(map, layers.indigenas, vis.indigenas);

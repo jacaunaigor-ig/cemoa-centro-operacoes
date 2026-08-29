@@ -16,7 +16,7 @@ type File = {
   indigenas: LocalidadePonto[];
 };
 
-const FILE = raw as File;
+const FILE = ((raw as File & { default?: File }).default ?? raw) as File;
 
 export const LOCALIDADES_FONTE = FILE.fonte;
 export const LOCALIDADES_NOTA = FILE.nota;
