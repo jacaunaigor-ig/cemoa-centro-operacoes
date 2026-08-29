@@ -48,9 +48,18 @@ export function FichaTerritorio({
               Em terras indígenas{" "}
               <strong className="text-text">{formatHab(demo.terrasIndigenas)}</strong>
             </p>
+            <p>
+              Crianças (0–14) <strong className="text-text">{formatHab(demo.criancas ?? 0)}</strong>
+              <span className="text-text-mute"> · {demo.pctCriancas ?? 0}%</span>
+            </p>
+            <p>
+              Idosos (60+) <strong className="text-text">{formatHab(demo.idosos ?? 0)}</strong>
+              <span className="text-text-mute"> · {demo.pctIdosos ?? 0}%</span>
+            </p>
           </div>
           <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
             {DEMOGRAFIA_FONTE}. Rural no Amazonas concentra comunidades ribeirinhas.
+            Idosos seguem o Estatuto do Idoso (60 anos ou mais).
           </p>
         </div>
       ) : null}

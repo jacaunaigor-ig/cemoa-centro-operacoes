@@ -6,8 +6,12 @@ export type DemoMuni = {
   rural: number;
   indigena: number;
   terrasIndigenas: number;
+  criancas: number;
+  idosos: number;
   pctRural: number;
   pctIndigena: number;
+  pctCriancas: number;
+  pctIdosos: number;
 };
 
 type File = {

@@ -1,6 +1,6 @@
 {
   "fonte": "IBGE Censo Demográfico 2022",
-  "nota": "Rural no Amazonas concentra comunidades ribeirinhas. Indígena = cor ou raça indígena. Terras indígenas = moradores em TI.",
+  "nota": "Rural no Amazonas concentra comunidades ribeirinhas. Indígena = cor ou raça indígena. Terras indígenas = moradores em TI. Crianças = 0 a 14 anos. Idosos = 60 anos ou mais (Estatuto do Idoso).",
   "municipios": {
     "1300029": {
       "total": 15866,
@@ -9,7 +9,11 @@
       "indigena": 2975,
       "terrasIndigenas": 1208,
       "pctRural": 45,
-      "pctIndigena": 18.8
+      "pctIndigena": 18.8,
+      "criancas": 5532,
+      "idosos": 1058,
+      "pctCriancas": 34.9,
+      "pctIdosos": 6.7
     },
     "1300060": {
       "total": 10819,
@@ -18,7 +22,11 @@
       "indigena": 6131,
       "terrasIndigenas": 3626,
       "pctRural": 28.2,
-      "pctIndigena": 56.7
+      "pctIndigena": 56.7,
+      "criancas": 4001,
+      "idosos": 747,
+      "pctCriancas": 37.0,
+      "pctIdosos": 6.9
     },
     "1300086": {
       "total": 9962,
@@ -27,7 +35,11 @@
       "indigena": 648,
       "terrasIndigenas": 214,
       "pctRural": 51.7,
-      "pctIndigena": 6.5
+      "pctIndigena": 6.5,
+      "criancas": 3085,
+      "idosos": 675,
+      "pctCriancas": 31.0,
+      "pctIdosos": 6.8
     },
     "1300102": {
       "total": 17194,
@@ -36,7 +48,11 @@
       "indigena": 432,
       "terrasIndigenas": 563,
       "pctRural": 36.9,
-      "pctIndigena": 2.5
+      "pctIndigena": 2.5,
+      "criancas": 5204,
+      "idosos": 1367,
+      "pctCriancas": 30.3,
+      "pctIdosos": 8.0
     },
     "1300144": {
       "total": 20647,
@@ -45,7 +61,11 @@
       "indigena": 308,
       "terrasIndigenas": 0,
       "pctRural": 47,
-      "pctIndigena": 1.5
+      "pctIndigena": 1.5,
+      "criancas": 5364,
+      "idosos": 1961,
+      "pctCriancas": 26.0,
+      "pctIdosos": 9.5
     },
     "1300201": {
       "total": 15314,
@@ -54,7 +74,11 @@
       "indigena": 7107,
       "terrasIndigenas": 5143,
       "pctRural": 48.2,
-      "pctIndigena": 46.4
+      "pctIndigena": 46.4,
+      "criancas": 5874,
+      "idosos": 955,
+      "pctCriancas": 38.4,
+      "pctIdosos": 6.2
     },
     "1300300": {
       "total": 41564,
@@ -63,7 +87,11 @@
       "indigena": 15499,
       "terrasIndigenas": 4295,
       "pctRural": 55.3,
-      "pctIndigena": 37.3
+      "pctIndigena": 37.3,
+      "criancas": 13284,
+      "idosos": 3698,
+      "pctCriancas": 32.0,
+      "pctIdosos": 8.9
     },
     "1300409": {
       "total": 18834,
@@ -72,7 +100,11 @@
       "indigena": 9868,
       "terrasIndigenas": 4853,
       "pctRural": 44.5,
-      "pctIndigena": 52.4
+      "pctIndigena": 52.4,
+      "criancas": 6620,
+      "idosos": 1508,
+      "pctCriancas": 35.1,
+      "pctIdosos": 8.0
     },
     "1300508": {
       "total": 31051,
@@ -81,7 +113,11 @@
       "indigena": 6157,
       "terrasIndigenas": 4340,
       "pctRural": 45.3,
-      "pctIndigena": 19.8
+      "pctIndigena": 19.8,
+      "criancas": 10455,
+      "idosos": 2531,
+      "pctCriancas": 33.7,
+      "pctIdosos": 8.2
     },
     "1300607": {
       "total": 37648,
@@ -90,7 +126,11 @@
       "indigena": 14587,
       "terrasIndigenas": 12351,
       "pctRural": 23.5,
-      "pctIndigena": 38.7
+      "pctIndigena": 38.7,
+      "criancas": 13629,
+      "idosos": 2723,
+      "pctCriancas": 36.2,
+      "pctIdosos": 7.2
     },
     "1300631": {
       "total": 20718,
@@ -99,7 +139,11 @@
       "indigena": 1997,
       "terrasIndigenas": 954,
       "pctRural": 41.7,
-      "pctIndigena": 9.6
+      "pctIndigena": 9.6,
+      "criancas": 7352,
+      "idosos": 1406,
+      "pctCriancas": 35.5,
+      "pctIdosos": 6.8
     },
     "1300680": {
       "total": 23785,
@@ -108,7 +152,11 @@
       "indigena": 513,
       "terrasIndigenas": 0,
       "pctRural": 50.1,
-      "pctIndigena": 2.2
+      "pctIndigena": 2.2,
+      "criancas": 7395,
+      "idosos": 2219,
+      "pctCriancas": 31.1,
+      "pctIdosos": 9.3
     },
     "1300706": {
       "total": 35447,
@@ -117,7 +165,11 @@
       "indigena": 1889,
       "terrasIndigenas": 852,
       "pctRural": 37.6,
-      "pctIndigena": 5.3
+      "pctIndigena": 5.3,
+      "criancas": 9591,
+      "idosos": 3452,
+      "pctCriancas": 27.1,
+      "pctIdosos": 9.7
     },
     "1300805": {
       "total": 33080,
@@ -126,7 +178,11 @@
       "indigena": 6457,
       "terrasIndigenas": 5207,
       "pctRural": 38.3,
-      "pctIndigena": 19.5
+      "pctIndigena": 19.5,
+      "criancas": 10476,
+      "idosos": 2876,
+      "pctCriancas": 31.7,
+      "pctIdosos": 8.7
     },
     "1300839": {
       "total": 13469,
@@ -135,7 +191,11 @@
       "indigena": 38,
       "terrasIndigenas": 0,
       "pctRural": 48.3,
-      "pctIndigena": 0.3
+      "pctIndigena": 0.3,
+      "criancas": 4002,
+      "idosos": 1045,
+      "pctCriancas": 29.7,
+      "pctIdosos": 7.8
     },
     "1300904": {
       "total": 16869,
@@ -144,7 +204,11 @@
       "indigena": 1144,
       "terrasIndigenas": 157,
       "pctRural": 40.2,
-      "pctIndigena": 6.8
+      "pctIndigena": 6.8,
+      "criancas": 4539,
+      "idosos": 1595,
+      "pctCriancas": 26.9,
+      "pctIdosos": 9.5
     },
     "1301001": {
       "total": 28742,
@@ -153,7 +217,11 @@
       "indigena": 437,
       "terrasIndigenas": 0,
       "pctRural": 21.1,
-      "pctIndigena": 1.5
+      "pctIndigena": 1.5,
+      "criancas": 9001,
+      "idosos": 2165,
+      "pctCriancas": 31.3,
+      "pctIdosos": 7.5
     },
     "1301100": {
       "total": 30792,
@@ -162,7 +230,11 @@
       "indigena": 1026,
       "terrasIndigenas": 327,
       "pctRural": 58,
-      "pctIndigena": 3.3
+      "pctIndigena": 3.3,
+      "criancas": 8865,
+      "idosos": 3777,
+      "pctCriancas": 28.8,
+      "pctIdosos": 12.3
     },
     "1301159": {
       "total": 19637,
@@ -171,7 +243,11 @@
       "indigena": 1198,
       "terrasIndigenas": 582,
       "pctRural": 84.9,
-      "pctIndigena": 6.1
+      "pctIndigena": 6.1,
+      "criancas": 5326,
+      "idosos": 2276,
+      "pctCriancas": 27.1,
+      "pctIdosos": 11.6
     },
     "1301209": {
       "total": 70616,
@@ -180,7 +256,11 @@
       "indigena": 4364,
       "terrasIndigenas": 233,
       "pctRural": 25.1,
-      "pctIndigena": 6.2
+      "pctIndigena": 6.2,
+      "criancas": 21969,
+      "idosos": 5601,
+      "pctCriancas": 31.1,
+      "pctIdosos": 7.9
     },
     "1301308": {
       "total": 23549,
@@ -189,7 +269,11 @@
       "indigena": 40,
       "terrasIndigenas": 0,
       "pctRural": 24.3,
-      "pctIndigena": 0.2
+      "pctIndigena": 0.2,
+      "criancas": 7287,
+      "idosos": 1933,
+      "pctCriancas": 30.9,
+      "pctIdosos": 8.2
     },
     "1301407": {
       "total": 33170,
@@ -198,7 +282,11 @@
       "indigena": 1923,
       "terrasIndigenas": 1813,
       "pctRural": 21.9,
-      "pctIndigena": 5.8
+      "pctIndigena": 5.8,
+      "criancas": 10876,
+      "idosos": 2515,
+      "pctCriancas": 32.8,
+      "pctIdosos": 7.6
     },
     "1301506": {
       "total": 17186,
@@ -207,7 +295,11 @@
       "indigena": 1013,
       "terrasIndigenas": 960,
       "pctRural": 25.5,
-      "pctIndigena": 5.9
+      "pctIndigena": 5.9,
+      "criancas": 5599,
+      "idosos": 1108,
+      "pctCriancas": 32.6,
+      "pctIdosos": 6.4
     },
     "1301605": {
       "total": 25871,
@@ -216,7 +308,11 @@
       "indigena": 3390,
       "terrasIndigenas": 566,
       "pctRural": 30.2,
-      "pctIndigena": 13.1
+      "pctIndigena": 13.1,
+      "criancas": 8477,
+      "idosos": 1849,
+      "pctCriancas": 32.8,
+      "pctIdosos": 7.1
     },
     "1301654": {
       "total": 13815,
@@ -225,7 +321,11 @@
       "indigena": 96,
       "terrasIndigenas": 0,
       "pctRural": 33,
-      "pctIndigena": 0.7
+      "pctIndigena": 0.7,
+      "criancas": 4271,
+      "idosos": 1044,
+      "pctCriancas": 30.9,
+      "pctIdosos": 7.6
     },
     "1301704": {
       "total": 57473,
@@ -234,7 +334,11 @@
       "indigena": 2944,
       "terrasIndigenas": 1600,
       "pctRural": 26.6,
-      "pctIndigena": 5.1
+      "pctIndigena": 5.1,
+      "criancas": 16300,
+      "idosos": 4872,
+      "pctCriancas": 28.4,
+      "pctIdosos": 8.5
     },
     "1301803": {
       "total": 24311,
@@ -243,7 +347,11 @@
       "indigena": 2148,
       "terrasIndigenas": 1765,
       "pctRural": 32.1,
-      "pctIndigena": 8.8
+      "pctIndigena": 8.8,
+      "criancas": 8409,
+      "idosos": 1286,
+      "pctCriancas": 34.6,
+      "pctIdosos": 5.3
     },
     "1301852": {
       "total": 61163,
@@ -252,7 +360,11 @@
       "indigena": 872,
       "terrasIndigenas": 0,
       "pctRural": 23.7,
-      "pctIndigena": 1.4
+      "pctIndigena": 1.4,
+      "criancas": 16758,
+      "idosos": 6268,
+      "pctCriancas": 27.4,
+      "pctIdosos": 10.2
     },
     "1301902": {
       "total": 103598,
@@ -261,7 +373,11 @@
       "indigena": 1872,
       "terrasIndigenas": 999,
       "pctRural": 29.5,
-      "pctIndigena": 1.8
+      "pctIndigena": 1.8,
+      "criancas": 28774,
+      "idosos": 9826,
+      "pctCriancas": 27.8,
+      "pctIdosos": 9.5
     },
     "1301951": {
       "total": 10937,
@@ -270,7 +386,11 @@
       "indigena": 1901,
       "terrasIndigenas": 1749,
       "pctRural": 32.3,
-      "pctIndigena": 17.4
+      "pctIndigena": 17.4,
+      "criancas": 4007,
+      "idosos": 616,
+      "pctCriancas": 36.6,
+      "pctIdosos": 5.6
     },
     "1302009": {
       "total": 10162,
@@ -279,7 +399,11 @@
       "indigena": 64,
       "terrasIndigenas": 0,
       "pctRural": 21.7,
-      "pctIndigena": 0.6
+      "pctIndigena": 0.6,
+      "criancas": 2989,
+      "idosos": 964,
+      "pctCriancas": 29.4,
+      "pctIdosos": 9.5
     },
     "1302108": {
       "total": 8858,
@@ -288,7 +412,11 @@
       "indigena": 1959,
       "terrasIndigenas": 1351,
       "pctRural": 43.6,
-      "pctIndigena": 22.1
+      "pctIndigena": 22.1,
+      "criancas": 3280,
+      "idosos": 451,
+      "pctCriancas": 37.0,
+      "pctIdosos": 5.1
     },
     "1302207": {
       "total": 10742,
@@ -297,7 +425,11 @@
       "indigena": 765,
       "terrasIndigenas": 358,
       "pctRural": 32.8,
-      "pctIndigena": 7.1
+      "pctIndigena": 7.1,
+      "criancas": 3426,
+      "idosos": 698,
+      "pctCriancas": 31.9,
+      "pctIdosos": 6.5
     },
     "1302306": {
       "total": 25172,
@@ -306,7 +438,11 @@
       "indigena": 5630,
       "terrasIndigenas": 4273,
       "pctRural": 35.8,
-      "pctIndigena": 22.4
+      "pctIndigena": 22.4,
+      "criancas": 9798,
+      "idosos": 1357,
+      "pctCriancas": 38.9,
+      "pctIdosos": 5.4
     },
     "1302405": {
       "total": 45448,
@@ -315,7 +451,11 @@
       "indigena": 8274,
       "terrasIndigenas": 3088,
       "pctRural": 39.1,
-      "pctIndigena": 18.2
+      "pctIndigena": 18.2,
+      "criancas": 13621,
+      "idosos": 3461,
+      "pctCriancas": 30.0,
+      "pctIdosos": 7.6
     },
     "1302504": {
       "total": 101883,
@@ -324,7 +464,11 @@
       "indigena": 830,
       "terrasIndigenas": 83,
       "pctRural": 34.9,
-      "pctIndigena": 0.8
+      "pctIndigena": 0.8,
+      "criancas": 29234,
+      "idosos": 9237,
+      "pctCriancas": 28.7,
+      "pctIdosos": 9.1
     },
     "1302553": {
       "total": 17107,
@@ -333,7 +477,11 @@
       "indigena": 1000,
       "terrasIndigenas": 47,
       "pctRural": 61.4,
-      "pctIndigena": 5.8
+      "pctIndigena": 5.8,
+      "criancas": 5001,
+      "idosos": 1904,
+      "pctCriancas": 29.2,
+      "pctIdosos": 11.1
     },
     "1302603": {
       "total": 2063689,
@@ -342,7 +490,11 @@
       "indigena": 18854,
       "terrasIndigenas": 0,
       "pctRural": 1,
-      "pctIndigena": 0.9
+      "pctIndigena": 0.9,
+      "criancas": 485519,
+      "idosos": 200138,
+      "pctCriancas": 23.5,
+      "pctIdosos": 9.7
     },
     "1302702": {
       "total": 53914,
@@ -351,7 +503,11 @@
       "indigena": 3570,
       "terrasIndigenas": 1472,
       "pctRural": 43.1,
-      "pctIndigena": 6.6
+      "pctIndigena": 6.6,
+      "criancas": 16498,
+      "idosos": 4576,
+      "pctCriancas": 30.6,
+      "pctIdosos": 8.5
     },
     "1302801": {
       "total": 15529,
@@ -360,7 +516,11 @@
       "indigena": 2032,
       "terrasIndigenas": 857,
       "pctRural": 49,
-      "pctIndigena": 13.1
+      "pctIndigena": 13.1,
+      "criancas": 5731,
+      "idosos": 858,
+      "pctCriancas": 36.9,
+      "pctIdosos": 5.5
     },
     "1302900": {
       "total": 61204,
@@ -369,7 +529,11 @@
       "indigena": 8105,
       "terrasIndigenas": 6150,
       "pctRural": 52.3,
-      "pctIndigena": 13.2
+      "pctIndigena": 13.2,
+      "criancas": 21044,
+      "idosos": 5351,
+      "pctCriancas": 34.4,
+      "pctIdosos": 8.7
     },
     "1303007": {
       "total": 20136,
@@ -378,7 +542,11 @@
       "indigena": 990,
       "terrasIndigenas": 837,
       "pctRural": 62.8,
-      "pctIndigena": 4.9
+      "pctIndigena": 4.9,
+      "criancas": 6049,
+      "idosos": 1941,
+      "pctCriancas": 30.0,
+      "pctIdosos": 9.6
     },
     "1303106": {
       "total": 27062,
@@ -387,7 +555,11 @@
       "indigena": 3393,
       "terrasIndigenas": 0,
       "pctRural": 39.2,
-      "pctIndigena": 12.5
+      "pctIndigena": 12.5,
+      "criancas": 8993,
+      "idosos": 2303,
+      "pctCriancas": 33.2,
+      "pctIdosos": 8.5
     },
     "1303205": {
       "total": 15761,
@@ -396,7 +568,11 @@
       "indigena": 2827,
       "terrasIndigenas": 1122,
       "pctRural": 24.9,
-      "pctIndigena": 17.9
+      "pctIndigena": 17.9,
+      "criancas": 5052,
+      "idosos": 1444,
+      "pctCriancas": 32.1,
+      "pctIdosos": 9.2
     },
     "1303304": {
       "total": 23818,
@@ -405,7 +581,11 @@
       "indigena": 447,
       "terrasIndigenas": 330,
       "pctRural": 24.8,
-      "pctIndigena": 1.9
+      "pctIndigena": 1.9,
+      "criancas": 6999,
+      "idosos": 2058,
+      "pctCriancas": 29.4,
+      "pctIdosos": 8.6
     },
     "1303403": {
       "total": 96372,
@@ -414,7 +594,11 @@
       "indigena": 1956,
       "terrasIndigenas": 777,
       "pctRural": 17.3,
-      "pctIndigena": 2
+      "pctIndigena": 2,
+      "criancas": 27019,
+      "idosos": 9496,
+      "pctCriancas": 28.0,
+      "pctIdosos": 9.9
     },
     "1303502": {
       "total": 19373,
@@ -423,7 +607,11 @@
       "indigena": 2914,
       "terrasIndigenas": 1595,
       "pctRural": 38.6,
-      "pctIndigena": 15
+      "pctIndigena": 15,
+      "criancas": 6423,
+      "idosos": 1251,
+      "pctCriancas": 33.2,
+      "pctIdosos": 6.5
     },
     "1303536": {
       "total": 30668,
@@ -432,7 +620,11 @@
       "indigena": 806,
       "terrasIndigenas": 553,
       "pctRural": 45.3,
-      "pctIndigena": 2.6
+      "pctIndigena": 2.6,
+      "criancas": 8574,
+      "idosos": 3065,
+      "pctCriancas": 28.0,
+      "pctIdosos": 10.0
     },
     "1303569": {
       "total": 24936,
@@ -441,7 +633,11 @@
       "indigena": 760,
       "terrasIndigenas": 0,
       "pctRural": 43.3,
-      "pctIndigena": 3
+      "pctIndigena": 3,
+      "criancas": 7000,
+      "idosos": 2842,
+      "pctCriancas": 28.1,
+      "pctIdosos": 11.4
     },
     "1303601": {
       "total": 14164,
@@ -450,7 +646,11 @@
       "indigena": 12016,
       "terrasIndigenas": 5918,
       "pctRural": 51.3,
-      "pctIndigena": 84.8
+      "pctIndigena": 84.8,
+      "criancas": 5256,
+      "idosos": 1066,
+      "pctCriancas": 37.1,
+      "pctIdosos": 7.5
     },
     "1303700": {
       "total": 28211,
@@ -459,7 +659,11 @@
       "indigena": 14318,
       "terrasIndigenas": 6294,
       "pctRural": 22.4,
-      "pctIndigena": 50.8
+      "pctIndigena": 50.8,
+      "criancas": 10764,
+      "idosos": 1763,
+      "pctCriancas": 38.2,
+      "pctIdosos": 6.2
     },
     "1303809": {
       "total": 51795,
@@ -468,7 +672,11 @@
       "indigena": 45919,
       "terrasIndigenas": 25083,
       "pctRural": 48.6,
-      "pctIndigena": 88.7
+      "pctIndigena": 88.7,
+      "criancas": 18181,
+      "idosos": 4230,
+      "pctCriancas": 35.1,
+      "pctIdosos": 8.2
     },
     "1303908": {
       "total": 32967,
@@ -477,7 +685,11 @@
       "indigena": 19890,
       "terrasIndigenas": 13179,
       "pctRural": 26.8,
-      "pctIndigena": 60.3
+      "pctIndigena": 60.3,
+      "criancas": 12973,
+      "idosos": 2103,
+      "pctCriancas": 39.4,
+      "pctIdosos": 6.4
     },
     "1303957": {
       "total": 11670,
@@ -486,7 +698,11 @@
       "indigena": 57,
       "terrasIndigenas": 0,
       "pctRural": 18.4,
-      "pctIndigena": 0.5
+      "pctIndigena": 0.5,
+      "criancas": 3653,
+      "idosos": 949,
+      "pctCriancas": 31.3,
+      "pctIdosos": 8.1
     },
     "1304005": {
       "total": 11559,
@@ -495,7 +711,11 @@
       "indigena": 466,
       "terrasIndigenas": 0,
       "pctRural": 55.5,
-      "pctIndigena": 4
+      "pctIndigena": 4,
+      "criancas": 3807,
+      "idosos": 1097,
+      "pctCriancas": 32.9,
+      "pctIdosos": 9.5
     },
     "1304062": {
       "total": 66764,
@@ -504,7 +724,11 @@
       "indigena": 27518,
       "terrasIndigenas": 19383,
       "pctRural": 16.6,
-      "pctIndigena": 41.2
+      "pctIndigena": 41.2,
+      "criancas": 23059,
+      "idosos": 4616,
+      "pctCriancas": 34.5,
+      "pctIdosos": 6.9
     },
     "1304104": {
       "total": 19599,
@@ -513,7 +737,11 @@
       "indigena": 2797,
       "terrasIndigenas": 1337,
       "pctRural": 42.1,
-      "pctIndigena": 14.3
+      "pctIndigena": 14.3,
+      "criancas": 6127,
+      "idosos": 1476,
+      "pctCriancas": 31.3,
+      "pctIdosos": 7.5
     },
     "1304203": {
       "total": 73669,
@@ -522,7 +750,11 @@
       "indigena": 7790,
       "terrasIndigenas": 1043,
       "pctRural": 19.1,
-      "pctIndigena": 10.6
+      "pctIndigena": 10.6,
+      "criancas": 23471,
+      "idosos": 5307,
+      "pctCriancas": 31.9,
+      "pctIdosos": 7.2
     },
     "1304237": {
       "total": 19247,
@@ -531,7 +763,11 @@
       "indigena": 7353,
       "terrasIndigenas": 3597,
       "pctRural": 41,
-      "pctIndigena": 38.2
+      "pctIndigena": 38.2,
+      "criancas": 7157,
+      "idosos": 1141,
+      "pctCriancas": 37.2,
+      "pctIdosos": 5.9
     },
     "1304260": {
       "total": 14431,
@@ -540,7 +776,11 @@
       "indigena": 2734,
       "terrasIndigenas": 625,
       "pctRural": 32.3,
-      "pctIndigena": 18.9
+      "pctIndigena": 18.9,
+      "criancas": 4873,
+      "idosos": 850,
+      "pctCriancas": 33.8,
+      "pctIdosos": 5.9
     },
     "1304302": {
       "total": 18631,
@@ -549,7 +789,11 @@
       "indigena": 194,
       "terrasIndigenas": 0,
       "pctRural": 33.8,
-      "pctIndigena": 1
+      "pctIndigena": 1,
+      "criancas": 5171,
+      "idosos": 1935,
+      "pctCriancas": 27.8,
+      "pctIdosos": 10.4
     },
     "1304401": {
       "total": 23945,
@@ -558,7 +802,11 @@
       "indigena": 41,
       "terrasIndigenas": 0,
       "pctRural": 35,
-      "pctIndigena": 0.2
+      "pctIndigena": 0.2,
+      "criancas": 6362,
+      "idosos": 2102,
+      "pctCriancas": 26.6,
+      "pctIdosos": 8.8
     }
   }
 }
