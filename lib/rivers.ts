@@ -17,11 +17,17 @@ type RiverFile = {
 const FILE = raw as RiverFile;
 
 export const RIVERS_FONTE = FILE.fonte;
-/** Japurá por último para não sumir sob o Solimões. */
-export const AMAZONAS_RIVERS: AmazonasRiver[] = [...FILE.rios].sort((a, b) => {
-  if (a.id === "japura") return 1;
-  if (b.id === "japura") return -1;
-  if (a.id === "solimoes") return 1;
-  if (b.id === "solimoes") return -1;
-  return 0;
-});
+
+/** Mesmo destaque visual para todos os rios principais. */
+export const RIVER_DESTAQUE = {
+  cor: "#0ea5e9",
+  peso: 5.6,
+  velocidade: 1.8,
+} as const;
+
+export const AMAZONAS_RIVERS: AmazonasRiver[] = FILE.rios.map((rio) => ({
+  ...rio,
+  cor: RIVER_DESTAQUE.cor,
+  peso: RIVER_DESTAQUE.peso,
+  velocidade: RIVER_DESTAQUE.velocidade,
+}));

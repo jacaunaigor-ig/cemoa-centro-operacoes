@@ -237,13 +237,15 @@ button, a, [role="button"] {
   stroke-linecap: round;
 }
 
-.river-flow-animated.flow-solimoes { animation-duration: 1.85s; }
-.river-flow-animated.flow-negro { animation-duration: 2.15s; }
-.river-flow-animated.flow-madeira { animation-duration: 2.05s; }
-.river-flow-animated.flow-purus { animation-duration: 2.45s; }
-.river-flow-animated.flow-jurua { animation-duration: 2.55s; }
-.river-flow-animated.flow-japura { animation-duration: 2.65s; }
-.river-flow-animated.flow-ica { animation-duration: 2.75s; }
+.river-flow-animated.flow-solimoes,
+.river-flow-animated.flow-negro,
+.river-flow-animated.flow-madeira,
+.river-flow-animated.flow-purus,
+.river-flow-animated.flow-jurua,
+.river-flow-animated.flow-japura,
+.river-flow-animated.flow-ica {
+  animation-duration: 2.2s;
+}
 
 .leaflet-tooltip.river-flow-tip {
   border: 0;

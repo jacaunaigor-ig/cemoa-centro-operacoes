@@ -37,7 +37,7 @@
     {
       "id": "solimoes",
       "nome": "Solimões–Amazonas",
-      "cor": "#38bdf8",
+      "cor": "#0ea5e9",
       "velocidade": 1.55,
       "municipios": [
         "TABATINGA",
@@ -56,7 +56,7 @@
     {
       "id": "negro",
       "nome": "Negro",
-      "cor": "#60a5fa",
+      "cor": "#0ea5e9",
       "velocidade": 1.75,
       "municipios": [
         "SÃO GABRIEL DA CACHOEIRA",
@@ -69,7 +69,7 @@
     {
       "id": "madeira",
       "nome": "Madeira",
-      "cor": "#22d3ee",
+      "cor": "#0ea5e9",
       "velocidade": 1.68,
       "municipios": [
         "HUMAITÁ",
@@ -81,7 +81,7 @@
     {
       "id": "purus",
       "nome": "Purus",
-      "cor": "#67e8f9",
+      "cor": "#0ea5e9",
       "velocidade": 1.88,
       "municipios": [
         "BOCA DO ACRE",
@@ -95,7 +95,7 @@
     {
       "id": "jurua",
       "nome": "Juruá",
-      "cor": "#7dd3fc",
+      "cor": "#0ea5e9",
       "velocidade": 1.95,
       "municipios": [
         "GUAJARÁ (CRUZEIRO SUL)",
@@ -109,7 +109,7 @@
     {
       "id": "japura",
       "nome": "Japurá",
-      "cor": "#4f46e5",
+      "cor": "#0ea5e9",
       "velocidade": 2.05,
       "municipios": [
         "JAPURÁ",
@@ -119,7 +119,7 @@
     {
       "id": "ica",
       "nome": "Içá",
-      "cor": "#67e8f9",
+      "cor": "#0ea5e9",
       "velocidade": 2.15,
       "municipios": [
         "SANTO ANTÔNIO DO IÇÁ"
