@@ -12,7 +12,7 @@ export function Slider({
       className={cn("relative flex w-full touch-none items-center select-none", className)}
       {...props}
     >
-      <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-white/10">
+      <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-hover">
         <SliderPrimitive.Range className="absolute h-full bg-brand" />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-brand bg-text shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus" />

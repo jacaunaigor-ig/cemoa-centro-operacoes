@@ -29,7 +29,7 @@ export function InfoTooltip({
             type="button"
             aria-label={label}
             className={cn(
-              "inline-flex size-5 items-center justify-center rounded-full text-text-mute hover:bg-white/10 hover:text-focus",
+              "inline-flex size-5 items-center justify-center rounded-full text-text-mute hover:bg-hover hover:text-focus",
               className,
             )}
           >

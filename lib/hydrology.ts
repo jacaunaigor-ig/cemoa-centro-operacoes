@@ -59,10 +59,10 @@ export function normalizeMunicipio(s: string) {
 }
 
 export const HYDRO_STATUS_COLORS: Record<HydroStatus | "SL", string> = {
-  NORMAL: "#66BB6A",
-  MODERADO: "#FFEB3B",
-  ALTO: "#FF9800",
-  SL: "#7c8fab",
+  NORMAL: "#10b981",
+  MODERADO: "#f59e0b",
+  ALTO: "#f97316",
+  SL: "#6b7280",
 };
 
 export const HYDRO_STATUS_LABELS: Record<HydroStatus | "SL", string> = {

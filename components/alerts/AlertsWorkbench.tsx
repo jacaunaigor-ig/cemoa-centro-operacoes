@@ -640,8 +640,8 @@ export function AlertsWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source}>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
-        <div className="shrink-0 space-y-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6">
+        <div className="shrink-0 space-y-4">
           <SituationBar
             generatedAt={data?.generatedAt ?? null}
             loading={loading}
@@ -687,13 +687,13 @@ export function AlertsWorkbench() {
             onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
           />
 
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
             <KpiCard
               compact
               label="Municípios"
               value={loading ? "—" : String(counts.TODOS)}
               sub={scopedCatalog.length === catalog.length ? "Total" : "No recorte"}
-              accent="#5eb4ff"
+              accent="#2563eb"
               active={activeFilter === "TODOS" && !bacia && !calha && !selected}
               onClick={() =>
                 setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null })
@@ -727,7 +727,7 @@ export function AlertsWorkbench() {
         ) : null}
 
         <div className={cn(
-          "grid min-h-0 flex-1 gap-2 sm:gap-3",
+          "grid min-h-0 flex-1 gap-4 sm:gap-6",
           isMobile
             ? "grid-cols-1"
             : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
@@ -783,7 +783,7 @@ export function AlertsWorkbench() {
                         {mudancas.map((m) => (
                           <li
                             key={m.id}
-                            className="flex items-center justify-between gap-2 rounded-lg bg-white/4 px-2 py-1.5 text-xs"
+                            className="flex items-center justify-between gap-2 rounded-lg bg-hover px-2 py-1.5 text-xs"
                           >
                             <span>
                               <strong className="text-text">{m.municipio}</strong>
@@ -944,8 +944,8 @@ export function AlertsWorkbench() {
                           })
                         }
                         className={cn(
-                          "flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-text transition-colors duration-150 hover:bg-white/10",
-                          activeFilter === level && "bg-white/12 font-bold",
+                          "flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-text transition-colors duration-150 hover:bg-hover",
+                          activeFilter === level && "bg-hover font-bold",
                         )}
                       >
                         <span
@@ -962,7 +962,7 @@ export function AlertsWorkbench() {
                 </ul>
                 <button
                   type="button"
-                  className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-white/10"
+                  className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
                   aria-pressed={rainFilter === "INTENSO"}
                   onClick={() =>
                     setQuery({

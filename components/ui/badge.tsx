@@ -6,7 +6,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-border bg-white/5 text-text-dim",
+        default: "border-border bg-hover text-text-dim",
         baixo: "border-risco-baixo/30 bg-risco-baixo/15 text-risco-baixo",
         moderado: "border-risco-moderado/30 bg-risco-moderado/15 text-risco-moderado",
         alto: "border-risco-alto/35 bg-risco-alto/15 text-risco-alto",

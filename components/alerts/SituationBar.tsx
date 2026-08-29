@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/shared/SectionHeading";
 
 export function SituationBar({
   generatedAt,
@@ -22,8 +23,8 @@ export function SituationBar({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <h2 className="mr-auto text-base font-black tracking-tight sm:text-lg">Painel de Alertas</h2>
+    <div className="flex flex-wrap items-center gap-3">
+      <SectionHeading className="mr-auto" kicker="Operações" title="Painel de Alertas" />
       {children}
       {urgent?.expiresAt ? (
         <AlertCountdown

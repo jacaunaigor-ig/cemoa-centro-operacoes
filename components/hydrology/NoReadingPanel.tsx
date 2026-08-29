@@ -32,7 +32,7 @@ export function NoReadingPanel({
             <button
               type="button"
               onClick={() => onSelect(s)}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs hover:bg-white/5"
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs hover:bg-hover"
             >
               <span>
                 <strong>{s.municipio}</strong>

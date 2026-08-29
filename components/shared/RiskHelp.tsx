@@ -100,7 +100,7 @@ export function RiskHelpButton({
                 {PNG_HYDRO_ITEMS.map((item) => (
                   <article
                     key={item.key}
-                    className="rounded-xl border border-border bg-white/4 p-3.5"
+                    className="rounded-xl border border-border bg-hover p-3.5"
                     style={{ borderLeft: `3px solid ${HYDRO_STATUS_COLORS[item.key]}` }}
                   >
                     <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function RiskHelpButton({
               {RISK_LEGEND_COPY.map((item) => (
                 <article
                   key={item.level}
-                  className="rounded-xl border border-border bg-white/4 p-3.5"
+                  className="rounded-xl border border-border bg-hover p-3.5"
                   style={{ borderLeft: `3px solid ${RISK_COLORS[item.level]}` }}
                 >
                   <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export function RiskHelpButton({
                       style={{ background: RISK_COLORS[item.level] }}
                     />
                     <strong className="text-sm">{item.title}</strong>
-                    <b className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] tracking-wide">
+                    <b className="ml-auto rounded-full bg-hover px-2 py-0.5 text-[9px] tracking-wide">
                       {item.action}
                     </b>
                   </div>
@@ -163,7 +163,7 @@ export function RiskHelpButton({
               ))}
             </footer>
 
-            <div className="mx-4 mb-5 rounded-xl border border-border bg-[#0f2840]/70 p-3.5">
+            <div className="mx-4 mb-5 rounded-xl border border-border bg-hover p-3.5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <strong className="text-sm">
                   Incêndio florestal — qualidade do ar (classificação própria)
@@ -196,7 +196,7 @@ export function RiskHelpButton({
                   </span>
                 ))}
               </div>
-              <p className="mt-3 rounded-lg bg-white/5 px-3 py-2 text-[11px] leading-relaxed text-text-dim">
+              <p className="mt-3 rounded-lg bg-hover px-3 py-2 text-[11px] leading-relaxed text-text-dim">
                 <strong className="text-text">Material particulado fino — MP2,5. </strong>
                 A classificação considera a concentração de material particulado fino com diâmetro ≤
                 2,5 micrômetros, expressa em µg/m³ — microgramas por metro cúbico de ar.

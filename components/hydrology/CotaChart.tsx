@@ -114,7 +114,7 @@ export const CotaChart = memo(function CotaChart({
               x={pad.l - 4}
               y={yOf(tick) + 3}
               textAnchor="end"
-              fill="#7c8fab"
+              fill="#6b7280"
               fontSize="8"
               fontFamily="ui-monospace, monospace"
             >
@@ -175,7 +175,7 @@ export const CotaChart = memo(function CotaChart({
 
         {forecast.map((p) => (
           <g key={p.label}>
-            <circle cx={xOf(p.x)} cy={yOf(p.y)} r="3" fill="#0e1526" stroke="#ffb020" strokeWidth="1.6" />
+            <circle cx={xOf(p.x)} cy={yOf(p.y)} r="3" fill="#ffffff" stroke="#f59e0b" strokeWidth="1.6" />
             <text
               x={xOf(p.x)}
               y={yOf(p.y) - 8}
@@ -196,7 +196,7 @@ export const CotaChart = memo(function CotaChart({
               x={xOf(p.x)}
               y={height - 6}
               textAnchor="middle"
-              fill="#7c8fab"
+              fill="#6b7280"
               fontSize="8"
               fontFamily="ui-monospace, monospace"
             >

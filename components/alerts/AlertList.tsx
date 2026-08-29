@@ -122,11 +122,13 @@ export function AlertList({
 
   return (
     <Card className="flex h-full min-h-[320px] flex-col overflow-hidden xl:min-h-0">
-      <div className="space-y-2 border-b border-border p-3">
+      <div className="space-y-3 border-b border-border p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-sm font-bold">Municípios por região</h3>
-            <p className="text-[11px] text-text-mute">
+            <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
+              Municípios por região
+            </h3>
+            <p className="mt-0.5 text-sm font-semibold text-text">
               {loading
                 ? "Atualizando…"
                 : `${municipios.length} no recorte · clique no nível para filtrar`}
@@ -234,7 +236,7 @@ export function AlertList({
                 <span className="text-[11px] font-black tracking-[0.12em] text-text uppercase">
                   {group.bacia}
                 </span>
-                <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-text-dim">
+                <span className="rounded-full bg-hover px-2 py-0.5 font-mono text-[10px] font-bold text-text-dim">
                   {group.items.length}
                 </span>
               </div>
@@ -260,7 +262,7 @@ export function AlertList({
                       <div
                         className={cn(
                           "relative flex w-full flex-col gap-1 py-2.5 pr-3 pl-3.5 text-left transition-colors",
-                          highlighted ? "bg-white/7" : "hover:bg-white/4",
+                          highlighted ? "bg-hover" : "hover:bg-hover",
                         )}
                         style={{
                           boxShadow: `inset 4px 0 0 ${color}`,
@@ -349,7 +351,7 @@ function CotaPeek({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex size-8 items-center justify-center rounded-md text-brand-2 hover:bg-white/10"
+          className="inline-flex size-8 items-center justify-center rounded-md text-brand-2 hover:bg-hover"
           aria-label={`Resumo de cota e classificação de ${nome}`}
           title="Cota e classificação"
         >

@@ -66,15 +66,14 @@ export function AppShell({
             : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
         )}
       >
-      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] backdrop-blur-xl sm:gap-3 sm:px-4">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand to-transparent" />
+      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/95 px-4 py-2.5 pt-[max(0.6rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
           <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.14em] text-brand-2 uppercase">
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-text-mute uppercase">
               Defesa Civil do Amazonas
             </p>
-            <h1 className="truncate text-sm font-black tracking-tight sm:text-lg">
+            <h1 className="truncate text-sm font-bold tracking-tight sm:text-lg">
               {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
             </h1>
             <span className="mt-0.5 hidden items-center rounded-full border border-live/30 bg-live/10 px-1.5 py-px text-[8px] font-black tracking-[0.1em] text-live uppercase sm:inline-flex">
@@ -85,7 +84,7 @@ export function AppShell({
 
         <nav
           aria-label="Produtos"
-          className="order-3 flex w-full gap-1 rounded-xl border border-border bg-bg/60 p-1 sm:order-none sm:ml-3 sm:w-auto"
+          className="order-3 flex w-full gap-1 rounded-xl border border-border bg-hover p-1 sm:order-none sm:ml-3 sm:w-auto"
         >
           <NavTab
             href={`/${suffix}`}
@@ -107,7 +106,7 @@ export function AppShell({
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
           <div
-            className="flex rounded-lg border border-border bg-bg/60 p-0.5"
+            className="flex rounded-lg border border-border bg-hover p-0.5"
             role="group"
             aria-label="Modo de visualização"
           >
@@ -195,7 +194,7 @@ export function AppShell({
             >
               <button
                 type="button"
-                className="hidden items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-white/5 sm:flex"
+                className="hidden items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-hover sm:flex"
                 aria-label="Sobre a sincronização"
               >
                 <span className="live-dot" aria-hidden />
@@ -276,8 +275,8 @@ function NavTab({
         "inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-200 sm:flex-none",
         compact && "px-2 py-1.5",
         active
-          ? "bg-brand text-white shadow"
-          : "text-text-dim hover:bg-white/5 hover:text-text",
+          ? "bg-brand text-white shadow-sm"
+          : "text-text-dim hover:bg-panel hover:text-text",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -295,17 +294,17 @@ function CemoaMark({ compact }: { compact?: boolean }) {
       role="img"
       aria-label="Brasão CEMOA"
     >
-      <rect width="48" height="48" rx="12" fill="#121b30" />
+      <rect width="48" height="48" rx="12" fill="#2563eb" />
       <path
         d="M24 6l14 6v11c0 9.2-6.1 17.4-14 19.8C16.1 40.4 10 32.2 10 23V12l14-6z"
-        fill="#ff6a1f"
+        fill="#1d4ed8"
       />
       <path
         d="M24 10l10 4.2v9c0 6.6-4.3 12.5-10 14.3-5.7-1.8-10-7.7-10-14.3v-9L24 10z"
-        fill="#0e1526"
+        fill="#eff6ff"
       />
-      <path d="M16 24.5h16l-8 9-8-9z" fill="#5eb4ff" />
-      <circle cx="24" cy="20" r="3.2" fill="#ffb020" />
+      <path d="M16 24.5h16l-8 9-8-9z" fill="#2563eb" />
+      <circle cx="24" cy="20" r="3.2" fill="#f59e0b" />
     </svg>
   );
 }

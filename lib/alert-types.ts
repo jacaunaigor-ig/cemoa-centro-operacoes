@@ -22,11 +22,11 @@ export type AirLevel = (typeof AIR_LEVELS)[number];
 export type AlertLevel = RiskLevel | AirLevel;
 
 export const AIR_COLORS: Record<AirLevel, string> = {
-  BOA: "#27ae52",
-  MODERADO: "#f0b90b",
-  RUIM: "#f2790f",
-  MUITO_RUIM: "#e21c2b",
-  PESSIMA: "#9026c9",
+  BOA: "#10b981",
+  MODERADO: "#f59e0b",
+  RUIM: "#f97316",
+  MUITO_RUIM: "#ef4444",
+  PESSIMA: "#7c3aed",
 };
 
 export const AIR_LABELS: Record<AirLevel, string> = {

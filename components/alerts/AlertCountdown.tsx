@@ -39,7 +39,7 @@ export function AlertCountdown({
           "flex min-h-11 items-center gap-3 rounded-xl border px-3 py-1.5",
           tone === "urgent" && "border-risco-severo/70 bg-risco-severo/15",
           tone === "warn" && "border-risco-alto/60 bg-risco-alto/10",
-          tone === "expired" && "border-border bg-white/4",
+          tone === "expired" && "border-border bg-hover",
           tone === "ok" && "border-live/35 bg-live/10",
           tone === "idle" && "border-border bg-panel",
         )}

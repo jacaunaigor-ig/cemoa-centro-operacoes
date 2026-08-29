@@ -19,7 +19,7 @@ export function MapToolButton({
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-semibold transition-colors duration-150 active:scale-[0.98]",
-        active ? "bg-brand/15 text-brand-2" : "text-text-dim hover:bg-white/5 hover:text-text",
+        active ? "bg-brand/15 text-brand-2" : "text-text-dim hover:bg-hover hover:text-text",
       )}
       aria-pressed={active}
     >

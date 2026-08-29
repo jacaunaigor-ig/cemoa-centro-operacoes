@@ -51,7 +51,7 @@ export function buildRainRanking(
 function RankBar({ mm, max }: { mm: number | null; max: number }) {
   const pct = mm && max > 0 ? Math.min(100, (mm / max) * 100) : 0;
   return (
-    <span className="inline-flex h-1.5 w-14 overflow-hidden rounded-full bg-white/10" aria-hidden>
+    <span className="inline-flex h-1.5 w-14 overflow-hidden rounded-full bg-hover" aria-hidden>
       <span
         className="block h-full rounded-full"
         style={{ width: `${pct}%`, background: rainBandColor(rainBand(mm)) }}
@@ -103,7 +103,7 @@ export function RainRanking({
                   onClick={() => onSelect(row.nome, row.bacia)}
                   title={row.motivo ?? undefined}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-[11px] hover:bg-white/6",
+                    "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-[11px] hover:bg-hover",
                     row.action !== "manter" && "bg-focus/8",
                   )}
                 >

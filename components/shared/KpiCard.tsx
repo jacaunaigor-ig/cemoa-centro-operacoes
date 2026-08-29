@@ -31,31 +31,33 @@ export function KpiCard({
       aria-pressed={active}
       title={`${label}: ${value}. Clique para filtrar o mapa.`}
       className={cn(
-        "group relative cursor-pointer overflow-hidden rounded-xl border bg-panel text-left shadow-[0_1px_2px_rgba(0,0,0,.3)] transition-[border-color,background-color,transform] duration-150 touch-manipulation active:scale-[0.98]",
-        compact ? "px-2.5 py-2" : "px-3 py-2.5 sm:min-h-[5.75rem] sm:py-3",
-        "hover:bg-white/4",
-        active ? "bg-brand/8" : "",
+        "group card-in relative cursor-pointer overflow-hidden rounded-xl border border-border bg-panel text-left shadow-[var(--shadow-card)] transition-all duration-200 touch-manipulation active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-md",
+        compact ? "px-3 py-2.5" : "px-3.5 py-3 sm:min-h-[5.75rem]",
       )}
       style={{
         borderColor: active ? accent : undefined,
-        boxShadow: active ? `inset 0 0 0 1px ${accent}` : undefined,
+        boxShadow: active ? `0 0 0 2px ${accent}33, var(--shadow-card)` : undefined,
       }}
     >
-      <span className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} />
-      <div className="flex items-start justify-between pl-1.5">
-        <small className="text-[10px] font-bold tracking-[0.08em] text-text-dim uppercase">
+      <div className="flex items-start justify-between gap-2">
+        <span
+          className="grid size-8 shrink-0 place-items-center rounded-lg"
+          style={{ background: `${accent}1a`, color: accent }}
+        >
+          {icon ?? <span className="size-2 rounded-full" style={{ background: accent }} />}
+        </span>
+        <small className="pt-1 text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
           {label}
         </small>
-        <span className="text-text-mute">{icon}</span>
       </div>
       {loading ? (
-        <Skeleton className={cn("mt-1.5 w-14", compact ? "h-6" : "h-8")} />
+        <Skeleton className="mt-2 h-7 w-14" />
       ) : (
-        <p className={cn("mt-0.5 pl-1.5 font-mono font-bold", compact ? "text-lg" : "text-xl sm:text-2xl")}>
+        <p className="mt-1.5 text-[1.75rem] leading-none font-semibold tracking-tight tabular-nums">
           {value}
         </p>
       )}
-      <p className="pl-1.5 text-[10px] text-text-mute">{sub}</p>
+      <p className="mt-1 text-xs text-text-mute">{sub}</p>
     </button>
   );
 }

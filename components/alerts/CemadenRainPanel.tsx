@@ -50,29 +50,22 @@ export function CemadenRainPanel({
 
       {showApoio ? <RainApoioCard tipo={tipo} rain={rain} /> : null}
 
-      {tipo !== "INCENDIO" && tipo !== "ALAGAMENTO" ? (
+      {tipo === "INCENDIO" ? null : (
         <p className="mt-2 text-[11px] text-text-dim">
-          Emitir alerta a partir desta chuva:{" "}
-          {tipo !== "ALAGAMENTO" ? (
+          {tipo === "ALAGAMENTO" ? "Também neste município: " : "Emitir alerta a partir desta chuva: "}
+          {tipo === "ALAGAMENTO" ? null : (
             <Link href={hrefAlertas("ALAGAMENTO")} className="font-bold text-focus hover:underline">
               Alagamento
             </Link>
-          ) : null}
+          )}
           {tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO" ? " · " : null}
-          {tipo !== "MOVIMENTO" ? (
+          {tipo === "MOVIMENTO" ? null : (
             <Link href={hrefAlertas("MOVIMENTO")} className="font-bold text-focus hover:underline">
               Movimento de massa
             </Link>
-          ) : null}
+          )}
         </p>
-      ) : tipo === "ALAGAMENTO" ? (
-        <p className="mt-2 text-[11px] text-text-dim">
-          Também neste município:{" "}
-          <Link href={hrefAlertas("MOVIMENTO")} className="font-bold text-focus hover:underline">
-            Movimento de massa
-          </Link>
-        </p>
-      ) : null}
+      )}
 
       <div className="mt-2 max-h-48 overflow-auto">
         <table className="w-full min-w-[280px] text-left text-[11px]">

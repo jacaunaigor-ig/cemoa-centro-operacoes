@@ -48,10 +48,10 @@ export function RainfallStrip({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-panel/80 px-2.5 py-1.5">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-panel px-3.5 py-2.5 shadow-[var(--shadow-card)]">
       <CloudRain className="size-4 shrink-0 text-focus" />
       <div className="min-w-0 flex-1 leading-tight">
-        <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
+        <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
           Pluviômetros CEMADEN · 1 h / 6 h / 24 h
         </p>
         {loading && !rain ? (
@@ -116,7 +116,7 @@ function RainChip({
         "inline-flex min-h-8 items-center rounded-full border px-2.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
         active
           ? "border-focus/50 bg-focus/20 text-text"
-          : "border-border bg-bg/40 text-text-mute hover:text-text",
+          : "border-border bg-hover text-text-mute hover:text-text",
       )}
     >
       {children}

@@ -50,7 +50,7 @@ export function RainWindowsChart({
               role="img"
               aria-label={`${label}: ${formatMm(mm)}`}
             >
-              <rect x="18" y="0" width="28" height={height - axis} rx="4" fill="rgba(255,255,255,0.06)" />
+              <rect x="18" y="0" width="28" height={height - axis} rx="4" fill="#f3f4f6" />
               {markY != null && markY >= 0 && markY <= height - axis ? (
                 <line
                   x1="14"
@@ -74,7 +74,7 @@ export function RainWindowsChart({
                 x="32"
                 y={height - 4}
                 textAnchor="middle"
-                fill="#9aabc4"
+                fill="#6b7280"
                 fontSize="9"
                 fontWeight="700"
               >

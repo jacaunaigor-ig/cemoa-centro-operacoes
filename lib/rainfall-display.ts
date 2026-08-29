@@ -38,12 +38,12 @@ export function rainBandLabel(band: RainBand, janela?: "1 h" | "6 h" | "24 h"): 
 }
 
 export function rainBandColor(band: RainBand): string {
-  if (band === "sem_leitura") return "#7c8fab";
-  if (band === "sem_chuva") return "#27ae52";
-  if (band === "fraca") return "#5eb4ff";
-  if (band === "moderada") return "#f0b90b";
-  if (band === "forte") return "#f2790f";
-  return "#e21c2b";
+  if (band === "sem_leitura") return "#6b7280";
+  if (band === "sem_chuva") return "#10b981";
+  if (band === "fraca") return "#3b82f6";
+  if (band === "moderada") return "#f59e0b";
+  if (band === "forte") return "#f97316";
+  return "#ef4444";
 }
 
 export function peakMm(rain: RainfallWindows | null | undefined): number | null {

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#080d17",
+  themeColor: "#f7f8fa",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -44,13 +44,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </TooltipProvider>
         </OpsModeProvider>
         <Toaster
-          theme="dark"
+          theme="light"
           position="top-right"
           duration={4000}
           visibleToasts={4}
           gap={8}
           toastOptions={{
-            className: "!bg-panel-2 !border-border !text-text",
+            className: "!bg-panel !border-border !text-text !shadow-[var(--shadow-card)]",
           }}
         />
       </body>

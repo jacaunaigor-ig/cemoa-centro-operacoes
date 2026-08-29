@@ -52,7 +52,7 @@ export function AlertDetail({
     <section
       className={cn(
         overlay
-          ? "max-h-[min(78vh,640px)] overflow-y-auto rounded-xl border border-border bg-panel/96 p-3 shadow-2xl backdrop-blur-md"
+          ? "max-h-[min(78vh,640px)] overflow-y-auto rounded-xl border border-border bg-panel p-3 shadow-[var(--shadow-card)] backdrop-blur-md"
           : "max-h-[min(52vh,520px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
       )}
     >
@@ -61,7 +61,7 @@ export function AlertDetail({
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
             Ficha · {productLabel}
           </p>
-          <h3 className="truncate text-base font-black">{nome}</h3>
+          <h3 className="truncate text-base font-bold tracking-tight">{nome}</h3>
           <p className="text-xs text-text-mute">{bacia}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar detalhe">

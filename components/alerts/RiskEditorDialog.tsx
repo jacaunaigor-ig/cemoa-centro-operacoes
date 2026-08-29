@@ -167,7 +167,7 @@ export function RiskEditorDialog({
             </thead>
             <tbody>
               {visible.map((row) => (
-                <tr key={row.id} className="border-t border-border/60 hover:bg-white/4">
+                <tr key={row.id} className="border-t border-border/60 hover:bg-hover">
                   <td className="px-4 py-2 font-semibold">
                     {row.nome}
                     {row.fonte === "admin" || draft[row.id] ? (

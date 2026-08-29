@@ -170,7 +170,7 @@ export function StationsList({
             <li key={group.calha}>
               <div className="sticky top-0 z-10 flex items-center gap-2 border-y border-border bg-panel-2 px-3 py-1.5 text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
                 <span>{group.calha}</span>
-                <span className="rounded-full bg-white/8 px-1.5 py-0.5 font-mono">
+                <span className="rounded-full bg-hover px-1.5 py-0.5 font-mono">
                   {group.items.length}
                 </span>
               </div>
@@ -191,7 +191,7 @@ export function StationsList({
                         onClick={() => onSelect(s)}
                         className={cn(
                           "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150",
-                          highlighted ? "bg-white/7" : "hover:bg-white/4",
+                          highlighted ? "bg-hover" : "hover:bg-hover",
                         )}
                       >
                         <div className="min-w-0 flex-1">

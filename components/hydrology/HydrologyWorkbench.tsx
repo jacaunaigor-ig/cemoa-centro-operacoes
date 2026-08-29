@@ -387,14 +387,19 @@ export function HydrologyWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-3 sm:p-3 lg:p-4">
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <h2 className="text-base font-black tracking-tight sm:text-lg">Boletim Hidrológico</h2>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-text-mute uppercase">
+              Operações
+            </p>
+            <h2 className="text-2xl font-bold tracking-tight">Boletim Hidrológico</h2>
+          </div>
           <span className="text-[11px] text-text-mute">
             Ref. {data?.referencia ?? "—"}
           </span>
           <div
-            className="ml-auto flex rounded-lg border border-border bg-bg/60 p-0.5"
+            className="ml-auto flex rounded-lg border border-border bg-hover p-0.5"
             role="group"
             aria-label="Tipo de risco"
           >
@@ -428,13 +433,13 @@ export function HydrologyWorkbench() {
         />
 
         <section className="shrink-0" aria-label="Resumo do boletim">
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
             <KpiCard
               compact
               label="Municípios"
               value={loading ? "—" : String(kpis.total)}
               sub={geoStations.length === catalog.length ? "Total" : "No recorte"}
-              accent="#5eb4ff"
+              accent="#2563eb"
               active={status === "Todos" && !calha && !bacia && !selected}
               onClick={() =>
                 setQuery({ status: null, calha: null, municipio: null, bacia: null })
@@ -446,7 +451,7 @@ export function HydrologyWorkbench() {
               label="Baixo"
               value={loading ? "—" : String(kpis.baixo)}
               sub={pct(kpis.baixo)}
-              accent="#66BB6A"
+              accent="#10b981"
               active={status === "NORMAL"}
               onClick={() => setQuery({ status: "NORMAL", municipio: null })}
               loading={loading}
@@ -456,7 +461,7 @@ export function HydrologyWorkbench() {
               label="Moderado"
               value={loading ? "—" : String(kpis.moderado)}
               sub={pct(kpis.moderado)}
-              accent="#FFEB3B"
+              accent="#f59e0b"
               active={status === "MODERADO"}
               onClick={() => setQuery({ status: "MODERADO", municipio: null })}
               loading={loading}
@@ -466,7 +471,7 @@ export function HydrologyWorkbench() {
               label="Alto"
               value={loading ? "—" : String(kpis.alto)}
               sub={pct(kpis.alto)}
-              accent="#FF9800"
+              accent="#f97316"
               active={status === "ALTO"}
               onClick={() => setQuery({ status: "ALTO", municipio: null })}
               loading={loading}
@@ -476,7 +481,7 @@ export function HydrologyWorkbench() {
               label="Com leitura"
               value={loading ? "—" : String(kpis.comLeitura)}
               sub={pct(kpis.comLeitura)}
-              accent="#4f9dfb"
+              accent="#3b82f6"
               icon={<Waves className="size-3.5" />}
               active={status === "COM_LEITURA"}
               onClick={() => setQuery({ status: "COM_LEITURA", municipio: null })}
@@ -487,7 +492,7 @@ export function HydrologyWorkbench() {
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
               sub={pct(kpis.semLeitura)}
-              accent="#f2790f"
+              accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}
               onClick={() => setQuery({ status: "SL", municipio: null })}
@@ -507,7 +512,7 @@ export function HydrologyWorkbench() {
 
         <div
           className={cn(
-            "grid min-h-0 flex-1 gap-2 sm:gap-3",
+            "grid min-h-0 flex-1 gap-4 sm:gap-6",
             isMobile
               ? "grid-cols-1"
               : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
@@ -599,7 +604,7 @@ export function HydrologyWorkbench() {
                       {(data?.mudancas24h ?? []).map((m) => (
                         <li
                           key={`${m.municipio}-${m.modo}`}
-                          className="flex items-center justify-between gap-2 rounded-lg bg-white/4 px-2 py-1.5 text-xs"
+                          className="flex items-center justify-between gap-2 rounded-lg bg-hover px-2 py-1.5 text-xs"
                         >
                           <span>
                             <strong className="text-text">{m.municipio}</strong>
