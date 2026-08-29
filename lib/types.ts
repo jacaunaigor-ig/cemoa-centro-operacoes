@@ -151,3 +151,46 @@ export type FrontLog = {
   message: string;
   context?: string;
 };
+
+export type RainFilter = "TODOS" | "COM_LEITURA" | "COM_CHUVA";
+
+export type RainBand = "sem_leitura" | "sem_chuva" | "fraca" | "moderada" | "forte" | "intensa";
+
+export type RainfallStation = {
+  id: string;
+  nome: string;
+  mm1h: number | null;
+  mm6h: number | null;
+  mm24h: number | null;
+  observedAt: number | null;
+};
+
+export type RainfallMunicipio = {
+  id: string;
+  nome: string;
+  codigoIbge: string;
+  bacia: string;
+  mm1h: number | null;
+  mm6h: number | null;
+  mm24h: number | null;
+  observedAt: number | null;
+  estacoes: RainfallStation[];
+};
+
+export type RainfallPayload = {
+  generatedAt: number;
+  source: string;
+  cache: "HIT" | "MISS";
+  error: string | null;
+  coverage: {
+    municipiosCemoa: number;
+    comEstacao: number;
+    comAcumulado24h: number;
+    comChuva: number;
+    estacoes: number;
+    semEstacao: string[];
+  };
+  maior: { nome: string; mm24h: number } | null;
+  byId: Record<string, RainfallMunicipio>;
+  byNome: Record<string, RainfallMunicipio>;
+};

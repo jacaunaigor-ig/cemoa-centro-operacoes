@@ -54,7 +54,7 @@ import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
-import type { AlertsPayload, HydrologyPayload, TimeWindow } from "@/lib/types";
+import type { AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
@@ -64,6 +64,8 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
+import { RainfallStrip } from "@/components/alerts/RainfallStrip";
+import { parseRainFilter } from "@/lib/rainfall-display";
 
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -142,11 +144,13 @@ export function AlertsWorkbench() {
   const bacia = parseSharedBacia(params.get("bacia"));
   const calha = parseSharedCalha(params.get("calha"));
   const tipo = parseAlertType(params.get("tipo"));
+  const rainFilter = parseRainFilter(params.get("chuva"));
   const product = productOf(tipo);
   const activeFilter = parseLevel(params.get("risco"), product.levels);
 
   const [data, setData] = useState<AlertsPayload | null>(null);
   const [hydro, setHydro] = useState<HydrologyPayload | null>(null);
+  const [rain, setRain] = useState<RainfallPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
@@ -270,13 +274,15 @@ export function AlertsWorkbench() {
           localPushed.current = true;
           await hydrateLocal();
         }
-        const [payload, hydroPayload] = await Promise.all([
+        const [payload, hydroPayload, rainPayload] = await Promise.all([
           fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
+          fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
         ]);
         if (cancelled) return;
         setData(payload);
         if (hydroPayload) setHydro(hydroPayload);
+        if (rainPayload) setRain(rainPayload);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -305,12 +311,14 @@ export function AlertsWorkbench() {
         setError(null);
         return;
       }
-      const [payload, hydroPayload] = await Promise.all([
+      const [payload, hydroPayload, rainPayload] = await Promise.all([
         fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
         fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
+        fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
       ]);
       setData(payload);
       if (hydroPayload) setHydro(hydroPayload);
+      if (rainPayload) setRain(rainPayload);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
@@ -424,6 +432,8 @@ export function AlertsWorkbench() {
       }
       if (!matchMunicipioGeo(m.nome, m.bacia, geo)) return false;
       if (selected && m.nome !== selected) return false;
+      if (rainFilter === "COM_LEITURA" && rain?.byNome[m.nome]?.mm24h == null) return false;
+      if (rainFilter === "COM_CHUVA" && !((rain?.byNome[m.nome]?.mm24h ?? 0) > 0)) return false;
       if (
         needle &&
         !m.nome.toLowerCase().includes(needle) &&
@@ -433,7 +443,7 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo]);
+  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain]);
 
   const counts = useMemo(() => {
     const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0 };
@@ -490,6 +500,7 @@ export function AlertsWorkbench() {
       catalog={catalog}
       alerts={filteredAlerts}
       hydro={hydroStations}
+      rain={rain}
       selected={selected}
       hovered={hovered}
       bacia={bacia}
@@ -524,7 +535,7 @@ export function AlertsWorkbench() {
       }}
       onLimpar={() => {
         setBusca("");
-        setQuery({ risco: null, bacia: null, calha: null, municipio: null });
+        setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null });
       }}
     />
   );
@@ -668,6 +679,12 @@ export function AlertsWorkbench() {
             </label>
             <TimeFilter value={windowFilter} onChange={setWindowFilter} />
           </div>
+          <RainfallStrip
+            rain={rain}
+            loading={!rain && !STATIC_DEPLOY}
+            filter={rainFilter}
+            onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
+          />
 
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
             <KpiCard
@@ -678,7 +695,7 @@ export function AlertsWorkbench() {
               accent="#5eb4ff"
               active={activeFilter === "TODOS" && !bacia && !calha && !selected}
               onClick={() =>
-                setQuery({ risco: null, bacia: null, calha: null, municipio: null })
+                setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null })
               }
               loading={loading}
             />
@@ -853,7 +870,11 @@ export function AlertsWorkbench() {
                 <AlertsMap
                   key={OSM_BASEMAP_ID}
                   ref={mapApi}
-                  municipios={data.municipios}
+                  municipios={data.municipios.map((m) => ({
+                    ...m,
+                    mm24h: rain?.byId[m.id]?.mm24h ?? null,
+                    hasRainStation: Boolean(rain?.byId[m.id]),
+                  }))}
                   selected={selected}
                   hovered={hovered}
                   filter={activeFilter}
@@ -893,6 +914,7 @@ export function AlertsWorkbench() {
                     expiresAt={selectedRow.expiresAt ?? selectedAlert?.expiresAt}
                     alert={selectedAlert}
                     hydro={selectedHydro}
+                    rain={rain ? rain.byNome[selectedRow.nome] ?? null : undefined}
                     productLabel={product.label}
                     tipo={tipo}
                     onClose={() => setQuery({ municipio: null })}

@@ -34,6 +34,7 @@ import {
   statusMapa,
 } from "@/lib/hydrology";
 import { parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
+import { parseRainFilter } from "@/lib/rainfall-display";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import type {
   HydroMode,
@@ -41,6 +42,7 @@ import type {
   HydroStatus,
   HydroStatusFilter,
   HydrologyPayload,
+  RainfallPayload,
 } from "@/lib/types";
 import { StationsList } from "@/components/hydrology/StationsList";
 import { StationsMap, type StationsMapHandle } from "@/components/hydrology/StationsMap";
@@ -54,6 +56,7 @@ import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
+import { RainfallStrip } from "@/components/alerts/RainfallStrip";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
@@ -92,8 +95,10 @@ export function HydrologyWorkbench() {
   const status = parseStatus(params.get("status"));
   const calha = parseCalha(params.get("calha"));
   const bacia = parseSharedBacia(params.get("bacia"));
+  const rainFilter = parseRainFilter(params.get("chuva"));
 
   const [data, setData] = useState<HydrologyPayload | null>(null);
+  const [rain, setRain] = useState<RainfallPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
@@ -154,9 +159,13 @@ export function HydrologyWorkbench() {
             /* ignore */
           }
         }
-        const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
+        const [payload, rainPayload] = await Promise.all([
+          fetchJson<HydrologyPayload>("/api/hydrology"),
+          fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
+        ]);
         if (cancelled) return;
         setData(payload);
+        if (rainPayload) setRain(rainPayload);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -207,18 +216,22 @@ export function HydrologyWorkbench() {
       }),
     [catalog, modo, calha, bacia],
   );
-  const visible = useMemo(
-    () =>
-      filtrarEstacoes(catalog, {
-        modo,
-        calha,
-        bacia,
-        status,
-        municipio: selected,
-        busca: buscaFiltro,
-      }),
-    [catalog, modo, calha, bacia, status, selected, buscaFiltro],
-  );
+  const visible = useMemo(() => {
+    const list = filtrarEstacoes(catalog, {
+      modo,
+      calha,
+      bacia,
+      status,
+      municipio: selected,
+      busca: buscaFiltro,
+    });
+    if (rainFilter === "TODOS" || !rain) return list;
+    return list.filter((s) => {
+      const row = rain.byNome[s.municipio] ?? rain.byNome[s.municipioBoletim];
+      if (rainFilter === "COM_LEITURA") return row?.mm24h != null;
+      return row?.mm24h != null && row.mm24h > 0;
+    });
+  }, [catalog, modo, calha, bacia, status, selected, buscaFiltro, rainFilter, rain]);
 
   const kpis = useMemo(() => contarStatus(geoStations, modo), [geoStations, modo]);
   const loading = !data && !error;
@@ -406,6 +419,12 @@ export function HydrologyWorkbench() {
             </button>
           </div>
         </div>
+        <RainfallStrip
+          rain={rain}
+          loading={!rain && !STATIC_DEPLOY}
+          filter={rainFilter}
+          onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
+        />
 
         <section className="shrink-0" aria-label="Resumo do boletim">
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
@@ -511,6 +530,7 @@ export function HydrologyWorkbench() {
               modo={modo}
               loading={loading}
               hovered={hovered}
+              rain={rain}
               onHover={setHovered}
               onSelect={(s) => {
                 setHovered(null);
@@ -742,6 +762,13 @@ export function HydrologyWorkbench() {
                 modo={modo}
                 admin={admin}
                 compact={isMobile}
+                rain={
+                  rain
+                    ? rain.byNome[selectedStation.municipio] ??
+                      rain.byNome[selectedStation.municipioBoletim] ??
+                      null
+                    : undefined
+                }
                 onClose={() => setQuery({ municipio: null })}
                 onSave={async (patch) => {
                   const ok = await persistHydro({ [selectedStation.id]: patch });

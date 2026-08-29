@@ -13,6 +13,7 @@ import type {
 } from "leaflet";
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
+import { formatMm } from "@/lib/rainfall-display";
 import {
   AMAZONAS_CENTER,
   OSM_ATTRIBUTION,
@@ -36,6 +37,8 @@ type Muni = {
   lon: number;
   lat: number;
   risco: AlertLevel;
+  mm24h?: number | null;
+  hasRainStation?: boolean;
 };
 
 export type AlertsMapHandle = {
@@ -345,7 +348,13 @@ export const AlertsMap = forwardRef<
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
               const prefix = stateRef.current.adminMode ? "Classificar · " : "";
               lyr.setTooltipContent(
-                `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}`,
+                `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${
+                  m?.mm24h != null
+                    ? ` · ${formatMm(m.mm24h)}/24h`
+                    : m?.hasRainStation
+                      ? " · s/ acumulado 24 h"
+                      : ""
+                }`,
               );
               lyr.openTooltip();
               onHoverRef.current?.(nome);

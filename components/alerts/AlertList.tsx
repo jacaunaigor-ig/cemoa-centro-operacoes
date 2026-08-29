@@ -23,14 +23,17 @@ import {
   type AlertType,
 } from "@/lib/alert-types";
 import { statusAtivo } from "@/lib/hydrology";
-import type { AlertLevel, HydroStation, RainAlert } from "@/lib/types";
+import type { AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib/types";
 import { cn, formatRelative, withAlpha } from "@/lib/utils";
+import { formatMm } from "@/lib/rainfall-display";
+import { RainMmBadge } from "@/components/alerts/RainfallStrip";
 
 export function AlertList({
   municipios,
   catalog,
   alerts,
   hydro,
+  rain,
   selected,
   hovered,
   bacia,
@@ -60,6 +63,7 @@ export function AlertList({
   catalog: Array<{ id: string; nome: string; bacia: string }>;
   alerts: RainAlert[];
   hydro: HydroStation[];
+  rain: RainfallPayload | null;
   selected: string | null;
   hovered: string | null;
   bacia: string | null;
@@ -278,11 +282,19 @@ export function AlertList({
                                 : "Monitoramento"}
                           </span>
                           <div className="flex shrink-0 items-center gap-1">
+                            {rain ? (
+                              <RainMmBadge
+                                mm={rain.byNome[m.nome]?.mm24h}
+                                hasStation={Boolean(rain.byNome[m.nome])}
+                              />
+                            ) : null}
                             <CotaPeek
                               nome={m.nome}
                               fonte={m.fonte}
                               risco={m.risco}
                               cota={cota}
+                              mm24h={rain?.byNome[m.nome]?.mm24h}
+                              hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
                             />
                             <Link
                               href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}${calhaHref ? `&calha=${encodeURIComponent(calhaHref)}` : ""}`}
@@ -311,11 +323,15 @@ function CotaPeek({
   fonte,
   risco,
   cota,
+  mm24h,
+  hasRainStation,
 }: {
   nome: string;
   fonte: "admin" | "monitor";
   risco: AlertLevel;
   cota: HydroStation | undefined;
+  mm24h?: number | null;
+  hasRainStation?: boolean;
 }) {
   return (
     <Popover>
@@ -348,6 +364,14 @@ function CotaPeek({
               {!cota ? "Sem estação" : cota.semLeitura ? "Sem leitura" : `${cota.cota?.toFixed(2)} m`}
             </dd>
           </div>
+          {hasRainStation != null ? (
+          <div className="flex justify-between gap-2">
+            <dt className="text-text-mute">Chuva 24 h</dt>
+            <dd className="font-mono font-bold text-text">
+              {!hasRainStation ? "Sem pluviômetro" : mm24h == null ? "Sem acumulado" : formatMm(mm24h)}
+            </dd>
+          </div>
+          ) : null}
           {cota ? (
             <>
               <div className="flex items-center justify-between gap-2">

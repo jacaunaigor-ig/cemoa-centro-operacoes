@@ -16,8 +16,9 @@ import {
   statusAtivo,
   tendenciaTexto,
 } from "@/lib/hydrology";
-import type { HydroMode, HydroStation, HydroStatusFilter, HydroTendencia } from "@/lib/types";
+import type { HydroMode, HydroStation, HydroStatusFilter, HydroTendencia, RainfallPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { RainMmBadge } from "@/components/alerts/RainfallStrip";
 
 export function StationsList({
   stations,
@@ -29,6 +30,7 @@ export function StationsList({
   busca,
   modo,
   loading,
+  rain,
   onSelect,
   onHover,
   onCalha,
@@ -46,6 +48,7 @@ export function StationsList({
   busca: string;
   modo: HydroMode;
   loading: boolean;
+  rain?: RainfallPayload | null;
   onSelect: (station: HydroStation) => void;
   onHover?: (nome: string | null) => void;
   onCalha: (calha: string | null) => void;
@@ -198,6 +201,20 @@ export function StationsList({
                           </div>
                           <p className="truncate text-[11px] text-text-mute">
                             {s.calha} · {s.semLeitura ? "sem cota do dia" : `${s.cota?.toFixed(2)} m`}
+                            {rain ? (
+                              <>
+                                {" · "}
+                                <RainMmBadge
+                                  mm={
+                                    rain.byNome[s.municipio]?.mm24h ??
+                                    rain.byNome[s.municipioBoletim]?.mm24h
+                                  }
+                                  hasStation={Boolean(
+                                    rain.byNome[s.municipio] ?? rain.byNome[s.municipioBoletim],
+                                  )}
+                                />
+                              </>
+                            ) : null}
                           </p>
                           <div className="mt-1 flex items-center gap-2 text-xs">
                             <TrendIcon trend={s.tendencia} />
