@@ -11,7 +11,7 @@ import { riskActionFor, type AlertType } from "@/lib/alert-types";
 import { statusAtivo, tendenciaTexto } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
-import { formatMm, rainBand, rainBandColor, rainBandLabel } from "@/lib/rainfall-display";
+import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 
 export function AlertDetail({
   nome,
@@ -24,6 +24,7 @@ export function AlertDetail({
   hydro,
   rain,
   productLabel,
+  tipo,
   overlay,
   onClose,
 }: {
@@ -87,27 +88,7 @@ export function AlertDetail({
       </p>
 
       {rain === undefined ? null : rain ? (
-        <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">
-          <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            Acumulado 24 h · CEMADEN
-          </small>
-          <p
-            className="font-mono text-lg font-bold leading-tight"
-            style={{ color: rainBandColor(rainBand(rain.mm24h)) }}
-          >
-            {rain.mm24h == null ? "Sem acumulado 24 h" : formatMm(rain.mm24h)}
-          </p>
-          <p className="text-[11px] text-text-mute">
-            {rainBandLabel(rainBand(rain.mm24h))}
-            {rain.mm6h != null ? ` · 6 h ${formatMm(rain.mm6h)}` : ""}
-            {rain.mm1h != null ? ` · 1 h ${formatMm(rain.mm1h)}` : ""}
-          </p>
-          <p className="mt-1 text-[10px] text-text-mute">
-            {rain.estacoes.length} pluviômetro{rain.estacoes.length === 1 ? "" : "s"}
-            {rain.estacoes.length ? ` · ${rain.estacoes.map((s) => s.nome).join(", ")}` : ""}. O valor
-            do município é o maior ponto nas 24 h.
-          </p>
-        </div>
+        <CemadenRainPanel rain={rain} tipo={tipo} />
       ) : (
         <p className="mt-3 text-[11px] text-text-mute">
           Sem pluviômetro público CEMADEN neste município.

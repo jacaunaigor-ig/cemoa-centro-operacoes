@@ -1,9 +1,25 @@
 "use client";
 
 import { CloudRain } from "lucide-react";
-import type { RainFilter, RainfallPayload } from "@/lib/types";
-import { formatMm, rainBand, rainBandColor, rainBandLabel } from "@/lib/rainfall-display";
+import type { RainFilter, RainfallPayload, RainfallWindows } from "@/lib/types";
+import {
+  formatMm,
+  formatWindowsCompact,
+  hasRain,
+  peakMm,
+  rainBand,
+  rainBandColor,
+  rainBandLabel,
+} from "@/lib/rainfall-display";
 import { cn } from "@/lib/utils";
+
+function picoText(
+  label: string,
+  pico: { nome: string; mm: number } | null | undefined,
+): string | null {
+  if (!pico || pico.mm <= 0) return null;
+  return `${label} ${pico.nome} ${formatMm(pico.mm)}`;
+}
 
 export function RainfallStrip({
   rain,
@@ -17,15 +33,19 @@ export function RainfallStrip({
   onFilter: (next: RainFilter) => void;
 }) {
   const cov = rain?.coverage;
-  const maior = rain?.maior;
-  const band = rainBand(maior?.mm24h ?? null);
+  const picos = cov?.picos;
+  const destaque =
+    picoText("1 h", picos?.mm1h) ??
+    picoText("6 h", picos?.mm6h) ??
+    picoText("24 h", picos?.mm24h);
+  const band = rainBand(peakMm(rain?.maior ?? null));
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-panel/80 px-2.5 py-1.5">
       <CloudRain className="size-4 shrink-0 text-focus" />
       <div className="min-w-0 leading-tight">
         <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
-          Acumulado 24 h · CEMADEN
+          Pluviômetros CEMADEN · 1 h / 6 h / 24 h
         </p>
         {loading && !rain ? (
           <p className="text-xs text-text-mute">Consultando pluviômetros…</p>
@@ -33,14 +53,11 @@ export function RainfallStrip({
           <p className="text-xs text-risco-alto">Pluviômetros indisponíveis agora.</p>
         ) : (
           <p className="truncate text-xs text-text">
-            {cov?.comAcumulado24h ?? 0}/{cov?.municipiosCemoa ?? 62} municípios com 24 h
-            {maior ? (
-              <span className="text-text-mute">
-                {" "}
-                · maior {maior.nome} {formatMm(maior.mm24h)}
-              </span>
+            {cov?.comEstacao ?? 0}/{cov?.municipiosCemoa ?? 62} municípios
+            {destaque ? (
+              <span className="text-text-mute"> · maior {destaque}</span>
             ) : (
-              <span className="text-text-mute"> · sem chuva reportada neste ciclo</span>
+              <span className="text-text-mute"> · sem chuva nas janelas 1 / 6 / 24 h</span>
             )}
           </p>
         )}
@@ -50,13 +67,13 @@ export function RainfallStrip({
           Todos
         </RainChip>
         <RainChip active={filter === "COM_LEITURA"} onClick={() => onFilter("COM_LEITURA")}>
-          Com 24 h ({cov?.comAcumulado24h ?? 0})
+          Com leitura ({cov?.comLeitura ?? 0})
         </RainChip>
         <RainChip active={filter === "COM_CHUVA"} onClick={() => onFilter("COM_CHUVA")}>
           Com chuva ({cov?.comChuva ?? 0})
         </RainChip>
       </div>
-      {maior ? (
+      {hasRain(rain?.maior ?? null) ? (
         <span
           className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold sm:inline"
           style={{ color: rainBandColor(band), background: `${rainBandColor(band)}22` }}
@@ -95,27 +112,28 @@ function RainChip({
 }
 
 export function RainMmBadge({
-  mm,
+  rain,
   hasStation,
 }: {
-  mm: number | null | undefined;
+  rain?: RainfallWindows | null;
   hasStation: boolean;
 }) {
   if (!hasStation) {
     return <span className="font-mono text-[10px] text-text-mute">s/ pluviômetro</span>;
   }
-  if (mm == null) {
-    return <span className="font-mono text-[10px] text-text-mute">s/ 24 h</span>;
+  if (!rain) {
+    return <span className="font-mono text-[10px] text-text-mute">s/ leitura</span>;
   }
-  const band = rainBand(mm);
+  const peak = peakMm(rain);
+  const band = rainBand(peak);
   return (
     <span
       className="inline-flex items-center gap-1 font-mono text-[10px] font-bold tabular-nums"
       style={{ color: rainBandColor(band) }}
-      title={rainBandLabel(band)}
+      title={`Acumulado 1 h · 6 h · 24 h (mm): ${formatWindowsCompact(rain)}`}
     >
       <CloudRain className="size-3" />
-      {formatMm(mm)}
+      {formatWindowsCompact(rain)}
     </span>
   );
 }

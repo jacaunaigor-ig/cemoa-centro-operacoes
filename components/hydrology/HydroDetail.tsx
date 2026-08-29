@@ -18,7 +18,7 @@ import {
 import type { HydroPatch } from "@/lib/hydro-overrides";
 import type { HydroMode, HydroStation, HydroStatus, RainfallMunicipio } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { formatMm, rainBand, rainBandColor, rainBandLabel } from "@/lib/rainfall-display";
+import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 
 export function HydroDetail({
   station,
@@ -172,18 +172,7 @@ export function HydroDetail({
       )}
 
       {rain === undefined ? null : rain ? (
-        <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">
-          <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            Acumulado 24 h · CEMADEN
-          </small>
-          <p
-            className="font-mono text-lg font-bold leading-tight"
-            style={{ color: rainBandColor(rainBand(rain.mm24h)) }}
-          >
-            {rain.mm24h == null ? "Sem acumulado 24 h" : formatMm(rain.mm24h)}
-          </p>
-          <p className="text-[11px] text-text-mute">{rainBandLabel(rainBand(rain.mm24h))}</p>
-        </div>
+        <CemadenRainPanel rain={rain} />
       ) : (
         <p className="mt-3 text-[11px] text-text-mute">Sem pluviômetro público CEMADEN neste município.</p>
       )}

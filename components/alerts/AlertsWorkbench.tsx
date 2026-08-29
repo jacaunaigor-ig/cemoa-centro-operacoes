@@ -65,7 +65,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
-import { parseRainFilter } from "@/lib/rainfall-display";
+import { hasRain, hasRainReading, parseRainFilter } from "@/lib/rainfall-display";
 
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -432,8 +432,8 @@ export function AlertsWorkbench() {
       }
       if (!matchMunicipioGeo(m.nome, m.bacia, geo)) return false;
       if (selected && m.nome !== selected) return false;
-      if (rainFilter === "COM_LEITURA" && rain?.byNome[m.nome]?.mm24h == null) return false;
-      if (rainFilter === "COM_CHUVA" && !((rain?.byNome[m.nome]?.mm24h ?? 0) > 0)) return false;
+      if (rainFilter === "COM_LEITURA" && !hasRainReading(rain?.byNome[m.nome])) return false;
+      if (rainFilter === "COM_CHUVA" && !hasRain(rain?.byNome[m.nome])) return false;
       if (
         needle &&
         !m.nome.toLowerCase().includes(needle) &&
@@ -870,11 +870,16 @@ export function AlertsWorkbench() {
                 <AlertsMap
                   key={OSM_BASEMAP_ID}
                   ref={mapApi}
-                  municipios={data.municipios.map((m) => ({
-                    ...m,
-                    mm24h: rain?.byId[m.id]?.mm24h ?? null,
-                    hasRainStation: Boolean(rain?.byId[m.id]),
-                  }))}
+                  municipios={data.municipios.map((m) => {
+                    const row = rain?.byId[m.id];
+                    return {
+                      ...m,
+                      mm1h: row?.mm1h ?? null,
+                      mm6h: row?.mm6h ?? null,
+                      mm24h: row?.mm24h ?? null,
+                      hasRainStation: Boolean(row),
+                    };
+                  })}
                   selected={selected}
                   hovered={hovered}
                   filter={activeFilter}
@@ -903,7 +908,7 @@ export function AlertsWorkbench() {
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
               {selectedRow ? (
-                <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),28rem)] sm:top-2">
+                  <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),32rem)] sm:top-2">
                   <AlertDetail
                     overlay
                     nome={selectedRow.nome}

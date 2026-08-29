@@ -205,9 +205,10 @@ export function StationsList({
                               <>
                                 {" · "}
                                 <RainMmBadge
-                                  mm={
-                                    rain.byNome[s.municipio]?.mm24h ??
-                                    rain.byNome[s.municipioBoletim]?.mm24h
+                                  rain={
+                                    rain.byNome[s.municipio] ??
+                                    rain.byNome[s.municipioBoletim] ??
+                                    null
                                   }
                                   hasStation={Boolean(
                                     rain.byNome[s.municipio] ?? rain.byNome[s.municipioBoletim],

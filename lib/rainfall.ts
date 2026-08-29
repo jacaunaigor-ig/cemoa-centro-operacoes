@@ -1,19 +1,27 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
-import type { RainfallMunicipio, RainfallPayload, RainfallStation } from "@/lib/types";
+import { hasRain, hasRainReading } from "@/lib/rainfall-display";
+import type {
+  RainfallMunicipio,
+  RainfallPayload,
+  RainfallPico,
+  RainfallStation,
+} from "@/lib/types";
 
 const CEMADEN_URL =
   "https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=AM";
 const UA = "CEMOA-CentroOperacoes/1.0 (Defesa Civil do Amazonas)";
-const TTL_MS = 5 * 60_000;
+const TTL_MS = 2 * 60_000;
 
 type CemadenRow = {
   idestacao?: number | string;
   cidade?: string;
   codibge?: number | string;
   nomeestacao?: string;
+  uf?: string;
   acc1hr?: unknown;
   acc6hr?: unknown;
   acc24hr?: unknown;
+  ultimovalor?: unknown;
   datahoraUltimovalor?: string;
 };
 
@@ -46,6 +54,12 @@ function latestAt(values: Array<number | null>): number | null {
   return Math.max(...nums);
 }
 
+function bumpPico(current: RainfallPico | null, nome: string, mm: number | null): RainfallPico | null {
+  if (mm == null) return current;
+  if (!current || mm > current.mm) return { nome, mm };
+  return current;
+}
+
 async function fetchCemadenAm(): Promise<CemadenRow[]> {
   const res = await fetch(CEMADEN_URL, {
     headers: { Accept: "application/json", "User-Agent": UA },
@@ -72,9 +86,15 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
   const byNome: Record<string, RainfallMunicipio> = {};
   const semEstacao: string[] = [];
   let comEstacao = 0;
+  let comLeitura = 0;
   let comAcumulado24h = 0;
   let comChuva = 0;
-  let maior: { nome: string; mm24h: number } | null = null;
+  let picos: RainfallPayload["coverage"]["picos"] = {
+    mm1h: null,
+    mm6h: null,
+    mm24h: null,
+  };
+  let maior: RainfallPayload["maior"] = null;
 
   for (const muni of MUNICIPALITIES) {
     const stationsRaw = byIbge.get(muni.codigoIbge) ?? [];
@@ -86,20 +106,18 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
     const estacoes: RainfallStation[] = stationsRaw.map((row) => ({
       id: String(row.idestacao ?? `${muni.codigoIbge}-${row.nomeestacao}`),
       nome: String(row.nomeestacao ?? "Pluviômetro"),
+      uf: String(row.uf ?? "AM"),
       mm1h: parseMm(row.acc1hr),
       mm6h: parseMm(row.acc6hr),
       mm24h: parseMm(row.acc24hr),
+      ultimoMm: parseMm(row.ultimovalor),
       observedAt: parseCemadenTime(row.datahoraUltimovalor),
     }));
     const mm24h = maxMm(estacoes.map((s) => s.mm24h));
     const mm6h = maxMm(estacoes.map((s) => s.mm6h));
     const mm1h = maxMm(estacoes.map((s) => s.mm1h));
+    const ultimoMm = maxMm(estacoes.map((s) => s.ultimoMm));
     const observedAt = latestAt(estacoes.map((s) => s.observedAt));
-    if (mm24h != null) {
-      comAcumulado24h += 1;
-      if (mm24h > 0) comChuva += 1;
-      if (!maior || mm24h > maior.mm24h) maior = { nome: muni.nome, mm24h };
-    }
     const rec: RainfallMunicipio = {
       id: muni.id,
       nome: muni.nome,
@@ -108,25 +126,40 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
       mm1h,
       mm6h,
       mm24h,
+      ultimoMm,
       observedAt,
       estacoes,
     };
+    if (hasRainReading(rec)) comLeitura += 1;
+    if (mm24h != null) comAcumulado24h += 1;
+    if (hasRain(rec)) comChuva += 1;
+    picos = {
+      mm1h: bumpPico(picos.mm1h, muni.nome, mm1h),
+      mm6h: bumpPico(picos.mm6h, muni.nome, mm6h),
+      mm24h: bumpPico(picos.mm24h, muni.nome, mm24h),
+    };
+    const score = mm24h ?? mm6h ?? mm1h;
+    if (score != null && (!maior || score > (maior.mm24h ?? maior.mm6h ?? maior.mm1h ?? -1))) {
+      maior = { nome: muni.nome, mm1h, mm6h, mm24h };
+    }
     byId[muni.id] = rec;
     byNome[muni.nome] = rec;
   }
 
   return {
     generatedAt: Date.now(),
-    source: "CEMADEN · pluviômetros automáticos do Amazonas (acumulado 24 h)",
+    source: "CEMADEN · pluviômetros automáticos do Amazonas (1 h / 6 h / 24 h)",
     cache: "MISS",
     error,
     coverage: {
       municipiosCemoa: MUNICIPALITIES.length,
       comEstacao,
+      comLeitura,
       comAcumulado24h,
       comChuva,
       estacoes: rows.length,
       semEstacao,
+      picos,
     },
     maior,
     byId,

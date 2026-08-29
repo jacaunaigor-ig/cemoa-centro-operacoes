@@ -284,7 +284,7 @@ export function AlertList({
                           <div className="flex shrink-0 items-center gap-1">
                             {rain ? (
                               <RainMmBadge
-                                mm={rain.byNome[m.nome]?.mm24h}
+                                rain={rain.byNome[m.nome] ?? null}
                                 hasStation={Boolean(rain.byNome[m.nome])}
                               />
                             ) : null}
@@ -293,7 +293,7 @@ export function AlertList({
                               fonte={m.fonte}
                               risco={m.risco}
                               cota={cota}
-                              mm24h={rain?.byNome[m.nome]?.mm24h}
+                              rain={rain?.byNome[m.nome]}
                               hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
                             />
                             <Link
@@ -323,14 +323,14 @@ function CotaPeek({
   fonte,
   risco,
   cota,
-  mm24h,
+  rain,
   hasRainStation,
 }: {
   nome: string;
   fonte: "admin" | "monitor";
   risco: AlertLevel;
   cota: HydroStation | undefined;
-  mm24h?: number | null;
+  rain?: { mm1h: number | null; mm6h: number | null; mm24h: number | null } | null;
   hasRainStation?: boolean;
 }) {
   return (
@@ -365,12 +365,27 @@ function CotaPeek({
             </dd>
           </div>
           {hasRainStation != null ? (
-          <div className="flex justify-between gap-2">
-            <dt className="text-text-mute">Chuva 24 h</dt>
-            <dd className="font-mono font-bold text-text">
-              {!hasRainStation ? "Sem pluviômetro" : mm24h == null ? "Sem acumulado" : formatMm(mm24h)}
-            </dd>
-          </div>
+            hasRainStation && rain ? (
+              <>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-text-mute">1 h</dt>
+                  <dd className="font-mono font-bold text-text">{formatMm(rain.mm1h)}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-text-mute">6 h</dt>
+                  <dd className="font-mono font-bold text-text">{formatMm(rain.mm6h)}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-text-mute">24 h</dt>
+                  <dd className="font-mono font-bold text-text">{formatMm(rain.mm24h)}</dd>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between gap-2">
+                <dt className="text-text-mute">Chuva CEMADEN</dt>
+                <dd className="font-mono font-bold text-text">Sem pluviômetro</dd>
+              </div>
+            )
           ) : null}
           {cota ? (
             <>

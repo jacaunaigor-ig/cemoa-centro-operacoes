@@ -159,23 +159,31 @@ export type RainBand = "sem_leitura" | "sem_chuva" | "fraca" | "moderada" | "for
 export type RainfallStation = {
   id: string;
   nome: string;
+  uf: string;
   mm1h: number | null;
   mm6h: number | null;
   mm24h: number | null;
+  ultimoMm: number | null;
   observedAt: number | null;
 };
 
-export type RainfallMunicipio = {
+export type RainfallWindows = {
+  mm1h: number | null;
+  mm6h: number | null;
+  mm24h: number | null;
+};
+
+export type RainfallMunicipio = RainfallWindows & {
   id: string;
   nome: string;
   codigoIbge: string;
   bacia: string;
-  mm1h: number | null;
-  mm6h: number | null;
-  mm24h: number | null;
+  ultimoMm: number | null;
   observedAt: number | null;
   estacoes: RainfallStation[];
 };
+
+export type RainfallPico = { nome: string; mm: number };
 
 export type RainfallPayload = {
   generatedAt: number;
@@ -185,12 +193,18 @@ export type RainfallPayload = {
   coverage: {
     municipiosCemoa: number;
     comEstacao: number;
+    comLeitura: number;
     comAcumulado24h: number;
     comChuva: number;
     estacoes: number;
     semEstacao: string[];
+    picos: {
+      mm1h: RainfallPico | null;
+      mm6h: RainfallPico | null;
+      mm24h: RainfallPico | null;
+    };
   };
-  maior: { nome: string; mm24h: number } | null;
+  maior: (RainfallWindows & { nome: string }) | null;
   byId: Record<string, RainfallMunicipio>;
   byNome: Record<string, RainfallMunicipio>;
 };

@@ -49,7 +49,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | `/boletim` | Boletim Hidrológico |
 | `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|INCENDIO`) |
 | `/api/hydrology` | JSON das estações e cotas |
-| `/api/rainfall` | Acumulado de chuva 24 h (CEMADEN) por município |
+| `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h por município e estação |
 | `/api/logs` | Log de erros de mapa/dados no front |
 
 Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 municípios) e `calha` (calha fluviométrica do boletim). Os dois recortes não são o mesmo mapa — Japurá no painel não vira Médio Solimões no boletim; Baixo Solimões no boletim não vira Médio Solimões no painel. No painel também: `risco`, `tipo`. No boletim: `modo`, `status`.
@@ -132,13 +132,24 @@ Sem as chaves do Google, o botão aparece desativado e o login por senha continu
 
 No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
 
-## Chuva acumulada 24 h
+## Chuva 1 h / 6 h / 24 h (CEMADEN)
 
 O painel consulta a API pública do **CEMADEN** (`getJson2.php?uf=AM`): 95 pluviômetros automáticos em **58 dos 62** municípios. Sem estação nesta rede: Barcelos, Santa Isabel do Rio Negro, São Sebastião do Uatumã e Tefé.
 
-O valor do município é o **maior acumulado 24 h** entre os pontos da sede. `—` / “s/ 24 h” significa que o pluviômetro existe mas o CEMADEN ainda não fechou a série das 24 horas (comum na estiagem). A classificação de alerta **não** é alterada por essa chuva — o dado entra como observação operacional.
+Cada município mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h** — as mesmas colunas da tabela do gráfico interativo. A ficha lista as estações (último valor + 1/6/24 h) e abre o gráfico oficial:
 
-Rota: `GET /api/rainfall` (cache de 5 min no servidor). Filtros no painel: **Com 24 h** e **Com chuva** (`?chuva=COM_LEITURA` / `COM_CHUVA`).
+`https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
+
+Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
+
+A classificação de alerta **não** é alterada pela chuva. Em **Alagamento** e **Movimento de massa**, a ficha sugere um nível de apoio (o operador pinta e envia em Edição):
+
+| Produto | Moderado | Alto | Severo |
+| --- | --- | --- | --- |
+| Alagamento | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h |
+| Movimento de massa | 15 mm/6 h ou 30 mm/24 h | 30 mm/6 h ou 50 mm/24 h | 50 mm/6 h ou 80 mm/24 h |
+
+Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros no painel: **Com leitura** e **Com chuva** (`?chuva=COM_LEITURA` / `COM_CHUVA`) — qualquer uma das três janelas.
 
 A API horária do INMET (estações automáticas A101 Manaus, A128 Barcelos etc.) existe, mas neste recorte o endpoint de série 24 h não devolveu dados; o INMET permanece como fonte de contexto, não como acumulado municipal.
 

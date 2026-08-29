@@ -34,7 +34,7 @@ import {
   statusMapa,
 } from "@/lib/hydrology";
 import { parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
-import { parseRainFilter } from "@/lib/rainfall-display";
+import { hasRain, hasRainReading, parseRainFilter } from "@/lib/rainfall-display";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import type {
   HydroMode,
@@ -228,8 +228,8 @@ export function HydrologyWorkbench() {
     if (rainFilter === "TODOS" || !rain) return list;
     return list.filter((s) => {
       const row = rain.byNome[s.municipio] ?? rain.byNome[s.municipioBoletim];
-      if (rainFilter === "COM_LEITURA") return row?.mm24h != null;
-      return row?.mm24h != null && row.mm24h > 0;
+      if (rainFilter === "COM_LEITURA") return hasRainReading(row);
+      return hasRain(row);
     });
   }, [catalog, modo, calha, bacia, status, selected, buscaFiltro, rainFilter, rain]);
 
