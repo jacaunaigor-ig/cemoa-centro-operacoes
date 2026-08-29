@@ -397,8 +397,10 @@ export const AlertsMap = forwardRef<
       );
       const territory = addTerritoryOverlays(L, map);
       territoryRef.current = territory;
-      applyTerritoryVisibility(map, territory, stateRef.current.overlays);
-      syncPluviometers(L, territory.pluvio, stateRef.current.pluvio);
+      applyTerritoryVisibility(L, map, territory, stateRef.current.overlays);
+      if (stateRef.current.overlays.pluvio) {
+        syncPluviometers(L, territory.pluvio, stateRef.current.pluvio);
+      }
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
 
@@ -512,15 +514,15 @@ export const AlertsMap = forwardRef<
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    applyTerritoryVisibility(map, territoryRef.current, overlays);
+    applyTerritoryVisibility(leafletRef.current, map, territoryRef.current, overlays);
   }, [overlays]);
 
   useEffect(() => {
     const L = leafletRef.current;
     const layer = territoryRef.current?.pluvio;
-    if (!L || !layer) return;
+    if (!L || !layer || !overlays.pluvio) return;
     syncPluviometers(L, layer, pluvio);
-  }, [pluvio]);
+  }, [pluvio, overlays.pluvio]);
 
   return (
     <div

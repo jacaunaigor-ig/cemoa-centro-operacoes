@@ -146,15 +146,14 @@ Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou
 
 ## Camadas de apoio no mapa
 
-No menu **Mapa** (Painel e Boletim) dá para ligar ou desligar, por padrão ligados:
+O mapa nasce limpo: só as sedes (62 pontos pequenos), desligáveis no menu **Mapa**. As demais camadas só entram se o operador ligar, e só no produto em que fazem sentido.
 
-| Camada | O que aparece | Fonte |
-| --- | --- | --- |
-| Sedes municipais | Ponto preto na sede de cada um dos 62 municípios | IBGE Localidades 2022 |
-| Pluviômetros CEMADEN | Ponto azul nas 95 estações automáticas do AM | CEMADEN + encaixe no IBGE |
-| Comunidades rurais | 1.285 povoados, vilas, agrovilas, núcleos e quilombos (agrupados no zoom amplo) | IBGE Localidades 2022 |
-| Comunidades indígenas | 3.047 localidades indígenas do Censo (agrupadas no zoom amplo) | IBGE Localidades Indígenas 2022 |
-| Áreas de risco mapeadas | Anel na sede dos municípios com setor de deslizamento, movimento de massa ou erosão de margem | Recorte operacional CEMOA |
+| Camada | Onde | Padrão | Fonte |
+| --- | --- | --- | --- |
+| Sedes municipais | Painel e Boletim | Ligada (pode ocultar) | IBGE Localidades 2022 |
+| Pluviômetros CEMADEN | Chuva intensa, Alagamento e Movimento de massa | Desligada; ícone de 7 px | CEMADEN + encaixe no IBGE |
+| Comunidades rurais / indígenas | Painel e Boletim | Desligada; agrupadas no zoom amplo | IBGE 2022 |
+| Áreas de risco mapeadas | Só Movimento de massa | Desligada | Recorte operacional CEMOA |
 
 O CEMADEN **não publica a coordenada do sensor**. Quando o nome da estação bate com uma localidade do mesmo município, o ponto vai para lá; senão fica na sede, com aviso no tooltip. Várias estações na mesma sede são espalhadas em círculo curto para não se sobrepor.
 

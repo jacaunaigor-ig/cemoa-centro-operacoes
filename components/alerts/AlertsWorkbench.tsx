@@ -36,7 +36,12 @@ import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
-import { pluvioFromRain, type TerritoryVisibility } from "@/lib/map-overlays";
+import {
+  DEFAULT_OVERLAYS,
+  effectiveOverlays,
+  pluvioFromRain,
+  type TerritoryVisibility,
+} from "@/lib/map-overlays";
 import {
   ALERT_PRODUCTS,
   ALERT_TYPES,
@@ -165,15 +170,10 @@ export function AlertsWorkbench() {
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
-  const [overlays, setOverlays] = useState<TerritoryVisibility>({
-    sedes: true,
-    rurais: true,
-    indigenas: true,
-    risco: true,
-    pluvio: true,
-  });
+  const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
+  const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
   const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
@@ -847,7 +847,7 @@ export function AlertsWorkbench() {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
-                    <MapOverlayToggles vis={overlays} onChange={setOverlays} />
+                    <MapOverlayToggles vis={overlays} product={tipo} onChange={setOverlays} />
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
                       <input
@@ -901,7 +901,7 @@ export function AlertsWorkbench() {
                   opacity={mapOpacity}
                   showNames={showNames}
                   showRivers={showRivers}
-                  overlays={overlays}
+                  overlays={overlayVis}
                   pluvio={pluvio}
                   onlyRisk={onlyRisk}
                   onSelect={(nome, basinName) => {
