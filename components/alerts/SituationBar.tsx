@@ -37,10 +37,11 @@ export function SituationBar({
         <SectionHeading compact className="shrink-0" title="Alertas" />
       ) : null}
       {tools ? (
-        <div className={cn("flex min-w-0 items-center gap-2", isMobile ? "w-full" : "min-w-[16rem] flex-1")}>
+        <div className={cn("flex min-w-0 items-center gap-2", isMobile ? "w-full" : "min-w-0")}>
           {tools}
         </div>
       ) : null}
+      <div className={cn("flex min-w-0 flex-wrap items-center gap-2", !isMobile && "ml-auto")}>
       {children}
       {urgent?.expiresAt ? (
         <AlertCountdown
@@ -74,6 +75,7 @@ export function SituationBar({
           <RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} />
           <span className="hidden sm:inline">Atualizar</span>
         </Button>
+      </div>
       </div>
     </div>
   );
