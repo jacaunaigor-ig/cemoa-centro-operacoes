@@ -3,7 +3,6 @@
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import {
   showsPluvio,
-  showsRisco,
   type OverlayProduct,
   type TerritoryVisibility,
 } from "@/lib/map-overlays";
@@ -22,7 +21,6 @@ export function MapOverlayToggles({
   }
 
   const pluvio = showsPluvio(product);
-  const risco = showsRisco(product);
 
   return (
     <div className="mt-1.5 border-t border-border pt-1.5">
@@ -43,11 +41,6 @@ export function MapOverlayToggles({
       <MapToolButton active={vis.indigenas} onClick={() => toggle("indigenas")}>
         {vis.indigenas ? "Ocultar comunidades indígenas" : "Comunidades indígenas"}
       </MapToolButton>
-      {risco ? (
-        <MapToolButton active={vis.risco} onClick={() => toggle("risco")}>
-          {vis.risco ? "Ocultar áreas de risco" : "Áreas de risco mapeadas"}
-        </MapToolButton>
-      ) : null}
     </div>
   );
 }

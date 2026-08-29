@@ -2,44 +2,429 @@
   "fonte": "CEMOA · SGB/CPRM · recorte operacional de áreas mapeadas",
   "nota": "Municípios com setores mapeados de deslizamento, movimento de massa ou erosão de margem fluvial são mais susceptíveis quando a chuva é intensa. Ausência de mapeamento não significa ausência de risco residual.",
   "municipios": {
-    "1302603": { "susceptibilidade": "alta", "tipos": ["deslizamento", "movimento_massa", "erosao_margem"], "setores": 38, "nota": "Encostas urbanas e margens de igarapés." },
-    "1301852": { "susceptibilidade": "alta", "tipos": ["deslizamento", "erosao_margem"], "setores": 9, "nota": "Encostas e margem do Negro/Solimões." },
-    "1303536": { "susceptibilidade": "alta", "tipos": ["deslizamento", "movimento_massa"], "setores": 11, "nota": "Taludes e encostas da BR-174." },
-    "1304062": { "susceptibilidade": "alta", "tipos": ["erosao_margem", "deslizamento"], "setores": 8, "nota": "Margem do Solimões e encostas da sede." },
-    "1300607": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 6, "nota": "Erosão de margem no Alto Solimões." },
-    "1300201": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 5, "nota": "Margem do Javari/Solimões." },
-    "1303908": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 5, "nota": "Erosão fluvial na sede e comunidades." },
-    "1301704": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 7, "nota": "Margem do Madeira." },
-    "1302702": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 6, "nota": "Margem do Madeira." },
-    "1301902": { "susceptibilidade": "alta", "tipos": ["erosao_margem", "deslizamento"], "setores": 8, "nota": "Sede e comunidades do Amazonas." },
-    "1303403": { "susceptibilidade": "alta", "tipos": ["erosao_margem", "deslizamento"], "setores": 7, "nota": "Ilha Tupinambarana e margem do Amazonas." },
-    "1303809": { "susceptibilidade": "alta", "tipos": ["deslizamento", "erosao_margem"], "setores": 8, "nota": "Encostas e margem do Negro." },
-    "1304203": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 6, "nota": "Erosão de margem no Médio Solimões." },
-    "1301209": { "susceptibilidade": "alta", "tipos": ["erosao_margem"], "setores": 6, "nota": "Lago de Coari e margem do Solimões." },
-    "1301605": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 4, "nota": "Margem do Solimões." },
-    "1303700": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Foz do Içá." },
-    "1304237": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Solimões." },
-    "1301100": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 4, "nota": "Várzea e terra firme." },
-    "1301159": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 5, "nota": "Várzea do Careiro." },
-    "1300300": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margens de Paraná e Amazonas." },
-    "1302504": { "susceptibilidade": "media", "tipos": ["erosao_margem", "deslizamento"], "setores": 5, "nota": "Sede e margem do Solimões." },
-    "1300805": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 4, "nota": "Margem do Madeira." },
-    "1303304": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Madeira." },
-    "1300409": { "susceptibilidade": "media", "tipos": ["deslizamento", "erosao_margem"], "setores": 4, "nota": "Encostas e margem do Negro." },
-    "1303601": { "susceptibilidade": "media", "tipos": ["deslizamento", "erosao_margem"], "setores": 3, "nota": "Margem do Negro." },
-    "1303569": { "susceptibilidade": "media", "tipos": ["deslizamento"], "setores": 3, "nota": "Taludes da AM-010." },
-    "1303205": { "susceptibilidade": "media", "tipos": ["deslizamento", "erosao_margem"], "setores": 3, "nota": "Encostas e margem do Negro." },
-    "1302405": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 4, "nota": "Margem do Purus." },
-    "1300706": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Purus/Acre." },
-    "1302108": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Japurá." },
-    "1302801": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 4, "nota": "Margem do Japurá/Solimões." },
-    "1302900": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Maués-Açu." },
-    "1301308": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Solimões." },
-    "1300029": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 2, "nota": "Margem do Solimões/Tefé." },
-    "1300102": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Foz do Purus." },
-    "1300631": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Foz do Purus." },
-    "1303106": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Foz do Madeira." },
-    "1300508": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 3, "nota": "Margem do Amazonas." },
-    "1303007": { "susceptibilidade": "media", "tipos": ["erosao_margem"], "setores": 2, "nota": "Margem do Nhamundá/Amazonas." }
+    "1302603": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "deslizamento",
+        "movimento_massa",
+        "erosao_margem"
+      ],
+      "setores": 38,
+      "nota": "Encostas urbanas e margens de igarapés.",
+      "pessoas": 55851
+    },
+    "1301852": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "deslizamento",
+        "erosao_margem"
+      ],
+      "setores": 9,
+      "nota": "Encostas e margem do Negro/Solimões.",
+      "pessoas": 94
+    },
+    "1303536": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "deslizamento",
+        "movimento_massa"
+      ],
+      "setores": 11,
+      "nota": "Taludes e encostas da BR-174.",
+      "pessoas": 1284
+    },
+    "1304062": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem",
+        "deslizamento"
+      ],
+      "setores": 8,
+      "nota": "Margem do Solimões e encostas da sede.",
+      "pessoas": 328
+    },
+    "1300607": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 6,
+      "nota": "Erosão de margem no Alto Solimões.",
+      "pessoas": 3866
+    },
+    "1300201": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 5,
+      "nota": "Margem do Javari/Solimões.",
+      "pessoas": 271
+    },
+    "1303908": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 5,
+      "nota": "Erosão fluvial na sede e comunidades.",
+      "pessoas": 477
+    },
+    "1301704": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 7,
+      "nota": "Margem do Madeira.",
+      "pessoas": 424
+    },
+    "1302702": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 6,
+      "nota": "Margem do Madeira.",
+      "pessoas": 231
+    },
+    "1301902": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem",
+        "deslizamento"
+      ],
+      "setores": 8,
+      "nota": "Sede e comunidades do Amazonas.",
+      "pessoas": 329
+    },
+    "1303403": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem",
+        "deslizamento"
+      ],
+      "setores": 7,
+      "nota": "Ilha Tupinambarana e margem do Amazonas.",
+      "pessoas": 5152
+    },
+    "1303809": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "deslizamento",
+        "erosao_margem"
+      ],
+      "setores": 8,
+      "nota": "Encostas e margem do Negro.",
+      "pessoas": 530
+    },
+    "1304203": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 6,
+      "nota": "Erosão de margem no Médio Solimões.",
+      "pessoas": 4679
+    },
+    "1301209": {
+      "susceptibilidade": "alta",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 6,
+      "nota": "Lago de Coari e margem do Solimões.",
+      "pessoas": 4475
+    },
+    "1301605": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 4,
+      "nota": "Margem do Solimões.",
+      "pessoas": 159
+    },
+    "1303700": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Foz do Içá.",
+      "pessoas": 95
+    },
+    "1304237": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Solimões.",
+      "pessoas": 436
+    },
+    "1301100": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 4,
+      "nota": "Várzea e terra firme.",
+      "pessoas": 352
+    },
+    "1301159": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 5,
+      "nota": "Várzea do Careiro.",
+      "pessoas": 1856
+    },
+    "1300300": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margens de Paraná e Amazonas.",
+      "pessoas": null
+    },
+    "1302504": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem",
+        "deslizamento"
+      ],
+      "setores": 5,
+      "nota": "Sede e margem do Solimões.",
+      "pessoas": 2093
+    },
+    "1300805": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 4,
+      "nota": "Margem do Madeira.",
+      "pessoas": 723
+    },
+    "1303304": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Madeira.",
+      "pessoas": 218
+    },
+    "1300409": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "deslizamento",
+        "erosao_margem"
+      ],
+      "setores": 4,
+      "nota": "Encostas e margem do Negro."
+    },
+    "1303601": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "deslizamento",
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Negro."
+    },
+    "1303569": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "deslizamento"
+      ],
+      "setores": 3,
+      "nota": "Taludes da AM-010.",
+      "pessoas": 3214
+    },
+    "1303205": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "deslizamento",
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Encostas e margem do Negro.",
+      "pessoas": null
+    },
+    "1302405": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 4,
+      "nota": "Margem do Purus.",
+      "pessoas": 3839
+    },
+    "1300706": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Purus/Acre.",
+      "pessoas": 11289
+    },
+    "1302108": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Japurá.",
+      "pessoas": 157
+    },
+    "1302801": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 4,
+      "nota": "Margem do Japurá/Solimões.",
+      "pessoas": 1005
+    },
+    "1302900": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Maués-Açu.",
+      "pessoas": null
+    },
+    "1301308": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Solimões.",
+      "pessoas": 5030
+    },
+    "1300029": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 2,
+      "nota": "Margem do Solimões/Tefé.",
+      "pessoas": 44
+    },
+    "1300102": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Foz do Purus.",
+      "pessoas": 4077
+    },
+    "1300631": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Foz do Purus.",
+      "pessoas": 2125
+    },
+    "1303106": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Foz do Madeira.",
+      "pessoas": 153
+    },
+    "1300508": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 3,
+      "nota": "Margem do Amazonas.",
+      "pessoas": 294
+    },
+    "1303007": {
+      "susceptibilidade": "media",
+      "tipos": [
+        "erosao_margem"
+      ],
+      "setores": 2,
+      "nota": "Margem do Nhamundá/Amazonas.",
+      "pessoas": 2146
+    }
+  },
+  "fontePessoas": "Casa Civil · NT 1/2023 · SGB-CPRM/Cemaden · pessoas em área de risco geo-hidrológico (Censo 2022)",
+  "notaPessoas": "A contagem federal cobre deslizamento, enxurrada e inundação. Ausência de número não significa ausência de gente exposta. Barcelos, Santa Isabel do Rio Negro e São Sebastião do Uatumã não entram no levantamento.",
+  "pessoas": {
+    "1300029": 44,
+    "1300060": 374,
+    "1300086": 3616,
+    "1300102": 4077,
+    "1300144": 619,
+    "1300201": 271,
+    "1300300": null,
+    "1300508": 294,
+    "1300607": 3866,
+    "1300631": 2125,
+    "1300680": 617,
+    "1300706": 11289,
+    "1300805": 723,
+    "1300839": 2680,
+    "1300904": 3145,
+    "1301001": 477,
+    "1301100": 352,
+    "1301159": 1856,
+    "1301209": 4475,
+    "1301308": 5030,
+    "1301407": 12512,
+    "1301506": 93,
+    "1301605": 159,
+    "1301654": 1488,
+    "1301704": 424,
+    "1301803": 1527,
+    "1301852": 94,
+    "1301902": 329,
+    "1301951": 1025,
+    "1302009": 573,
+    "1302108": 157,
+    "1302207": 480,
+    "1302306": null,
+    "1302405": 3839,
+    "1302504": 2093,
+    "1302553": 860,
+    "1302603": 55851,
+    "1302702": 231,
+    "1302801": 1005,
+    "1302900": null,
+    "1303007": 2146,
+    "1303106": 153,
+    "1303205": null,
+    "1303304": 218,
+    "1303403": 5152,
+    "1303502": 1051,
+    "1303536": 1284,
+    "1303569": 3214,
+    "1303700": 95,
+    "1303809": 530,
+    "1303908": 477,
+    "1304005": 266,
+    "1304062": 328,
+    "1304104": 1964,
+    "1304203": 4679,
+    "1304237": 436,
+    "1304260": null,
+    "1304302": 698,
+    "1304401": 2124
   }
 }

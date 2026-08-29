@@ -97,7 +97,7 @@ export function AlertDetail({
         </p>
       )}
 
-      {municipioId ? <FichaTerritorio municipioId={municipioId} /> : null}
+      {municipioId ? <FichaTerritorio municipioId={municipioId} tipo={tipo} /> : null}
 
       {hydro ? (
         <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">

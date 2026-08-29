@@ -150,14 +150,13 @@ O mapa nasce limpo: só as sedes (62 pontos pequenos), desligáveis no menu **Ma
 
 | Camada | Onde | Padrão | Fonte |
 | --- | --- | --- | --- |
-| Sedes municipais | Painel e Boletim | Ligada (pode ocultar) | IBGE Localidades 2022 |
+| Sedes municipais | Painel e Boletim | Ligada (pin pequeno; pode ocultar) | IBGE Localidades 2022 |
 | Pluviômetros CEMADEN | Chuva intensa, Alagamento e Movimento de massa | Desligada; ícone de 7 px | CEMADEN + encaixe no IBGE |
 | Comunidades rurais / indígenas | Painel e Boletim | Desligada; agrupadas no zoom amplo | IBGE 2022 |
-| Áreas de risco mapeadas | Só Movimento de massa | Desligada | Recorte operacional CEMOA |
+
+Áreas de risco **não** entram no mapa. Na ficha do produto **Movimento de massa** aparece se o município tem setor mapeado, quantos setores e, quando o levantamento federal publicou, quantas pessoas moram em área de risco geo-hidrológico (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem anel no mapa.
 
 O CEMADEN **não publica a coordenada do sensor**. Quando o nome da estação bate com uma localidade do mesmo município, o ponto vai para lá; senão fica na sede, com aviso no tooltip. Várias estações na mesma sede são espalhadas em círculo curto para não se sobrepor.
-
-Não há polígonos oficiais de área de risco neste recorte: o anel marca o município com setor mapeado, não o perímetro do setor. Use o tooltip e a ficha para ver tipos e quantidade de setores.
 
 A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 

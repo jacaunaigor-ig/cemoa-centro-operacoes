@@ -304,9 +304,30 @@ button, a, [role="button"] {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
 }
 
+.leaflet-div-icon.map-sede-icon,
 .leaflet-div-icon.map-pluvio-icon {
   background: transparent !important;
   border: none !important;
+}
+
+.map-sede-icon span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 0 auto;
+  background: #1d4ed8;
+  border: 1.5px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.32);
+}
+
+.map-legend-sede {
+  width: 7px !important;
+  height: 7px !important;
+  background: #1d4ed8;
+  border-radius: 50% 50% 50% 0 !important;
+  transform: rotate(-45deg);
 }
 
 .map-pluvio-icon span {
