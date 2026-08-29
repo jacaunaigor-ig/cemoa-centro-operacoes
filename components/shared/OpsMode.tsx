@@ -271,7 +271,9 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    applyThemeAttr(theme);
+    // Never let the SSR snapshot ("light") overwrite the FOUC / localStorage choice.
+    applyThemeAttr(getTheme());
+    emit(themeListeners);
   }, [theme]);
 
   const setAdmin = useCallback(
