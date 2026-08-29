@@ -2,8 +2,8 @@
 
 Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
 
-- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), ticker e ficha com Censo 2022, áreas mapeadas de movimento de massa e gráfico de cota.
-- **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto), KPIs, calhas, polígonos de risco, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha com gráfico, limiares ANA/SGB e a mesma projeção linear.
+- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas, áreas de risco), ticker e ficha com Censo 2022, áreas mapeadas de movimento de massa e gráfico de cota.
+- **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha com gráfico, limiares ANA/SGB e a mesma projeção linear.
 
 Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. Não exige Supabase.
 
@@ -143,6 +143,22 @@ Cada município mostra o **maior valor** entre os pontos da sede nas janelas **1
 No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora**. O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** o alerta do produto ativo se a chuva cruzar o limiar — o operador ainda pinta em Edição.
 
 Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
+
+## Camadas de apoio no mapa
+
+No menu **Mapa** (Painel e Boletim) dá para ligar ou desligar, por padrão ligados:
+
+| Camada | O que aparece | Fonte |
+| --- | --- | --- |
+| Sedes municipais | Ponto preto na sede de cada um dos 62 municípios | IBGE Localidades 2022 |
+| Pluviômetros CEMADEN | Ponto azul nas 95 estações automáticas do AM | CEMADEN + encaixe no IBGE |
+| Comunidades rurais | 1.285 povoados, vilas, agrovilas, núcleos e quilombos (agrupados no zoom amplo) | IBGE Localidades 2022 |
+| Comunidades indígenas | 3.047 localidades indígenas do Censo (agrupadas no zoom amplo) | IBGE Localidades Indígenas 2022 |
+| Áreas de risco mapeadas | Anel na sede dos municípios com setor de deslizamento, movimento de massa ou erosão de margem | Recorte operacional CEMOA |
+
+O CEMADEN **não publica a coordenada do sensor**. Quando o nome da estação bate com uma localidade do mesmo município, o ponto vai para lá; senão fica na sede, com aviso no tooltip. Várias estações na mesma sede são espalhadas em círculo curto para não se sobrepor.
+
+Não há polígonos oficiais de área de risco neste recorte: o anel marca o município com setor mapeado, não o perímetro do setor. Use o tooltip e a ficha para ver tipos e quantidade de setores.
 
 A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 

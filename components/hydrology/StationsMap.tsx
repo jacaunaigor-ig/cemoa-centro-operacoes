@@ -34,7 +34,15 @@ import {
   panToIfNeeded,
   scheduleAmazonasFit,
 } from "@/lib/map";
-import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
+import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
+import {
+  addTerritoryOverlays,
+  applyTerritoryVisibility,
+  syncPluviometers,
+  type PluvioStation,
+  type TerritoryLayers,
+  type TerritoryVisibility,
+} from "@/lib/map-overlays";
 import { reportClientError } from "@/lib/client";
 import { withBase } from "@/lib/site";
 import "leaflet/dist/leaflet.css";
@@ -57,6 +65,8 @@ export const StationsMap = forwardRef<
     opacity: number;
     showNames: boolean;
     showRivers: boolean;
+    overlays: TerritoryVisibility;
+    pluvio: PluvioStation[];
     onlyRisk: boolean;
     adminMode?: boolean;
     drawMode?: boolean;
@@ -78,6 +88,8 @@ export const StationsMap = forwardRef<
     opacity,
     showNames,
     showRivers,
+    overlays,
+    pluvio,
     onlyRisk,
     adminMode = false,
     drawMode = false,
@@ -97,6 +109,7 @@ export const StationsMap = forwardRef<
   const layerRef = useRef<GeoJSONType | null>(null);
   const riversRef = useRef<LayerGroup | null>(null);
   const namesRef = useRef<LayerGroup | null>(null);
+  const territoryRef = useRef<TerritoryLayers | null>(null);
   const drawLineRef = useRef<Polyline | null>(null);
   const drawDotsRef = useRef<CircleMarker[]>([]);
   const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
@@ -118,6 +131,8 @@ export const StationsMap = forwardRef<
     opacity,
     adminMode,
     drawMode,
+    overlays,
+    pluvio,
   });
 
   useEffect(() => {
@@ -137,6 +152,8 @@ export const StationsMap = forwardRef<
       opacity,
       adminMode,
       drawMode,
+      overlays,
+      pluvio,
     };
   }, [
     stations,
@@ -149,6 +166,8 @@ export const StationsMap = forwardRef<
     opacity,
     adminMode,
     drawMode,
+    overlays,
+    pluvio,
     onSelect,
     onHover,
     onPaint,
@@ -250,7 +269,7 @@ export const StationsMap = forwardRef<
     let cancelFit: (() => void) | undefined;
 
     async function boot() {
-      const L = leafletNamespace(await import("leaflet"));
+      const L = await loadLeafletWithCluster();
       leafletRef.current = L;
       if (cancelled || !hostRef.current) return;
       if (mapRef.current) {
@@ -359,6 +378,10 @@ export const StationsMap = forwardRef<
       }
       namesRef.current = names;
       if (showNames) names.addTo(map);
+      const territory = addTerritoryOverlays(L, map);
+      territoryRef.current = territory;
+      applyTerritoryVisibility(map, territory, stateRef.current.overlays);
+      syncPluviometers(L, territory.pluvio, stateRef.current.pluvio);
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
 
@@ -381,6 +404,7 @@ export const StationsMap = forwardRef<
       layerRef.current = null;
       riversRef.current = null;
       namesRef.current = null;
+      territoryRef.current = null;
       tilesRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -459,6 +483,19 @@ export const StationsMap = forwardRef<
       if (!map.hasLayer(names)) names.addTo(map);
     } else if (map.hasLayer(names)) map.removeLayer(names);
   }, [showNames]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    applyTerritoryVisibility(map, territoryRef.current, overlays);
+  }, [overlays]);
+
+  useEffect(() => {
+    const L = leafletRef.current;
+    const layer = territoryRef.current?.pluvio;
+    if (!L || !layer) return;
+    syncPluviometers(L, layer, pluvio);
+  }, [pluvio]);
 
   return (
     <div

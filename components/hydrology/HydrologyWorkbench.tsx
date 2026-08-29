@@ -21,6 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { OSM_BASEMAP_ID } from "@/lib/map";
+import { pluvioFromRain, type TerritoryVisibility } from "@/lib/map-overlays";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { buildHydrologyPayload } from "@/lib/live-state";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -53,6 +54,7 @@ import { NoReadingPanel } from "@/components/hydrology/NoReadingPanel";
 import { HydroTicker } from "@/components/hydrology/HydroTicker";
 import { HydroDetail } from "@/components/hydrology/HydroDetail";
 import { KpiCard } from "@/components/shared/KpiCard";
+import { MapOverlayToggles } from "@/components/shared/MapOverlayToggles";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
@@ -110,8 +112,16 @@ export function HydrologyWorkbench() {
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
+  const [overlays, setOverlays] = useState<TerritoryVisibility>({
+    sedes: true,
+    rurais: true,
+    indigenas: true,
+    risco: true,
+    pluvio: true,
+  });
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
+  const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [paintArmed, setPaintArmed] = useState(true);
   const [drawMode, setDrawMode] = useState(false);
@@ -697,7 +707,7 @@ export function HydrologyWorkbench() {
                       Mapa
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 p-2">
+                  <PopoverContent align="end" className="w-72 p-2">
                     <MapToolButton
                       active={onlyRisk}
                       onClick={() => setOnlyRisk((v) => !v)}
@@ -723,6 +733,7 @@ export function HydrologyWorkbench() {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
+                    <MapOverlayToggles vis={overlays} onChange={setOverlays} />
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
                       <input
@@ -766,6 +777,8 @@ export function HydrologyWorkbench() {
                   opacity={mapOpacity}
                   showNames={showNames}
                   showRivers={showRivers}
+                  overlays={overlays}
+                  pluvio={pluvio}
                   onlyRisk={onlyRisk}
                   adminMode={admin && paintArmed}
                   drawMode={admin && drawMode}

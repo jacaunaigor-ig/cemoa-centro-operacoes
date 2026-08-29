@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { KpiCard } from "@/components/shared/KpiCard";
+import { MapOverlayToggles } from "@/components/shared/MapOverlayToggles";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
@@ -35,6 +36,7 @@ import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
+import { pluvioFromRain, type TerritoryVisibility } from "@/lib/map-overlays";
 import {
   ALERT_PRODUCTS,
   ALERT_TYPES,
@@ -163,8 +165,16 @@ export function AlertsWorkbench() {
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
+  const [overlays, setOverlays] = useState<TerritoryVisibility>({
+    sedes: true,
+    rurais: true,
+    indigenas: true,
+    risco: true,
+    pluvio: true,
+  });
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
+  const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -811,7 +821,7 @@ export function AlertsWorkbench() {
                       Mapa
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 p-2">
+                  <PopoverContent align="end" className="w-72 p-2">
                     <MapToolButton
                       active={onlyRisk}
                       onClick={() => setOnlyRisk((v) => !v)}
@@ -837,6 +847,7 @@ export function AlertsWorkbench() {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
+                    <MapOverlayToggles vis={overlays} onChange={setOverlays} />
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
                       <input
@@ -890,6 +901,8 @@ export function AlertsWorkbench() {
                   opacity={mapOpacity}
                   showNames={showNames}
                   showRivers={showRivers}
+                  overlays={overlays}
+                  pluvio={pluvio}
                   onlyRisk={onlyRisk}
                   onSelect={(nome, basinName) => {
                     setHovered(null);

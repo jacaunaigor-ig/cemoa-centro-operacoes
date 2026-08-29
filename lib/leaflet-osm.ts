@@ -6,6 +6,12 @@ export function leafletNamespace(mod: unknown): typeof import("leaflet") {
   return (rec.default ?? (mod as typeof import("leaflet"))) as typeof import("leaflet");
 }
 
+export async function loadLeafletWithCluster() {
+  const L = leafletNamespace(await import("leaflet"));
+  await import("leaflet.markercluster");
+  return L;
+}
+
 export function resetLeafletHost(host: HTMLElement) {
   const marked = host as HTMLElement & { _leaflet_id?: number };
   if (marked._leaflet_id) {
