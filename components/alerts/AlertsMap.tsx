@@ -24,7 +24,7 @@ import {
   panToIfNeeded,
   scheduleAmazonasFit,
 } from "@/lib/map";
-import { HYDRO_RIOS, normalizeMunicipio } from "@/lib/hydrology";
+import { addAmazonasRiverFlow } from "@/lib/map-rivers";
 import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
 import { withBase } from "@/lib/site";
@@ -278,46 +278,7 @@ export const AlertsMap = forwardRef<
       mapRef.current = map;
       cancelFit = scheduleAmazonasFit(map, L);
 
-      map.createPane("flowPane");
-      const flowPane = map.getPane("flowPane");
-      if (flowPane) {
-        flowPane.style.zIndex = "455";
-        flowPane.style.pointerEvents = "none";
-      }
-      const flowRenderer = L.svg({ pane: "flowPane" });
-      const rios = L.layerGroup();
-      const byNorm = new Map(
-        stateRef.current.municipios.map(
-          (s) => [normalizeMunicipio(s.nome), s] as const,
-        ),
-      );
-      for (const rio of HYDRO_RIOS) {
-        const coords = rio.municipios
-          .map((nome) => byNorm.get(normalizeMunicipio(nome)))
-          .filter((s): s is Muni => Boolean(s))
-          .map((s) => [s.lat, s.lon] as [number, number]);
-        if (coords.length < 2) continue;
-        L.polyline(coords, {
-          renderer: flowRenderer,
-          pane: "flowPane",
-          color: rio.cor,
-          weight: 5.2,
-          opacity: 0.28,
-          interactive: false,
-          className: `river-flow-base flow-${rio.id}`,
-        }).addTo(rios);
-        L.polyline(coords, {
-          renderer: flowRenderer,
-          pane: "flowPane",
-          color: "#0b1220",
-          weight: 2.6,
-          opacity: 0.9,
-          dashArray: "10 18",
-          lineCap: "round",
-          interactive: false,
-          className: `river-flow-animated flow-${rio.id}`,
-        }).addTo(rios);
-      }
+      const rios = addAmazonasRiverFlow(L, map);
       rios.addTo(map);
       riversRef.current = rios;
 

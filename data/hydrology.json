@@ -105,6 +105,25 @@
         "CARAUARI",
         "JURUÁ"
       ]
+    },
+    {
+      "id": "japura",
+      "nome": "Japurá",
+      "cor": "#7dd3fc",
+      "velocidade": 2.05,
+      "municipios": [
+        "JAPURÁ",
+        "MARAÃ"
+      ]
+    },
+    {
+      "id": "ica",
+      "nome": "Içá",
+      "cor": "#67e8f9",
+      "velocidade": 2.15,
+      "municipios": [
+        "SANTO ANTÔNIO DO IÇÁ"
+      ]
     }
   ],
   "stations": [

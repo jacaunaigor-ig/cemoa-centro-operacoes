@@ -227,8 +227,31 @@ button, a, [role="button"] {
 }
 
 .river-flow-animated {
-  stroke-dasharray: 10 18;
-  animation: river-dash 1.65s linear infinite;
+  stroke-dasharray: 16 22;
+  animation: river-dash 2.4s linear infinite;
+}
+
+.river-flow-animated.flow-solimoes { animation-duration: 1.85s; }
+.river-flow-animated.flow-negro { animation-duration: 2.15s; }
+.river-flow-animated.flow-madeira { animation-duration: 2.05s; }
+.river-flow-animated.flow-purus { animation-duration: 2.45s; }
+.river-flow-animated.flow-jurua { animation-duration: 2.55s; }
+.river-flow-animated.flow-japura { animation-duration: 2.65s; }
+.river-flow-animated.flow-ica { animation-duration: 2.75s; }
+
+.leaflet-tooltip.river-flow-tip {
+  border: 0;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+}
+
+.leaflet-tooltip.river-flow-tip::before {
+  border-top-color: #0f172a;
 }
 
 @keyframes ticker-scroll {
@@ -237,7 +260,7 @@ button, a, [role="button"] {
 }
 
 @keyframes river-dash {
-  to { stroke-dashoffset: -28; }
+  to { stroke-dashoffset: -38; }
 }
 
 .leaflet-div-icon.rain-burst-wrap,
