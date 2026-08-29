@@ -9,7 +9,7 @@ type Limite = { label: string; value: number; color: string };
 
 const EMPTY_LIMITES: Limite[] = [];
 
-function CotaChartInner({
+export const CotaChart = memo(function CotaChart({
   station,
   status,
   compact = false,
@@ -244,6 +244,4 @@ function CotaChartInner({
       </p>
     </div>
   );
-}
-
-export const CotaChart = memo(CotaChartInner);
+});
