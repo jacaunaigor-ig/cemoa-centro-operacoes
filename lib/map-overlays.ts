@@ -179,7 +179,8 @@ function fillRisco(L: LeafletNS, layer: LayerGroup) {
 function paintLegend(el: HTMLElement | null, vis: TerritoryVisibility) {
   if (!el) return;
   const rows: string[] = [];
-  if (vis.sedes) rows.push(`<span><i style="background:#111827"></i> Sede</span>`);
+  const extra = vis.pluvio || vis.rurais || vis.indigenas || vis.risco;
+  if (vis.sedes && extra) rows.push(`<span><i style="background:#111827"></i> Sede</span>`);
   if (vis.pluvio) rows.push(`<span><i class="map-legend-pluvio"></i> CEMADEN</span>`);
   if (vis.rurais) rows.push(`<span><i style="background:#ca8a04"></i> Rural</span>`);
   if (vis.indigenas) rows.push(`<span><i style="background:#7c3aed"></i> Indígena</span>`);

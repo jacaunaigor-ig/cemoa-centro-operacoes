@@ -16,7 +16,11 @@ export function MapToolButton({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       className={cn(
         "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-semibold transition-colors duration-150 active:scale-[0.98]",
         active ? "bg-brand/15 text-brand-2" : "text-text-dim hover:bg-hover hover:text-text",

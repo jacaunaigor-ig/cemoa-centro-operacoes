@@ -15,10 +15,10 @@ export function MapOverlayToggles({
 }: {
   vis: TerritoryVisibility;
   product: OverlayProduct;
-  onChange: (next: TerritoryVisibility) => void;
+  onChange: (next: TerritoryVisibility | ((prev: TerritoryVisibility) => TerritoryVisibility)) => void;
 }) {
   function toggle(key: keyof TerritoryVisibility) {
-    onChange({ ...vis, [key]: !vis[key] });
+    onChange((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   const pluvio = showsPluvio(product);
@@ -30,22 +30,22 @@ export function MapOverlayToggles({
         Camadas
       </p>
       <MapToolButton active={vis.sedes} onClick={() => toggle("sedes")}>
-        {vis.sedes ? "Sedes municipais" : "Sedes municipais (ocultas)"}
+        {vis.sedes ? "Ocultar sedes" : "Sedes municipais"}
       </MapToolButton>
       {pluvio ? (
         <MapToolButton active={vis.pluvio} onClick={() => toggle("pluvio")}>
-          {vis.pluvio ? "Pluviômetros CEMADEN" : "Pluviômetros CEMADEN"}
+          {vis.pluvio ? "Ocultar pluviômetros" : "Pluviômetros CEMADEN"}
         </MapToolButton>
       ) : null}
       <MapToolButton active={vis.rurais} onClick={() => toggle("rurais")}>
-        Comunidades rurais
+        {vis.rurais ? "Ocultar comunidades rurais" : "Comunidades rurais"}
       </MapToolButton>
       <MapToolButton active={vis.indigenas} onClick={() => toggle("indigenas")}>
-        Comunidades indígenas
+        {vis.indigenas ? "Ocultar comunidades indígenas" : "Comunidades indígenas"}
       </MapToolButton>
       {risco ? (
         <MapToolButton active={vis.risco} onClick={() => toggle("risco")}>
-          Áreas de risco mapeadas
+          {vis.risco ? "Ocultar áreas de risco" : "Áreas de risco mapeadas"}
         </MapToolButton>
       ) : null}
     </div>
