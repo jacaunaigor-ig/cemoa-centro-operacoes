@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ export function RiskEditorDialog({
   levels: readonly string[];
   productLabel: string;
   onClose: () => void;
-  onApply: (updates: Record<string, string>) => void;
+  onApply: (updates: Record<string, string>) => void | Promise<void>;
 }) {
   const fallbackBatch = levels.includes("ALTO")
     ? "ALTO"
@@ -39,6 +39,7 @@ export function RiskEditorDialog({
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [batchLevel, setBatchLevel] = useState(fallbackBatch);
+  const [applying, setApplying] = useState(false);
   const effectiveBatch = levels.includes(batchLevel) ? batchLevel : fallbackBatch;
 
   const merged = useMemo(() => {
@@ -64,11 +65,20 @@ export function RiskEditorDialog({
     return acc;
   }, [merged, levels]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 p-3"
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 p-3 animate-in fade-in-0 duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -77,7 +87,7 @@ export function RiskEditorDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="risk-editor-title"
-        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
       >
         <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div>
@@ -194,19 +204,24 @@ export function RiskEditorDialog({
             pendente(s)
           </p>
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={applying}>
               Cancelar
             </Button>
             <Button
               type="button"
-              onClick={() => {
-                onApply(draft);
-                setDraft({});
-                onClose();
+              onClick={async () => {
+                setApplying(true);
+                try {
+                  await onApply(draft);
+                  setDraft({});
+                  onClose();
+                } finally {
+                  setApplying(false);
+                }
               }}
-              disabled={Object.keys(draft).length === 0}
+              disabled={applying || Object.keys(draft).length === 0}
             >
-              Aplicar ao mapa
+              {applying ? "Aplicando…" : "Aplicar ao mapa"}
             </Button>
           </div>
         </footer>

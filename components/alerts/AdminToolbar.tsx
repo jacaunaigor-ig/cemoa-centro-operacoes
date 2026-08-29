@@ -86,7 +86,7 @@ export function AdminToolbar({
             type="button"
             onClick={() => onPaintLevel(level)}
             className={cn(
-              "rounded-full border px-2 py-0.5 text-[10px] font-bold",
+              "rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
               paintLevel === level ? "text-bg" : "border-border text-text-dim",
             )}
             style={

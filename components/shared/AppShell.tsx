@@ -16,12 +16,12 @@ import {
   Users,
 } from "lucide-react";
 import { cn, formatAmazonTime } from "@/lib/utils";
+import { useNow, usePauseMotionWhenHidden } from "@/lib/client-hooks";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { MeteoAvisoBanner, MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
-import { useEffect, useState } from "react";
 
 export function AppShell({
   children,
@@ -47,14 +47,7 @@ export function AppShell({
     openAdmins,
     logout,
   } = useOpsMode();
-  const [clock, setClock] = useState("--:--:--");
-
-  useEffect(() => {
-    const tick = () => setClock(formatAmazonTime(Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
+  usePauseMotionWhenHidden();
 
   const shared = new URLSearchParams();
   for (const key of ["municipio", "bacia", "calha"] as const) {
@@ -193,16 +186,7 @@ export function AppShell({
               )}
             </div>
           ) : null}
-          {!isMobile ? (
-            <div className="hidden text-right md:block">
-              <small className="block font-mono text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-                Horário de Manaus
-              </small>
-              <strong className="font-mono text-sm tabular-nums">{clock}</strong>
-            </div>
-          ) : (
-            <strong className="font-mono text-xs tabular-nums">{clock}</strong>
-          )}
+          <HeaderClock compact={isMobile} />
           {!isMobile ? (
             <InfoTooltip
               label="Sobre a sincronização"
@@ -253,6 +237,22 @@ export function AppShell({
       <AdminsDialog />
       </div>
     </MeteoAvisoProvider>
+  );
+}
+
+function HeaderClock({ compact }: { compact: boolean }) {
+  const now = useNow();
+  const clock = now ? formatAmazonTime(now) : "--:--:--";
+  if (compact) {
+    return <strong className="font-mono text-xs tabular-nums">{clock}</strong>;
+  }
+  return (
+    <div className="hidden text-right md:block">
+      <small className="block font-mono text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
+        Horário de Manaus
+      </small>
+      <strong className="font-mono text-sm tabular-nums">{clock}</strong>
+    </div>
   );
 }
 

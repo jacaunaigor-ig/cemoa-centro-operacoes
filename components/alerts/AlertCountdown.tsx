@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Timer } from "lucide-react";
 import { LEVEL_LABELS } from "@/lib/alert-types";
 import {
@@ -8,16 +7,10 @@ import {
   formatCountdown,
   remainingMs,
 } from "@/lib/alert-validity";
+import { useNow } from "@/lib/client-hooks";
 import { cn } from "@/lib/utils";
 
-export function useNow(intervalMs = 1000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), intervalMs);
-    return () => window.clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
+export { useNow } from "@/lib/client-hooks";
 
 export function AlertCountdown({
   expiresAt,
@@ -33,7 +26,7 @@ export function AlertCountdown({
   variant?: "compact" | "row" | "hero";
 }) {
   const now = useNow();
-  const left = remainingMs(expiresAt, now);
+  const left = now ? remainingMs(expiresAt, now) : null;
   const tone = countdownTone(left);
   const clock = left == null ? "--:--:--" : left <= 0 ? "00:00:00" : formatCountdown(left);
   const status =

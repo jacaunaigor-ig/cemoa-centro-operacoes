@@ -19,7 +19,8 @@ import {
   OSM_BASEMAP_ID,
   OSM_TILE_URL,
   fitMapToAmazonas,
-  mapCenterInAmazonas,
+  observeAmazonasResize,
+  panToIfNeeded,
   scheduleAmazonasFit,
 } from "@/lib/map";
 import { HYDRO_RIOS, normalizeMunicipio } from "@/lib/hydrology";
@@ -96,6 +97,8 @@ export const AlertsMap = forwardRef<
   const drawLineRef = useRef<Polyline | null>(null);
   const drawDotsRef = useRef<CircleMarker[]>([]);
   const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
+  const layersByNameRef = useRef(new Map<string, Path>());
+  const prevHoveredRef = useRef<string | null>(null);
   const onSelectRef = useRef(onSelect);
   const onHoverRef = useRef(onHover);
   const onPaintRef = useRef(onPaint);
@@ -237,7 +240,7 @@ export const AlertsMap = forwardRef<
 
   useEffect(() => {
     let cancelled = false;
-    let resizeObs: ResizeObserver | undefined;
+    let cancelResize: (() => void) | undefined;
     let cancelFit: (() => void) | undefined;
 
     async function boot() {
@@ -323,6 +326,8 @@ export const AlertsMap = forwardRef<
           style: styleFor,
           onEachFeature: (feature, lyr) => {
             const nome = String(feature.properties?.nome ?? "");
+            layersByNameRef.current.set(nome, lyr as Path);
+            lyr.bindTooltip("", { sticky: true });
             lyr.on("click", (ev) => {
               const { adminMode: admin, drawMode: drawing } = stateRef.current;
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
@@ -339,14 +344,11 @@ export const AlertsMap = forwardRef<
             lyr.on("mouseover", () => {
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
               const prefix = stateRef.current.adminMode ? "Classificar · " : "";
-              (lyr as Path).bringToFront();
+              lyr.setTooltipContent(
+                `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}`,
+              );
+              lyr.openTooltip();
               onHoverRef.current?.(nome);
-              lyr
-                .bindTooltip(
-                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}`,
-                  { sticky: true },
-                )
-                .openTooltip();
             });
             lyr.on("mouseout", () => {
               lyr.closeTooltip();
@@ -388,16 +390,7 @@ export const AlertsMap = forwardRef<
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
 
-      resizeObs = new ResizeObserver(() => {
-        const before = map.getSize().y;
-        map.invalidateSize();
-        const after = map.getSize();
-        if (after.x < 40 || after.y < 40) return;
-        if (Math.abs(after.y - before) > 48 || !mapCenterInAmazonas(map)) {
-          fitMapToAmazonas(map, false);
-        }
-      });
-      if (hostRef.current) resizeObs.observe(hostRef.current);
+      if (hostRef.current) cancelResize = observeAmazonasResize(hostRef.current, map);
 
       map.on("dblclick", (ev) => {
         if (!stateRef.current.drawMode) return;
@@ -410,7 +403,7 @@ export const AlertsMap = forwardRef<
     return () => {
       cancelled = true;
       cancelFit?.();
-      resizeObs?.disconnect();
+      cancelResize?.();
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -425,19 +418,38 @@ export const AlertsMap = forwardRef<
   useEffect(() => {
     const layer = layerRef.current;
     layer?.setStyle((feature) => styleFor(feature));
-    const focus = hovered || selected;
-    if (focus && layer) {
-      layer.eachLayer((lyr) => {
-        const feature = (lyr as Path & { feature?: GeoJSON.Feature }).feature;
-        const nome = String(feature?.properties?.nome ?? "");
-        if (nome === focus) (lyr as Path).bringToFront();
-      });
+    if (selected) layersByNameRef.current.get(selected)?.bringToFront();
+  }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity]);
+
+  const prevSelectedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    const prev = prevSelectedRef.current;
+    prevSelectedRef.current = selected;
+    if (!selected || adminMode || !map || selected === prev) return;
+    const m = stateRef.current.municipios.find((item) => item.nome === selected);
+    if (m) panToIfNeeded(map, m.lat, m.lon);
+  }, [selected, adminMode]);
+
+  // Hover restyles only the two affected polygons directly — avoids re-styling
+  // all ~62 features on every mouseover/mouseout (see full setStyle effect above).
+  useEffect(() => {
+    const prev = prevHoveredRef.current;
+    if (prev && prev !== hovered) {
+      const lyr = layersByNameRef.current.get(prev);
+      const feature = (lyr as (Path & { feature?: GeoJSON.Feature }) | undefined)?.feature;
+      lyr?.setStyle(styleFor(feature));
     }
-    if (selected && !adminMode) {
-      const m = municipios.find((item) => item.nome === selected);
-      if (m && mapRef.current) mapRef.current.panTo([m.lat, m.lon], { animate: true });
+    if (hovered) {
+      const lyr = layersByNameRef.current.get(hovered);
+      const feature = (lyr as (Path & { feature?: GeoJSON.Feature }) | undefined)?.feature;
+      if (lyr) {
+        lyr.setStyle(styleFor(feature));
+        lyr.bringToFront();
+      }
     }
-  }, [municipios, selected, hovered, filter, basin, calhaNomes, adminMode, opacity]);
+    prevHoveredRef.current = hovered ?? null;
+  }, [hovered]);
 
   useEffect(() => {
     const map = mapRef.current;

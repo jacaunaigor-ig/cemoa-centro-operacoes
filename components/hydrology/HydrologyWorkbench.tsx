@@ -56,6 +56,7 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { cn } from "@/lib/utils";
+import { useDebouncedValue } from "@/lib/client-hooks";
 
 const POLL_MS = 12_000;
 const HYDRO_STORAGE = "cemoa_hydro_overrides_v1";
@@ -96,10 +97,13 @@ export function HydrologyWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const buscaFiltro = useDebouncedValue(busca, 180);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
   const [opacity, setOpacity] = useState(58);
+  const mapOpacity = useDebouncedValue(opacity, 60);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [paintArmed, setPaintArmed] = useState(true);
   const [drawMode, setDrawMode] = useState(false);
   const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
@@ -180,6 +184,16 @@ export function HydrologyWorkbench() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
+  useEffect(() => {
+    if (!selected || editorOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setQuery({ municipio: null });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, editorOpen]);
+
   const catalog = useMemo(() => data?.stations ?? [], [data]);
   const geoStations = useMemo(
     () =>
@@ -201,9 +215,9 @@ export function HydrologyWorkbench() {
         bacia,
         status,
         municipio: selected,
-        busca,
+        busca: buscaFiltro,
       }),
-    [catalog, modo, calha, bacia, status, selected, busca],
+    [catalog, modo, calha, bacia, status, selected, buscaFiltro],
   );
 
   const kpis = useMemo(() => contarStatus(geoStations, modo), [geoStations, modo]);
@@ -239,7 +253,7 @@ export function HydrologyWorkbench() {
         /* ignore */
       }
       setData({ ...buildHydrologyPayload(), cache: "MISS" });
-      return;
+      return true;
     }
     const res = await fetch("/api/hydrology/overrides", {
       method: "POST",
@@ -249,11 +263,11 @@ export function HydrologyWorkbench() {
     });
     if (res.status === 401) {
       toast.error("Entre como operador para alterar cotas e status.");
-      return;
+      return false;
     }
     if (!res.ok) {
       toast.error("Não foi possível gravar a alteração hidrológica.");
-      return;
+      return false;
     }
     try {
       const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
@@ -270,16 +284,17 @@ export function HydrologyWorkbench() {
     }
     const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
     setData(payload);
+    return true;
   }
 
   async function paintStation(station: HydroStation) {
-    await persistHydro({ [station.id]: { [statusKey]: paintLevel } });
     setQuery({
       municipio: station.municipio,
       bacia: station.bacia,
       calha: station.calha,
     });
-    toast.success(`${station.municipio}: ${HYDRO_STATUS_LABELS[paintLevel]}`);
+    const ok = await persistHydro({ [station.id]: { [statusKey]: paintLevel } });
+    if (ok) toast.success(`${station.municipio}: ${HYDRO_STATUS_LABELS[paintLevel]}`);
   }
 
   async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
@@ -294,7 +309,8 @@ export function HydrologyWorkbench() {
       toast.error("Nenhum município dentro do polígono.");
       return;
     }
-    await persistHydro(updates);
+    const ok = await persistHydro(updates);
+    if (!ok) return;
     toast.success(`${n} município(s) com status ${HYDRO_STATUS_LABELS[paintLevel]}.`);
     setDrawMode(false);
   }
@@ -494,9 +510,12 @@ export function HydrologyWorkbench() {
               busca={busca}
               modo={modo}
               loading={loading}
-              onSelect={(s) =>
-                setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha })
-              }
+              hovered={hovered}
+              onHover={setHovered}
+              onSelect={(s) => {
+                setHovered(null);
+                setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha });
+              }}
               onCalha={(next) => setQuery({ calha: next, bacia: null, municipio: null })}
               onStatus={(next) => setQuery({ status: next === "Todos" ? null : next })}
               onBusca={setBusca}
@@ -652,19 +671,22 @@ export function HydrologyWorkbench() {
                   key={OSM_BASEMAP_ID}
                   stations={catalog}
                   selected={selected}
+                  hovered={hovered}
                   calha={calha}
                   bacia={bacia}
                   status={status}
                   modo={modo}
-                  opacity={opacity}
+                  opacity={mapOpacity}
                   showNames={showNames}
                   showRivers={showRivers}
                   onlyRisk={onlyRisk}
                   adminMode={admin && paintArmed}
                   drawMode={admin && drawMode}
-                  onSelect={(s) =>
-                    setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha })
-                  }
+                  onSelect={(s) => {
+                    setHovered(null);
+                    setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha });
+                  }}
+                  onHover={setHovered}
                   onPaint={(s) => void paintStation(s)}
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
                   onGeoError={setGeoError}
@@ -721,7 +743,10 @@ export function HydrologyWorkbench() {
                 admin={admin}
                 compact={isMobile}
                 onClose={() => setQuery({ municipio: null })}
-                onSave={(patch) => void persistHydro({ [selectedStation.id]: patch }).then(() => toast.success("Cota e status atualizados."))}
+                onSave={async (patch) => {
+                  const ok = await persistHydro({ [selectedStation.id]: patch });
+                  if (ok) toast.success("Cota e status atualizados.");
+                }}
               />
             ) : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
@@ -737,7 +762,9 @@ export function HydrologyWorkbench() {
         rows={catalog}
         modo={modo}
         onClose={() => setEditorOpen(false)}
-        onApply={(updates) => void persistHydro(updates)}
+        onApply={async (updates) => {
+          await persistHydro(updates);
+        }}
       />
     </AppShell>
   );

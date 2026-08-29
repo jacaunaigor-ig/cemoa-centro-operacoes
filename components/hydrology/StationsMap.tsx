@@ -11,6 +11,7 @@ import type {
   GeoJSON as GeoJSONType,
   LayerGroup,
   Map as LeafletMap,
+  Path,
   PathOptions,
   Polyline,
   TileLayer,
@@ -29,7 +30,8 @@ import {
   OSM_BASEMAP_ID,
   OSM_TILE_URL,
   fitMapToAmazonas,
-  mapCenterInAmazonas,
+  observeAmazonasResize,
+  panToIfNeeded,
   scheduleAmazonasFit,
 } from "@/lib/map";
 import { leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
@@ -58,7 +60,9 @@ export const StationsMap = forwardRef<
     onlyRisk: boolean;
     adminMode?: boolean;
     drawMode?: boolean;
+    hovered?: string | null;
     onSelect: (station: HydroStation) => void;
+    onHover?: (nome: string | null) => void;
     onPaint?: (station: HydroStation) => void;
     onPolygonComplete?: (points: Array<{ lat: number; lng: number }>) => void;
     onGeoError?: (message: string | null) => void;
@@ -77,7 +81,9 @@ export const StationsMap = forwardRef<
     onlyRisk,
     adminMode = false,
     drawMode = false,
+    hovered,
     onSelect,
+    onHover,
     onPaint,
     onPolygonComplete,
     onGeoError,
@@ -94,13 +100,17 @@ export const StationsMap = forwardRef<
   const drawLineRef = useRef<Polyline | null>(null);
   const drawDotsRef = useRef<CircleMarker[]>([]);
   const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
+  const layersByNameRef = useRef(new Map<string, Path>());
+  const prevHoveredRef = useRef<string | null>(null);
   const onSelectRef = useRef(onSelect);
+  const onHoverRef = useRef(onHover);
   const onPaintRef = useRef(onPaint);
   const onPolygonRef = useRef(onPolygonComplete);
   const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     stations,
     selected,
+    hovered: hovered ?? null,
     calha,
     bacia: bacia ?? null,
     status,
@@ -112,12 +122,14 @@ export const StationsMap = forwardRef<
 
   useEffect(() => {
     onSelectRef.current = onSelect;
+    onHoverRef.current = onHover;
     onPaintRef.current = onPaint;
     onPolygonRef.current = onPolygonComplete;
     onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       stations,
       selected,
+      hovered: hovered ?? null,
       calha,
       bacia: bacia ?? null,
       status,
@@ -129,6 +141,7 @@ export const StationsMap = forwardRef<
   }, [
     stations,
     selected,
+    hovered,
     calha,
     bacia,
     status,
@@ -137,6 +150,7 @@ export const StationsMap = forwardRef<
     adminMode,
     drawMode,
     onSelect,
+    onHover,
     onPaint,
     onPolygonComplete,
     onGeoError,
@@ -157,19 +171,26 @@ export const StationsMap = forwardRef<
 
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
     const nome = String(feature?.properties?.nome ?? "");
-    const { stations: list, selected: sel, opacity: op, status: filter, modo: m } =
+    const { stations: list, selected: sel, hovered: hov, opacity: op, status: filter, modo: m } =
       stateRef.current;
     const station = list.find((s) => s.municipio === nome);
     const st = statusMapa(station, m, filter);
     const match = isVisible(station);
     const isSel = sel === nome;
+    const isHov = hov === nome;
     const fill = Math.max(0.12, Math.min(0.92, op / 100));
     return {
-      color: isSel ? "#ffffff" : match ? "rgba(255,255,255,.8)" : "#3a4b60",
-      weight: isSel ? 2.8 : match ? 1.05 : 0.7,
-      opacity: match || isSel ? 1 : 0.28,
+      color: isSel ? "#ffffff" : isHov ? "#ffb020" : match ? "rgba(255,255,255,.8)" : "#3a4b60",
+      weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.05 : 0.7,
+      opacity: match || isSel || isHov ? 1 : 0.28,
       fillColor: HYDRO_STATUS_COLORS[st],
-      fillOpacity: isSel ? Math.min(0.95, fill + 0.12) : match ? fill : 0.08,
+      fillOpacity: isSel
+        ? Math.min(0.95, fill + 0.12)
+        : isHov
+          ? Math.min(0.92, fill + 0.18)
+          : match
+            ? fill
+            : 0.08,
       className: "muni-path",
     };
   }
@@ -225,7 +246,7 @@ export const StationsMap = forwardRef<
 
   useEffect(() => {
     let cancelled = false;
-    let resizeObs: ResizeObserver | undefined;
+    let cancelResize: (() => void) | undefined;
     let cancelFit: (() => void) | undefined;
 
     async function boot() {
@@ -309,6 +330,8 @@ export const StationsMap = forwardRef<
           style: styleFor,
           onEachFeature: (feature, lyr) => {
             const nome = String(feature.properties?.nome ?? "");
+            layersByNameRef.current.set(nome, lyr as Path);
+            lyr.bindTooltip("", { sticky: true });
             lyr.on("click", (ev) => {
               const { adminMode: admin, drawMode: drawing } = stateRef.current;
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
@@ -326,18 +349,21 @@ export const StationsMap = forwardRef<
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
               const st = statusMapa(s, stateRef.current.modo, stateRef.current.status);
               const prefix = stateRef.current.adminMode ? "Editar · " : "";
-              lyr
-                .bindTooltip(
-                  `<strong>${prefix}${nome}</strong><br/>${s?.calha ?? ""} · ${HYDRO_STATUS_LABELS[st]}${
-                    s?.semLeitura
-                      ? "<br/>Sem cota do dia"
-                      : s?.cota != null
-                        ? `<br/>Cota ${s.cota.toFixed(2)} m`
-                        : ""
-                  }`,
-                  { sticky: true },
-                )
-                .openTooltip();
+              lyr.setTooltipContent(
+                `<strong>${prefix}${nome}</strong><br/>${s?.calha ?? ""} · ${HYDRO_STATUS_LABELS[st]}${
+                  s?.semLeitura
+                    ? "<br/>Sem cota do dia"
+                    : s?.cota != null
+                      ? `<br/>Cota ${s.cota.toFixed(2)} m`
+                      : ""
+                }`,
+              );
+              lyr.openTooltip();
+              onHoverRef.current?.(nome);
+            });
+            lyr.on("mouseout", () => {
+              lyr.closeTooltip();
+              onHoverRef.current?.(null);
             });
           },
         }).addTo(map);
@@ -373,16 +399,7 @@ export const StationsMap = forwardRef<
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
 
-      resizeObs = new ResizeObserver(() => {
-        const before = map.getSize().y;
-        map.invalidateSize();
-        const after = map.getSize();
-        if (after.x < 40 || after.y < 40) return;
-        if (Math.abs(after.y - before) > 48 || !mapCenterInAmazonas(map)) {
-          fitMapToAmazonas(map, false);
-        }
-      });
-      if (hostRef.current) resizeObs.observe(hostRef.current);
+      if (hostRef.current) cancelResize = observeAmazonasResize(hostRef.current, map);
 
       map.on("dblclick", (ev) => {
         if (!stateRef.current.drawMode) return;
@@ -395,7 +412,7 @@ export const StationsMap = forwardRef<
     return () => {
       cancelled = true;
       cancelFit?.();
-      resizeObs?.disconnect();
+      cancelResize?.();
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -408,12 +425,40 @@ export const StationsMap = forwardRef<
 
   useEffect(() => {
     layerRef.current?.setStyle((feature) => styleFor(feature));
-    if (selected && !adminMode) {
-      const s = stations.find((item) => item.municipio === selected);
-      if (s && mapRef.current) mapRef.current.panTo([s.lat, s.lon], { animate: true });
-    }
+    if (selected) layersByNameRef.current.get(selected)?.bringToFront();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stations, selected, calha, bacia, status, modo, opacity, adminMode]);
+
+  const prevSelectedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    const prev = prevSelectedRef.current;
+    prevSelectedRef.current = selected;
+    if (!selected || adminMode || !map || selected === prev) return;
+    const s = stateRef.current.stations.find((item) => item.municipio === selected);
+    if (s) panToIfNeeded(map, s.lat, s.lon);
+  }, [selected, adminMode]);
+
+  // Hover restyles only the two affected polygons directly — avoids re-styling
+  // all ~62 features on every mouseover/mouseout.
+  useEffect(() => {
+    const prev = prevHoveredRef.current;
+    if (prev && prev !== hovered) {
+      const lyr = layersByNameRef.current.get(prev);
+      const feature = (lyr as (Path & { feature?: GeoJSON.Feature }) | undefined)?.feature;
+      lyr?.setStyle(styleFor(feature));
+    }
+    if (hovered) {
+      const lyr = layersByNameRef.current.get(hovered);
+      const feature = (lyr as (Path & { feature?: GeoJSON.Feature }) | undefined)?.feature;
+      if (lyr) {
+        lyr.setStyle(styleFor(feature));
+        lyr.bringToFront();
+      }
+    }
+    prevHoveredRef.current = hovered ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hovered]);
 
   useEffect(() => {
     const map = mapRef.current;

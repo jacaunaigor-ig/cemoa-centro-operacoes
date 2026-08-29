@@ -46,6 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Toaster
           theme="dark"
           position="top-right"
+          duration={4000}
+          visibleToasts={4}
+          gap={8}
           toastOptions={{
             className: "!bg-panel-2 !border-border !text-text",
           }}

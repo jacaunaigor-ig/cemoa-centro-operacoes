@@ -14,11 +14,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/shared/Modal";
-import { useNow } from "@/components/alerts/AlertCountdown";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { fetchJson } from "@/lib/client";
+import { useNow } from "@/lib/client-hooks";
 import {
   AVISO_TTL_MS,
+  AVISO_URGENT_MS,
+  AVISO_WARN_MS,
   avisoNearExpiry,
   avisoTone,
   parseMeteoAviso,
@@ -72,11 +74,28 @@ function notifyStage(tone: AvisoTone) {
   return null;
 }
 
+function notifyAvisoStage(aviso: MeteoAviso, stage: string, notified: { current: string | null }) {
+  const key = `${aviso.id}:${stage}`;
+  try {
+    if (sessionStorage.getItem(NOTIFY_KEY) === key) return;
+    sessionStorage.setItem(NOTIFY_KEY, key);
+  } catch {
+    if (notified.current === key) return;
+  }
+  notified.current = key;
+  if (stage === "expired") {
+    toast.error("Aviso Meteorológico vencido. O plantão precisa emitir o próximo agora.");
+  } else if (stage === "urgent") {
+    toast.warning("Faltam menos de 15 min para o Aviso Meteorológico vencer.");
+  } else {
+    toast.warning("O Aviso Meteorológico vence em menos de 1 hora. Prepare o próximo boletim.");
+  }
+}
+
 export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) {
   const { session } = useOpsMode();
   const [aviso, setAviso] = useState<MeteoAviso | null>(null);
   const [emitting, setEmitting] = useState(false);
-  const now = useNow(1000);
   const notified = useRef<string | null>(null);
 
   const apply = useCallback((next: MeteoAviso | null) => {
@@ -108,25 +127,33 @@ export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!aviso) return;
-    const tone = avisoTone(aviso.expiresAt, now);
-    const stage = notifyStage(tone);
-    if (!stage) return;
-    const key = `${aviso.id}:${stage}`;
-    try {
-      if (sessionStorage.getItem(NOTIFY_KEY) === key) return;
-      sessionStorage.setItem(NOTIFY_KEY, key);
-    } catch {
-      if (notified.current === key) return;
+    const now = Date.now();
+    const current = notifyStage(avisoTone(aviso.expiresAt, now));
+    if (current) notifyAvisoStage(aviso, current, notified);
+
+    const timers: number[] = [];
+    const warnAt = aviso.expiresAt - AVISO_WARN_MS;
+    const urgentAt = aviso.expiresAt - AVISO_URGENT_MS;
+    if (now < warnAt) {
+      timers.push(window.setTimeout(() => notifyAvisoStage(aviso, "warn", notified), warnAt - now));
     }
-    notified.current = key;
-    if (stage === "expired") {
-      toast.error("Aviso Meteorológico vencido. O plantão precisa emitir o próximo agora.");
-    } else if (stage === "urgent") {
-      toast.warning("Faltam menos de 15 min para o Aviso Meteorológico vencer.");
-    } else {
-      toast.warning("O Aviso Meteorológico vence em menos de 1 hora. Prepare o próximo boletim.");
+    if (now < urgentAt) {
+      timers.push(
+        window.setTimeout(() => notifyAvisoStage(aviso, "urgent", notified), urgentAt - now),
+      );
     }
-  }, [aviso, now]);
+    if (aviso.expiresAt > now) {
+      timers.push(
+        window.setTimeout(
+          () => notifyAvisoStage(aviso, "expired", notified),
+          aviso.expiresAt - now,
+        ),
+      );
+    }
+    return () => {
+      for (const id of timers) window.clearTimeout(id);
+    };
+  }, [aviso]);
 
   const emit = useCallback(async (note?: string) => {
     setEmitting(true);
@@ -188,12 +215,12 @@ export function useMeteoAviso() {
 export function MeteoAvisoBanner() {
   const { aviso, emit, emitting } = useMeteoAviso();
   const { session } = useOpsMode();
-  const now = useNow(1000);
+  const now = useNow();
   if (!aviso) return null;
   const tone = avisoTone(aviso.expiresAt, now);
   if (!avisoNearExpiry(tone)) return null;
-  const left = remainingMs(aviso.expiresAt, now) ?? 0;
-  const clock = left <= 0 ? "00:00:00" : formatCountdown(left);
+  const left = now ? remainingMs(aviso.expiresAt, now) : null;
+  const clock = left == null || left <= 0 ? "00:00:00" : formatCountdown(left);
 
   return (
     <div
@@ -236,11 +263,11 @@ export function MeteoAvisoBanner() {
 export function MeteoAvisoDutyCard() {
   const { aviso, emit, emitting } = useMeteoAviso();
   const { session, isMobile } = useOpsMode();
-  const now = useNow(1000);
+  const now = useNow();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const tone = avisoTone(aviso?.expiresAt, now);
-  const left = remainingMs(aviso?.expiresAt, now);
+  const left = now ? remainingMs(aviso?.expiresAt, now) : null;
   const clock = left == null ? "--:--:--" : left <= 0 ? "00:00:00" : formatCountdown(left);
   const canEmit = Boolean(session) && !isMobile;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,13 @@ export function HydroEditorDialog({
   rows: HydroStation[];
   modo: HydroMode;
   onClose: () => void;
-  onApply: (updates: Record<string, HydroPatch>) => void;
+  onApply: (updates: Record<string, HydroPatch>) => void | Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [draftStatus, setDraftStatus] = useState<Record<string, HydroStatus>>({});
   const [draftCota, setDraftCota] = useState<Record<string, string>>({});
   const [batch, setBatch] = useState<HydroStatus>("ALTO");
+  const [applying, setApplying] = useState(false);
 
   const merged = useMemo(
     () =>
@@ -51,13 +52,22 @@ export function HydroEditorDialog({
       .sort((a, b) => a.municipio.localeCompare(b.municipio, "pt-BR"));
   }, [merged, query]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
 
   return (
     <div
-      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 p-3"
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 p-3 animate-in fade-in-0 duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -65,7 +75,7 @@ export function HydroEditorDialog({
       <section
         role="dialog"
         aria-modal="true"
-        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
       >
         <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div>
@@ -161,13 +171,16 @@ export function HydroEditorDialog({
           </table>
         </ScrollArea>
         <footer className="flex justify-end gap-2 border-t border-border px-4 py-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={applying}>
             Cancelar
           </Button>
           <Button
             type="button"
-            disabled={Object.keys(draftStatus).length === 0 && Object.keys(draftCota).length === 0}
-            onClick={() => {
+            disabled={
+              applying ||
+              (Object.keys(draftStatus).length === 0 && Object.keys(draftCota).length === 0)
+            }
+            onClick={async () => {
               const updates: Record<string, HydroPatch> = {};
               const ids = new Set([...Object.keys(draftStatus), ...Object.keys(draftCota)]);
               for (const id of ids) {
@@ -188,13 +201,18 @@ export function HydroEditorDialog({
                 }
                 updates[id] = patch;
               }
-              onApply(updates);
-              setDraftStatus({});
-              setDraftCota({});
-              onClose();
+              setApplying(true);
+              try {
+                await onApply(updates);
+                setDraftStatus({});
+                setDraftCota({});
+                onClose();
+              } finally {
+                setApplying(false);
+              }
             }}
           >
-            Aplicar ao mapa
+            {applying ? "Aplicando…" : "Aplicar ao mapa"}
           </Button>
         </footer>
       </section>

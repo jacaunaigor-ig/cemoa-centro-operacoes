@@ -1,16 +1,19 @@
 "use client";
 
+import { memo } from "react";
 import { HYDRO_STATUS_COLORS, projecaoLinear } from "@/lib/hydrology";
 import type { HydroStation, HydroStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Limite = { label: string; value: number; color: string };
 
-export function CotaChart({
+const EMPTY_LIMITES: Limite[] = [];
+
+function CotaChartInner({
   station,
   status,
   compact = false,
-  limites = [],
+  limites = EMPTY_LIMITES,
 }: {
   station: HydroStation;
   status: HydroStatus | "SL";
@@ -242,3 +245,5 @@ export function CotaChart({
     </div>
   );
 }
+
+export const CotaChart = memo(CotaChartInner);

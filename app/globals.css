@@ -115,7 +115,7 @@ button, a, [role="button"] {
 }
 
 .muni-path {
-  transition: fill-opacity 0.35s ease, fill 0.35s ease, stroke-opacity 0.35s ease, stroke-width 0.35s ease;
+  transition: fill-opacity 0.15s ease, fill 0.15s ease, stroke 0.15s ease, stroke-opacity 0.15s ease, stroke-width 0.15s ease, opacity 0.15s ease;
 }
 
 .leaflet-container {
@@ -205,6 +205,7 @@ button, a, [role="button"] {
   gap: 1.75rem;
   padding: 8px 12px;
   animation: ticker-scroll 70s linear infinite;
+  will-change: transform;
 }
 
 .ticker-item {
@@ -229,8 +230,16 @@ button, a, [role="button"] {
   to { stroke-dashoffset: -28; }
 }
 
+html.page-hidden .ticker-track,
+html.page-hidden .river-flow-animated,
+html.page-hidden .aviso-pulse,
+html.page-hidden .live-dot {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .live-dot { animation: none; }
+  .live-dot,
+  .aviso-pulse { animation: none; }
   .ticker-track,
   .river-flow-animated { animation: none; }
   *, *::before, *::after {

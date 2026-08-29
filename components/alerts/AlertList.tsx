@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { AlertTriangle, Droplets, SearchX } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -77,22 +77,28 @@ export function AlertList({
   onMunicipio: (nome: string | null) => void;
   onLimpar: () => void;
 }) {
-  const alertByMuni = new Map(alerts.map((a) => [a.municipio, a]));
-  const hydroByMuni = new Map<string, (typeof hydro)[number]>();
-  for (const s of hydro) {
-    hydroByMuni.set(s.municipio, s);
-    if (s.municipioBoletim) hydroByMuni.set(s.municipioBoletim, s);
-  }
-  const grouped: Array<{ bacia: string; items: typeof municipios }> = [];
-  for (const m of [...municipios].sort((a, b) => {
-    const baciaComp = a.bacia.localeCompare(b.bacia, "pt-BR");
-    if (baciaComp !== 0) return baciaComp;
-    return a.nome.localeCompare(b.nome, "pt-BR");
-  })) {
-    const last = grouped.at(-1);
-    if (!last || last.bacia !== m.bacia) grouped.push({ bacia: m.bacia, items: [m] });
-    else last.items.push(m);
-  }
+  const alertByMuni = useMemo(() => new Map(alerts.map((a) => [a.municipio, a])), [alerts]);
+  const hydroByMuni = useMemo(() => {
+    const map = new Map<string, (typeof hydro)[number]>();
+    for (const s of hydro) {
+      map.set(s.municipio, s);
+      if (s.municipioBoletim) map.set(s.municipioBoletim, s);
+    }
+    return map;
+  }, [hydro]);
+  const grouped = useMemo(() => {
+    const acc: Array<{ bacia: string; items: typeof municipios }> = [];
+    for (const m of [...municipios].sort((a, b) => {
+      const baciaComp = a.bacia.localeCompare(b.bacia, "pt-BR");
+      if (baciaComp !== 0) return baciaComp;
+      return a.nome.localeCompare(b.nome, "pt-BR");
+    })) {
+      const last = acc.at(-1);
+      if (!last || last.bacia !== m.bacia) acc.push({ bacia: m.bacia, items: [m] });
+      else last.items.push(m);
+    }
+    return acc;
+  }, [municipios]);
 
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   useEffect(() => {
@@ -207,7 +213,7 @@ export function AlertList({
               Nenhum município neste filtro.
             </li>
           ) : null}
-          {grouped.map((group) => (
+          {(loading ? [] : grouped).map((group) => (
             <li key={group.bacia}>
               <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-y border-border bg-panel-2 px-3 py-2">
                 <span className="text-[11px] font-black tracking-[0.12em] text-text uppercase">
@@ -381,7 +387,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all hover:brightness-110",
+        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
         active ? "shadow" : "text-text-dim hover:text-text",
       )}
       style={

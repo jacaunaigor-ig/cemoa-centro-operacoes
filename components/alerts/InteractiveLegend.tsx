@@ -39,7 +39,7 @@ export function InteractiveLegend({
             aria-pressed={pressed}
             onClick={() => onSelect(pressed && level !== "TODOS" ? "TODOS" : level)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all",
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-[background-color,border-color,color] duration-150 active:scale-[0.97]",
               pressed
                 ? "border-transparent text-bg shadow"
                 : "border-border bg-bg/40 text-text-dim hover:border-border-strong hover:text-text",

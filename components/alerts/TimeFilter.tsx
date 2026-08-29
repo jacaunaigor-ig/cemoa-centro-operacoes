@@ -29,7 +29,7 @@ export function TimeFilter({
           type="button"
           onClick={() => onChange(opt.id)}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-bold",
+            "rounded-lg px-3 py-1.5 text-xs font-bold transition-colors duration-150 active:scale-[0.97]",
             value === opt.id
               ? "bg-brand text-white"
               : "text-text-mute hover:text-text",

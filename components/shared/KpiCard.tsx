@@ -31,7 +31,7 @@ export function KpiCard({
       aria-pressed={active}
       title={`${label}: ${value}. Clique para filtrar o mapa.`}
       className={cn(
-        "group relative cursor-pointer overflow-hidden rounded-xl border bg-panel text-left shadow-[0_1px_2px_rgba(0,0,0,.3)] transition-[border-color,background-color] duration-200 touch-manipulation",
+        "group relative cursor-pointer overflow-hidden rounded-xl border bg-panel text-left shadow-[0_1px_2px_rgba(0,0,0,.3)] transition-[border-color,background-color,transform] duration-150 touch-manipulation active:scale-[0.98]",
         compact ? "px-2.5 py-2" : "px-3 py-2.5 sm:min-h-[5.75rem] sm:py-3",
         "hover:bg-white/4",
         active ? "bg-brand/8" : "",

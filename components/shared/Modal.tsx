@@ -41,7 +41,7 @@ export function Modal({
     <div className="fixed inset-0 z-[4000] flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-black/65 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/65 backdrop-blur-[2px] animate-in fade-in-0 duration-150"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -50,7 +50,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby="cemoa-modal-title"
         className={cn(
-          "relative z-10 max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-border bg-panel p-4 shadow-2xl sm:rounded-2xl sm:p-5",
+          "relative z-10 max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-border bg-panel p-4 shadow-2xl animate-in slide-in-from-bottom-4 fade-in-0 duration-200 sm:rounded-2xl sm:p-5 sm:zoom-in-95 sm:slide-in-from-bottom-0",
           wide ? "sm:max-w-lg" : "sm:max-w-md",
         )}
       >

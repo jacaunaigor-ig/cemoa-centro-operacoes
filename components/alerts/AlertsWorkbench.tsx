@@ -53,6 +53,7 @@ import {
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
+import { useDebouncedValue } from "@/lib/client-hooks";
 import type { AlertsPayload, HydrologyPayload, TimeWindow } from "@/lib/types";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
@@ -150,6 +151,7 @@ export function AlertsWorkbench() {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
   const [busca, setBusca] = useState("");
+  const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(true);
   const [drawMode, setDrawMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
@@ -158,6 +160,7 @@ export function AlertsWorkbench() {
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
   const [opacity, setOpacity] = useState(58);
+  const mapOpacity = useDebouncedValue(opacity, 60);
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -179,7 +182,7 @@ export function AlertsWorkbench() {
           /* ignore quota */
         }
         setData(localAlerts(tipo));
-        return;
+        return true;
       }
       const res = await fetch("/api/alerts/overrides", {
         method: "POST",
@@ -189,11 +192,11 @@ export function AlertsWorkbench() {
       });
       if (res.status === 401) {
         toast.error("Entre como operador para alterar o mapa.");
-        return;
+        return false;
       }
       if (!res.ok) {
         toast.error("Não foi possível gravar a classificação.");
-        return;
+        return false;
       }
       try {
         rememberLocalOverrides(tipo, updates, replace);
@@ -202,6 +205,7 @@ export function AlertsWorkbench() {
       }
       const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
       setData(payload);
+      return true;
     },
     [tipo, setData],
   );
@@ -371,6 +375,16 @@ export function AlertsWorkbench() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
+  useEffect(() => {
+    if (!selected || editorOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setQuery({ municipio: null });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, editorOpen]);
+
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
@@ -401,7 +415,7 @@ export function AlertsWorkbench() {
   }, [data, windowFilter, activeFilter, geo, selected, tipo]);
 
   const visibleMunicipios = useMemo(() => {
-    const needle = busca.trim().toLowerCase();
+    const needle = buscaFiltro.trim().toLowerCase();
     return catalog.filter((m) => {
       if (activeFilter === "ATIVOS") {
         if (!isAlertActive(tipo, m.risco)) return false;
@@ -419,7 +433,7 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, geo, selected, busca, tipo]);
+  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo]);
 
   const counts = useMemo(() => {
     const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0 };
@@ -525,9 +539,9 @@ export function AlertsWorkbench() {
   }
 
   async function paintMunicipio(id: string, nome: string, baciaName: string) {
-    await persistOverrides({ [id]: paintLevel });
     setQuery(geoForNome(nome, baciaName));
-    toast.success(`${nome}: ${levelLabel(paintLevel)}`);
+    const ok = await persistOverrides({ [id]: paintLevel });
+    if (ok) toast.success(`${nome}: ${levelLabel(paintLevel)}`);
   }
 
   async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
@@ -542,7 +556,8 @@ export function AlertsWorkbench() {
       toast.error("Nenhum município dentro do polígono.");
       return;
     }
-    await persistOverrides(updates);
+    const ok = await persistOverrides(updates);
+    if (!ok) return;
     toast.success(`${n} município(s) classificados como ${levelLabel(paintLevel)}.`);
     setDrawMode(false);
   }
@@ -836,7 +851,7 @@ export function AlertsWorkbench() {
               ) : null}
               {ready && data ? (
                 <AlertsMap
-                  key={`${OSM_BASEMAP_ID}-${tipo}`}
+                  key={OSM_BASEMAP_ID}
                   ref={mapApi}
                   municipios={data.municipios}
                   selected={selected}
@@ -846,7 +861,7 @@ export function AlertsWorkbench() {
                   calhaNomes={nomesCalha ? [...nomesCalha] : null}
                   adminMode={admin && paintArmed}
                   drawMode={admin && drawMode}
-                  opacity={opacity}
+                  opacity={mapOpacity}
                   showNames={showNames}
                   showRivers={showRivers}
                   onlyRisk={onlyRisk}
@@ -893,6 +908,7 @@ export function AlertsWorkbench() {
                     <li key={level}>
                       <button
                         type="button"
+                        aria-pressed={activeFilter === level}
                         onClick={() =>
                           setQuery({
                             risco: activeFilter === level ? null : level,
@@ -900,7 +916,7 @@ export function AlertsWorkbench() {
                           })
                         }
                         className={cn(
-                          "flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-text hover:bg-white/10",
+                          "flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-text transition-colors duration-150 hover:bg-white/10",
                           activeFilter === level && "bg-white/12 font-bold",
                         )}
                       >
@@ -948,7 +964,9 @@ export function AlertsWorkbench() {
         levels={product.levels}
         productLabel={product.label}
         onClose={() => setEditorOpen(false)}
-        onApply={(updates) => void persistOverrides(updates)}
+        onApply={async (updates) => {
+          await persistOverrides(updates);
+        }}
       />
     </AppShell>
   );

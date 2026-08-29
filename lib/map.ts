@@ -36,6 +36,42 @@ export function mapCenterInAmazonas(map: LeafletMap): boolean {
   );
 }
 
+/** Pan only when the target is outside the current view — avoids snapping on every poll/filter. */
+export function panToIfNeeded(map: LeafletMap, lat: number, lng: number) {
+  try {
+    if (map.getBounds().pad(-0.12).contains([lat, lng])) return;
+    map.panTo([lat, lng], { animate: true, duration: 0.35 });
+  } catch {
+    /* map not ready */
+  }
+}
+
+/** Debounced resize → invalidateSize, refit Amazonas only on large layout jumps. */
+export function observeAmazonasResize(host: HTMLElement, map: LeafletMap): () => void {
+  let timer = 0;
+  const obs = new ResizeObserver(() => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      try {
+        const before = map.getSize().y;
+        map.invalidateSize();
+        const after = map.getSize();
+        if (after.x < MIN_MAP_PX || after.y < MIN_MAP_PX) return;
+        if (Math.abs(after.y - before) > 48 || !mapCenterInAmazonas(map)) {
+          fitMapToAmazonas(map, false);
+        }
+      } catch {
+        /* map removed mid-callback */
+      }
+    }, 90);
+  });
+  obs.observe(host);
+  return () => {
+    window.clearTimeout(timer);
+    obs.disconnect();
+  };
+}
+
 /** Fit only after the container has a real size. Leaflet 0×0 init frames the wrong continent. */
 export function fitMapToAmazonas(map: LeafletMap, animate = false): boolean {
   map.invalidateSize();

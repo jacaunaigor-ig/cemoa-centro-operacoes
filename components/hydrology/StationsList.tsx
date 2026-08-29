@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { Radio, SearchX, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -22,12 +23,14 @@ export function StationsList({
   stations,
   catalog,
   selected,
+  hovered,
   calha,
   status,
   busca,
   modo,
   loading,
   onSelect,
+  onHover,
   onCalha,
   onStatus,
   onBusca,
@@ -37,25 +40,30 @@ export function StationsList({
   stations: HydroStation[];
   catalog: HydroStation[];
   selected: string | null;
+  hovered?: string | null;
   calha: string | null;
   status: HydroStatusFilter;
   busca: string;
   modo: HydroMode;
   loading: boolean;
   onSelect: (station: HydroStation) => void;
+  onHover?: (nome: string | null) => void;
   onCalha: (calha: string | null) => void;
   onStatus: (status: HydroStatusFilter) => void;
   onBusca: (q: string) => void;
   onMunicipio: (nome: string | null) => void;
   onLimpar: () => void;
 }) {
-  const ordered = ordenarPorCalha(stations, modo);
-  const grouped: Array<{ calha: string; items: HydroStation[] }> = [];
-  for (const s of ordered) {
-    const last = grouped.at(-1);
-    if (!last || last.calha !== s.calha) grouped.push({ calha: s.calha, items: [s] });
-    else last.items.push(s);
-  }
+  const ordered = useMemo(() => ordenarPorCalha(stations, modo), [stations, modo]);
+  const grouped = useMemo(() => {
+    const acc: Array<{ calha: string; items: HydroStation[] }> = [];
+    for (const s of ordered) {
+      const last = acc.at(-1);
+      if (!last || last.calha !== s.calha) acc.push({ calha: s.calha, items: [s] });
+      else last.items.push(s);
+    }
+    return acc;
+  }, [ordered]);
 
   return (
     <Card className="flex h-full min-h-[320px] flex-1 flex-col overflow-hidden xl:min-h-0">
@@ -155,7 +163,7 @@ export function StationsList({
               Nenhum município neste filtro.
             </li>
           ) : null}
-          {grouped.map((group) => (
+          {(loading ? [] : grouped).map((group) => (
             <li key={group.calha}>
               <div className="sticky top-0 z-10 flex items-center gap-2 border-y border-border bg-panel-2 px-3 py-1.5 text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
                 <span>{group.calha}</span>
@@ -167,14 +175,20 @@ export function StationsList({
                 {group.items.map((s) => {
                   const st = statusAtivo(s, modo);
                   const rec = rotuloSituacao(s);
+                  const highlighted = selected === s.municipio || hovered === s.municipio;
                   return (
-                    <li key={s.id} className="border-b border-border">
+                    <li
+                      key={s.id}
+                      className="border-b border-border"
+                      onMouseEnter={() => onHover?.(s.municipio)}
+                      onMouseLeave={() => onHover?.(null)}
+                    >
                       <button
                         type="button"
                         onClick={() => onSelect(s)}
                         className={cn(
-                          "flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-white/4",
-                          selected === s.municipio && "bg-white/6",
+                          "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150",
+                          highlighted ? "bg-white/7" : "hover:bg-white/4",
                         )}
                       >
                         <div className="min-w-0 flex-1">
@@ -239,7 +253,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-2 py-0.5 text-[10px] font-bold",
+        "rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
         active
           ? "border-brand/50 bg-brand/15 text-brand-2"
           : "border-border text-text-mute hover:text-text",

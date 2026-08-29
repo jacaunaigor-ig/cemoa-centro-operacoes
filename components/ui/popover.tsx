@@ -19,6 +19,9 @@ export function PopoverContent({
         sideOffset={sideOffset}
         className={cn(
           "z-[2000] w-80 rounded-xl border border-border bg-panel p-4 text-sm text-text-dim shadow-2xl outline-none",
+          "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          "data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1",
           className,
         )}
         {...props}
