@@ -19,6 +19,7 @@ import type { HydroPatch } from "@/lib/hydro-overrides";
 import type { HydroMode, HydroStation, HydroStatus, RainfallMunicipio } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
+import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 
 export function HydroDetail({
   station,
@@ -66,6 +67,7 @@ export function HydroDetail({
       </div>
 
       <p className="mt-2 text-sm font-semibold">{tendenciaTexto(station.tendencia)}</p>
+      <FichaTerritorio municipioId={station.id} />
 
       {admin && onSave ? (
         <HydroAdminForm key={station.id} station={station} onSave={onSave} />

@@ -1,0 +1,564 @@
+{
+  "fonte": "IBGE Censo Demográfico 2022",
+  "nota": "Rural no Amazonas concentra comunidades ribeirinhas. Indígena = cor ou raça indígena. Terras indígenas = moradores em TI.",
+  "municipios": {
+    "1300029": {
+      "total": 15866,
+      "urbana": 8730,
+      "rural": 7136,
+      "indigena": 2975,
+      "terrasIndigenas": 1208,
+      "pctRural": 45,
+      "pctIndigena": 18.8
+    },
+    "1300060": {
+      "total": 10819,
+      "urbana": 7771,
+      "rural": 3048,
+      "indigena": 6131,
+      "terrasIndigenas": 3626,
+      "pctRural": 28.2,
+      "pctIndigena": 56.7
+    },
+    "1300086": {
+      "total": 9962,
+      "urbana": 4811,
+      "rural": 5151,
+      "indigena": 648,
+      "terrasIndigenas": 214,
+      "pctRural": 51.7,
+      "pctIndigena": 6.5
+    },
+    "1300102": {
+      "total": 17194,
+      "urbana": 10850,
+      "rural": 6344,
+      "indigena": 432,
+      "terrasIndigenas": 563,
+      "pctRural": 36.9,
+      "pctIndigena": 2.5
+    },
+    "1300144": {
+      "total": 20647,
+      "urbana": 10940,
+      "rural": 9707,
+      "indigena": 308,
+      "terrasIndigenas": 0,
+      "pctRural": 47,
+      "pctIndigena": 1.5
+    },
+    "1300201": {
+      "total": 15314,
+      "urbana": 7933,
+      "rural": 7381,
+      "indigena": 7107,
+      "terrasIndigenas": 5143,
+      "pctRural": 48.2,
+      "pctIndigena": 46.4
+    },
+    "1300300": {
+      "total": 41564,
+      "urbana": 18585,
+      "rural": 22979,
+      "indigena": 15499,
+      "terrasIndigenas": 4295,
+      "pctRural": 55.3,
+      "pctIndigena": 37.3
+    },
+    "1300409": {
+      "total": 18834,
+      "urbana": 10460,
+      "rural": 8374,
+      "indigena": 9868,
+      "terrasIndigenas": 4853,
+      "pctRural": 44.5,
+      "pctIndigena": 52.4
+    },
+    "1300508": {
+      "total": 31051,
+      "urbana": 16978,
+      "rural": 14073,
+      "indigena": 6157,
+      "terrasIndigenas": 4340,
+      "pctRural": 45.3,
+      "pctIndigena": 19.8
+    },
+    "1300607": {
+      "total": 37648,
+      "urbana": 28794,
+      "rural": 8854,
+      "indigena": 14587,
+      "terrasIndigenas": 12351,
+      "pctRural": 23.5,
+      "pctIndigena": 38.7
+    },
+    "1300631": {
+      "total": 20718,
+      "urbana": 12080,
+      "rural": 8638,
+      "indigena": 1997,
+      "terrasIndigenas": 954,
+      "pctRural": 41.7,
+      "pctIndigena": 9.6
+    },
+    "1300680": {
+      "total": 23785,
+      "urbana": 11873,
+      "rural": 11912,
+      "indigena": 513,
+      "terrasIndigenas": 0,
+      "pctRural": 50.1,
+      "pctIndigena": 2.2
+    },
+    "1300706": {
+      "total": 35447,
+      "urbana": 22125,
+      "rural": 13322,
+      "indigena": 1889,
+      "terrasIndigenas": 852,
+      "pctRural": 37.6,
+      "pctIndigena": 5.3
+    },
+    "1300805": {
+      "total": 33080,
+      "urbana": 20416,
+      "rural": 12664,
+      "indigena": 6457,
+      "terrasIndigenas": 5207,
+      "pctRural": 38.3,
+      "pctIndigena": 19.5
+    },
+    "1300839": {
+      "total": 13469,
+      "urbana": 6965,
+      "rural": 6504,
+      "indigena": 38,
+      "terrasIndigenas": 0,
+      "pctRural": 48.3,
+      "pctIndigena": 0.3
+    },
+    "1300904": {
+      "total": 16869,
+      "urbana": 10088,
+      "rural": 6781,
+      "indigena": 1144,
+      "terrasIndigenas": 157,
+      "pctRural": 40.2,
+      "pctIndigena": 6.8
+    },
+    "1301001": {
+      "total": 28742,
+      "urbana": 22681,
+      "rural": 6061,
+      "indigena": 437,
+      "terrasIndigenas": 0,
+      "pctRural": 21.1,
+      "pctIndigena": 1.5
+    },
+    "1301100": {
+      "total": 30792,
+      "urbana": 12940,
+      "rural": 17852,
+      "indigena": 1026,
+      "terrasIndigenas": 327,
+      "pctRural": 58,
+      "pctIndigena": 3.3
+    },
+    "1301159": {
+      "total": 19637,
+      "urbana": 2960,
+      "rural": 16677,
+      "indigena": 1198,
+      "terrasIndigenas": 582,
+      "pctRural": 84.9,
+      "pctIndigena": 6.1
+    },
+    "1301209": {
+      "total": 70616,
+      "urbana": 52896,
+      "rural": 17720,
+      "indigena": 4364,
+      "terrasIndigenas": 233,
+      "pctRural": 25.1,
+      "pctIndigena": 6.2
+    },
+    "1301308": {
+      "total": 23549,
+      "urbana": 17837,
+      "rural": 5712,
+      "indigena": 40,
+      "terrasIndigenas": 0,
+      "pctRural": 24.3,
+      "pctIndigena": 0.2
+    },
+    "1301407": {
+      "total": 33170,
+      "urbana": 25892,
+      "rural": 7278,
+      "indigena": 1923,
+      "terrasIndigenas": 1813,
+      "pctRural": 21.9,
+      "pctIndigena": 5.8
+    },
+    "1301506": {
+      "total": 17186,
+      "urbana": 12797,
+      "rural": 4389,
+      "indigena": 1013,
+      "terrasIndigenas": 960,
+      "pctRural": 25.5,
+      "pctIndigena": 5.9
+    },
+    "1301605": {
+      "total": 25871,
+      "urbana": 18064,
+      "rural": 7807,
+      "indigena": 3390,
+      "terrasIndigenas": 566,
+      "pctRural": 30.2,
+      "pctIndigena": 13.1
+    },
+    "1301654": {
+      "total": 13815,
+      "urbana": 9257,
+      "rural": 4558,
+      "indigena": 96,
+      "terrasIndigenas": 0,
+      "pctRural": 33,
+      "pctIndigena": 0.7
+    },
+    "1301704": {
+      "total": 57473,
+      "urbana": 42212,
+      "rural": 15261,
+      "indigena": 2944,
+      "terrasIndigenas": 1600,
+      "pctRural": 26.6,
+      "pctIndigena": 5.1
+    },
+    "1301803": {
+      "total": 24311,
+      "urbana": 16517,
+      "rural": 7794,
+      "indigena": 2148,
+      "terrasIndigenas": 1765,
+      "pctRural": 32.1,
+      "pctIndigena": 8.8
+    },
+    "1301852": {
+      "total": 61163,
+      "urbana": 46642,
+      "rural": 14521,
+      "indigena": 872,
+      "terrasIndigenas": 0,
+      "pctRural": 23.7,
+      "pctIndigena": 1.4
+    },
+    "1301902": {
+      "total": 103598,
+      "urbana": 73023,
+      "rural": 30575,
+      "indigena": 1872,
+      "terrasIndigenas": 999,
+      "pctRural": 29.5,
+      "pctIndigena": 1.8
+    },
+    "1301951": {
+      "total": 10937,
+      "urbana": 7401,
+      "rural": 3536,
+      "indigena": 1901,
+      "terrasIndigenas": 1749,
+      "pctRural": 32.3,
+      "pctIndigena": 17.4
+    },
+    "1302009": {
+      "total": 10162,
+      "urbana": 7953,
+      "rural": 2209,
+      "indigena": 64,
+      "terrasIndigenas": 0,
+      "pctRural": 21.7,
+      "pctIndigena": 0.6
+    },
+    "1302108": {
+      "total": 8858,
+      "urbana": 4995,
+      "rural": 3863,
+      "indigena": 1959,
+      "terrasIndigenas": 1351,
+      "pctRural": 43.6,
+      "pctIndigena": 22.1
+    },
+    "1302207": {
+      "total": 10742,
+      "urbana": 7215,
+      "rural": 3527,
+      "indigena": 765,
+      "terrasIndigenas": 358,
+      "pctRural": 32.8,
+      "pctIndigena": 7.1
+    },
+    "1302306": {
+      "total": 25172,
+      "urbana": 16163,
+      "rural": 9009,
+      "indigena": 5630,
+      "terrasIndigenas": 4273,
+      "pctRural": 35.8,
+      "pctIndigena": 22.4
+    },
+    "1302405": {
+      "total": 45448,
+      "urbana": 27687,
+      "rural": 17761,
+      "indigena": 8274,
+      "terrasIndigenas": 3088,
+      "pctRural": 39.1,
+      "pctIndigena": 18.2
+    },
+    "1302504": {
+      "total": 101883,
+      "urbana": 66353,
+      "rural": 35530,
+      "indigena": 830,
+      "terrasIndigenas": 83,
+      "pctRural": 34.9,
+      "pctIndigena": 0.8
+    },
+    "1302553": {
+      "total": 17107,
+      "urbana": 6603,
+      "rural": 10504,
+      "indigena": 1000,
+      "terrasIndigenas": 47,
+      "pctRural": 61.4,
+      "pctIndigena": 5.8
+    },
+    "1302603": {
+      "total": 2063689,
+      "urbana": 2043677,
+      "rural": 20012,
+      "indigena": 18854,
+      "terrasIndigenas": 0,
+      "pctRural": 1,
+      "pctIndigena": 0.9
+    },
+    "1302702": {
+      "total": 53914,
+      "urbana": 30694,
+      "rural": 23220,
+      "indigena": 3570,
+      "terrasIndigenas": 1472,
+      "pctRural": 43.1,
+      "pctIndigena": 6.6
+    },
+    "1302801": {
+      "total": 15529,
+      "urbana": 7926,
+      "rural": 7603,
+      "indigena": 2032,
+      "terrasIndigenas": 857,
+      "pctRural": 49,
+      "pctIndigena": 13.1
+    },
+    "1302900": {
+      "total": 61204,
+      "urbana": 29196,
+      "rural": 32008,
+      "indigena": 8105,
+      "terrasIndigenas": 6150,
+      "pctRural": 52.3,
+      "pctIndigena": 13.2
+    },
+    "1303007": {
+      "total": 20136,
+      "urbana": 7496,
+      "rural": 12640,
+      "indigena": 990,
+      "terrasIndigenas": 837,
+      "pctRural": 62.8,
+      "pctIndigena": 4.9
+    },
+    "1303106": {
+      "total": 27062,
+      "urbana": 16463,
+      "rural": 10599,
+      "indigena": 3393,
+      "terrasIndigenas": 0,
+      "pctRural": 39.2,
+      "pctIndigena": 12.5
+    },
+    "1303205": {
+      "total": 15761,
+      "urbana": 11836,
+      "rural": 3925,
+      "indigena": 2827,
+      "terrasIndigenas": 1122,
+      "pctRural": 24.9,
+      "pctIndigena": 17.9
+    },
+    "1303304": {
+      "total": 23818,
+      "urbana": 17907,
+      "rural": 5911,
+      "indigena": 447,
+      "terrasIndigenas": 330,
+      "pctRural": 24.8,
+      "pctIndigena": 1.9
+    },
+    "1303403": {
+      "total": 96372,
+      "urbana": 79675,
+      "rural": 16697,
+      "indigena": 1956,
+      "terrasIndigenas": 777,
+      "pctRural": 17.3,
+      "pctIndigena": 2
+    },
+    "1303502": {
+      "total": 19373,
+      "urbana": 11898,
+      "rural": 7475,
+      "indigena": 2914,
+      "terrasIndigenas": 1595,
+      "pctRural": 38.6,
+      "pctIndigena": 15
+    },
+    "1303536": {
+      "total": 30668,
+      "urbana": 16772,
+      "rural": 13896,
+      "indigena": 806,
+      "terrasIndigenas": 553,
+      "pctRural": 45.3,
+      "pctIndigena": 2.6
+    },
+    "1303569": {
+      "total": 24936,
+      "urbana": 14145,
+      "rural": 10791,
+      "indigena": 760,
+      "terrasIndigenas": 0,
+      "pctRural": 43.3,
+      "pctIndigena": 3
+    },
+    "1303601": {
+      "total": 14164,
+      "urbana": 6902,
+      "rural": 7262,
+      "indigena": 12016,
+      "terrasIndigenas": 5918,
+      "pctRural": 51.3,
+      "pctIndigena": 84.8
+    },
+    "1303700": {
+      "total": 28211,
+      "urbana": 21900,
+      "rural": 6311,
+      "indigena": 14318,
+      "terrasIndigenas": 6294,
+      "pctRural": 22.4,
+      "pctIndigena": 50.8
+    },
+    "1303809": {
+      "total": 51795,
+      "urbana": 26600,
+      "rural": 25195,
+      "indigena": 45919,
+      "terrasIndigenas": 25083,
+      "pctRural": 48.6,
+      "pctIndigena": 88.7
+    },
+    "1303908": {
+      "total": 32967,
+      "urbana": 24118,
+      "rural": 8849,
+      "indigena": 19890,
+      "terrasIndigenas": 13179,
+      "pctRural": 26.8,
+      "pctIndigena": 60.3
+    },
+    "1303957": {
+      "total": 11670,
+      "urbana": 9527,
+      "rural": 2143,
+      "indigena": 57,
+      "terrasIndigenas": 0,
+      "pctRural": 18.4,
+      "pctIndigena": 0.5
+    },
+    "1304005": {
+      "total": 11559,
+      "urbana": 5142,
+      "rural": 6417,
+      "indigena": 466,
+      "terrasIndigenas": 0,
+      "pctRural": 55.5,
+      "pctIndigena": 4
+    },
+    "1304062": {
+      "total": 66764,
+      "urbana": 55680,
+      "rural": 11084,
+      "indigena": 27518,
+      "terrasIndigenas": 19383,
+      "pctRural": 16.6,
+      "pctIndigena": 41.2
+    },
+    "1304104": {
+      "total": 19599,
+      "urbana": 11339,
+      "rural": 8260,
+      "indigena": 2797,
+      "terrasIndigenas": 1337,
+      "pctRural": 42.1,
+      "pctIndigena": 14.3
+    },
+    "1304203": {
+      "total": 73669,
+      "urbana": 59584,
+      "rural": 14085,
+      "indigena": 7790,
+      "terrasIndigenas": 1043,
+      "pctRural": 19.1,
+      "pctIndigena": 10.6
+    },
+    "1304237": {
+      "total": 19247,
+      "urbana": 11347,
+      "rural": 7900,
+      "indigena": 7353,
+      "terrasIndigenas": 3597,
+      "pctRural": 41,
+      "pctIndigena": 38.2
+    },
+    "1304260": {
+      "total": 14431,
+      "urbana": 9764,
+      "rural": 4667,
+      "indigena": 2734,
+      "terrasIndigenas": 625,
+      "pctRural": 32.3,
+      "pctIndigena": 18.9
+    },
+    "1304302": {
+      "total": 18631,
+      "urbana": 12336,
+      "rural": 6295,
+      "indigena": 194,
+      "terrasIndigenas": 0,
+      "pctRural": 33.8,
+      "pctIndigena": 1
+    },
+    "1304401": {
+      "total": 23945,
+      "urbana": 15563,
+      "rural": 8382,
+      "indigena": 41,
+      "terrasIndigenas": 0,
+      "pctRural": 35,
+      "pctIndigena": 0.2
+    }
+  }
+}

@@ -16,6 +16,7 @@ import {
   HYDRO_RIOS,
   catalogStations,
 } from "@/lib/hydrology";
+import { massRiskDo } from "@/lib/mass-risk";
 import { riskRank } from "@/lib/risk";
 import type {
   AlertLevel,
@@ -81,15 +82,17 @@ function floodFromRain(rain: RiskLevel, muniId: string): RiskLevel {
   return "BAIXO";
 }
 
-function massFromRain(rain: RiskLevel, muniId: string, bacia: string): RiskLevel {
-  const west = bacia === "Juruá" || bacia === "Purus" || bacia === "Alto Solimões";
-  if (!west) {
-    if (rain === "EXTREMO") return "MODERADO";
-    return "BAIXO";
+function massFromRain(rain: RiskLevel, muniId: string, _bacia: string): RiskLevel {
+  const mapped = massRiskDo(muniId);
+  if (mapped.setores === 0) {
+    return rain === "EXTREMO" ? "MODERADO" : "BAIXO";
   }
-  if (rain === "EXTREMO" || rain === "SEVERO") return hash32(`mm:${muniId}`) % 2 === 0 ? "ALTO" : "MODERADO";
-  if (rain === "ALTO") return "MODERADO";
-  return hash32(`mm2:${muniId}`) % 11 === 0 ? "MODERADO" : "BAIXO";
+  const alta = mapped.susceptibilidade === "alta";
+  if (rain === "EXTREMO") return alta ? "EXTREMO" : "SEVERO";
+  if (rain === "SEVERO") return alta ? "SEVERO" : "ALTO";
+  if (rain === "ALTO") return alta ? "ALTO" : "MODERADO";
+  if (rain === "MODERADO") return alta ? "MODERADO" : "BAIXO";
+  return "BAIXO";
 }
 
 function fireAt(muniId: string, bacia: string, at: number): AirLevel {
@@ -120,7 +123,7 @@ function issuedAtFor(muniId: string, tipo: AlertType, risco: string, now: number
   return now - elapsed;
 }
 
-function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string) {
+function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, muniId: string) {
   if (tipo === "ALAGAMENTO") {
     const copy: Record<string, string> = {
       MODERADO: `Risco moderado de alagamento em ${nome}. Observar igarapés e trechos baixos da bacia ${bacia}.`,
@@ -132,12 +135,18 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string) 
     return copy[risco] ?? copy.BAIXO;
   }
   if (tipo === "MOVIMENTO") {
+    const mapped = massRiskDo(muniId);
+    const onde = mapped.tipos.includes("erosao_margem")
+      ? "encostas e margens fluviais mapeadas"
+      : "setores de encosta mapeados";
     const copy: Record<string, string> = {
-      MODERADO: `Instabilidade pontual de encosta em ${nome}. Atenção a taludes e acessos.`,
-      ALTO: `Risco alto de movimento de massa em ${nome}. Preparar interdição de trechos críticos.`,
-      SEVERO: `Risco severo de deslizamento em ${nome}. Ação iminente de evacuação pontual.`,
-      EXTREMO: `Movimento de massa extremo em ${nome}. Evacuação imediata das áreas de risco.`,
-      BAIXO: `Encostas estáveis em ${nome}.`,
+      MODERADO: `Chuva sobre ${onde} em ${nome}. Atenção a taludes, acessos e erosão de margem.`,
+      ALTO: `Risco alto de movimento de massa em ${nome}, nos ${mapped.setores} setores mapeados. Preparar interdição.`,
+      SEVERO: `Risco severo de deslizamento ou erosão de margem em ${nome}. Ação iminente nas áreas mapeadas.`,
+      EXTREMO: `Movimento de massa extremo em ${nome}. Evacuação imediata dos setores mapeados.`,
+      BAIXO: mapped.setores
+        ? `Setores mapeados em ${nome} sem chuva suficiente para elevar o risco.`
+        : `Sem área mapeada de movimento de massa em ${nome}.`,
     };
     return copy[risco] ?? copy.BAIXO;
   }
@@ -190,7 +199,7 @@ export function buildAlertsPayload(
         agravado: levelRank(tipo, risco) > levelRank(tipo, previous),
         novo: !isAlertActive(tipo, previous) && isAlertActive(tipo, risco),
         tipo,
-        resumo: alertCopy(tipo, m.nome, risco, m.bacia),
+        resumo: alertCopy(tipo, m.nome, risco, m.bacia, m.id),
       });
     }
     return {

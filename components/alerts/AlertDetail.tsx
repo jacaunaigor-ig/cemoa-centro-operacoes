@@ -12,8 +12,10 @@ import { statusAtivo, tendenciaTexto } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
+import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 
 export function AlertDetail({
+  municipioId,
   nome,
   bacia,
   risco,
@@ -28,6 +30,7 @@ export function AlertDetail({
   overlay,
   onClose,
 }: {
+  municipioId?: string;
   nome: string;
   bacia: string;
   risco: AlertLevel;
@@ -93,6 +96,8 @@ export function AlertDetail({
           Sem pluviômetro CEMADEN.
         </p>
       )}
+
+      {municipioId ? <FichaTerritorio municipioId={municipioId} /> : null}
 
       {hydro ? (
         <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">

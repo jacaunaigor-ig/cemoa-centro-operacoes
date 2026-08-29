@@ -84,7 +84,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     id: "MOVIMENTO",
     label: "Risco de Movimento de Massa",
     short: "Movimento de massa",
-    subtitle: "Deslizamentos e instabilidade de encostas",
+    subtitle: "Deslizamento, movimento de massa e erosão de margem fluvial",
     legendTitle: "Movimento de massa",
     scale: "risco",
     levels: RISK_LEVELS,

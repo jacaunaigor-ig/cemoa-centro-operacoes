@@ -52,7 +52,7 @@ export function RainfallStrip({
   return (
     <div className={cn(
       "flex items-center gap-2 rounded-xl border border-border bg-panel shadow-[var(--shadow-card)]",
-      isMobile ? "flex-col items-stretch px-3 py-2" : "flex-wrap px-3.5 py-2.5 gap-3",
+      isMobile ? "flex-nowrap px-2 py-1.5" : "flex-wrap px-3.5 py-2.5 gap-3",
     )}>
       <div className="flex min-w-0 items-center gap-2">
       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/12 text-focus">
@@ -83,7 +83,7 @@ export function RainfallStrip({
         <RainWindowsChart rain={statewide} compact />
       </div>
       ) : null}
-      <div className={cn("flex gap-1", isMobile ? "-mx-0.5 overflow-x-auto pb-0.5" : "ml-auto flex-wrap")}>
+      <div className={cn("flex min-w-0 gap-1", isMobile ? "flex-1 overflow-x-auto" : "ml-auto flex-wrap")}>
         <RainChip active={filter === "TODOS"} onClick={() => onFilter("TODOS")}>
           Todos
         </RainChip>

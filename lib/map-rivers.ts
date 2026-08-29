@@ -4,7 +4,7 @@ import { AMAZONAS_RIVERS } from "@/lib/rivers";
 type LeafletNS = typeof import("leaflet");
 
 function scaleForZoom(zoom: number) {
-  return Math.max(0.72, Math.min(1.55, 0.55 + zoom / 12));
+  return Math.max(0.78, Math.min(1.65, 0.5 + zoom / 11));
 }
 
 export function addAmazonasRiverFlow(L: LeafletNS, map: LeafletMap): LayerGroup {
@@ -22,9 +22,9 @@ export function addAmazonasRiverFlow(L: LeafletNS, map: LeafletMap): LayerGroup 
     const scale = scaleForZoom(map.getZoom());
     for (const stroke of strokes) {
       const weight = stroke.peso * scale;
-      stroke.halo.setStyle({ weight: weight + 3.2 });
+      stroke.halo.setStyle({ weight: weight + 2.8 });
       stroke.base.setStyle({ weight });
-      stroke.flow.setStyle({ weight: Math.max(1.4, weight * 0.42) });
+      stroke.flow.setStyle({ weight: Math.max(1.2, weight * 0.38) });
     }
   };
 
@@ -34,10 +34,11 @@ export function addAmazonasRiverFlow(L: LeafletNS, map: LeafletMap): LayerGroup 
       renderer,
       pane: "flowPane",
       color: rio.cor,
-      weight: rio.peso + 3.2,
-      opacity: 0.16,
+      weight: rio.peso + 2.8,
+      opacity: rio.id === "japura" ? 0.28 : 0.14,
       lineCap: "round",
       lineJoin: "round",
+      smoothFactor: 0,
       interactive: false,
       className: `river-flow-halo flow-${rio.id}`,
     }).addTo(group);
@@ -46,9 +47,10 @@ export function addAmazonasRiverFlow(L: LeafletNS, map: LeafletMap): LayerGroup 
       pane: "flowPane",
       color: rio.cor,
       weight: rio.peso,
-      opacity: 0.72,
+      opacity: rio.id === "japura" ? 0.92 : 0.7,
       lineCap: "round",
       lineJoin: "round",
+      smoothFactor: 0,
       interactive: true,
       className: `river-flow-base flow-${rio.id}`,
     })
@@ -58,11 +60,12 @@ export function addAmazonasRiverFlow(L: LeafletNS, map: LeafletMap): LayerGroup 
       renderer,
       pane: "flowPane",
       color: "#f8fafc",
-      weight: Math.max(1.4, rio.peso * 0.42),
-      opacity: 0.88,
-      dashArray: "16 22",
+      weight: Math.max(1.2, rio.peso * 0.38),
+      opacity: 0.8,
+      dashArray: "7 16",
       lineCap: "round",
       lineJoin: "round",
+      smoothFactor: 0,
       interactive: false,
       className: `river-flow-animated flow-${rio.id}`,
     }).addTo(group);

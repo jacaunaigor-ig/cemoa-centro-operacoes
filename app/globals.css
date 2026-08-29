@@ -227,8 +227,14 @@ button, a, [role="button"] {
 }
 
 .river-flow-animated {
-  stroke-dasharray: 16 22;
-  animation: river-dash 2.4s linear infinite;
+  stroke-dasharray: 7 16;
+  animation: river-dash 2.8s linear infinite;
+}
+.river-flow-base,
+.river-flow-halo,
+.river-flow-animated {
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .river-flow-animated.flow-solimoes { animation-duration: 1.85s; }
@@ -260,7 +266,7 @@ button, a, [role="button"] {
 }
 
 @keyframes river-dash {
-  to { stroke-dashoffset: -38; }
+  to { stroke-dashoffset: -23; }
 }
 
 .leaflet-div-icon.rain-burst-wrap,

@@ -60,10 +60,11 @@ const SPECS = [
   {
     id: "japura",
     nome: "Rio Japurá",
-    cor: "#7dd3fc",
+    cor: "#4f46e5",
     velocidade: 2.05,
-    peso: 3.8,
+    peso: 5.4,
     names: ["Caquetá", "Japurá"],
+    keep: 0.002,
   },
   {
     id: "ica",
@@ -201,6 +202,52 @@ function perpendicularDist(p, a, b) {
   return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
 }
 
+function chaikin(points, iters = 2) {
+  let pts = points;
+  for (let k = 0; k < iters; k++) {
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      out.push([0.75 * a[0] + 0.25 * b[0], 0.75 * a[1] + 0.25 * b[1]]);
+      out.push([0.25 * a[0] + 0.75 * b[0], 0.25 * a[1] + 0.75 * b[1]]);
+    }
+    out.push(pts[pts.length - 1]);
+    pts = out;
+  }
+  return pts;
+}
+
+function catmull(p0, p1, p2, p3, t) {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return [
+    0.5 *
+      (2 * p1[0] +
+        (-p0[0] + p2[0]) * t +
+        (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+        (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+    0.5 *
+      (2 * p1[1] +
+        (-p0[1] + p2[1]) * t +
+        (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+        (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3),
+  ];
+}
+
+function densify(points, segs = 2) {
+  if (points.length < 3) return points;
+  const out = [points[0]];
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+    for (let s = 1; s <= segs; s++) out.push(catmull(p0, p1, p2, p3, s / segs));
+  }
+  return out;
+}
+
 function simplify(points, tol) {
   if (points.length <= 2) return points;
   let maxD = 0;
@@ -284,7 +331,7 @@ for (const spec of SPECS) {
     process.exitCode = 1;
     continue;
   }
-  const simple = simplify(stitched, 0.012);
+  const simple = densify(chaikin(simplify(stitched, spec.keep ?? 0.0034), 1), 1);
   rios.push({
     id: spec.id,
     nome: spec.nome,

@@ -638,9 +638,9 @@ export function AlertsWorkbench() {
     <AppShell cache={data?.cache} source={data?.source}>
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        isMobile ? "gap-3 p-3" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
-        <div className={cn("shrink-0", isMobile ? "space-y-2.5" : "space-y-4")}>
+        <div className={cn("shrink-0", isMobile ? "space-y-1.5" : "space-y-4")}>
           <SituationBar
             generatedAt={data?.generatedAt ?? null}
             loading={loading}
@@ -651,13 +651,13 @@ export function AlertsWorkbench() {
             <MeteoAvisoDutyCard />
           </SituationBar>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={cn("flex items-center gap-2", isMobile && "w-full")}>
             <label className="inline-flex min-w-0 items-center gap-2">
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/15 text-focus">
                 <ProductIcon className="size-4" />
               </span>
               <select
-                className="hydro-select max-w-[16rem] font-bold"
+                className={cn("hydro-select font-bold", isMobile ? "min-w-0 flex-1" : "max-w-[16rem]")}
                 value={tipo}
                 onChange={(e) => {
                   const next = parseAlertType(e.target.value);
@@ -686,7 +686,7 @@ export function AlertsWorkbench() {
             onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
           />
 
-          <div className={cn("grid", isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6")}>
+          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6")}>
             <KpiCard
               compact
               label="Municípios"
@@ -911,6 +911,7 @@ export function AlertsWorkbench() {
                   <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),32rem)] sm:top-2">
                   <AlertDetail
                     overlay
+                    municipioId={selectedRow.id}
                     nome={selectedRow.nome}
                     bacia={selectedRow.bacia}
                     risco={selectedRow.risco}

@@ -288,7 +288,7 @@ export function MeteoAvisoDutyCard() {
     <>
       <div
         className={cn(
-          "inline-flex min-h-11 max-w-full flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1",
+          "inline-flex min-h-10 max-w-full flex-wrap items-center gap-1.5 rounded-lg border px-2 py-1",
           tone === "expired" && "border-risco-severo/70 bg-risco-severo/12",
           tone === "urgent" && "border-risco-severo/50 bg-risco-severo/10",
           tone === "warn" && "border-risco-alto/50 bg-risco-alto/10",

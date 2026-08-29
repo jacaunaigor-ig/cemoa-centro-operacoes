@@ -66,7 +66,7 @@ export function AppShell({
             : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
         )}
       >
-      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/95 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-2.5">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-1.5 border-b border-border bg-panel/95 px-2 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-2.5">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
           <div className="min-w-0">

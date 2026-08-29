@@ -25,7 +25,7 @@ export function SituationBar({
 }) {
   const { isMobile } = useOpsMode();
   return (
-    <div className={cn("flex flex-wrap items-center", isMobile ? "gap-2" : "gap-3")}>
+    <div className={cn("flex flex-wrap items-center", isMobile ? "w-full justify-between gap-1.5" : "gap-3")}>
       {!isMobile ? (
         <SectionHeading className="mr-auto max-sm:hidden" title="Alertas" />
       ) : null}
