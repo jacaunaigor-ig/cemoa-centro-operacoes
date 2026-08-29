@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { CemadenIcon } from "@/components/shared/CemadenIcon";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { RainWindowsChart } from "@/components/alerts/RainWindowsChart";
 import type { AlertType } from "@/lib/alert-types";
@@ -35,13 +36,20 @@ export function CemadenRainPanel({
 
   return (
     <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">
-      <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-        CEMADEN · 1 / 6 / 24 h
-      </small>
-      <p className="text-xs text-text-mute">
-        {rain.estacoes.length} estação{rain.estacoes.length === 1 ? "" : "ões"}
-        {latest ? ` · ${formatAmazonDateTime(latest)}` : ""}
-      </p>
+      <div className="flex items-center gap-2">
+        <span className="grid size-7 place-items-center rounded-md bg-focus/12 text-focus">
+          <CemadenIcon className="size-4" />
+        </span>
+        <div>
+          <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+            CEMADEN
+          </small>
+          <p className="text-xs text-text-mute">
+            {rain.estacoes.length} est.
+            {latest ? ` · ${formatAmazonDateTime(latest)}` : ""}
+          </p>
+        </div>
+      </div>
 
       <div className="mt-2">
         <RainWindowsChart rain={rain} tipo={tipo} />

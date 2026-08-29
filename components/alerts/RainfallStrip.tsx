@@ -1,6 +1,6 @@
 "use client";
 
-import { CloudRain } from "lucide-react";
+import { CemadenIcon } from "@/components/shared/CemadenIcon";
 import { RainWindowsChart } from "@/components/alerts/RainWindowsChart";
 import type { RainFilter, RainfallPayload, RainfallWindows } from "@/lib/types";
 import {
@@ -49,7 +49,9 @@ export function RainfallStrip({
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-panel px-3.5 py-2.5 shadow-[var(--shadow-card)]">
-      <CloudRain className="size-4 shrink-0 text-focus" />
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/12 text-focus">
+        <CemadenIcon className="size-5" />
+      </span>
       <div className="min-w-0 flex-1 leading-tight">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
           CEMADEN
@@ -145,7 +147,7 @@ export function RainMmBadge({
       style={{ color: rainBandColor(band) }}
       title={`Acumulado 1 h · 6 h · 24 h (mm): ${formatWindowsCompact(rain)}`}
     >
-      <CloudRain className="size-3" />
+      <CemadenIcon className="size-3.5" />
       {formatWindowsCompact(rain)}
     </span>
   );

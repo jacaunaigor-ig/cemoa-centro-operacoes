@@ -34,25 +34,19 @@ export function RiskHelpButton({
       <button
         type="button"
         className={cn(
-          "risk-help-btn inline-flex min-h-11 items-center gap-2 rounded-xl border border-focus/35 bg-panel/90 px-2.5 py-1.5 text-left shadow-lg backdrop-blur",
+          "risk-help-btn inline-flex size-11 items-center justify-center rounded-xl border border-focus/35 bg-panel/90 text-focus shadow-lg backdrop-blur",
           className,
         )}
-        aria-label="Entenda os níveis de risco"
-        title="Entenda os níveis de risco"
+        aria-label="Níveis de risco"
+        title="Níveis de risco"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
       >
-        <span
-          className="grid size-8 place-items-center rounded-lg border border-focus/30 bg-focus/15 text-focus"
-          aria-hidden
-        >
-          <svg viewBox="0 0 24 24" className="size-4 fill-none stroke-current" strokeWidth="1.7">
-            <path d="M12 3l8.5 4.8v8.4L12 21l-8.5-4.8V7.8L12 3z" />
-            <path d="M12 8v8" />
-            <path d="M12 5.8v.1" />
-          </svg>
-        </span>
-        <span className="text-[10px] font-extrabold tracking-wide">Níveis de risco</span>
+        <svg viewBox="0 0 24 24" className="size-4 fill-none stroke-current" strokeWidth="1.7" aria-hidden>
+          <path d="M12 3l8.5 4.8v8.4L12 21l-8.5-4.8V7.8L12 3z" />
+          <path d="M12 8v8" />
+          <path d="M12 5.8v.1" />
+        </svg>
       </button>
 
       {open ? (
@@ -67,24 +61,12 @@ export function RiskHelpButton({
             role="dialog"
             aria-modal="true"
             aria-labelledby="risk-help-title"
-            className="relative max-h-[88vh] w-full max-w-3xl overflow-auto rounded-2xl border border-border-strong bg-panel shadow-2xl"
+            className="relative max-h-[88vh] w-full max-w-md overflow-auto rounded-2xl border border-border-strong bg-panel shadow-2xl"
           >
-            <header className="flex items-start justify-between gap-3 border-b border-border bg-panel-2/80 px-5 py-4">
-              <div>
-                <small className="text-[10px] font-black tracking-[0.12em] text-focus uppercase">
-                  {variant === "boletim"
-                    ? "Referência do boletim hidrológico"
-                    : "Referência para comunicação de alertas"}
-                </small>
-                <h2 id="risk-help-title" className="mt-1 text-xl font-black">
-                  {variant === "boletim" ? "Estiagem e inundação" : "Entenda os níveis de risco"}
-                </h2>
-                <p className="text-xs text-text-mute">
-                  {variant === "boletim"
-                    ? "Baixo, Moderado e Alto pintam o município mesmo sem cota do dia. Cinza só no filtro Sem leitura."
-                    : "Referência: art. 12 da Portaria MIDR nº 2.458/2026."}
-                </p>
-              </div>
+            <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+              <h2 id="risk-help-title" className="text-base font-bold tracking-tight">
+                {variant === "boletim" ? "Estiagem e inundação" : "Níveis de risco"}
+              </h2>
               <button
                 type="button"
                 className="grid size-9 place-items-center rounded-lg border border-border text-lg text-text-dim hover:text-text"
@@ -96,111 +78,64 @@ export function RiskHelpButton({
             </header>
 
             {variant === "boletim" ? (
-              <div className="grid gap-2.5 p-4 sm:grid-cols-2">
+              <ul className="space-y-1.5 p-4">
                 {PNG_HYDRO_ITEMS.map((item) => (
-                  <article
+                  <li
                     key={item.key}
-                    className="rounded-xl border border-border bg-hover p-3.5"
-                    style={{ borderLeft: `3px solid ${HYDRO_STATUS_COLORS[item.key]}` }}
+                    className="flex items-center gap-2.5 rounded-xl border border-border bg-hover px-3 py-2.5"
                   >
-                    <div className="flex items-center gap-2">
-                      <i
-                        className="size-2.5 rounded-full"
-                        style={{ background: HYDRO_STATUS_COLORS[item.key] }}
-                      />
-                      <strong className="text-sm">{item.title}</strong>
-                    </div>
-                    <p className="mt-2 text-xs leading-relaxed text-text-dim">{item.text}</p>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <>
-                <div className="grid gap-2.5 p-4 sm:grid-cols-2">
-              {RISK_LEGEND_COPY.map((item) => (
-                <article
-                  key={item.level}
-                  className="rounded-xl border border-border bg-hover p-3.5"
-                  style={{ borderLeft: `3px solid ${RISK_COLORS[item.level]}` }}
-                >
-                  <div className="flex items-center gap-2">
                     <i
-                      className="size-2.5 rounded-full"
-                      style={{ background: RISK_COLORS[item.level] }}
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ background: HYDRO_STATUS_COLORS[item.key] }}
                     />
                     <strong className="text-sm">{item.title}</strong>
-                    <b className="ml-auto rounded-full bg-hover px-2 py-0.5 text-[9px] tracking-wide">
-                      {item.action}
-                    </b>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-text-dim">{item.body}</p>
-                  <span className="mt-2 block border-t border-border pt-2 text-[11px] font-semibold text-text">
-                    {item.footer}
-                  </span>
-                </article>
-              ))}
-            </div>
-
-            <footer className="grid grid-cols-2 gap-1.5 px-4 pb-3 sm:grid-cols-4">
-              {(
-                [
-                  ["MODERADO", "Moderado", "Atenção e prevenção"],
-                  ["ALTO", "Alto", "Preparação antecipada"],
-                  ["SEVERO", "Severo", "Ação iminente"],
-                  ["EXTREMO", "Extremo", "Ação imediata"],
-                ] as const
-              ).map(([level, name, hint]) => (
-                <span
-                  key={`sum-${level}`}
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-panel-2 px-2 py-2 text-[10px] text-text-mute"
-                >
-                  <i
-                    className="size-1.5 rounded-full"
-                    style={{ background: RISK_COLORS[level] }}
-                  />
-                  <b className="text-text">{name}</b> {hint}
-                </span>
-              ))}
-            </footer>
-
-            <div className="mx-4 mb-5 rounded-xl border border-border bg-hover p-3.5">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <strong className="text-sm">
-                  Incêndio florestal — qualidade do ar (classificação própria)
-                </strong>
-                <span className="text-[11px] text-text-mute">
-                  Não segue o art. 12 da Portaria MIDR nº 2.458/2026.
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-text-dim">
-                Incêndio em áreas não protegidas com reflexos na qualidade do ar. Escala por
-                concentração de MP2,5 (µg/m³).
-              </p>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                {(
-                  [
-                    ["BOA", "Boa", "#27ae52"],
-                    ["MODERADO", "Moderada", "#f0b90b"],
-                    ["RUIM", "Ruim", "#f2790f"],
-                    ["MUITO_RUIM", "Muito Ruim", "#e21c2b"],
-                    ["PESSIMA", "Péssimo", "#9026c9"],
-                  ] as const
-                ).map(([key, label, color]) => (
-                  <span
-                    key={key}
-                    className="rounded-full px-2.5 py-1 text-[10px] font-black text-white"
-                    style={{ background: color, color: key === "MODERADO" ? "#25323b" : "#fff" }}
-                  >
-                    {label}
-                    <small className="ml-1 font-semibold opacity-90">{AIR_RANGES[key]}</small>
-                  </span>
+                  </li>
                 ))}
-              </div>
-              <p className="mt-3 rounded-lg bg-hover px-3 py-2 text-[11px] leading-relaxed text-text-dim">
-                <strong className="text-text">Material particulado fino — MP2,5. </strong>
-                A classificação considera a concentração de material particulado fino com diâmetro ≤
-                2,5 micrômetros, expressa em µg/m³ — microgramas por metro cúbico de ar.
-              </p>
+              </ul>
+            ) : (
+              <>
+                <ul className="space-y-1.5 p-4">
+                  {RISK_LEGEND_COPY.map((item) => (
+                    <li
+                      key={item.level}
+                      className="flex items-center gap-2.5 rounded-xl border border-border bg-hover px-3 py-2.5"
+                    >
+                      <i
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ background: RISK_COLORS[item.level] }}
+                      />
+                      <strong className="text-sm">{item.title}</strong>
+                      <span className="ml-auto rounded-full bg-panel px-2 py-0.5 text-[10px] font-semibold tracking-wide text-text-mute">
+                        {item.action}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="border-t border-border px-4 py-3">
+                  <p className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
+                    Qualidade do ar
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        ["BOA", "Boa", "#27ae52"],
+                        ["MODERADO", "Moderada", "#f0b90b"],
+                        ["RUIM", "Ruim", "#f2790f"],
+                        ["MUITO_RUIM", "Muito Ruim", "#e21c2b"],
+                        ["PESSIMA", "Péssimo", "#9026c9"],
+                      ] as const
+                    ).map(([key, label, color]) => (
+                      <span
+                        key={key}
+                        className="rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
+                        style={{ background: color, color: key === "MODERADO" ? "#25323b" : "#fff" }}
+                      >
+                        {label}
+                        <small className="ml-1 font-semibold opacity-90">{AIR_RANGES[key]}</small>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
