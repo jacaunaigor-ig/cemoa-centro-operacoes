@@ -152,7 +152,7 @@ export type FrontLog = {
   context?: string;
 };
 
-export type RainFilter = "TODOS" | "COM_LEITURA" | "COM_CHUVA";
+export type RainFilter = "TODOS" | "COM_LEITURA" | "COM_CHUVA" | "INTENSO";
 
 export type RainBand = "sem_leitura" | "sem_chuva" | "fraca" | "moderada" | "forte" | "intensa";
 
@@ -196,6 +196,7 @@ export type RainfallPayload = {
     comLeitura: number;
     comAcumulado24h: number;
     comChuva: number;
+    intenso1h: number;
     estacoes: number;
     semEstacao: string[];
     picos: {

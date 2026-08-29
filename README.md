@@ -60,7 +60,7 @@ O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e list
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
-O **Aviso Meteorológico** do plantão é outro ciclo: os meteorologistas emitem o aviso a cada **6 horas**. O cronômetro começa no primeiro aviso emitido. Faltando **1 hora**, o painel mostra um aviso amarelo; faltando **15 minutos**, vira vermelho e pulsa; vencido, pede emissão imediata. Quem está autenticado emite pelo cartão do plantão ou pelo botão **Emitir agora** na faixa.
+O **Aviso Meteorológico** do plantão cobre o turno do meteorologista: **12 horas**, **07–19** (diurno) e **19–07** (noturno), horário de Manaus. O cronômetro vale até o fim daquele plantão. Faltando **1 hora**, o painel mostra um aviso amarelo; faltando **15 minutos**, vira vermelho e pulsa; vencido, pede emissão imediata. Quem está autenticado emite pelo cartão do plantão ou pelo botão **Emitir agora** na faixa.
 
 **Operador** só no Desktop. O fluxo agora é separado:
 
@@ -136,20 +136,23 @@ No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62
 
 O painel consulta a API pública do **CEMADEN** (`getJson2.php?uf=AM`): 95 pluviômetros automáticos em **58 dos 62** municípios. Sem estação nesta rede: Barcelos, Santa Isabel do Rio Negro, São Sebastião do Uatumã e Tefé.
 
-Cada município mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h** — as mesmas colunas da tabela do gráfico interativo. A ficha lista as estações (último valor + 1/6/24 h) e abre o gráfico oficial:
+Cada município mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h**, em gráfico de barras (ficha e faixa geral). A ficha lista as estações (último valor + 1/6/24 h) e abre o gráfico oficial:
 
 `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
 
+No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora**. O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** o alerta do produto ativo se a chuva cruzar o limiar — o operador ainda pinta em Edição.
+
 Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
 
-A classificação de alerta **não** é alterada pela chuva. Em **Alagamento** e **Movimento de massa**, a ficha sugere um nível de apoio (o operador pinta e envia em Edição):
+A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 
-| Produto | Moderado | Alto | Severo |
-| --- | --- | --- | --- |
-| Alagamento | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h |
-| Movimento de massa | 15 mm/6 h ou 30 mm/24 h | 30 mm/6 h ou 50 mm/24 h | 50 mm/6 h ou 80 mm/24 h |
+| Produto | Moderado | Alto | Severo | Extremo |
+| --- | --- | --- | --- | --- |
+| Chuva intensa | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h | 60 mm/1 h ou 90 mm/6 h |
+| Alagamento | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h | — |
+| Movimento de massa | 15 mm/6 h ou 30 mm/24 h | 30 mm/6 h ou 50 mm/24 h | 50 mm/6 h ou 80 mm/24 h | — |
 
-Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros no painel: **Com leitura** e **Com chuva** (`?chuva=COM_LEITURA` / `COM_CHUVA`) — qualquer uma das três janelas.
+Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e **≥ 20 mm/h** (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`).
 
 A API horária do INMET (estações automáticas A101 Manaus, A128 Barcelos etc.) existe, mas neste recorte o endpoint de série 24 h não devolveu dados; o INMET permanece como fonte de contexto, não como acumulado municipal.
 

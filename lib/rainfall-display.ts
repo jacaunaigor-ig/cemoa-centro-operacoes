@@ -63,8 +63,16 @@ export function hasRain(rain: RainfallWindows | null | undefined): boolean {
   return (rain.mm1h ?? 0) > 0 || (rain.mm6h ?? 0) > 0 || (rain.mm24h ?? 0) > 0;
 }
 
-export function parseRainFilter(value: string | null): "TODOS" | "COM_LEITURA" | "COM_CHUVA" {
-  if (value === "COM_LEITURA" || value === "COM_CHUVA") return value;
+export const INTENSE_MM_PER_H = 20;
+
+export function isIntense1h(mm1h: number | null | undefined): boolean {
+  return (mm1h ?? 0) >= INTENSE_MM_PER_H;
+}
+
+export function parseRainFilter(
+  value: string | null,
+): "TODOS" | "COM_LEITURA" | "COM_CHUVA" | "INTENSO" {
+  if (value === "COM_LEITURA" || value === "COM_CHUVA" || value === "INTENSO") return value;
   return "TODOS";
 }
 
@@ -77,13 +85,59 @@ export function cemadenGraficoUrl(idEstacao: string, uf = "AM"): string {
   return `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?${params.toString()}`;
 }
 
-/** Apoio operacional — não pinta o mapa. Limiares de plantão para alagamento (1 h / 6 h) e movimento de massa (6 h / 24 h). */
+export type RainApoio = { level: RiskLevel; motivo: string };
+
+function hit(
+  cond: boolean,
+  level: RiskLevel,
+  motivo: string,
+): RainApoio | null {
+  return cond ? { level, motivo } : null;
+}
+
+/** Apoio operacional — não pinta o mapa. 20 mm/h é o limiar de chuva intensa no mapa. */
 export function rainApoio(
   tipo: AlertType | undefined,
   rain: RainfallWindows | null | undefined,
-): { level: RiskLevel; motivo: string } | null {
-  if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return null;
+): RainApoio | null {
+  if (!rain || (tipo !== "CHUVA" && tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return null;
   if (!hasRainReading(rain)) return null;
+
+  if (tipo === "CHUVA") {
+    return (
+      hit(
+        (rain.mm1h ?? 0) >= 60 || (rain.mm6h ?? 0) >= 90,
+        "EXTREMO",
+        (rain.mm1h ?? 0) >= 60
+          ? `1 h com ${formatMm(rain.mm1h)} — limiar de chuva extrema (≥ 60 mm/1 h).`
+          : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva extrema (≥ 90 mm/6 h).`,
+      ) ??
+      hit(
+        (rain.mm1h ?? 0) >= 40 || (rain.mm6h ?? 0) >= 60,
+        "SEVERO",
+        (rain.mm1h ?? 0) >= 40
+          ? `1 h com ${formatMm(rain.mm1h)} — limiar de chuva severa (≥ 40 mm/1 h).`
+          : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva severa (≥ 60 mm/6 h).`,
+      ) ??
+      hit(
+        (rain.mm1h ?? 0) >= INTENSE_MM_PER_H || (rain.mm6h ?? 0) >= 40,
+        "ALTO",
+        (rain.mm1h ?? 0) >= INTENSE_MM_PER_H
+          ? `1 h com ${formatMm(rain.mm1h)} — chuva intensa no mapa (≥ ${INTENSE_MM_PER_H} mm/h).`
+          : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva alta (≥ 40 mm/6 h).`,
+      ) ??
+      hit(
+        (rain.mm1h ?? 0) >= 10 || (rain.mm6h ?? 0) >= 20,
+        "MODERADO",
+        (rain.mm1h ?? 0) >= 10
+          ? `1 h com ${formatMm(rain.mm1h)} — limiar de chuva moderada (≥ 10 mm/1 h).`
+          : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva moderada (≥ 20 mm/6 h).`,
+      ) ?? {
+        level: "BAIXO",
+        motivo: "Acumulados 1 h e 6 h abaixo dos limiares de chuva intensa do plantão.",
+      }
+    );
+  }
 
   if (tipo === "ALAGAMENTO") {
     if ((rain.mm1h ?? 0) >= 40 || (rain.mm6h ?? 0) >= 60) {
@@ -150,4 +204,53 @@ export function rainApoio(
     level: "BAIXO",
     motivo: "Acumulados 6 h e 24 h abaixo dos limiares de movimento de massa do plantão.",
   };
+}
+
+export type RainRankAction = "manter" | "emitir" | "elevar";
+
+export type RainRankRow = {
+  nome: string;
+  bacia: string;
+  mm1h: number | null;
+  mm6h: number | null;
+  mm24h: number | null;
+  current: string;
+  suggested: RiskLevel | null;
+  motivo: string | null;
+  action: RainRankAction;
+  score: number;
+};
+
+const RISK_ORDER: RiskLevel[] = ["BAIXO", "MODERADO", "ALTO", "SEVERO", "EXTREMO"];
+
+function riskIndex(level: string | null | undefined) {
+  const i = RISK_ORDER.indexOf(level as RiskLevel);
+  return i < 0 ? 0 : i;
+}
+
+export function rainScore(tipo: AlertType | undefined, rain: RainfallWindows): number {
+  if (tipo === "MOVIMENTO") return (rain.mm24h ?? 0) * 2 + (rain.mm6h ?? 0);
+  if (tipo === "ALAGAMENTO") return (rain.mm1h ?? 0) * 4 + (rain.mm6h ?? 0) + (rain.mm24h ?? 0) * 0.15;
+  return (rain.mm1h ?? 0) * 5 + (rain.mm6h ?? 0) + (rain.mm24h ?? 0) * 0.25;
+}
+
+export function rainRankAction(current: string, suggested: RiskLevel | null): RainRankAction {
+  if (!suggested || suggested === "BAIXO") return "manter";
+  if (riskIndex(suggested) > riskIndex(current)) {
+    return current === "BAIXO" || current === "BOA" ? "emitir" : "elevar";
+  }
+  return "manter";
+}
+
+export function chartScale(mm: number | null | undefined, janela: "1h" | "6h" | "24h"): number {
+  const cap = janela === "1h" ? 50 : janela === "6h" ? 80 : 120;
+  const value = mm ?? 0;
+  return Math.max(cap, value * 1.15);
+}
+
+export function chartMarkMm(tipo: AlertType | undefined, janela: "1h" | "6h" | "24h"): number | null {
+  if (janela === "1h") return INTENSE_MM_PER_H;
+  if (janela === "6h") return tipo === "MOVIMENTO" ? 30 : 40;
+  if (janela === "24h") return tipo === "MOVIMENTO" ? 50 : null;
+  return null;
 }

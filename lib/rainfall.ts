@@ -1,5 +1,5 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
-import { hasRain, hasRainReading } from "@/lib/rainfall-display";
+import { hasRain, hasRainReading, isIntense1h } from "@/lib/rainfall-display";
 import type {
   RainfallMunicipio,
   RainfallPayload,
@@ -89,6 +89,7 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
   let comLeitura = 0;
   let comAcumulado24h = 0;
   let comChuva = 0;
+  let intenso1h = 0;
   let picos: RainfallPayload["coverage"]["picos"] = {
     mm1h: null,
     mm6h: null,
@@ -133,6 +134,7 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
     if (hasRainReading(rec)) comLeitura += 1;
     if (mm24h != null) comAcumulado24h += 1;
     if (hasRain(rec)) comChuva += 1;
+    if (isIntense1h(mm1h)) intenso1h += 1;
     picos = {
       mm1h: bumpPico(picos.mm1h, muni.nome, mm1h),
       mm6h: bumpPico(picos.mm6h, muni.nome, mm6h),
@@ -157,6 +159,7 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
       comLeitura,
       comAcumulado24h,
       comChuva,
+      intenso1h,
       estacoes: rows.length,
       semEstacao,
       picos,

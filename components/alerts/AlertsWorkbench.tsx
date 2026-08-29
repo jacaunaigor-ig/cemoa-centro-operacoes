@@ -65,7 +65,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
-import { hasRain, hasRainReading, parseRainFilter } from "@/lib/rainfall-display";
+import { hasRain, hasRainReading, isIntense1h, INTENSE_MM_PER_H, parseRainFilter } from "@/lib/rainfall-display";
 
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -434,6 +434,7 @@ export function AlertsWorkbench() {
       if (selected && m.nome !== selected) return false;
       if (rainFilter === "COM_LEITURA" && !hasRainReading(rain?.byNome[m.nome])) return false;
       if (rainFilter === "COM_CHUVA" && !hasRain(rain?.byNome[m.nome])) return false;
+      if (rainFilter === "INTENSO" && !isIntense1h(rain?.byNome[m.nome]?.mm1h)) return false;
       if (
         needle &&
         !m.nome.toLowerCase().includes(needle) &&
@@ -959,6 +960,21 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                <button
+                  type="button"
+                  className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-white/10"
+                  aria-pressed={rainFilter === "INTENSO"}
+                  onClick={() =>
+                    setQuery({
+                      chuva: rainFilter === "INTENSO" ? null : "INTENSO",
+                      municipio: null,
+                    })
+                  }
+                >
+                  <span className="size-2.5 rounded-full bg-risco-severo" />
+                  Chuva ≥ {INTENSE_MM_PER_H} mm/h
+                  <span className="ml-auto font-mono">{rain?.coverage.intenso1h ?? 0}</span>
+                </button>
               </div>
             </div>
 

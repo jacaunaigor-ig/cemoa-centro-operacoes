@@ -3,25 +3,18 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { RiskBadge } from "@/components/shared/RiskBadge";
+import { RainWindowsChart } from "@/components/alerts/RainWindowsChart";
 import type { AlertType } from "@/lib/alert-types";
 import {
   cemadenGraficoUrl,
-  formatMm,
   formatMmShort,
   isCemadenStationId,
   rainApoio,
   rainBand,
   rainBandColor,
-  rainBandLabel,
 } from "@/lib/rainfall-display";
 import type { RainfallMunicipio } from "@/lib/types";
-import { cn, formatAmazonDateTime } from "@/lib/utils";
-
-const JANELAS = [
-  { key: "mm1h", label: "1 h" as const },
-  { key: "mm6h", label: "6 h" as const },
-  { key: "mm24h", label: "24 h" as const },
-] as const;
+import { formatAmazonDateTime } from "@/lib/utils";
 
 export function CemadenRainPanel({
   rain,
@@ -36,13 +29,7 @@ export function CemadenRainPanel({
     const bPeak = Math.max(b.mm24h ?? -1, b.mm6h ?? -1, b.mm1h ?? -1);
     return bPeak - aPeak || a.nome.localeCompare(b.nome, "pt-BR");
   });
-  const destaque =
-    tipo === "ALAGAMENTO"
-      ? new Set(["mm1h", "mm6h"])
-      : tipo === "MOVIMENTO"
-        ? new Set(["mm6h", "mm24h"])
-        : null;
-  const showApoio = tipo === "ALAGAMENTO" || tipo === "MOVIMENTO";
+  const showApoio = tipo === "CHUVA" || tipo === "ALAGAMENTO" || tipo === "MOVIMENTO";
   const hrefAlertas = (next: AlertType) =>
     `/?municipio=${encodeURIComponent(rain.nome)}&bacia=${encodeURIComponent(rain.bacia)}&tipo=${next}`;
 
@@ -57,41 +44,30 @@ export function CemadenRainPanel({
         {latest ? ` · última ${formatAmazonDateTime(latest)}` : ""}
       </p>
 
-      <div className="mt-2 grid grid-cols-3 gap-1.5">
-        {JANELAS.map(({ key, label }) => {
-          const mm = rain[key];
-          const band = rainBand(mm);
-          const ring = destaque?.has(key);
-          return (
-            <div
-              key={key}
-              className={cn(
-                "rounded-md border bg-panel/60 px-2 py-1.5",
-                ring ? "border-focus/50" : "border-border",
-              )}
-            >
-              <p className="text-[9px] font-bold tracking-wide text-text-mute uppercase">{label}</p>
-              <p
-                className="font-mono text-base font-black leading-tight tabular-nums"
-                style={{ color: rainBandColor(band) }}
-              >
-                {formatMm(mm)}
-              </p>
-              <p className="text-[10px] text-text-mute">{rainBandLabel(band, label)}</p>
-            </div>
-          );
-        })}
+      <div className="mt-2">
+        <RainWindowsChart rain={rain} tipo={tipo} />
       </div>
 
       {showApoio ? <RainApoioCard tipo={tipo} rain={rain} /> : null}
 
-      {!showApoio && tipo !== "INCENDIO" ? (
+      {tipo !== "INCENDIO" && tipo !== "ALAGAMENTO" ? (
         <p className="mt-2 text-[11px] text-text-dim">
           Emitir alerta a partir desta chuva:{" "}
-          <Link href={hrefAlertas("ALAGAMENTO")} className="font-bold text-focus hover:underline">
-            Alagamento
-          </Link>
-          {" · "}
+          {tipo !== "ALAGAMENTO" ? (
+            <Link href={hrefAlertas("ALAGAMENTO")} className="font-bold text-focus hover:underline">
+              Alagamento
+            </Link>
+          ) : null}
+          {tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO" ? " · " : null}
+          {tipo !== "MOVIMENTO" ? (
+            <Link href={hrefAlertas("MOVIMENTO")} className="font-bold text-focus hover:underline">
+              Movimento de massa
+            </Link>
+          ) : null}
+        </p>
+      ) : tipo === "ALAGAMENTO" ? (
+        <p className="mt-2 text-[11px] text-text-dim">
+          Também neste município:{" "}
           <Link href={hrefAlertas("MOVIMENTO")} className="font-bold text-focus hover:underline">
             Movimento de massa
           </Link>
@@ -167,7 +143,7 @@ function RainApoioCard({
   tipo,
   rain,
 }: {
-  tipo: "ALAGAMENTO" | "MOVIMENTO";
+  tipo: "CHUVA" | "ALAGAMENTO" | "MOVIMENTO";
   rain: RainfallMunicipio;
 }) {
   const apoio = rainApoio(tipo, rain);
@@ -176,7 +152,7 @@ function RainApoioCard({
     <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Apoio · {tipo === "ALAGAMENTO" ? "alagamento" : "movimento de massa"}
+          Apoio · {tipo === "CHUVA" ? "chuva intensa" : tipo === "ALAGAMENTO" ? "alagamento" : "movimento de massa"}
         </span>
         <RiskBadge level={apoio.level} />
       </div>

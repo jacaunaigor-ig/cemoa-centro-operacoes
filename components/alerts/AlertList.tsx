@@ -27,6 +27,7 @@ import type { AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib
 import { cn, formatRelative, withAlpha } from "@/lib/utils";
 import { formatMm } from "@/lib/rainfall-display";
 import { RainMmBadge } from "@/components/alerts/RainfallStrip";
+import { RainRanking, buildRainRanking } from "@/components/alerts/RainRanking";
 
 export function AlertList({
   municipios,
@@ -60,7 +61,7 @@ export function AlertList({
     issuedAt: number | null;
     expiresAt?: number | null;
   }>;
-  catalog: Array<{ id: string; nome: string; bacia: string }>;
+  catalog: Array<{ id: string; nome: string; bacia: string; risco?: AlertLevel }>;
   alerts: RainAlert[];
   hydro: HydroStation[];
   rain: RainfallPayload | null;
@@ -103,6 +104,15 @@ export function AlertList({
     }
     return acc;
   }, [municipios]);
+
+  const ranking = useMemo(() => {
+    const source = catalog.map((m) => ({
+      nome: m.nome,
+      bacia: m.bacia,
+      risco: m.risco ?? municipios.find((row) => row.nome === m.nome)?.risco ?? "BAIXO",
+    }));
+    return buildRainRanking(rain, source, tipo);
+  }, [catalog, rain, tipo, municipios]);
 
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   useEffect(() => {
@@ -200,6 +210,7 @@ export function AlertList({
           placeholder="Buscar município ou região…"
           aria-label="Buscar município ou região"
         />
+        {rain ? <RainRanking rows={ranking} tipo={tipo} onSelect={onSelect} /> : null}
       </div>
       <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">
         <ul>

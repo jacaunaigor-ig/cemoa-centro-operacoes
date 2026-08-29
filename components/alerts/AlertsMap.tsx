@@ -13,7 +13,7 @@ import type {
 } from "leaflet";
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
-import { formatWindowsCompact } from "@/lib/rainfall-display";
+import { formatMm, formatMmShort, formatWindowsCompact, INTENSE_MM_PER_H } from "@/lib/rainfall-display";
 import {
   AMAZONAS_CENTER,
   OSM_ATTRIBUTION,
@@ -99,6 +99,7 @@ export const AlertsMap = forwardRef<
   const layerRef = useRef<GeoJSONType | null>(null);
   const riversRef = useRef<LayerGroup | null>(null);
   const namesRef = useRef<LayerGroup | null>(null);
+  const rainLayerRef = useRef<LayerGroup | null>(null);
   const drawLineRef = useRef<Polyline | null>(null);
   const drawDotsRef = useRef<CircleMarker[]>([]);
   const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
@@ -356,7 +357,11 @@ export const AlertsMap = forwardRef<
                         mm1h: m.mm1h ?? null,
                         mm6h: m.mm6h ?? null,
                         mm24h: m.mm24h ?? null,
-                      })} mm`
+                      })} mm${
+                        (m.mm1h ?? 0) >= INTENSE_MM_PER_H
+                          ? ` · chuva ≥ ${INTENSE_MM_PER_H} mm/h`
+                          : ""
+                      }`
                     : ""
                 }`,
               );
@@ -400,6 +405,16 @@ export const AlertsMap = forwardRef<
       }
       namesRef.current = names;
       if (showNames) names.addTo(map);
+
+      map.createPane("rainPane");
+      const rainPane = map.getPane("rainPane");
+      if (rainPane) rainPane.style.zIndex = "650";
+      const rainLayer = L.layerGroup();
+      rainLayer.addTo(map);
+      rainLayerRef.current = rainLayer;
+      syncRainBursts(L, rainLayer, stateRef.current.municipios, (nome, bacia) =>
+        onSelectRef.current(nome, bacia),
+      );
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
 
@@ -422,6 +437,7 @@ export const AlertsMap = forwardRef<
       layerRef.current = null;
       riversRef.current = null;
       namesRef.current = null;
+      rainLayerRef.current = null;
       tilesRef.current = null;
     };
     // Map is remounted via key={OSM_BASEMAP_ID}. Draw/paint handlers read stateRef.
@@ -433,6 +449,13 @@ export const AlertsMap = forwardRef<
     layer?.setStyle((feature) => styleFor(feature));
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
   }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity]);
+
+  useEffect(() => {
+    const L = leafletRef.current;
+    const layer = rainLayerRef.current;
+    if (!L || !layer) return;
+    syncRainBursts(L, layer, municipios, (nome, bacia) => onSelectRef.current(nome, bacia));
+  }, [municipios]);
 
   const prevSelectedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -516,3 +539,31 @@ export const AlertsMap = forwardRef<
 });
 
 AlertsMap.displayName = "AlertsMap";
+
+function syncRainBursts(
+  L: typeof import("leaflet"),
+  layer: LayerGroup,
+  municipios: Muni[],
+  onSelect: (nome: string, bacia: string) => void,
+) {
+  layer.clearLayers();
+  for (const m of municipios) {
+    if ((m.mm1h ?? 0) < INTENSE_MM_PER_H) continue;
+    const icon = L.divIcon({
+      className: "rain-burst-wrap",
+      html: `<div class="rain-burst" aria-hidden="true"><span class="rain-burst-core">${formatMmShort(m.mm1h)}</span></div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+    });
+    const marker = L.marker([m.lat, m.lon], { icon, keyboard: false, zIndexOffset: 800 });
+    marker.bindTooltip(
+      `<strong>${m.nome}</strong><br/>Chuva intensa ${formatMm(m.mm1h)} / 1 h (≥ ${INTENSE_MM_PER_H} mm/h)`,
+      { direction: "top" },
+    );
+    marker.on("click", (ev) => {
+      L.DomEvent.stopPropagation(ev);
+      onSelect(m.nome, m.bacia);
+    });
+    layer.addLayer(marker);
+  }
+}

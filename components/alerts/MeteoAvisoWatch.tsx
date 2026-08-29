@@ -18,11 +18,13 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { fetchJson } from "@/lib/client";
 import { useNow } from "@/lib/client-hooks";
 import {
-  AVISO_TTL_MS,
   AVISO_URGENT_MS,
   AVISO_WARN_MS,
+  avisoExpiresAt,
   avisoNearExpiry,
   avisoTone,
+  formatShiftHours,
+  meteoShiftAt,
   parseMeteoAviso,
   type AvisoTone,
   type MeteoAviso,
@@ -30,6 +32,16 @@ import {
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { formatCountdown, remainingMs } from "@/lib/alert-validity";
+
+function emitSuccessMessage(issuedAt: number) {
+  const shift = meteoShiftAt(issuedAt);
+  const until = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Manaus",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(shift.endAt));
+  return `Aviso Meteorológico emitido. Válido até o fim do plantão ${formatShiftHours(shift)} (${until}).`;
+}
 
 const STORAGE_KEY = "cemoa_meteo_aviso_v1";
 const NOTIFY_KEY = "cemoa_meteo_notify_v1";
@@ -163,13 +175,13 @@ export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) 
         const next: MeteoAviso = {
           id: `aviso-${issuedAt}`,
           issuedAt,
-          expiresAt: issuedAt + AVISO_TTL_MS,
+          expiresAt: avisoExpiresAt(issuedAt),
           issuedBy: session?.name || "Plantão CEMOA",
           note: note?.trim() || null,
         };
         writeLocal(next);
         setAviso(next);
-        toast.success("Aviso Meteorológico emitido. Válido por 6 horas.");
+        toast.success(emitSuccessMessage(issuedAt));
         return;
       }
       const res = await fetch(withBase("/api/avisos"), {
@@ -188,7 +200,7 @@ export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) 
         writeLocal(parsed);
         setAviso(parsed);
       }
-      toast.success("Aviso Meteorológico emitido. Válido por 6 horas.");
+      toast.success(emitSuccessMessage(parsed?.issuedAt ?? Date.now()));
     } catch {
       toast.error("Falha de rede ao emitir o aviso.");
     } finally {
@@ -266,6 +278,7 @@ export function MeteoAvisoDutyCard() {
   const now = useNow();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
+  const shift = meteoShiftAt(now || Date.now());
   const tone = avisoTone(aviso?.expiresAt, now);
   const left = now ? remainingMs(aviso?.expiresAt, now) : null;
   const clock = left == null ? "--:--:--" : left <= 0 ? "00:00:00" : formatCountdown(left);
@@ -286,7 +299,7 @@ export function MeteoAvisoDutyCard() {
         <CloudSun className="size-4 shrink-0 text-focus" />
         <div className="min-w-0 leading-tight">
           <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
-            Plantão · 6 h
+            Plantão · 12 h · {shift.label} {shift.hours}
           </p>
           {aviso ? (
             <strong
@@ -322,7 +335,7 @@ export function MeteoAvisoDutyCard() {
         open={open}
         onClose={() => setOpen(false)}
         title="Emitir Aviso Meteorológico"
-        description="O plantão emite o aviso a cada 6 horas. Este registro reinicia o cronômetro e o painel avisará de novo quando o prazo estiver acabando."
+        description="O meteorologista cobre 12 horas: 07–19 (diurno) e 19–07 (noturno), horário de Manaus. O aviso vale até o fim deste plantão. O painel avisa 1 h e 15 min antes do encerramento."
       >
         <form
           className="grid gap-3"
@@ -348,7 +361,7 @@ export function MeteoAvisoDutyCard() {
               Cancelar
             </Button>
             <Button type="submit" disabled={emitting}>
-              Emitir e validar por 6 h
+              Emitir e validar até {shift.hours === "07–19" ? "19:00" : "07:00"}
             </Button>
           </div>
         </form>

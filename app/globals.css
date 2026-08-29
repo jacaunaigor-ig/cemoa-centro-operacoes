@@ -230,16 +230,70 @@ button, a, [role="button"] {
   to { stroke-dashoffset: -28; }
 }
 
+.leaflet-div-icon.rain-burst-wrap,
+.rain-burst-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+.rain-burst {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+}
+
+.rain-burst::before,
+.rain-burst::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 2px solid #5eb4ff;
+  animation: rain-ring 1.8s ease-out infinite;
+}
+
+.rain-burst::after {
+  animation-delay: 0.9s;
+}
+
+.rain-burst-core {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e21c2b;
+  color: #fff;
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(226, 28, 43, 0.4);
+}
+
+@keyframes rain-ring {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+
 html.page-hidden .ticker-track,
 html.page-hidden .river-flow-animated,
 html.page-hidden .aviso-pulse,
-html.page-hidden .live-dot {
+html.page-hidden .live-dot,
+html.page-hidden .rain-burst::before,
+html.page-hidden .rain-burst::after {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .live-dot,
-  .aviso-pulse { animation: none; }
+  .aviso-pulse,
+  .rain-burst::before,
+  .rain-burst::after { animation: none; }
   .ticker-track,
   .river-flow-animated { animation: none; }
   *, *::before, *::after {
