@@ -103,7 +103,7 @@ export const HYDRO_PILL_CLASS: Record<HydroStatus | "SL", string> = {
   NORMAL: "bg-risco-baixo/18 text-risco-baixo border-risco-baixo/35",
   MODERADO: "bg-risco-moderado/18 text-risco-moderado border-risco-moderado/40",
   ALTO: "bg-risco-alto/18 text-risco-alto border-risco-alto/40",
-  SL: "bg-white/6 text-text-mute border-border",
+  SL: "bg-hover text-text-mute border-border",
 };
 
 type RawStation = {
