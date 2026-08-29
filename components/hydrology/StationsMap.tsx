@@ -30,10 +30,12 @@ import {
   OSM_BASEMAP_ID,
   OSM_TILE_URL,
   fitMapToAmazonas,
+  muniStroke,
   observeAmazonasResize,
   panToIfNeeded,
   scheduleAmazonasFit,
 } from "@/lib/map";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import {
   addTerritoryOverlays,
@@ -102,6 +104,7 @@ export const StationsMap = forwardRef<
   },
   ref,
 ) {
+  const { theme } = useOpsMode();
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
@@ -199,7 +202,7 @@ export const StationsMap = forwardRef<
     const isHov = hov === nome;
     const fill = Math.max(0.12, Math.min(0.92, op / 100));
     return {
-      color: isSel ? "#ffffff" : isHov ? "#ffb020" : match ? "rgba(255,255,255,.8)" : "#3a4b60",
+      color: muniStroke(isSel, isHov, match),
       weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.05 : 0.7,
       opacity: match || isSel || isHov ? 1 : 0.28,
       fillColor: HYDRO_STATUS_COLORS[st],
@@ -416,7 +419,7 @@ export const StationsMap = forwardRef<
     layerRef.current?.setStyle((feature) => styleFor(feature));
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stations, selected, calha, bacia, status, modo, opacity, adminMode]);
+  }, [stations, selected, calha, bacia, status, modo, opacity, adminMode, theme]);
 
   const prevSelectedRef = useRef<string | null>(null);
   useEffect(() => {

@@ -10,6 +10,15 @@ export const OSM_ATTRIBUTION =
 
 export const OSM_BASEMAP_ID = STATIC_DEPLOY ? "osm-github-pages-v1" : "osm-local-proxy-v3";
 
+/** Contorno dos municípios: branco no claro, mais suave no escuro. */
+export function muniStroke(isSel: boolean, isHov: boolean, match: boolean): string {
+  const dark = typeof document !== "undefined" && document.documentElement.dataset.theme === "dark";
+  if (dark) {
+    return isSel ? "#f8fafc" : isHov ? "#fbbf24" : match ? "rgba(232,238,246,.62)" : "#4b5d78";
+  }
+  return isSel ? "#ffffff" : isHov ? "#ffb020" : match ? "rgba(255,255,255,.85)" : "#3a4b60";
+}
+
 /** Southwest → northeast, used to keep the maps on Amazonas. */
 export const AMAZONAS_CENTER: [number, number] = [-3.9, -64.5];
 export const AMAZONAS_BOUNDS: [[number, number], [number, number]] = [

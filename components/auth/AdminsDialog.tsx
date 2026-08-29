@@ -252,7 +252,7 @@ export function AdminsDialog() {
       {googleEnabled && session && !session.id.startsWith("env:") ? (
         <a
           href={withBase("/api/auth/google?link=1")}
-          className="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-xs font-semibold text-neutral-900 hover:bg-neutral-100"
+          className="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border bg-panel px-3 text-xs font-semibold text-text hover:bg-hover"
         >
           Associar meu Gmail
         </a>

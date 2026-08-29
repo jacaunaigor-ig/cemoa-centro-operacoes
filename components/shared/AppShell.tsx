@@ -9,10 +9,12 @@ import {
   LogIn,
   LogOut,
   Monitor,
+  Moon,
   Pencil,
   Radio,
   Shield,
   Smartphone,
+  Sun,
   Users,
 } from "lucide-react";
 import { cn, formatAmazonTime } from "@/lib/utils";
@@ -38,11 +40,13 @@ export function AppShell({
   const params = useSearchParams();
   const {
     layout,
+    theme,
     admin,
     isMobile,
     session,
     needsSetup,
     setLayout,
+    setTheme,
     setAdmin,
     openAdmins,
     logout,
@@ -134,6 +138,17 @@ export function AppShell({
               <span className="hidden sm:inline">Mobile</span>
             </button>
           </div>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute transition-colors hover:text-text"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-pressed={theme === "dark"}
+            aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+            <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Escuro"}</span>
+          </button>
           {layout === "desktop" ? (
             <div className="flex items-center gap-1.5">
               {session ? (

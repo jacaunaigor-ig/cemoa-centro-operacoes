@@ -133,7 +133,7 @@ export function LoginDialog() {
           <>
             <a
               href={withBase("/api/auth/google")}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-100"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-panel px-3 text-sm font-semibold text-text hover:bg-hover"
             >
               <GoogleMark />
               Continuar com Gmail

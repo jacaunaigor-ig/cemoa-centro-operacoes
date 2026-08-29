@@ -18,6 +18,7 @@ import {
 } from "@/lib/local-auth";
 
 export type LayoutMode = "desktop" | "mobile";
+export type ThemeMode = "light" | "dark";
 
 export type SessionUser = {
   id: string;
@@ -28,6 +29,7 @@ export type SessionUser = {
 
 type OpsMode = {
   layout: LayoutMode;
+  theme: ThemeMode;
   admin: boolean;
   isMobile: boolean;
   session: SessionUser | null;
@@ -39,6 +41,7 @@ type OpsMode = {
   loginOpen: boolean;
   adminsOpen: boolean;
   setLayout: (layout: LayoutMode) => void;
+  setTheme: (theme: ThemeMode) => void;
   setAdmin: (on: boolean) => void;
   openLogin: () => void;
   closeLogin: () => void;
@@ -51,10 +54,12 @@ type OpsMode = {
 
 const Ctx = createContext<OpsMode | null>(null);
 const LAYOUT_KEY = "cemoa_layout_mode";
+const THEME_KEY = "cemoa_theme";
 const TOOLS_KEY = "cemoa_admin_tools";
 const NARROW_QUERY = "(max-width: 767px)";
 
 const layoutListeners = new Set<() => void>();
+const themeListeners = new Set<() => void>();
 const toolsListeners = new Set<() => void>();
 
 function subscribeNarrow(cb: () => void) {
@@ -77,6 +82,20 @@ function getLayout(): LayoutMode {
   return window.matchMedia("(max-width: 767px)").matches ? "mobile" : "desktop";
 }
 
+function applyThemeAttr(theme: ThemeMode) {
+  const root = document.documentElement;
+  root.dataset.theme = theme;
+  root.style.colorScheme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#0b1220" : "#f7f8fa");
+}
+
+function getTheme(): ThemeMode {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === "dark" || stored === "light") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 function getToolsOn(): boolean {
   return sessionStorage.getItem(TOOLS_KEY) === "1";
 }
@@ -89,6 +108,14 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     },
     getLayout,
     () => "desktop" as const,
+  );
+  const theme = useSyncExternalStore(
+    (cb) => {
+      themeListeners.add(cb);
+      return () => themeListeners.delete(cb);
+    },
+    getTheme,
+    () => "light" as const,
   );
   const toolsOn = useSyncExternalStore(
     (cb) => {
@@ -233,6 +260,20 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     emit(layoutListeners);
   }, []);
 
+  const setTheme = useCallback((next: ThemeMode) => {
+    try {
+      window.localStorage.setItem(THEME_KEY, next);
+    } catch {
+      /* quota / private mode */
+    }
+    applyThemeAttr(next);
+    emit(themeListeners);
+  }, []);
+
+  useEffect(() => {
+    applyThemeAttr(theme);
+  }, [theme]);
+
   const setAdmin = useCallback(
     (on: boolean) => {
       if (on) {
@@ -281,6 +322,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<OpsMode>(
     () => ({
       layout,
+      theme,
       admin,
       isMobile,
       session,
@@ -292,6 +334,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       loginOpen,
       adminsOpen,
       setLayout,
+      setTheme,
       setAdmin,
       openLogin: () => {
         void refreshAuth().finally(() => setLoginOpen(true));
@@ -305,6 +348,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       layout,
+      theme,
       admin,
       isMobile,
       session,
@@ -316,6 +360,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       loginOpen,
       adminsOpen,
       setLayout,
+      setTheme,
       setAdmin,
       completeLogin,
       logout,
@@ -328,6 +373,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
 
 const FALLBACK: OpsMode = {
   layout: "desktop",
+  theme: "light",
   admin: false,
   isMobile: false,
   session: null,
@@ -339,6 +385,7 @@ const FALLBACK: OpsMode = {
   loginOpen: false,
   adminsOpen: false,
   setLayout: () => {},
+  setTheme: () => {},
   setAdmin: () => {},
   openLogin: () => {},
   closeLogin: () => {},

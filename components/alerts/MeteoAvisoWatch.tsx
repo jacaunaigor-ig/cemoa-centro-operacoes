@@ -259,7 +259,7 @@ export function MeteoAvisoBanner() {
           variant={tone === "warn" ? "secondary" : "default"}
           className={cn(
             "min-h-9",
-            tone !== "warn" && "bg-white text-risco-severo hover:bg-white/90",
+            tone !== "warn" && "bg-panel text-risco-severo hover:bg-panel/90",
           )}
           disabled={emitting}
           onClick={() => void emit()}

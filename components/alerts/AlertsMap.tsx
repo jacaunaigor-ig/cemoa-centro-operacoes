@@ -20,10 +20,12 @@ import {
   OSM_BASEMAP_ID,
   OSM_TILE_URL,
   fitMapToAmazonas,
+  muniStroke,
   observeAmazonasResize,
   panToIfNeeded,
   scheduleAmazonasFit,
 } from "@/lib/map";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { addAmazonasRiverFlow } from "@/lib/map-rivers";
 import {
   addTerritoryOverlays,
@@ -104,6 +106,7 @@ export const AlertsMap = forwardRef<
   },
   ref,
 ) {
+  const { theme } = useOpsMode();
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
@@ -239,7 +242,7 @@ export const AlertsMap = forwardRef<
     const isHov = hov === nome;
     const fill = Math.max(0.12, Math.min(0.92, op / 100));
     return {
-      color: isSel ? "#ffffff" : isHov ? "#ffb020" : match ? "rgba(255,255,255,.85)" : "#3a4b60",
+      color: muniStroke(isSel, isHov, match),
       weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.1 : 0.7,
       opacity: match || isSel || isHov ? 1 : 0.28,
       fillColor: LEVEL_COLORS[risco] ?? "#7c8fab",
@@ -435,7 +438,7 @@ export const AlertsMap = forwardRef<
     const layer = layerRef.current;
     layer?.setStyle((feature) => styleFor(feature));
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
-  }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity]);
+  }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity, theme]);
 
   useEffect(() => {
     const L = leafletRef.current;
