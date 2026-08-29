@@ -28,6 +28,7 @@ import { cn, formatRelative, withAlpha } from "@/lib/utils";
 import { formatMm } from "@/lib/rainfall-display";
 import { RainMmBadge } from "@/components/alerts/RainfallStrip";
 import { RainRanking, buildRainRanking } from "@/components/alerts/RainRanking";
+import { useOpsMode } from "@/components/shared/OpsMode";
 
 export function AlertList({
   municipios,
@@ -105,6 +106,7 @@ export function AlertList({
     return acc;
   }, [municipios]);
 
+  const { isMobile } = useOpsMode();
   const ranking = useMemo(() => {
     const source = catalog.map((m) => ({
       nome: m.nome,
@@ -138,7 +140,7 @@ export function AlertList({
             Limpar
           </button>
         </div>
-        <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filtrar por nível de alerta">
+        <div className={cn("flex gap-1.5", isMobile ? "overflow-x-auto pb-0.5" : "flex-wrap")} role="toolbar" aria-label="Filtrar por nível de alerta">
           <Chip
             active={risco === "TODOS"}
             color="#5eb4ff"
@@ -188,7 +190,7 @@ export function AlertList({
           placeholder="Buscar…"
           aria-label="Buscar município ou região"
         />
-        {rain ? <RainRanking rows={ranking} tipo={tipo} onSelect={onSelect} /> : null}
+        {!isMobile && rain ? <RainRanking rows={ranking} tipo={tipo} onSelect={onSelect} /> : null}
       </div>
       <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">
         <ul>
@@ -413,7 +415,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
+        "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
         active ? "shadow" : "text-text-dim hover:text-text",
       )}
       style={

@@ -66,13 +66,15 @@ export function AppShell({
             : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
         )}
       >
-      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/95 px-4 py-2.5 pt-[max(0.6rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/95 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-2.5">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-text-mute uppercase">
-              Defesa Civil do Amazonas
-            </p>
+            {!isMobile ? (
+              <p className="text-[11px] font-semibold tracking-[0.14em] text-text-mute uppercase">
+                Defesa Civil do Amazonas
+              </p>
+            ) : null}
             <h1 className="truncate text-sm font-bold tracking-tight sm:text-lg">
               {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
             </h1>
@@ -81,7 +83,7 @@ export function AppShell({
 
         <nav
           aria-label="Produtos"
-          className="order-3 flex w-full gap-1 rounded-xl border border-border bg-hover p-1 sm:order-none sm:ml-3 sm:w-auto"
+          className="flex min-w-0 flex-1 gap-1 rounded-xl border border-border bg-hover p-1 sm:ml-3 sm:flex-none sm:w-auto"
         >
           <NavTab
             href={`/${suffix}`}

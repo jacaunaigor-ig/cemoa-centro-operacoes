@@ -1,6 +1,7 @@
 "use client";
 
 import { CemadenIcon } from "@/components/shared/CemadenIcon";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { RainWindowsChart } from "@/components/alerts/RainWindowsChart";
 import type { RainFilter, RainfallPayload, RainfallWindows } from "@/lib/types";
 import {
@@ -40,6 +41,7 @@ export function RainfallStrip({
     picoText("1 h", picos?.mm1h) ??
     picoText("6 h", picos?.mm6h) ??
     picoText("24 h", picos?.mm24h);
+  const { isMobile } = useOpsMode();
   const band = rainBand(peakMm(rain?.maior ?? null));
   const statewide: RainfallWindows = {
     mm1h: picos?.mm1h?.mm ?? null,
@@ -48,7 +50,11 @@ export function RainfallStrip({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-panel px-3.5 py-2.5 shadow-[var(--shadow-card)]">
+    <div className={cn(
+      "flex items-center gap-2 rounded-xl border border-border bg-panel shadow-[var(--shadow-card)]",
+      isMobile ? "flex-col items-stretch px-3 py-2" : "flex-wrap px-3.5 py-2.5 gap-3",
+    )}>
+      <div className="flex min-w-0 items-center gap-2">
       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/12 text-focus">
         <CemadenIcon className="size-5" />
       </span>
@@ -71,10 +77,13 @@ export function RainfallStrip({
           </p>
         )}
       </div>
+      </div>
+      {!isMobile ? (
       <div className="hidden w-[9.5rem] shrink-0 sm:block">
         <RainWindowsChart rain={statewide} compact />
       </div>
-      <div className="ml-auto flex flex-wrap gap-1">
+      ) : null}
+      <div className={cn("flex gap-1", isMobile ? "-mx-0.5 overflow-x-auto pb-0.5" : "ml-auto flex-wrap")}>
         <RainChip active={filter === "TODOS"} onClick={() => onFilter("TODOS")}>
           Todos
         </RainChip>
@@ -115,7 +124,7 @@ function RainChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-8 items-center rounded-full border px-2.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
+        "inline-flex min-h-8 shrink-0 items-center rounded-full border px-2.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
         active
           ? "border-focus/50 bg-focus/20 text-text"
           : "border-border bg-hover text-text-mute hover:text-text",

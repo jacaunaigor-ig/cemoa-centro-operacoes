@@ -636,8 +636,11 @@ export function AlertsWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source}>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6">
-        <div className="shrink-0 space-y-4">
+      <div className={cn(
+        "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
+        isMobile ? "gap-3 p-3" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+      )}>
+        <div className={cn("shrink-0", isMobile ? "space-y-2.5" : "space-y-4")}>
           <SituationBar
             generatedAt={data?.generatedAt ?? null}
             loading={loading}
@@ -683,7 +686,7 @@ export function AlertsWorkbench() {
             onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
           />
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <div className={cn("grid grid-cols-2 xl:grid-cols-6", isMobile ? "gap-2 sm:grid-cols-3" : "gap-4 sm:grid-cols-3")}>
             <KpiCard
               compact
               label="Municípios"

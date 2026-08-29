@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  ChevronDown,
+  ChevronUp,
   Layers,
+  List,
   MapPinned,
   RadioTower,
   Settings2,
@@ -102,6 +105,7 @@ export function HydrologyWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [mobileListOpen, setMobileListOpen] = useState(false);
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
@@ -383,10 +387,13 @@ export function HydrologyWorkbench() {
 
   return (
     <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6">
-        <div className="flex shrink-0 flex-wrap items-center gap-3">
+      <div className={cn(
+        "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
+        isMobile ? "gap-3 p-3" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+      )}>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Boletim</h2>
+            {!isMobile ? <h2 className="text-2xl font-bold tracking-tight">Boletim</h2> : null}
           </div>
           <span className="text-[11px] text-text-mute">
             Ref. {data?.referencia ?? "—"}
@@ -426,7 +433,7 @@ export function HydrologyWorkbench() {
         />
 
         <section className="shrink-0" aria-label="Resumo do boletim">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <div className={cn("grid grid-cols-2 xl:grid-cols-6", isMobile ? "gap-2 sm:grid-cols-3" : "gap-4 sm:grid-cols-3")}>
             <KpiCard
               compact
               label="Municípios"
@@ -511,6 +518,52 @@ export function HydrologyWorkbench() {
               : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
           )}
         >
+          {isMobile && mobileListOpen ? (
+            <div className="max-h-[min(48vh,480px)]">
+              <StationsList
+                stations={visible}
+                catalog={catalog}
+                selected={selected}
+                calha={calha}
+                status={status}
+                busca={busca}
+                modo={modo}
+                loading={loading}
+                hovered={hovered}
+                rain={rain}
+                onHover={setHovered}
+                onSelect={(s) => {
+                  setHovered(null);
+                  setMobileListOpen(false);
+                  setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha });
+                }}
+                onCalha={(next) => setQuery({ calha: next, bacia: null, municipio: null })}
+                onStatus={(next) => setQuery({ status: next === "Todos" ? null : next })}
+                onBusca={setBusca}
+                onMunicipio={(nome) => {
+                  if (!nome) {
+                    setQuery({ municipio: null });
+                    return;
+                  }
+                  const s = catalog.find((item) => item.municipio === nome);
+                  setQuery({
+                    municipio: nome,
+                    bacia: s?.bacia ?? null,
+                    calha: s?.calha ?? calha,
+                  });
+                }}
+                onLimpar={() => {
+                  setBusca("");
+                  setQuery({
+                    status: null,
+                    calha: null,
+                    municipio: null,
+                    bacia: null,
+                  });
+                }}
+              />
+            </div>
+          ) : null}
           {isMobile ? null : (
           <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
             {status === "SL" ? (
@@ -571,7 +624,20 @@ export function HydrologyWorkbench() {
                 {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                {isMobile ? null : (
+                {isMobile ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="min-h-11"
+                    aria-expanded={mobileListOpen}
+                    onClick={() => setMobileListOpen((v) => !v)}
+                  >
+                    <List className="size-3.5" />
+                    Lista
+                    {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                  </Button>
+                ) : (
                   <ExportPngButton onExport={exportMapPng} disabled={!data} />
                 )}
                 <Popover>

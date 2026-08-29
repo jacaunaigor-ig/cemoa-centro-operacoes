@@ -299,7 +299,7 @@ export function MeteoAvisoDutyCard() {
         <CloudSun className="size-4 shrink-0 text-focus" />
         <div className="min-w-0 leading-tight">
           <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
-            Plantão · 12 h · {shift.label} {shift.hours}
+            {isMobile ? `${shift.label} ${shift.hours}` : `Plantão · 12 h · ${shift.label} ${shift.hours}`}
           </p>
           {aviso ? (
             <strong

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "@/components/shared/SectionHeading";
+import { useOpsMode } from "@/components/shared/OpsMode";
 
 export function SituationBar({
   generatedAt,
@@ -22,13 +23,14 @@ export function SituationBar({
   urgent?: { municipio: string; risco: string; expiresAt: number | null } | null;
   children?: React.ReactNode;
 }) {
+  const { isMobile } = useOpsMode();
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <SectionHeading className="mr-auto" title="Alertas" />
+    <div className={cn("flex flex-wrap items-center", isMobile ? "gap-2" : "gap-3")}>
+      {!isMobile ? <SectionHeading className="mr-auto" title="Alertas" /> : null}
       {children}
       {urgent?.expiresAt ? (
         <AlertCountdown
-          variant="hero"
+          variant={isMobile ? "row" : "hero"}
           expiresAt={urgent.expiresAt}
           municipio={urgent.municipio}
           risco={urgent.risco}
