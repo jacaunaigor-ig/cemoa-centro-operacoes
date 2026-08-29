@@ -20,6 +20,7 @@ import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
+import { MeteoAvisoBanner, MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { useEffect, useState } from "react";
 
 export function AppShell({
@@ -63,14 +64,15 @@ export function AppShell({
   const suffix = shared.toString() ? `?${shared.toString()}` : "";
 
   return (
-    <div
-      className={cn(
-        "flex flex-col transition-[min-height] duration-300",
-        isMobile
-          ? "min-h-dvh"
-          : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
-      )}
-    >
+    <MeteoAvisoProvider>
+      <div
+        className={cn(
+          "flex flex-col transition-[min-height] duration-300",
+          isMobile
+            ? "min-h-dvh"
+            : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
+        )}
+      >
       <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-panel/90 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-xl sm:gap-3 sm:px-4 sm:pb-2.5">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand to-transparent" />
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -237,6 +239,7 @@ export function AppShell({
           Indisponível no mobile.
         </div>
       ) : null}
+      <MeteoAvisoBanner />
       <div
         id="conteudo"
         className={cn(
@@ -248,7 +251,8 @@ export function AppShell({
       </div>
       <LoginDialog />
       <AdminsDialog />
-    </div>
+      </div>
+    </MeteoAvisoProvider>
   );
 }
 

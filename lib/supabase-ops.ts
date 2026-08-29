@@ -133,6 +133,32 @@ export async function hydrateAlertOverridesFromRemote() {
   hydrateOverrideRecord(raw);
 }
 
+export async function fetchRemoteMeteoAviso(): Promise<Record<string, unknown> | null> {
+  const rows = await rest<Record<string, unknown>[]>(
+    "meteo_avisos?select=id,issued_at,issued_by,note&order=issued_at.desc&limit=1",
+  );
+  return rows?.[0] ?? null;
+}
+
+export async function upsertRemoteMeteoAviso(aviso: {
+  id: string;
+  issuedAt: number;
+  issuedBy: string;
+  note: string | null;
+}) {
+  if (!supabaseConfigured()) return;
+  await rest("meteo_avisos", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({
+      id: aviso.id,
+      issued_at: new Date(aviso.issuedAt).toISOString(),
+      issued_by: aviso.issuedBy,
+      note: aviso.note,
+    }),
+  });
+}
+
 export async function hydrateHydroOverridesFromRemote() {
   if (!supabaseConfigured()) return;
   if (Date.now() - lastHydroHydrate < 5000) return;

@@ -73,3 +73,26 @@ create policy "alerts readable"
 create policy "hydro readable"
   on public.hydro_overrides for select
   using (true);
+
+create table if not exists public.meteo_avisos (
+  id text primary key,
+  issued_at timestamptz not null,
+  issued_by text not null,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.meteo_avisos enable row level security;
+
+create policy "avisos readable"
+  on public.meteo_avisos for select
+  using (true);
+
+create policy "operators write avisos"
+  on public.meteo_avisos for insert
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role in ('admin', 'operator')
+    )
+  );

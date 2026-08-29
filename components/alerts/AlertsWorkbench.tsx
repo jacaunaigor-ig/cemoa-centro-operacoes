@@ -63,6 +63,7 @@ import { TimeFilter } from "@/components/alerts/TimeFilter";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
+import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -651,6 +652,9 @@ export function AlertsWorkbench() {
                 monitoradosActive={activeFilter === "TODOS" && !bacia && !calha && !selected}
                 urgent={urgentAlert}
               />
+              <div className="mt-2">
+                <MeteoAvisoDutyCard />
+              </div>
             </div>
             {isMobile ? null : (
               <InfoTooltip

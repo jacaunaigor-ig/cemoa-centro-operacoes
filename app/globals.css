@@ -105,6 +105,15 @@ button, a, [role="button"] {
   100% { box-shadow: 0 0 0 0 rgba(57, 217, 122, 0); }
 }
 
+.aviso-pulse {
+  animation: aviso-flash 1.4s ease-in-out infinite;
+}
+
+@keyframes aviso-flash {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+}
+
 .muni-path {
   transition: fill-opacity 0.35s ease, fill 0.35s ease, stroke-opacity 0.35s ease, stroke-width 0.35s ease;
 }

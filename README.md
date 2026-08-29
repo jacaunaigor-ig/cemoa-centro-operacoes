@@ -59,6 +59,8 @@ O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e list
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
+O **Aviso Meteorológico** do plantão é outro ciclo: os meteorologistas emitem o aviso a cada **6 horas**. O cronômetro começa no primeiro aviso emitido. Faltando **1 hora**, o painel mostra um aviso amarelo; faltando **15 minutos**, vira vermelho e pulsa; vencido, pede emissão imediata. Quem está autenticado emite pelo cartão do plantão ou pelo botão **Emitir agora** na faixa.
+
 **Operador** só no Desktop. O fluxo agora é separado:
 
 1. **Entrar** (ou **Criar operador** na primeira vez) — autentica.
