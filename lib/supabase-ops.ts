@@ -5,7 +5,11 @@ import { mergeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 type Json = Record<string, unknown>;
 
 export function supabaseUrl() {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "";
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+      .replace(/^["']|["']$/g, "")
+      .replace(/\/$/, "") ?? ""
+  );
 }
 
 export function supabaseKey() {

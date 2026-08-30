@@ -44,15 +44,22 @@ async function passwordGrant(email: string, password: string): Promise<AuthUser 
   const url = supabaseUrl();
   const key = supabaseAnonKey();
   if (!url || !key) return { error: "Supabase ainda sem chaves neste ambiente." };
-  const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch (err) {
+    const hint = err instanceof Error ? err.message : "rede";
+    return { error: `Não alcançou o Supabase Auth (${hint}).` };
+  }
   const data = (await res.json().catch(() => ({}))) as {
     user?: AuthUser;
     error_description?: string;
@@ -77,9 +84,15 @@ async function resolveEmail(login: string): Promise<string | null> {
   const url = supabaseUrl();
   const key = supabaseKey();
   if (!url || !key) return null;
-  const res = await fetch(`${url}/auth/v1/admin/users?per_page=200`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${url}/auth/v1/admin/users?per_page=200`, {
+      cache: "no-store",
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    });
+  } catch {
+    return null;
+  }
   if (!res.ok) return null;
   const data = (await res.json().catch(() => ({}))) as { users?: AuthUser[] };
   const needle = foldIdent(login);
@@ -128,7 +141,11 @@ export async function signInSupabase(
       // Login não depende da tabela profiles (schema ainda não rodado).
     }
     return { admin };
-  } catch {
-    return { error: "Não foi possível falar com o Supabase. Confira URL e chaves no Vercel.", status: 502 };
+  } catch (err) {
+    const hint = err instanceof Error ? err.message : "erro de rede";
+    return {
+      error: `Não foi possível falar com o Supabase (${hint}). Confira URL e chaves no Vercel.`,
+      status: 502,
+    };
   }
 }
