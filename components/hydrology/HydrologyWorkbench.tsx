@@ -8,6 +8,8 @@ import {
   Layers,
   List,
   MapPinned,
+  Maximize2,
+  Minimize2,
   RadioTower,
   Settings2,
   Waves,
@@ -62,6 +64,7 @@ import { MapOverlayToggles } from "@/components/shared/MapOverlayToggles";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
+import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
@@ -116,7 +119,7 @@ export function HydrologyWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const { admin, isMobile, session } = useOpsMode();
+  const { admin, isMobile, session, mapFocus, setMapFocus } = useOpsMode();
   const selected = params.get("municipio");
   const modo = parseModo(params.get("modo"));
   const status = parseStatus(params.get("status"));
@@ -154,6 +157,10 @@ export function HydrologyWorkbench() {
   const mapRef = useRef<StationsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
+
+  useEffect(() => {
+    if (mapFocus) setMobileListOpen(false);
+  }, [mapFocus]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -507,8 +514,10 @@ export function HydrologyWorkbench() {
     >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        isMobile || mapFocus ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
+        {mapFocus ? null : (
+        <>
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
           {!isMobile ? (
             <h2 className="shrink-0 text-lg font-bold tracking-tight">Boletim</h2>
@@ -639,6 +648,8 @@ export function HydrologyWorkbench() {
             />
           </div>
         </section>
+        </>
+        )}
 
         {error ? (
           <div
@@ -652,12 +663,12 @@ export function HydrologyWorkbench() {
         <div
           className={cn(
             "grid min-h-0 flex-1 gap-4 sm:gap-6",
-            isMobile
+            isMobile || mapFocus
               ? "grid-cols-1"
               : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
           )}
         >
-          {isMobile && mobileListOpen ? (
+          {mapFocus ? null : isMobile && mobileListOpen ? (
             <div className="max-h-[min(48vh,480px)]">
               <StationsList
                 stations={visible}
@@ -702,7 +713,7 @@ export function HydrologyWorkbench() {
               />
             </div>
           ) : null}
-          {isMobile ? null : (
+          {mapFocus || isMobile ? null : (
           <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
             {status === "SL" ? (
               <NoReadingPanel
@@ -761,7 +772,37 @@ export function HydrologyWorkbench() {
                 {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                {isMobile ? (
+                {mapFocus ? (
+                  <div
+                    className="flex rounded-lg border border-border bg-hover p-0.5"
+                    role="group"
+                    aria-label="Tipo de risco"
+                  >
+                    <button
+                      type="button"
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-[11px] font-bold",
+                        modo === "vazante" ? "bg-brand text-white" : "text-text-dim hover:text-text",
+                      )}
+                      onClick={() => setQuery({ modo: "vazante" })}
+                    >
+                      Estiagem
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-[11px] font-bold",
+                        modo === "enchente" ? "bg-brand text-white" : "text-text-dim hover:text-text",
+                      )}
+                      onClick={() => setQuery({ modo: "enchente" })}
+                    >
+                      Inundação
+                    </button>
+                  </div>
+                ) : null}
+                {mapFocus ? <AvisoGraficoButton compact /> : null}
+                <MapFocusButton />
+                {isMobile && !mapFocus ? (
                   <Button
                     type="button"
                     variant="secondary"
@@ -775,7 +816,7 @@ export function HydrologyWorkbench() {
                     {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                   </Button>
                 ) : (
-                  <ExportPngButton onExport={exportMapPng} disabled={!data} />
+                  !isMobile ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
                 )}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -839,6 +880,13 @@ export function HydrologyWorkbench() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-72 p-2">
+                    <MapToolButton
+                      active={mapFocus}
+                      onClick={() => setMapFocus(!mapFocus)}
+                      icon={mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+                    >
+                      {mapFocus ? "Mostrar painéis" : "Mapa em destaque"}
+                    </MapToolButton>
                     <MapToolButton
                       active={onlyRisk}
                       onClick={() => setOnlyRisk((v) => !v)}
@@ -948,7 +996,7 @@ export function HydrologyWorkbench() {
               </div>
             </div>
 
-            {isMobile ? null : <HydroTicker stations={visible} modo={modo} />}
+            {isMobile || mapFocus ? null : <HydroTicker stations={visible} modo={modo} />}
 
             <AdminToolbar
               enabled={admin}
@@ -982,7 +1030,7 @@ export function HydrologyWorkbench() {
                   if (ok) toast.success("Cota e status atualizados.");
                 }}
               />
-            ) : (
+            ) : mapFocus ? null : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
                 Selecione um município.
               </p>

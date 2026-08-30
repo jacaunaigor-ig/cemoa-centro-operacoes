@@ -35,6 +35,7 @@ type OpsMode = {
   theme: ThemeMode;
   admin: boolean;
   isMobile: boolean;
+  mapFocus: boolean;
   session: SessionUser | null;
   authLoading: boolean;
   needsSetup: boolean;
@@ -46,6 +47,7 @@ type OpsMode = {
   adminsOpen: boolean;
   setLayout: (layout: LayoutMode) => void;
   setTheme: (theme: ThemeMode) => void;
+  setMapFocus: (on: boolean) => void;
   setAdmin: (on: boolean) => void;
   openLogin: () => void;
   closeLogin: () => void;
@@ -59,11 +61,13 @@ type OpsMode = {
 const Ctx = createContext<OpsMode | null>(null);
 const LAYOUT_KEY = "cemoa_layout_mode";
 const THEME_KEY = "cemoa_theme";
+const MAP_FOCUS_KEY = "cemoa_map_focus";
 const TOOLS_KEY = "cemoa_admin_tools";
 const NARROW_QUERY = "(max-width: 767px)";
 
 const layoutListeners = new Set<() => void>();
 const themeListeners = new Set<() => void>();
+const mapFocusListeners = new Set<() => void>();
 const toolsListeners = new Set<() => void>();
 
 function subscribeNarrow(cb: () => void) {
@@ -104,6 +108,14 @@ function getToolsOn(): boolean {
   return sessionStorage.getItem(TOOLS_KEY) === "1";
 }
 
+function getMapFocus(): boolean {
+  try {
+    return localStorage.getItem(MAP_FOCUS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const layout = useSyncExternalStore(
     (cb) => {
@@ -127,6 +139,14 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       return () => toolsListeners.delete(cb);
     },
     getToolsOn,
+    () => false,
+  );
+  const mapFocus = useSyncExternalStore(
+    (cb) => {
+      mapFocusListeners.add(cb);
+      return () => mapFocusListeners.delete(cb);
+    },
+    getMapFocus,
     () => false,
   );
   const narrow = useSyncExternalStore(subscribeNarrow, getNarrow, () => false);
@@ -279,6 +299,15 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     emit(themeListeners);
   }, []);
 
+  const setMapFocus = useCallback((on: boolean) => {
+    try {
+      window.localStorage.setItem(MAP_FOCUS_KEY, on ? "1" : "0");
+    } catch {
+      /* quota / private mode */
+    }
+    emit(mapFocusListeners);
+  }, []);
+
   useEffect(() => {
     // Never let the SSR snapshot ("light") overwrite the FOUC / localStorage choice.
     applyThemeAttr(getTheme());
@@ -336,6 +365,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       theme,
       admin,
       isMobile,
+      mapFocus,
       session,
       authLoading,
       needsSetup,
@@ -347,6 +377,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       adminsOpen,
       setLayout,
       setTheme,
+      setMapFocus,
       setAdmin,
       openLogin: () => {
         void refreshAuth().finally(() => setLoginOpen(true));
@@ -363,6 +394,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       theme,
       admin,
       isMobile,
+      mapFocus,
       session,
       authLoading,
       needsSetup,
@@ -374,6 +406,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       adminsOpen,
       setLayout,
       setTheme,
+      setMapFocus,
       setAdmin,
       completeLogin,
       logout,
@@ -389,6 +422,7 @@ const FALLBACK: OpsMode = {
   theme: "light",
   admin: false,
   isMobile: false,
+  mapFocus: false,
   session: null,
   authLoading: true,
   needsSetup: false,
@@ -400,6 +434,7 @@ const FALLBACK: OpsMode = {
   adminsOpen: false,
   setLayout: () => {},
   setTheme: () => {},
+  setMapFocus: () => {},
   setAdmin: () => {},
   openLogin: () => {},
   closeLogin: () => {},

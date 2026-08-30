@@ -11,6 +11,8 @@ import {
   Layers,
   List,
   MapPinned,
+  Maximize2,
+  Minimize2,
   Mountain,
   Settings2,
   Waves,
@@ -21,6 +23,7 @@ import { MapOverlayToggles } from "@/components/shared/MapOverlayToggles";
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
+import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,7 +164,7 @@ export function AlertsWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const { admin, isMobile, session } = useOpsMode();
+  const { admin, isMobile, session, mapFocus, setMapFocus } = useOpsMode();
   const selected = params.get("municipio");
   const bacia = parseSharedBacia(params.get("bacia"));
   const calha = parseSharedCalha(params.get("calha"));
@@ -209,6 +212,10 @@ export function AlertsWorkbench() {
   const prevRef = useRef<AlertsPayload | null>(null);
   const firstRef = useRef(true);
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
+
+  useEffect(() => {
+    if (mapFocus) setMobileListOpen(false);
+  }, [mapFocus]);
 
   const persistOverrides = useCallback(
     async (
@@ -791,8 +798,9 @@ export function AlertsWorkbench() {
     >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        isMobile || mapFocus ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
+        {mapFocus ? null : (
         <div className={cn("shrink-0", isMobile ? "space-y-1.5" : "space-y-4")}>
           <SituationBar
             generatedAt={data?.generatedAt ?? null}
@@ -896,6 +904,7 @@ export function AlertsWorkbench() {
             ))}
           </div>
         </div>
+        )}
 
         {error ? (
           <div
@@ -909,11 +918,11 @@ export function AlertsWorkbench() {
 
         <div className={cn(
           "grid min-h-0 flex-1 gap-4 sm:gap-6",
-          isMobile
+          isMobile || mapFocus
             ? "grid-cols-1"
             : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {isMobile ? (
+          {mapFocus ? null : isMobile ? (
             mobileListOpen ? <div className="max-h-[min(52vh,520px)]">{listNode}</div> : null
           ) : (
             listNode
@@ -927,7 +936,32 @@ export function AlertsWorkbench() {
                 {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                {isMobile ? (
+                {mapFocus ? (
+                  <label className="inline-flex min-w-0 items-center">
+                    <select
+                      className="hydro-select max-w-[11rem] font-bold"
+                      value={tipo}
+                      onChange={(e) => {
+                        const next = parseAlertType(e.target.value);
+                        setEditorOpen(false);
+                        setDrawMode(false);
+                        setQuery({
+                          tipo: next === "CHUVA" ? null : next,
+                          risco: null,
+                        });
+                      }}
+                      aria-label="Tipo de alerta"
+                    >
+                      {ALERT_TYPES.map((id) => (
+                        <option key={id} value={id}>
+                          {ALERT_PRODUCTS[id].label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <MapFocusButton />
+                {isMobile && !mapFocus ? (
                   <Button
                     type="button"
                     variant="secondary"
@@ -941,7 +975,7 @@ export function AlertsWorkbench() {
                     {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                   </Button>
                 ) : (
-                  <ExportPngButton onExport={exportMapPng} disabled={!ready} />
+                  !isMobile ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
                 )}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -994,6 +1028,13 @@ export function AlertsWorkbench() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-72 p-2">
+                    <MapToolButton
+                      active={mapFocus}
+                      onClick={() => setMapFocus(!mapFocus)}
+                      icon={mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+                    >
+                      {mapFocus ? "Mostrar painéis" : "Mapa em destaque"}
+                    </MapToolButton>
                     <MapToolButton
                       active={onlyRisk}
                       onClick={() => setOnlyRisk((v) => !v)}
@@ -1165,7 +1206,7 @@ export function AlertsWorkbench() {
               </div>
             </div>
 
-            {isMobile ? null : <AlertTicker alerts={filteredAlerts} />}
+            {isMobile || mapFocus ? null : <AlertTicker alerts={filteredAlerts} />}
 
             <AdminToolbar
               enabled={admin}

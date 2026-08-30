@@ -18,7 +18,7 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 
 A classificação de qualidade do ar não segue o art. 12 da Portaria MIDR nº 2.458/2026. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³.
 
-O ícone **Níveis de risco** no mapa (Painel e Boletim) abre a referência de comunicação da Portaria e, no mesmo modal, a escala de MP2,5.
+O botão **Mapa em destaque** (no canto do mapa) oculta o dashboard de cima e a lista da esquerda, nos dois produtos. **Mostrar painéis** restaura. A escolha fica em `localStorage` (`cemoa_map_focus`).
 
 ## Exportar PNG
 
@@ -60,7 +60,7 @@ No Painel de Alertas a lista ordena região e município pela gravidade, os chip
 
 ## Desktop, mobile e operador
 
-O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema.
+O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Mapa em destaque** oculta o dashboard superior e a lista da esquerda; **Mostrar painéis** restaura (`localStorage` `cemoa_map_focus`).
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
