@@ -24,6 +24,8 @@ import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { MapFocusButton } from "@/components/shared/MapFocusButton";
+import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
+import { MapChromeBar } from "@/components/shared/MapChromeBar";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -215,6 +217,8 @@ export function AlertsWorkbench() {
 
   useEffect(() => {
     if (mapFocus) setMobileListOpen(false);
+    const t = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
+    return () => window.clearTimeout(t);
   }, [mapFocus]);
 
   const persistOverrides = useCallback(
@@ -798,10 +802,11 @@ export function AlertsWorkbench() {
     >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        isMobile || mapFocus ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        mapFocus ? "gap-0 p-0" : isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
         {mapFocus ? null : (
-        <div className={cn("shrink-0", isMobile ? "space-y-1.5" : "space-y-4")}>
+        <DashboardPanel>
+          <DashboardRow>
           <SituationBar
             generatedAt={data?.generatedAt ?? null}
             loading={loading}
@@ -841,27 +846,26 @@ export function AlertsWorkbench() {
           >
             <MeteoAvisoDutyCard />
           </SituationBar>
+          </DashboardRow>
 
           {isMobile ? (
+            <div className="border-b border-border px-2 py-1.5">
             <RainfallStrip
               rain={rain}
               loading={!rain && !STATIC_DEPLOY}
               filter={rainFilter}
               onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
             />
+            </div>
           ) : null}
 
-          {!isMobile ? (
-            <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
-              Resumo geral
-            </p>
-          ) : null}
+          <DashboardBody>
           <div
             className={cn(
               "grid",
               isMobile
                 ? "grid-cols-3 gap-1.5"
-                : "grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-[minmax(20rem,1.35fr)_repeat(6,minmax(0,1fr))]",
+                : "grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-[minmax(20rem,1.35fr)_repeat(6,minmax(0,1fr))]",
             )}
           >
             {!isMobile ? (
@@ -903,7 +907,8 @@ export function AlertsWorkbench() {
               />
             ))}
           </div>
-        </div>
+          </DashboardBody>
+        </DashboardPanel>
         )}
 
         {error ? (
@@ -928,14 +933,20 @@ export function AlertsWorkbench() {
             listNode
           )}
 
-          <Card className="relative flex h-full min-h-[min(58dvh,640px)] flex-col overflow-hidden lg:min-h-0">
-            <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="live-dot" />
-                Situação no mapa · {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
-                {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
-              </span>
-              <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Card className={cn(
+            "relative flex h-full flex-col overflow-hidden",
+            mapFocus ? "min-h-0 rounded-none border-0 shadow-none lg:min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+          )}>
+            <MapChromeBar
+              mapFocus={mapFocus}
+              status={
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="live-dot" />
+                  {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
+                  {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
+                </span>
+              }
+            >
                 {mapFocus ? (
                   <label className="inline-flex min-w-0 items-center">
                     <select
@@ -975,8 +986,9 @@ export function AlertsWorkbench() {
                     {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                   </Button>
                 ) : (
-                  !isMobile ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
+                  !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
                 )}
+                {mapFocus ? null : (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -1015,6 +1027,7 @@ export function AlertsWorkbench() {
                     )}
                   </PopoverContent>
                 </Popover>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1033,7 +1046,7 @@ export function AlertsWorkbench() {
                       onClick={() => setMapFocus(!mapFocus)}
                       icon={mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
                     >
-                      {mapFocus ? "Mostrar painéis" : "Mapa em destaque"}
+                      {mapFocus ? "Mostrar tudo" : "Somente mapa"}
                     </MapToolButton>
                     <MapToolButton
                       active={onlyRisk}
@@ -1076,10 +1089,12 @@ export function AlertsWorkbench() {
                     </label>
                   </PopoverContent>
                 </Popover>
-              </div>
-            </div>
+            </MapChromeBar>
 
-            <div className="relative min-h-[min(48dvh,560px)] flex-1 overflow-hidden lg:min-h-0">
+            <div className={cn(
+              "relative flex-1 overflow-hidden lg:min-h-0",
+              mapFocus ? "min-h-0" : "min-h-[min(48dvh,560px)]",
+            )}>
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">
                   Carregando malha municipal e mapa-base…
@@ -1208,6 +1223,7 @@ export function AlertsWorkbench() {
 
             {isMobile || mapFocus ? null : <AlertTicker alerts={filteredAlerts} />}
 
+            <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar
               enabled={admin}
               drawMode={drawMode}
@@ -1227,6 +1243,7 @@ export function AlertsWorkbench() {
               onUndo={() => void undoLast()}
               canUndo={undoStack.length > 0 && !classifying}
             />
+            </div>
           </Card>
         </div>
       </div>

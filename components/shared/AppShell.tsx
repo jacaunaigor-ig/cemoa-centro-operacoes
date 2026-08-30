@@ -51,6 +51,7 @@ export function AppShell({
     theme,
     admin,
     isMobile,
+    mapFocus,
     session,
     needsSetup,
     supabaseConfigured,
@@ -75,11 +76,13 @@ export function AppShell({
       <div
         className={cn(
           "flex flex-col transition-[min-height] duration-300",
-          isMobile
-            ? "min-h-dvh"
-            : "h-dvh max-lg:h-auto max-lg:min-h-dvh overflow-hidden max-lg:overflow-visible",
+          mapFocus || !isMobile
+            ? "h-dvh overflow-hidden"
+            : "min-h-dvh",
+          !mapFocus && !isMobile && "max-lg:h-auto max-lg:min-h-dvh max-lg:overflow-visible",
         )}
       >
+      {mapFocus ? null : (
       <header className="sticky top-0 z-30 flex flex-wrap items-center gap-1.5 border-b border-border bg-panel/95 px-2 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-2.5">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
@@ -254,7 +257,8 @@ export function AppShell({
           )}
         </div>
       </header>
-      {admin ? (
+      )}
+      {admin && !mapFocus ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
           {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — classifique no clique ou em lote.
@@ -265,12 +269,14 @@ export function AppShell({
       <div
         id="conteudo"
         className={cn(
-          "flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]",
-          isMobile ? "" : "overflow-hidden max-lg:overflow-visible",
+          "flex min-h-0 flex-1 flex-col",
+          mapFocus ? "overflow-hidden" : "pb-[env(safe-area-inset-bottom)]",
+          !mapFocus && !isMobile && "overflow-hidden max-lg:overflow-visible",
         )}
       >
         {children}
       </div>
+      {mapFocus ? null : (
       <OpsFooter
         source={source}
         updatedAt={updatedAt}
@@ -278,6 +284,7 @@ export function AppShell({
         hydroAt={hydroAt}
         supabase={supabaseConfigured ? "ligado" : "aguardando"}
       />
+      )}
       <LoginDialog />
       <AdminsDialog />
       </div>

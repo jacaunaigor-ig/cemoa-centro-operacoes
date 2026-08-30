@@ -14,13 +14,13 @@ export function MapFocusButton() {
       aria-pressed={mapFocus}
       title={
         mapFocus
-          ? "Mostrar o dashboard e a lista"
-          : "Ocultar o dashboard e a lista — mapa em destaque"
+          ? "Mostrar cabeçalho, dashboard e lista (Esc)"
+          : "Ocultar tudo e deixar só o mapa"
       }
       onClick={() => setMapFocus(!mapFocus)}
     >
       {mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-      <span className="hidden sm:inline">{mapFocus ? "Mostrar painéis" : "Mapa em destaque"}</span>
+      <span className="hidden sm:inline">{mapFocus ? "Mostrar tudo" : "Somente mapa"}</span>
     </Button>
   );
 }

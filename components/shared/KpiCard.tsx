@@ -34,13 +34,18 @@ export function KpiCard({
       title={`${label}: ${value}. Clique para filtrar o mapa.`}
       className={cn(
         "group card-in relative cursor-pointer overflow-hidden rounded-xl border border-border bg-panel text-left shadow-[var(--shadow-card)] transition-all duration-200 touch-manipulation active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-md",
-        compact || isMobile ? "h-full px-2 py-1.5" : "px-3.5 py-3 sm:min-h-[5.75rem]",
+        compact || isMobile ? "h-full px-2 py-1.5 pl-3" : "px-3.5 py-3 pl-4 sm:min-h-[5.5rem]",
       )}
       style={{
         borderColor: active ? accent : undefined,
         boxShadow: active ? `0 0 0 2px ${accent}33, var(--shadow-card)` : undefined,
       }}
     >
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ background: accent, opacity: active ? 1 : 0.45 }}
+      />
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn("grid shrink-0 place-items-center rounded-lg", isMobile ? "size-7" : "size-8")}

@@ -65,6 +65,8 @@ import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { MapFocusButton } from "@/components/shared/MapFocusButton";
+import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
+import { MapChromeBar } from "@/components/shared/MapChromeBar";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
@@ -160,6 +162,8 @@ export function HydrologyWorkbench() {
 
   useEffect(() => {
     if (mapFocus) setMobileListOpen(false);
+    const t = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
+    return () => window.clearTimeout(t);
   }, [mapFocus]);
 
   useEffect(() => {
@@ -514,11 +518,11 @@ export function HydrologyWorkbench() {
     >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        isMobile || mapFocus ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        mapFocus ? "gap-0 p-0" : isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
         {mapFocus ? null : (
-        <>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+        <DashboardPanel>
+        <DashboardRow>
           {!isMobile ? (
             <h2 className="shrink-0 text-lg font-bold tracking-tight">Boletim</h2>
           ) : null}
@@ -568,10 +572,10 @@ export function HydrologyWorkbench() {
             </button>
           </div>
           </div>
-        </div>
+        </DashboardRow>
 
-        <section className="shrink-0" aria-label="Resumo do boletim">
-          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7")}>
+        <DashboardBody aria-label="Resumo do boletim">
+          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-7")}>
             <KpiCard
               compact
               label="Municípios"
@@ -647,8 +651,8 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
           </div>
-        </section>
-        </>
+        </DashboardBody>
+        </DashboardPanel>
         )}
 
         {error ? (
@@ -764,14 +768,20 @@ export function HydrologyWorkbench() {
           </div>
           )}
 
-          <Card className="relative flex h-full min-h-[min(58dvh,640px)] flex-col overflow-hidden lg:min-h-0">
-            <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="live-dot" />
-                {kpis.total} município{kpis.total === 1 ? "" : "s"}
-                {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
-              </span>
-              <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Card className={cn(
+            "relative flex h-full flex-col overflow-hidden",
+            mapFocus ? "min-h-0 rounded-none border-0 shadow-none lg:min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+          )}>
+            <MapChromeBar
+              mapFocus={mapFocus}
+              status={
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="live-dot" />
+                  {kpis.total} município{kpis.total === 1 ? "" : "s"}
+                  {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
+                </span>
+              }
+            >
                 {mapFocus ? (
                   <div
                     className="flex rounded-lg border border-border bg-hover p-0.5"
@@ -816,8 +826,9 @@ export function HydrologyWorkbench() {
                     {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                   </Button>
                 ) : (
-                  !isMobile ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
+                  !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
                 )}
+                {mapFocus ? null : (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -867,6 +878,7 @@ export function HydrologyWorkbench() {
                     )}
                   </PopoverContent>
                 </Popover>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -885,7 +897,7 @@ export function HydrologyWorkbench() {
                       onClick={() => setMapFocus(!mapFocus)}
                       icon={mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
                     >
-                      {mapFocus ? "Mostrar painéis" : "Mapa em destaque"}
+                      {mapFocus ? "Mostrar tudo" : "Somente mapa"}
                     </MapToolButton>
                     <MapToolButton
                       active={onlyRisk}
@@ -928,10 +940,12 @@ export function HydrologyWorkbench() {
                     </label>
                   </PopoverContent>
                 </Popover>
-              </div>
-            </div>
+            </MapChromeBar>
 
-            <div className="relative min-h-[min(48dvh,560px)] flex-1 overflow-hidden lg:min-h-0">
+            <div className={cn(
+              "relative flex-1 overflow-hidden lg:min-h-0",
+              mapFocus ? "min-h-0" : "min-h-[min(48dvh,560px)]",
+            )}>
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">
                   Carregando estações e mapa-base…
@@ -998,6 +1012,7 @@ export function HydrologyWorkbench() {
 
             {isMobile || mapFocus ? null : <HydroTicker stations={visible} modo={modo} />}
 
+            <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar
               enabled={admin}
               drawMode={drawMode}
@@ -1017,19 +1032,22 @@ export function HydrologyWorkbench() {
               onUndo={() => void undoLast()}
               canUndo={undoStack.length > 0 && !classifying}
             />
+            </div>
 
             {selectedStation ? (
+              <div className={cn(mapFocus && "absolute inset-x-2 bottom-2 z-[1200] max-h-[min(48vh,28rem)] overflow-auto rounded-xl shadow-lg")}>
               <HydroDetail
                 station={selectedStation}
                 modo={modo}
                 admin={admin}
-                compact={isMobile}
+                compact={isMobile || mapFocus}
                 onClose={() => setQuery({ municipio: null })}
                 onSave={async (patch) => {
                   const ok = await persistHydro({ [selectedStation.id]: patch });
                   if (ok) toast.success("Cota e status atualizados.");
                 }}
               />
+              </div>
             ) : mapFocus ? null : (
               <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
                 Selecione um município.

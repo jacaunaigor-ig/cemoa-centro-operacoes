@@ -116,6 +116,12 @@ function getMapFocus(): boolean {
   }
 }
 
+function applyMapFocusAttr(on: boolean) {
+  const root = document.documentElement;
+  if (on) root.dataset.mapFocus = "1";
+  else delete root.dataset.mapFocus;
+}
+
 export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const layout = useSyncExternalStore(
     (cb) => {
@@ -305,7 +311,31 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* quota / private mode */
     }
+    applyMapFocusAttr(on);
     emit(mapFocusListeners);
+  }, []);
+
+  useEffect(() => {
+    applyMapFocusAttr(mapFocus);
+  }, [mapFocus]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.closest("input, textarea, select, [contenteditable=true]"))) return;
+      if (!getMapFocus()) return;
+      event.preventDefault();
+      try {
+        window.localStorage.setItem(MAP_FOCUS_KEY, "0");
+      } catch {
+        /* quota */
+      }
+      applyMapFocusAttr(false);
+      emit(mapFocusListeners);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {

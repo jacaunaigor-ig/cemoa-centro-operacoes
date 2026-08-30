@@ -83,6 +83,12 @@ html[data-theme="dark"] {
 
 html, body { height: 100%; }
 
+html[data-map-focus="1"],
+html[data-map-focus="1"] body {
+  overflow: hidden;
+  height: 100%;
+}
+
 html {
   scrollbar-gutter: stable;
 }

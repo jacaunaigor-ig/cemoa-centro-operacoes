@@ -29,8 +29,8 @@ export function SituationBar({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center",
-        isMobile ? "w-full justify-between gap-1.5" : "gap-3",
+        "flex w-full flex-wrap items-center",
+        isMobile ? "justify-between gap-1.5" : "gap-3",
       )}
     >
       {!isMobile ? (
