@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { allowLocalReset, needsSetup } from "@/lib/admins";
 import { isGoogleConfigured } from "@/lib/google";
+import { supabaseConfigured } from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,7 +14,7 @@ export async function GET() {
     needsSetup: needsSetup(),
     googleEnabled: isGoogleConfigured(),
     allowReset: allowLocalReset(),
-    supabase: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)),
+    supabase: supabaseConfigured(),
     user,
   });
 }

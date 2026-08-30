@@ -5,6 +5,9 @@ import { RISK_LEVELS, type RiskLevel } from "@/lib/types";
 export type OverrideEntry = {
   level: string;
   issuedAt: number;
+  issuedBy?: string;
+  issuedById?: string;
+  previousLevel?: string;
 };
 
 const overrides = new Map<string, OverrideEntry>();
@@ -22,10 +25,22 @@ function parseEntry(value: unknown): OverrideEntry | null {
     return { level: value, issuedAt: Date.now() };
   }
   if (value && typeof value === "object") {
-    const row = value as { level?: unknown; issuedAt?: unknown };
+    const row = value as {
+      level?: unknown;
+      issuedAt?: unknown;
+      issuedBy?: unknown;
+      issuedById?: unknown;
+      previousLevel?: unknown;
+    };
     if (typeof row.level !== "string") return null;
     const issuedAt = typeof row.issuedAt === "number" ? row.issuedAt : Date.now();
-    return { level: row.level, issuedAt };
+    return {
+      level: row.level,
+      issuedAt,
+      issuedBy: typeof row.issuedBy === "string" ? row.issuedBy : undefined,
+      issuedById: typeof row.issuedById === "string" ? row.issuedById : undefined,
+      previousLevel: typeof row.previousLevel === "string" ? row.previousLevel : undefined,
+    };
   }
   return null;
 }
@@ -60,22 +75,45 @@ export function getOverrideEntry(id: string, tipo: AlertType = "CHUVA"): Overrid
   return overrides.get(keyFor(tipo, id));
 }
 
+export type OverrideMeta = {
+  issuedBy?: string;
+  issuedById?: string;
+};
+
 export function mergeOverrides(
   tipo: AlertType,
   updates: Record<string, string>,
   issuedAt = Date.now(),
+  meta?: OverrideMeta,
 ) {
   for (const [id, level] of Object.entries(updates)) {
-    if (isLevelForType(tipo, level)) overrides.set(keyFor(tipo, id), { level, issuedAt });
+    if (!isLevelForType(tipo, level)) continue;
+    const prev = overrides.get(keyFor(tipo, id));
+    overrides.set(keyFor(tipo, id), {
+      level,
+      issuedAt,
+      issuedBy: meta?.issuedBy ?? prev?.issuedBy,
+      issuedById: meta?.issuedById ?? prev?.issuedById,
+      previousLevel: prev?.level ?? prev?.previousLevel,
+    });
   }
 }
 
-export function replaceOverrides(tipo: AlertType, next: Record<string, string>, issuedAt = Date.now()) {
+export function replaceOverrides(
+  tipo: AlertType,
+  next: Record<string, string>,
+  issuedAt = Date.now(),
+  meta?: OverrideMeta,
+) {
   const prefix = `${tipo}:`;
   for (const key of [...overrides.keys()]) {
     if (key.startsWith(prefix)) overrides.delete(key);
   }
-  mergeOverrides(tipo, next, issuedAt);
+  mergeOverrides(tipo, next, issuedAt, meta);
+}
+
+export function removeOverrides(tipo: AlertType, ids: string[]) {
+  for (const id of ids) overrides.delete(keyFor(tipo, id));
 }
 
 export function clearOverrides(tipo?: AlertType) {

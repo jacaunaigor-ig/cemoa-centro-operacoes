@@ -58,7 +58,7 @@ function candidateUrls(now = Date.now()): Array<{ url: string; imageAt: number }
     for (const stamp of stamps) {
       const { y, m, ymd, hm } = utcStamp(stamp);
       const names = [`S11161222_${ymd}${hm}.jpg`, `S11161213_${ymd}${hm}.jpg`];
-      const folder = folders(y, m)[folderKind];
+      const folder = folders(String(y), m)[folderKind];
       for (const name of names) out.push({ url: `${folder}/${name}`, imageAt: stamp });
     }
   }

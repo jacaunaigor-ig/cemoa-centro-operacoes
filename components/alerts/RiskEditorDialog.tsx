@@ -221,7 +221,7 @@ export function RiskEditorDialog({
               }}
               disabled={applying || Object.keys(draft).length === 0}
             >
-              {applying ? "Aplicando…" : "Aplicar ao mapa"}
+              {applying ? "Aplicando…" : "Aplicar classificação"}
             </Button>
           </div>
         </footer>

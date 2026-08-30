@@ -59,7 +59,7 @@ export type RemoteHydroOverride = {
 
 export async function fetchRemoteAlertOverrides(): Promise<RemoteAlertOverride[]> {
   const rows = await rest<RemoteAlertOverride[]>(
-    "alert_overrides?select=tipo,municipio_id,level,issued_at",
+    "alert_overrides?select=tipo,municipio_id,level,issued_at,issued_by",
   );
   return rows ?? [];
 }
@@ -68,6 +68,7 @@ export async function upsertRemoteAlertOverrides(
   tipo: string,
   updates: Record<string, string>,
   issuedAt = Date.now(),
+  meta?: { issuedBy?: string; issuedById?: string },
 ) {
   if (!supabaseConfigured() || !Object.keys(updates).length) return;
   const rows = Object.entries(updates).map(([municipio_id, level]) => ({
@@ -76,11 +77,40 @@ export async function upsertRemoteAlertOverrides(
     level,
     issued_at: new Date(issuedAt).toISOString(),
     updated_at: new Date().toISOString(),
+    issued_by: meta?.issuedBy ?? null,
+    issued_by_id: meta?.issuedById ?? null,
   }));
   await rest("alert_overrides", {
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(rows),
+  });
+}
+
+export async function appendClassificationAudit(
+  rows: Array<{
+    tipo: string;
+    municipio_id: string;
+    municipio?: string;
+    previous_level?: string | null;
+    level: string;
+    issued_by?: string;
+    source?: string;
+  }>,
+) {
+  if (!supabaseConfigured() || !rows.length) return;
+  await rest("classification_audit", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify(rows),
+  });
+}
+
+export async function deleteRemoteAlertOverrideIds(tipo: string, ids: string[]) {
+  if (!supabaseConfigured() || !ids.length) return;
+  const list = ids.map((id) => `"${id.replace(/"/g, "")}"`).join(",");
+  await rest(`alert_overrides?tipo=eq.${encodeURIComponent(tipo)}&municipio_id=in.(${list})`, {
+    method: "DELETE",
   });
 }
 
@@ -95,18 +125,28 @@ export async function fetchRemoteHydroOverrides(): Promise<RemoteHydroOverride[]
   return rows ?? [];
 }
 
-export async function upsertRemoteHydroOverrides(updates: Record<string, HydroPatch>) {
+export async function upsertRemoteHydroOverrides(
+  updates: Record<string, HydroPatch>,
+  meta?: { issuedBy?: string; issuedById?: string },
+) {
   if (!supabaseConfigured() || !Object.keys(updates).length) return;
   const rows = Object.entries(updates).map(([station_id, patch]) => ({
     station_id,
     patch,
     updated_at: new Date().toISOString(),
+    issued_by: meta?.issuedBy ?? null,
   }));
   await rest("hydro_overrides", {
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(rows),
   });
+}
+
+export async function deleteRemoteHydroOverrideIds(ids: string[]) {
+  if (!supabaseConfigured() || !ids.length) return;
+  const list = ids.map((id) => `"${id.replace(/"/g, "")}"`).join(",");
+  await rest(`hydro_overrides?station_id=in.(${list})`, { method: "DELETE" });
 }
 
 export async function deleteRemoteHydroOverrides() {
@@ -128,6 +168,7 @@ export async function hydrateAlertOverridesFromRemote() {
     raw[`${parseAlertType(row.tipo)}:${row.municipio_id}`] = {
       level: row.level,
       issuedAt: Date.parse(row.issued_at) || Date.now(),
+      issuedBy: (row as { issued_by?: string }).issued_by,
     };
   }
   hydrateOverrideRecord(raw);

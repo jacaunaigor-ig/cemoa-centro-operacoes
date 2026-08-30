@@ -21,6 +21,8 @@ export function AlertDetail({
   risco,
   fonte,
   issuedAt,
+  classifiedBy,
+  classifiedAt,
   expiresAt,
   alert,
   hydro,
@@ -36,6 +38,8 @@ export function AlertDetail({
   risco: AlertLevel;
   fonte: "admin" | "monitor";
   issuedAt: number | null;
+  classifiedBy?: string | null;
+  classifiedAt?: number | null;
   expiresAt?: number | null;
   alert: RainAlert | null;
   hydro: HydroStation | null;
@@ -80,8 +84,18 @@ export function AlertDetail({
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <RiskBadge level={risco} showAction strong />
         <span className="text-[11px] text-text-mute">
-          {fonte === "admin" ? "Operador" : "Monitor"}
-          {alert ? ` · ${formatRelative(alert.updatedAt)}` : issuedAt ? ` · ${formatRelative(issuedAt)}` : ""}
+          {fonte === "admin"
+            ? classifiedBy
+              ? `Classificado por ${classifiedBy}`
+              : "Operador"
+            : "Monitor"}
+          {alert
+            ? ` · ${formatRelative(alert.updatedAt)}`
+            : classifiedAt
+              ? ` · ${formatRelative(classifiedAt)}`
+              : issuedAt
+                ? ` · ${formatRelative(issuedAt)}`
+                : ""}
         </span>
         <AlertCountdown
           variant="row"

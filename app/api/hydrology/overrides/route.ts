@@ -4,12 +4,17 @@ import {
   clearHydroOverrides,
   getHydroOverrides,
   mergeHydroOverrides,
+  removeHydroOverrides,
   replaceHydroOverrides,
   type HydroPatch,
 } from "@/lib/hydro-overrides";
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
-import { deleteRemoteHydroOverrides, upsertRemoteHydroOverrides } from "@/lib/supabase-ops";
+import {
+  deleteRemoteHydroOverrideIds,
+  deleteRemoteHydroOverrides,
+  upsertRemoteHydroOverrides,
+} from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
 
@@ -56,15 +61,24 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       updates?: Record<string, unknown>;
       replace?: boolean;
+      remove?: unknown;
     };
     const updates: Record<string, HydroPatch> = {};
     for (const [id, raw] of Object.entries(body.updates ?? {})) {
       const patch = parsePatch(raw);
       if (patch) updates[id] = patch;
     }
+    const remove = Array.isArray(body.remove)
+      ? body.remove.filter((id): id is string => typeof id === "string")
+      : [];
     if (body.replace) replaceHydroOverrides(updates);
-    else mergeHydroOverrides(updates);
-    await upsertRemoteHydroOverrides(updates);
+    else if (Object.keys(updates).length) mergeHydroOverrides(updates);
+    if (remove.length) removeHydroOverrides(remove);
+    await upsertRemoteHydroOverrides(updates, {
+      issuedBy: gate.user.name,
+      issuedById: gate.user.id,
+    });
+    if (remove.length) await deleteRemoteHydroOverrideIds(remove);
     invalidate("hydrology");
     return NextResponse.json({ ok: true, overrides: getHydroOverrides() });
   } catch {

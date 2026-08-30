@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MousePointerClick, Pentagon, RotateCcw } from "lucide-react";
+import { Check, MousePointerClick, Pentagon, RotateCcw, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,8 @@ export function AdminToolbar({
   onOpenBatch,
   onRestore,
   onFinishPolygon,
+  onUndo,
+  canUndo = false,
   extra,
 }: {
   enabled: boolean;
@@ -38,6 +40,8 @@ export function AdminToolbar({
   onOpenBatch: () => void;
   onRestore: () => void;
   onFinishPolygon: () => void;
+  onUndo?: () => void;
+  canUndo?: boolean;
   extra?: React.ReactNode;
 }) {
   if (!enabled) return null;
@@ -53,11 +57,11 @@ export function AdminToolbar({
           aria-pressed={paintArmed}
         >
           <MousePointerClick />
-          Pintar no clique
+          Classificar no clique
         </Button>
       ) : null}
       <Button type="button" size="sm" variant="secondary" onClick={onOpenBatch}>
-        Editar em lote
+        Classificar em lote
       </Button>
       <Button
         type="button"
@@ -101,12 +105,18 @@ export function AdminToolbar({
         ))}
       </div>
       {extra}
+      {onUndo ? (
+        <Button type="button" size="sm" variant="ghost" onClick={onUndo} disabled={!canUndo}>
+          <Undo2 />
+          Desfazer
+        </Button>
+      ) : null}
       <span className="ml-auto text-[11px] text-text-mute">
         {drawMode
-          ? `Clique para vértices · duplo clique aplica ${labels[paintLevel] ?? paintLevel}`
+          ? `Clique para vértices · duplo clique classifica como ${labels[paintLevel] ?? paintLevel}`
           : paintHint ??
-            `Clique no município para aplicar ${labels[paintLevel] ?? paintLevel}`}
-        {overrideCount ? ` · ${overrideCount} editado(s)` : ""}
+            `Clique no município para classificar como ${labels[paintLevel] ?? paintLevel}`}
+        {overrideCount ? ` · ${overrideCount} classificado(s)` : ""}
       </span>
       <Button type="button" size="sm" variant="ghost" onClick={onRestore} disabled={overrideCount === 0}>
         <RotateCcw />

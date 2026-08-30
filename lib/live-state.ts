@@ -212,6 +212,8 @@ export function buildAlertsPayload(
       issuedAt,
       expiresAt,
       fonte: (admin ? "admin" : "monitor") as "admin" | "monitor",
+      classifiedBy: admin?.issuedBy ?? null,
+      classifiedAt: admin?.issuedAt ?? null,
     };
   });
 

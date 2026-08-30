@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { parseAlertType, productOf, type AlertType } from "@/lib/alert-types";
 import {
   clearOverrides,
+  getOverride,
   getOverrides,
   mergeOverrides,
+  removeOverrides,
   replaceOverrides,
   serializeOverrides,
 } from "@/lib/overrides";
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
+import { withOperatorRole } from "@/lib/equipe";
 import {
+  appendClassificationAudit,
+  deleteRemoteAlertOverrideIds,
   deleteRemoteAlertOverrides,
   upsertRemoteAlertOverrides,
 } from "@/lib/supabase-ops";
@@ -33,7 +38,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       tipo?: string;
       updates?: Record<string, unknown>;
+      remove?: unknown;
       replace?: boolean;
+      source?: string;
     };
     const tipo = parseTipo(body.tipo);
     const product = productOf(tipo);
@@ -42,9 +49,34 @@ export async function POST(request: Request) {
     for (const [id, value] of Object.entries(raw)) {
       if (typeof value === "string" && product.levels.includes(value)) updates[id] = value;
     }
-    if (body.replace) replaceOverrides(tipo, updates);
-    else mergeOverrides(tipo, updates);
-    await upsertRemoteAlertOverrides(tipo, updates);
+    const remove = Array.isArray(body.remove)
+      ? body.remove.filter((id): id is string => typeof id === "string")
+      : [];
+    const who = withOperatorRole(gate.user);
+    const meta = { issuedBy: who.name, issuedById: who.id };
+    const previousById: Record<string, string | undefined> = {};
+    for (const id of Object.keys(updates)) previousById[id] = getOverride(id, tipo);
+    if (body.replace) replaceOverrides(tipo, updates, Date.now(), meta);
+    else if (Object.keys(updates).length) mergeOverrides(tipo, updates, Date.now(), meta);
+    if (remove.length) removeOverrides(tipo, remove);
+    await upsertRemoteAlertOverrides(tipo, updates, Date.now(), meta);
+    if (remove.length) await deleteRemoteAlertOverrideIds(tipo, remove);
+    const source =
+      typeof body.source === "string" && body.source.trim()
+        ? body.source.trim()
+        : body.replace
+          ? "lote"
+          : "clique";
+    await appendClassificationAudit(
+      Object.entries(updates).map(([municipio_id, level]) => ({
+        tipo,
+        municipio_id,
+        previous_level: previousById[municipio_id] ?? null,
+        level,
+        issued_by: who.name,
+        source,
+      })),
+    );
     invalidate(`alerts:${tipo}`);
     invalidate("alerts");
     return NextResponse.json({ ok: true, tipo, overrides: getOverrides(tipo) });

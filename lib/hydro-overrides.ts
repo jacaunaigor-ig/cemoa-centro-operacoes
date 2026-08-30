@@ -40,6 +40,10 @@ export function replaceHydroOverrides(next: Record<string, HydroPatch>) {
   mergeHydroOverrides(next);
 }
 
+export function removeHydroOverrides(ids: string[]) {
+  for (const id of ids) store.delete(id);
+}
+
 export function clearHydroOverrides() {
   store.clear();
 }

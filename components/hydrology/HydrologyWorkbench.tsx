@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronDown,
@@ -31,7 +31,7 @@ import { fetchJson, reportClientError } from "@/lib/client";
 import { buildHydrologyPayload } from "@/lib/live-state";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { toast } from "sonner";
-import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
+import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, removeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 import {
   HYDRO_LEVELS,
   HYDRO_STATUS_COLORS,
@@ -65,12 +65,30 @@ import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
+import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
 
 const POLL_MS = 12_000;
 const HYDRO_STORAGE = "cemoa_hydro_overrides_v1";
+
+function rememberHydroLocal(
+  updates: Record<string, HydroPatch>,
+  replace: boolean,
+  remove: string[] = [],
+) {
+  const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
+    string,
+    HydroPatch
+  >;
+  const next: Record<string, HydroPatch> = replace ? {} : { ...current };
+  for (const [id, patch] of Object.entries(updates)) {
+    next[id] = { ...(replace ? {} : current[id]), ...patch };
+  }
+  for (const id of remove) delete next[id];
+  localStorage.setItem(HYDRO_STORAGE, JSON.stringify(next));
+}
 
 function parseModo(value: string | null): HydroMode {
   return value === "enchente" ? "enchente" : "vazante";
@@ -123,6 +141,16 @@ export function HydrologyWorkbench() {
   const [drawMode, setDrawMode] = useState(false);
   const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
   const [editorOpen, setEditorOpen] = useState(false);
+  const [pendingClassify, setPendingClassify] = useState<{
+    updates: Record<string, HydroPatch>;
+    names: string[];
+    source: "clique" | "lote" | "poligono";
+    level: HydroStatus;
+  } | null>(null);
+  const [undoStack, setUndoStack] = useState<
+    Array<{ previous: Record<string, HydroPatch | null>; next: Record<string, HydroPatch> }>
+  >([]);
+  const [classifying, setClassifying] = useState(false);
   const mapRef = useRef<StationsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
@@ -200,14 +228,32 @@ export function HydrologyWorkbench() {
   }
 
   useEffect(() => {
-    if (!selected || editorOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setQuery({ municipio: null });
+      if (event.key === "Escape") {
+        if (pendingClassify) {
+          setPendingClassify(null);
+          return;
+        }
+        if (selected && !editorOpen) setQuery({ municipio: null });
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        const target = event.target as HTMLElement | null;
+        const typing =
+          target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.tagName === "SELECT" ||
+            target.isContentEditable);
+        if (typing || !admin || classifying || pendingClassify) return;
+        if (!undoStack.length) return;
+        event.preventDefault();
+        void undoLast();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen]);
+  }, [selected, editorOpen, pendingClassify, admin, classifying, undoStack.length]);
 
   const catalog = useMemo(() => data?.stations ?? [], [data]);
   const geoStations = useMemo(
@@ -253,84 +299,145 @@ export function HydrologyWorkbench() {
   const overrideCount = catalog.filter((s) => s.editadoPorOperador).length;
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
 
-  async function persistHydro(updates: Record<string, HydroPatch>, replace = false) {
-    if (STATIC_DEPLOY) {
-      if (replace) replaceHydroOverrides(updates);
-      else mergeHydroOverrides(updates);
-      try {
-        const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
-          string,
-          HydroPatch
-        >;
-        const next: Record<string, HydroPatch> = replace ? {} : { ...current };
-        for (const [id, patch] of Object.entries(updates)) {
-          next[id] = { ...(replace ? {} : current[id]), ...patch };
+  const persistHydro = useCallback(
+    async (
+      updates: Record<string, HydroPatch>,
+      opts?: { replace?: boolean; remove?: string[]; skipHistory?: boolean },
+    ) => {
+      const replace = Boolean(opts?.replace);
+      const remove = opts?.remove ?? [];
+      const previous: Record<string, HydroPatch | null> = {};
+      if (!opts?.skipHistory && data) {
+        const ids = new Set([...Object.keys(updates), ...remove]);
+        for (const id of ids) {
+          const station = data.stations.find((s) => s.id === id);
+          previous[id] = station?.editadoPorOperador
+            ? {
+                statusVazante: station.statusVazante,
+                statusEnchente: station.statusEnchente,
+                cota: station.cota,
+                semLeitura: station.semLeitura,
+              }
+            : null;
         }
-        localStorage.setItem(HYDRO_STORAGE, JSON.stringify(next));
+      }
+      if (STATIC_DEPLOY) {
+        if (replace) replaceHydroOverrides(updates);
+        else if (Object.keys(updates).length) mergeHydroOverrides(updates);
+        if (remove.length) removeHydroOverrides(remove);
+        try {
+          rememberHydroLocal(updates, replace, remove);
+        } catch {
+          /* ignore */
+        }
+        setData({ ...buildHydrologyPayload(), cache: "MISS" });
+        if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
+          setUndoStack((stack) => [{ previous, next: updates }, ...stack].slice(0, 20));
+        }
+        return true;
+      }
+      const res = await fetch("/api/hydrology/overrides", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates, replace, remove }),
+      });
+      if (res.status === 401) {
+        toast.error("Entre como operador para alterar cotas e status.");
+        return false;
+      }
+      if (!res.ok) {
+        toast.error("Não foi possível gravar a alteração hidrológica.");
+        return false;
+      }
+      try {
+        rememberHydroLocal(updates, replace, remove);
       } catch {
         /* ignore */
       }
-      setData({ ...buildHydrologyPayload(), cache: "MISS" });
-      return true;
-    }
-    const res = await fetch("/api/hydrology/overrides", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ updates, replace }),
-    });
-    if (res.status === 401) {
-      toast.error("Entre como operador para alterar cotas e status.");
-      return false;
-    }
-    if (!res.ok) {
-      toast.error("Não foi possível gravar a alteração hidrológica.");
-      return false;
-    }
-    try {
-      const current = JSON.parse(localStorage.getItem(HYDRO_STORAGE) || "{}") as Record<
-        string,
-        HydroPatch
-      >;
-      const next: Record<string, HydroPatch> = replace ? {} : { ...current };
-      for (const [id, patch] of Object.entries(updates)) {
-        next[id] = { ...(replace ? {} : current[id]), ...patch };
+      const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
+      setData(payload);
+      if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
+        setUndoStack((stack) => [{ previous, next: updates }, ...stack].slice(0, 20));
       }
-      localStorage.setItem(HYDRO_STORAGE, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-    const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
-    setData(payload);
-    return true;
-  }
+      return true;
+    },
+    [data],
+  );
 
-  async function paintStation(station: HydroStation) {
+  const undoLast = useCallback(async () => {
+    const item = undoStack[0];
+    if (!item || classifying) return;
+    setClassifying(true);
+    try {
+      const updates: Record<string, HydroPatch> = {};
+      const remove: string[] = [];
+      for (const [id, prev] of Object.entries(item.previous)) {
+        if (prev == null) remove.push(id);
+        else updates[id] = prev;
+      }
+      const ok = await persistHydro(updates, { remove, skipHistory: true });
+      if (!ok) return;
+      setUndoStack((stack) => stack.slice(1));
+      toast.success("Última classificação desfeita.");
+    } finally {
+      setClassifying(false);
+    }
+  }, [undoStack, classifying, persistHydro]);
+
+  function paintStation(station: HydroStation) {
     setQuery({
       municipio: station.municipio,
       bacia: station.bacia,
       calha: station.calha,
     });
-    const ok = await persistHydro({ [station.id]: { [statusKey]: paintLevel } });
-    if (ok) toast.success(`${station.municipio}: ${HYDRO_STATUS_LABELS[paintLevel]}`);
+    setPendingClassify({
+      updates: { [station.id]: { [statusKey]: paintLevel } },
+      names: [station.municipio],
+      source: "clique",
+      level: paintLevel,
+    });
   }
 
-  async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
+  function applyPolygon(points: Array<{ lat: number; lng: number }>) {
     if (!data) return;
     const ring = latLngsToRing(points);
     const updates: Record<string, HydroPatch> = {};
+    const names: string[] = [];
     for (const s of data.stations) {
-      if (pointInRing(s.lon, s.lat, ring)) updates[s.id] = { [statusKey]: paintLevel };
+      if (!pointInRing(s.lon, s.lat, ring)) continue;
+      updates[s.id] = { [statusKey]: paintLevel };
+      names.push(s.municipio);
     }
-    const n = Object.keys(updates).length;
-    if (!n) {
+    if (!names.length) {
       toast.error("Nenhum município dentro do polígono.");
       return;
     }
-    const ok = await persistHydro(updates);
-    if (!ok) return;
-    toast.success(`${n} município(s) com status ${HYDRO_STATUS_LABELS[paintLevel]}.`);
-    setDrawMode(false);
+    setPendingClassify({
+      updates,
+      names,
+      source: "poligono",
+      level: paintLevel,
+    });
+  }
+
+  async function confirmClassify() {
+    if (!pendingClassify) return;
+    setClassifying(true);
+    try {
+      const ok = await persistHydro(pendingClassify.updates);
+      if (!ok) return;
+      const n = pendingClassify.names.length;
+      toast.success(
+        n === 1
+          ? `${pendingClassify.names[0]}: ${HYDRO_STATUS_LABELS[pendingClassify.level]}`
+          : `${n} municípios com status ${HYDRO_STATUS_LABELS[pendingClassify.level]}.`,
+      );
+      if (pendingClassify.source === "poligono") setDrawMode(false);
+      setPendingClassify(null);
+    } finally {
+      setClassifying(false);
+    }
   }
 
   async function restoreHydro() {
@@ -338,6 +445,7 @@ export function HydrologyWorkbench() {
       clearHydroOverrides();
       localStorage.removeItem(HYDRO_STORAGE);
       setData({ ...buildHydrologyPayload(), cache: "MISS" });
+      setUndoStack([]);
       toast.success("Cotas e status do operador removidos.");
       return;
     }
@@ -352,6 +460,7 @@ export function HydrologyWorkbench() {
     localStorage.removeItem(HYDRO_STORAGE);
     const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
     setData(payload);
+    setUndoStack([]);
     toast.success("Cotas e status do operador removidos.");
   }
 
@@ -857,6 +966,8 @@ export function HydrologyWorkbench() {
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreHydro()}
               onFinishPolygon={() => mapRef.current?.finishPolygon()}
+              onUndo={() => void undoLast()}
+              canUndo={undoStack.length > 0 && !classifying}
             />
 
             {selectedStation ? (
@@ -885,8 +996,20 @@ export function HydrologyWorkbench() {
         modo={modo}
         onClose={() => setEditorOpen(false)}
         onApply={async (updates) => {
-          await persistHydro(updates);
+          const ok = await persistHydro(updates);
+          if (ok) toast.success("Classificação em lote aplicada.");
         }}
+      />
+      <ClassifyConfirm
+        open={Boolean(pendingClassify)}
+        title="Confirmar classificação hidrológica"
+        description="O status entra no mapa deste modo. Use Desfazer se precisar voltar."
+        level={pendingClassify ? HYDRO_STATUS_LABELS[pendingClassify.level] : ""}
+        names={pendingClassify?.names ?? []}
+        by={session?.name}
+        busy={classifying}
+        onCancel={() => !classifying && setPendingClassify(null)}
+        onConfirm={() => void confirmClassify()}
       />
     </AppShell>
   );

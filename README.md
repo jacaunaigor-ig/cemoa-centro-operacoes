@@ -5,7 +5,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. Não exige Supabase.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave, as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -77,9 +77,22 @@ O **Aviso Meteorológico** tem duas camadas:
 2. **Edição** — liga/desliga as ferramentas do mapa sem sair da conta.
 3. **Sair** — encerra a sessão.
 
-Com a edição ligada, o operador atualiza cotas e status no boletim, classifica/envia alertas no painel, edita em lote e desenha polígonos. No mobile a edição fica oculta.
+Com a edição ligada, o operador classifica no **clique** (com confirmação), em **lote** ou por **polígono**, e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem e quando. No mobile a edição fica oculta.
 
-Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). Quem já entrou abre o ícone de pessoas para gerenciar a equipe e, se quiser, troca a própria senha.
+### Quadro do Centro de Monitoramento
+
+Papel é identidade. Ninguém fica travado em um produto — geólogo também classifica chuva.
+
+| Pessoa | Papel |
+| --- | --- |
+| Karol, Lenizia, Luan, Gustavo, Adriana | Meteorologistas plantonistas |
+| Thayná, Igor | Geólogos · expediente |
+| Capitão BM Barroso | Chefe do Centro |
+| Demais contas | Operacional do Centro de Monitoramento |
+
+Logins sugeridos: `karol`, `lenizia`, `luan`, `gustavo`, `adriana`, `thayna`, `igor`, `barroso`. Crie a conta em **Equipe** (ícone de pessoas). Quem ainda não cadastrou aparece como “aguardando cadastro”.
+
+Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax).
 
 ### Primeiro operador
 
@@ -103,7 +116,7 @@ O cadastro em arquivo e as classificações em memória servem para desenvolvime
 - os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel
 - vários operadores veem o mesmo mapa
 - Auth com e-mail/senha ou Google, sem OAuth artesanal
-- políticas RLS: só `admin`/`operator` escrevem; o painel público só lê
+- políticas RLS: `chefe`, `meteorologista`, `geologo` e `operacional` escrevem; o painel público só lê
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
 2. Rode `supabase/schema.sql` no SQL Editor.
@@ -151,7 +164,7 @@ Cada município no painel mostra o **maior valor** entre os pontos da sede nas j
 
 `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
 
-No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora**. O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** o alerta do produto ativo se a chuva cruzar o limiar — o operador ainda pinta em Edição.
+No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora**. O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** o alerta do produto ativo se a chuva cruzar o limiar — o operador ainda classifica em Edição.
 
 Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
 

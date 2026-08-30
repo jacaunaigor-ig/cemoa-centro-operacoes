@@ -14,6 +14,7 @@ import {
   readLocalSession,
   updateLocalPassword,
 } from "@/lib/local-auth";
+import { EQUIPE_CEMOA, ROLE_LABELS, foldIdent } from "@/lib/equipe";
 
 type AdminRow = {
   id: string;
@@ -170,8 +171,11 @@ export function AdminsDialog() {
       onClose={closeAdmins}
       wide
       title="Equipe de operadores"
-      description="Quem entra aqui pode classificar alertas e atualizar cotas. Associe um Gmail para entrar sem senha."
+      description="Quadro do Centro de Monitoramento. Quem entra aqui classifica alertas e atualiza cotas. Associe um Gmail para entrar sem senha."
     >
+      <EquipeRoster admins={admins} me={me} />
+
+      <p className="mb-2 text-xs font-bold">Contas de acesso</p>
       <ul className="mb-4 space-y-2">
         {admins.length === 0 ? (
           <li className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-xs text-text-mute">
@@ -290,5 +294,58 @@ export function AdminsDialog() {
         </p>
       ) : null}
     </Modal>
+  );
+}
+
+function EquipeRoster({
+  admins,
+  me,
+}: {
+  admins: AdminRow[];
+  me: string | null;
+}) {
+  const groups: Array<{ title: string; role: (typeof EQUIPE_CEMOA)[number]["role"] }> = [
+    { title: "Meteorologistas plantonistas", role: "meteorologista" },
+    { title: "Geólogos · expediente", role: "geologo" },
+    { title: "Chefe do Centro", role: "chefe" },
+  ];
+  return (
+    <div className="mb-4 space-y-3 rounded-xl border border-border bg-panel-2 p-3">
+      <p className="text-xs font-bold text-text">Quadro do Centro de Monitoramento</p>
+      {groups.map((group) => (
+        <div key={group.role}>
+          <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
+            {group.title}
+          </p>
+          <ul className="mt-1 space-y-1">
+            {EQUIPE_CEMOA.filter((m) => m.role === group.role).map((m) => {
+              const account = admins.find(
+                (row) =>
+                  foldIdent(row.login) === foldIdent(m.login) ||
+                  foldIdent(row.name) === foldIdent(m.nome),
+              );
+              return (
+                <li key={m.login} className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="min-w-0 truncate font-semibold">
+                    {m.nome}
+                    {account && account.id === me ? (
+                      <span className="ml-1.5 text-[10px] font-semibold text-brand-2">você</span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-text-mute">
+                    {account ? "conta criada" : "aguardando cadastro"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+      <p className="text-[11px] leading-snug text-text-dim">
+        Papel é identidade, não trava produto: meteorologista, geólogo, chefe e operacional
+        classificam chuva, alagamento, movimento e incêndio. Quem não está no quadro entra como{" "}
+        {ROLE_LABELS.operacional.toLowerCase()}.
+      </p>
+    </div>
   );
 }

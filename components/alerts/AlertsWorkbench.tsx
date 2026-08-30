@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/popover";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow } from "@/lib/live-state";
-import { clearOverrides, hydrateOverrideRecord, mergeOverrides, replaceOverrides } from "@/lib/overrides";
+import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides, replaceOverrides } from "@/lib/overrides";
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
@@ -62,6 +62,13 @@ import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, 
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
 import type { AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
+import {
+  hasRain,
+  hasRainReading,
+  INTENSE_MM_PER_H,
+  isIntense1h,
+  parseRainFilter,
+} from "@/lib/rainfall-display";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
@@ -72,7 +79,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
-import { hasRain, hasRainReading, isIntense1h, INTENSE_MM_PER_H, parseRainFilter } from "@/lib/rainfall-display";
+import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
 
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -107,6 +114,8 @@ function rememberLocalOverrides(
   tipo: AlertType,
   updates: Record<string, string>,
   replace: boolean,
+  remove: string[] = [],
+  meta?: { issuedBy?: string; issuedById?: string },
 ) {
   const current = readLocalOverrides();
   if (replace) {
@@ -116,8 +125,14 @@ function rememberLocalOverrides(
   }
   const issuedAt = Date.now();
   for (const [id, level] of Object.entries(updates)) {
-    current[`${tipo}:${id}`] = { level, issuedAt };
+    current[`${tipo}:${id}`] = {
+      level,
+      issuedAt,
+      issuedBy: meta?.issuedBy,
+      issuedById: meta?.issuedById,
+    };
   }
+  for (const id of remove) delete current[`${tipo}:${id}`];
   writeLocalOverrides(current);
 }
 
@@ -166,6 +181,16 @@ export function AlertsWorkbench() {
   const [paintArmed, setPaintArmed] = useState(true);
   const [drawMode, setDrawMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
+  const [pendingClassify, setPendingClassify] = useState<{
+    updates: Record<string, string>;
+    names: string[];
+    source: "clique" | "lote" | "poligono";
+    level: string;
+  } | null>(null);
+  const [undoStack, setUndoStack] = useState<
+    Array<{ tipo: AlertType; previous: Record<string, string | null>; next: Record<string, string> }>
+  >([]);
+  const [classifying, setClassifying] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
@@ -186,23 +211,54 @@ export function AlertsWorkbench() {
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
 
   const persistOverrides = useCallback(
-    async (updates: Record<string, string>, replace = false) => {
+    async (
+      updates: Record<string, string>,
+      opts?: {
+        replace?: boolean;
+        remove?: string[];
+        skipHistory?: boolean;
+        source?: "clique" | "lote" | "poligono" | "desfazer";
+        tipo?: AlertType;
+      },
+    ) => {
+      const tipoAlvo = opts?.tipo ?? tipo;
+      const replace = Boolean(opts?.replace);
+      const remove = opts?.remove ?? [];
+      const previous: Record<string, string | null> = {};
+      if (!opts?.skipHistory && data) {
+        const ids = new Set([...Object.keys(updates), ...remove]);
+        for (const id of ids) {
+          const row = data.municipios.find((m) => m.id === id);
+          previous[id] = row?.fonte === "admin" ? row.risco : null;
+        }
+      }
+      const meta = session ? { issuedBy: session.name, issuedById: session.id } : undefined;
       if (STATIC_DEPLOY) {
-        if (replace) replaceOverrides(tipo, updates);
-        else mergeOverrides(tipo, updates);
+        if (replace) replaceOverrides(tipoAlvo, updates, Date.now(), meta);
+        else if (Object.keys(updates).length) mergeOverrides(tipoAlvo, updates, Date.now(), meta);
+        if (remove.length) removeOverrides(tipoAlvo, remove);
         try {
-          rememberLocalOverrides(tipo, updates, replace);
+          rememberLocalOverrides(tipoAlvo, updates, replace, remove, meta);
         } catch {
           /* ignore quota */
         }
-        setData(localAlerts(tipo));
+        if (tipoAlvo === tipo) setData(localAlerts(tipoAlvo));
+        if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
+          setUndoStack((stack) => [{ tipo: tipoAlvo, previous, next: updates }, ...stack].slice(0, 20));
+        }
         return true;
       }
       const res = await fetch("/api/alerts/overrides", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo, updates, replace }),
+        body: JSON.stringify({
+          tipo: tipoAlvo,
+          updates,
+          replace,
+          remove,
+          source: opts?.source ?? "clique",
+        }),
       });
       if (res.status === 401) {
         toast.error("Entre como operador para alterar o mapa.");
@@ -213,16 +269,44 @@ export function AlertsWorkbench() {
         return false;
       }
       try {
-        rememberLocalOverrides(tipo, updates, replace);
+        rememberLocalOverrides(tipoAlvo, updates, replace, remove, meta);
       } catch {
         /* ignore quota */
       }
       const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
       setData(payload);
+      if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
+        setUndoStack((stack) => [{ tipo: tipoAlvo, previous, next: updates }, ...stack].slice(0, 20));
+      }
       return true;
     },
-    [tipo, setData],
+    [tipo, data, session],
   );
+
+  const undoLast = useCallback(async () => {
+    const item = undoStack[0];
+    if (!item || classifying) return;
+    setClassifying(true);
+    try {
+      const updates: Record<string, string> = {};
+      const remove: string[] = [];
+      for (const [id, prev] of Object.entries(item.previous)) {
+        if (prev == null) remove.push(id);
+        else updates[id] = prev;
+      }
+      const ok = await persistOverrides(updates, {
+        remove,
+        skipHistory: true,
+        source: "desfazer",
+        tipo: item.tipo,
+      });
+      if (!ok) return;
+      setUndoStack((stack) => stack.slice(1));
+      toast.success("Última classificação desfeita.");
+    } finally {
+      setClassifying(false);
+    }
+  }, [undoStack, classifying, persistOverrides]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -394,14 +478,32 @@ export function AlertsWorkbench() {
   }
 
   useEffect(() => {
-    if (!selected || editorOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setQuery({ municipio: null });
+      if (event.key === "Escape") {
+        if (pendingClassify) {
+          setPendingClassify(null);
+          return;
+        }
+        if (selected && !editorOpen) setQuery({ municipio: null });
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        const target = event.target as HTMLElement | null;
+        const typing =
+          target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.tagName === "SELECT" ||
+            target.isContentEditable);
+        if (typing || !admin || classifying || pendingClassify) return;
+        if (!undoStack.length) return;
+        event.preventDefault();
+        void undoLast();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen]);
+  }, [selected, editorOpen, pendingClassify, admin, classifying, undoStack.length, undoLast]);
 
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
@@ -562,28 +664,55 @@ export function AlertsWorkbench() {
     };
   }
 
-  async function paintMunicipio(id: string, nome: string, baciaName: string) {
+  function paintMunicipio(id: string, nome: string, baciaName: string) {
     setQuery(geoForNome(nome, baciaName));
-    const ok = await persistOverrides({ [id]: paintLevel });
-    if (ok) toast.success(`${nome}: ${levelLabel(paintLevel)}`);
+    setPendingClassify({
+      updates: { [id]: paintLevel },
+      names: [nome],
+      source: "clique",
+      level: paintLevel,
+    });
   }
 
-  async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
+  function applyPolygon(points: Array<{ lat: number; lng: number }>) {
     if (!data) return;
     const ring = latLngsToRing(points);
     const updates: Record<string, string> = {};
+    const names: string[] = [];
     for (const m of data.municipios) {
-      if (pointInRing(m.lon, m.lat, ring)) updates[m.id] = paintLevel;
+      if (!pointInRing(m.lon, m.lat, ring)) continue;
+      updates[m.id] = paintLevel;
+      names.push(m.nome);
     }
-    const n = Object.keys(updates).length;
-    if (!n) {
+    if (!names.length) {
       toast.error("Nenhum município dentro do polígono.");
       return;
     }
-    const ok = await persistOverrides(updates);
-    if (!ok) return;
-    toast.success(`${n} município(s) classificados como ${levelLabel(paintLevel)}.`);
-    setDrawMode(false);
+    setPendingClassify({
+      updates,
+      names,
+      source: "poligono",
+      level: paintLevel,
+    });
+  }
+
+  async function confirmClassify() {
+    if (!pendingClassify) return;
+    setClassifying(true);
+    try {
+      const ok = await persistOverrides(pendingClassify.updates, { source: pendingClassify.source });
+      if (!ok) return;
+      const n = pendingClassify.names.length;
+      toast.success(
+        n === 1
+          ? `${pendingClassify.names[0]}: ${levelLabel(pendingClassify.level)}`
+          : `${n} municípios classificados como ${levelLabel(pendingClassify.level)}.`,
+      );
+      if (pendingClassify.source === "poligono") setDrawMode(false);
+      setPendingClassify(null);
+    } finally {
+      setClassifying(false);
+    }
   }
 
   async function restoreLive() {
@@ -599,6 +728,7 @@ export function AlertsWorkbench() {
         /* ignore */
       }
       setData(localAlerts(tipo));
+      setUndoStack([]);
       toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
       return;
     }
@@ -621,6 +751,7 @@ export function AlertsWorkbench() {
     }
     const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
     setData(payload);
+    setUndoStack([]);
     toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
   }
 
@@ -951,7 +1082,7 @@ export function AlertsWorkbench() {
                   }}
                   onHover={setHovered}
                   onPaint={paintMunicipio}
-                  onPolygonComplete={(pts) => void applyPolygon(pts)}
+                  onPolygonComplete={applyPolygon}
                   onGeoError={setGeoError}
                 />
               ) : null}
@@ -971,6 +1102,8 @@ export function AlertsWorkbench() {
                     risco={selectedRow.risco}
                     fonte={selectedRow.fonte}
                     issuedAt={selectedRow.issuedAt}
+                    classifiedBy={selectedRow.classifiedBy}
+                    classifiedAt={selectedRow.classifiedAt}
                     expiresAt={selectedRow.expiresAt ?? selectedAlert?.expiresAt}
                     alert={selectedAlert}
                     hydro={selectedHydro}
@@ -1050,6 +1183,8 @@ export function AlertsWorkbench() {
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreLive()}
               onFinishPolygon={() => mapApi.current?.finishPolygon()}
+              onUndo={() => void undoLast()}
+              canUndo={undoStack.length > 0 && !classifying}
             />
           </Card>
         </div>
@@ -1062,8 +1197,20 @@ export function AlertsWorkbench() {
         productLabel={product.label}
         onClose={() => setEditorOpen(false)}
         onApply={async (updates) => {
-          await persistOverrides(updates);
+          const ok = await persistOverrides(updates, { source: "lote" });
+          if (ok) toast.success(`${Object.keys(updates).length} município(s) classificados.`);
         }}
+      />
+      <ClassifyConfirm
+        open={Boolean(pendingClassify)}
+        title="Confirmar classificação"
+        description="A classificação entra no mapa deste produto. Use Desfazer se precisar voltar."
+        level={pendingClassify ? levelLabel(pendingClassify.level) : ""}
+        names={pendingClassify?.names ?? []}
+        by={session?.name}
+        busy={classifying}
+        onCancel={() => !classifying && setPendingClassify(null)}
+        onConfirm={() => void confirmClassify()}
       />
     </AppShell>
   );

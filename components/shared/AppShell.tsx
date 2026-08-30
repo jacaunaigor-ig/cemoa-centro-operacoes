@@ -53,6 +53,7 @@ export function AppShell({
     isMobile,
     session,
     needsSetup,
+    supabaseConfigured,
     setLayout,
     setTheme,
     setAdmin,
@@ -181,10 +182,21 @@ export function AppShell({
                     type="button"
                     className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-dim transition-colors hover:text-text"
                     onClick={openAdmins}
-                    title="Equipe de operadores"
+                    title={
+                      session.roleLabel
+                        ? `${session.name} · ${session.roleLabel}`
+                        : "Equipe de operadores"
+                    }
                   >
                     <Users className="size-3.5" />
-                    <span className="hidden lg:inline max-w-[9rem] truncate">{session.name}</span>
+                    <span className="hidden lg:inline max-w-[11rem] truncate">
+                      {session.name}
+                      {session.roleLabel ? (
+                        <span className="ml-1 font-semibold normal-case tracking-normal text-text-mute">
+                          · {session.roleLabel.replace(" · Centro de Monitoramento", "")}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -213,7 +225,11 @@ export function AppShell({
             <InfoTooltip
               label="Sobre a sincronização"
               title="Sincronizado"
-              body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} Sem Supabase neste recorte: a série é gerada de forma determinística a partir da malha municipal do CEMOA.`}
+              body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} ${
+                supabaseConfigured
+                  ? "Supabase ligado: classificações e cotas gravam no Postgres."
+                  : "Supabase aguardando chaves: o centro está pronto — cole URL e chave em .env.local. Até lá, cookie + memória."
+              }`}
             >
               <button
                 type="button"
@@ -240,7 +256,9 @@ export function AppShell({
       </header>
       {admin ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
-          Edição{session ? ` · ${session.name}` : ""} — classifica alertas e cotas.
+          Edição{session ? ` · ${session.name}` : ""}
+          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — classifique no clique ou em lote.
+          Confirme antes de gravar. Desfazer (Ctrl+Z).
         </div>
       ) : null}
       <MeteoAvisoBanner />
@@ -253,7 +271,13 @@ export function AppShell({
       >
         {children}
       </div>
-      <OpsFooter source={source} updatedAt={updatedAt} rainAt={rainAt} hydroAt={hydroAt} />
+      <OpsFooter
+        source={source}
+        updatedAt={updatedAt}
+        rainAt={rainAt}
+        hydroAt={hydroAt}
+        supabase={supabaseConfigured ? "ligado" : "aguardando"}
+      />
       <LoginDialog />
       <AdminsDialog />
       </div>

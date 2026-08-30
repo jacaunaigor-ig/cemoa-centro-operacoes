@@ -75,6 +75,8 @@ export type AlertsPayload = {
     issuedAt: number | null;
     expiresAt: number | null;
     fonte: "admin" | "monitor";
+    classifiedBy?: string | null;
+    classifiedAt?: number | null;
   }>;
 };
 

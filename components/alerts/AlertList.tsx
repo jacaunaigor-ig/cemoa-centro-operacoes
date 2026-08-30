@@ -63,6 +63,7 @@ export function AlertList({
     fonte: "admin" | "monitor";
     issuedAt: number | null;
     expiresAt?: number | null;
+    classifiedBy?: string | null;
   }>;
   catalog: Array<{
     id: string;
@@ -347,7 +348,11 @@ export function AlertList({
                         </p>
                         <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
                           <span className="min-w-0 truncate">
-                            {m.fonte === "admin" ? "Operador · " : ""}
+                            {m.fonte === "admin"
+                              ? m.classifiedBy
+                                ? `Classificado por ${m.classifiedBy} · `
+                                : "Operador · "
+                              : ""}
                             {alert
                               ? `${alert.novo ? "Novo" : alert.agravado ? "Agravou" : "Alerta"} · ${formatRelative(alert.updatedAt)}`
                               : isAlertActive(tipo, m.risco)
@@ -365,6 +370,7 @@ export function AlertList({
                               <CotaPeek
                                 nome={m.nome}
                                 fonte={m.fonte}
+                                classifiedBy={m.classifiedBy}
                                 risco={m.risco}
                                 cota={cota}
                                 rain={rain?.byNome[m.nome]}
@@ -397,6 +403,7 @@ export function AlertList({
 function CotaPeek({
   nome,
   fonte,
+  classifiedBy,
   risco,
   cota,
   rain,
@@ -404,6 +411,7 @@ function CotaPeek({
 }: {
   nome: string;
   fonte: "admin" | "monitor";
+  classifiedBy?: string | null;
   risco: AlertLevel;
   cota: HydroStation | undefined;
   rain?: { mm1h: number | null; mm6h: number | null; mm24h: number | null } | null;
@@ -431,7 +439,11 @@ function CotaPeek({
           <div className="flex justify-between gap-2">
             <dt className="text-text-mute">Classificação</dt>
             <dd className="font-bold text-text">
-              {fonte === "admin" ? "Operador" : "Monitoramento automático"}
+              {fonte === "admin"
+                ? classifiedBy
+                  ? `Classificado por ${classifiedBy}`
+                  : "Operador"
+                : "Monitoramento automático"}
             </dd>
           </div>
           <div className="flex justify-between gap-2">

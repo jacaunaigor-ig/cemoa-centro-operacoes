@@ -8,6 +8,7 @@ import {
   recordLoginFailure,
 } from "@/lib/auth";
 import { enterWithCredentials } from "@/lib/admins";
+import { withOperatorRole } from "@/lib/equipe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -68,12 +69,12 @@ export async function POST(request: Request) {
   const response = NextResponse.json({
     ok: true,
     created: result.created,
-    user: {
+    user: withOperatorRole({
       id: result.admin.id,
       login: result.admin.login,
       name: result.admin.name,
       email: result.admin.email,
-    },
+    }),
   });
   return attachSessionCookie(response, result.admin, request);
 }

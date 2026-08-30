@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { findAdminById, type PublicAdmin } from "@/lib/admins";
+import { withOperatorRole, type EquipeRole } from "@/lib/equipe";
 
 export const SESSION_COOKIE = "cemoa_sess";
 export const SESSION_TTL_SEC = 60 * 60 * 8;
@@ -19,6 +20,8 @@ export type SessionUser = {
   login: string;
   name: string;
   email: string | null;
+  role: EquipeRole;
+  roleLabel: string;
 };
 
 export function cookieSecure(request?: Request): boolean {
@@ -135,7 +138,12 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!payload) return null;
   const admin = findAdminById(payload.sub);
   if (!admin || admin.login !== payload.login) return null;
-  return { id: admin.id, login: admin.login, name: admin.name, email: admin.email };
+  return withOperatorRole({
+    id: admin.id,
+    login: admin.login,
+    name: admin.name,
+    email: admin.email,
+  });
 }
 
 export function clientIp(request: Request): string {
