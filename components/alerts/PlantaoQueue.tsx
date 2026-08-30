@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ClipboardList, Megaphone, RefreshCw, TimerOff } from "lucide-react";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
@@ -54,7 +54,14 @@ export function PlantaoQueue({
     [tipo, municipios, rain, hydro],
   );
   const counts = useMemo(() => countPlantao(items), [items]);
-  const visible = filter === "TODOS" ? items : items.filter((item) => item.action === filter);
+
+  useEffect(() => {
+    setFilter("TODOS");
+  }, [tipo]);
+
+  const activeFilter =
+    filter !== "TODOS" && counts[filter] === 0 ? "TODOS" : filter;
+  const visible = activeFilter === "TODOS" ? items : items.filter((item) => item.action === activeFilter);
   const shown = compact ? visible.slice(0, 5) : visible.slice(0, 12);
   const product = ALERT_PRODUCTS[tipo].short;
 
@@ -72,11 +79,17 @@ export function PlantaoQueue({
       </div>
 
       <div className="mt-1.5 flex flex-wrap gap-1" role="toolbar" aria-label="Filtrar a fila do plantão">
-        <FilterChip active={filter === "TODOS"} onClick={() => setFilter("TODOS")}>
+        <FilterChip active={activeFilter === "TODOS"} onClick={() => setFilter("TODOS")}>
           Todos ({items.length})
         </FilterChip>
         {(["vencido", "renovar", "emitir"] as const).map((key) => (
-          <FilterChip key={key} active={filter === key} tone={key} onClick={() => setFilter(key)}>
+          <FilterChip
+            key={key}
+            active={activeFilter === key}
+            tone={key}
+            disabled={counts[key] === 0}
+            onClick={() => setFilter(key)}
+          >
             {plantaoLabel(key)} ({counts[key]})
           </FilterChip>
         ))}
@@ -147,11 +160,13 @@ function QueueRow({
 function FilterChip({
   active,
   tone,
+  disabled,
   onClick,
   children,
 }: {
   active: boolean;
   tone?: PlantaoAction;
+  disabled?: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -159,9 +174,11 @@ function FilterChip({
     <button
       type="button"
       aria-pressed={active}
+      disabled={disabled}
       onClick={onClick}
       className={cn(
         "rounded-full border px-2 py-0.5 text-[10px] font-bold",
+        disabled && "cursor-not-allowed opacity-45",
         active && tone
           ? ACTION_TONE[tone]
           : active
