@@ -121,7 +121,7 @@ export function formatManausStamp(ts: number | null | undefined) {
 }
 
 export const AVISO_TEXTO_PADRAO =
-  "As imagens do satélite GOES, no canal infravermelho, indicam o cenário convectivo sobre o Amazonas. Descreva aqui chuvas, descargas elétricas e nebulosidade observadas neste recorte de 6 horas.";
+  "As imagens do satélite GOES, no canal infravermelho realçado, indicam o cenário convectivo sobre o Amazonas, com os limites municipais. Descreva aqui chuvas, descargas elétricas e nebulosidade observadas neste recorte de 6 horas.";
 
 export function draftAvisoGrafico(input: {
   issuedBy?: string;

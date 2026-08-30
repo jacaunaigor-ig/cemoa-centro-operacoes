@@ -165,7 +165,8 @@ export async function cropGoesToAmazonas(input: Buffer): Promise<Buffer> {
     .toBuffer();
 
   const rings = loadRings();
-  const d = svgPaths(rings, plot, { x0, y0, scale });
+  const crop = { x0, y0, scale };
+  const d = svgPaths(rings, plot, crop);
   const maskPng = await sharp(
     Buffer.from(
       `<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}">
@@ -181,8 +182,28 @@ export async function cropGoesToAmazonas(input: Buffer): Promise<Buffer> {
     .png()
     .toBuffer();
 
+  const bordersSvg = municipalBordersSvg(rings, plot, crop, outW, outH);
+  const bordersPng = await sharp(Buffer.from(bordersSvg)).ensureAlpha().png().toBuffer();
+
   return sharp(clipped)
     .flatten({ background: "#0b1d4a" })
+    .composite([{ input: bordersPng, blend: "over" }])
     .jpeg({ quality: 90, chromaSubsampling: "4:4:4" })
     .toBuffer();
+}
+
+function municipalBordersSvg(
+  rings: Ring[],
+  plot: { left: number; top: number; right: number; bottom: number },
+  crop: { x0: number; y0: number; scale: number },
+  width: number,
+  height: number,
+) {
+  const d = svgPaths(rings, plot, crop);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+    <g fill="none" stroke-linejoin="round" stroke-linecap="round">
+      <path d="${d}" stroke="#071428" stroke-width="2.8"/>
+      <path d="${d}" stroke="#f4f8ff" stroke-width="1.25"/>
+    </g>
+  </svg>`;
 }

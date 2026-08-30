@@ -2,12 +2,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { cropGoesToAmazonas } from "@/lib/goes-amazonas";
 
-export const GOES_PRODUCT = "GOES-19 · Infravermelho canal 13 (10,3 µm) · Amazonas";
+export const GOES_PRODUCT =
+  "GOES-19 · Infravermelho realçado · sistemas convectivos e limites municipais · Amazonas";
 export const GOES_CREDIT = "CPTEC / INPE";
 
 const CACHE_DIR = path.join("/tmp", "cemoa-goes");
 const META_PATH = path.join(CACHE_DIR, "latest.json");
-const IMAGE_PATH = path.join(CACHE_DIR, "latest-am.jpg");
+const IMAGE_PATH = path.join(CACHE_DIR, "latest-am-muni.jpg");
 const STALE_MS = 15 * 60_000;
 const FETCH_MS = 8_000;
 
@@ -41,19 +42,25 @@ function floorTenMinutes(ts: number) {
 }
 
 function candidateUrls(now = Date.now()): Array<{ url: string; imageAt: number }> {
-  const out: Array<{ url: string; imageAt: number }> = [];
+  const stamps: number[] = [];
   let t = floorTenMinutes(now);
   for (let i = 0; i < 8; i += 1) {
-    const { y, m, ymd, hm } = utcStamp(t);
-    const names = [`S11835388_${ymd}${hm}.jpg`, `S11635388_${ymd}${hm}.jpg`];
-    const folders = [
+    stamps.push(t);
+    t -= 10 * 60_000;
+  }
+  const out: Array<{ url: string; imageAt: number }> = [];
+  const folders = (y: string, m: string) =>
+    [
       `https://ftp.cptec.inpe.br/goes/goes19/goes19_web/ams_realcada_alta/${y}/${m}`,
       `https://ftp.cptec.inpe.br/goes/goes19/goes19_web/ams_ret_ch13_baixa/${y}/${m}`,
-    ];
-    for (const folder of folders) {
-      for (const name of names) out.push({ url: `${folder}/${name}`, imageAt: t });
+    ] as const;
+  for (const folderKind of [0, 1] as const) {
+    for (const stamp of stamps) {
+      const { y, m, ymd, hm } = utcStamp(stamp);
+      const names = [`S11835388_${ymd}${hm}.jpg`, `S11635388_${ymd}${hm}.jpg`];
+      const folder = folders(y, m)[folderKind];
+      for (const name of names) out.push({ url: `${folder}/${name}`, imageAt: stamp });
     }
-    t -= 10 * 60_000;
   }
   return out;
 }

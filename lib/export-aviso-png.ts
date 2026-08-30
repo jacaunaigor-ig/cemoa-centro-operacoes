@@ -96,7 +96,7 @@ export async function exportAvisoPng(aviso: AvisoGrafico, image: HTMLImageElemen
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "800 22px Inter, system-ui, sans-serif";
-  ctx.fillText("SATÉLITE GOES-19 — INFRAVERMELHO CANAL 13 (10,3 µm)", 48, afterEvo + 28);
+  ctx.fillText("SATÉLITE GOES-19 — INFRAVERMELHO REALÇADO · LIMITES MUNICIPAIS", 48, afterEvo + 28);
   ctx.font = "600 20px Inter, system-ui, sans-serif";
   ctx.fillStyle = "#c9d4ee";
   ctx.fillText(`Data: ${formatManausStamp(aviso.imageAt)}  ·  Horário de Manaus`, 48, afterEvo + 56);

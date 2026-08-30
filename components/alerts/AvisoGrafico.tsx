@@ -149,7 +149,7 @@ function AvisoGraficoComposer({
         generatedAt: Date.now(),
         imageAt: null,
         imageUrl: null,
-        product: "GOES-19 · Infravermelho canal 13 (10,3 µm)",
+        product: "GOES-19 · Infravermelho realçado · limites municipais",
         credit: "CPTEC / INPE",
         error: "A imagem ao vivo do CPTEC precisa do servidor do Centro de Operações.",
       });
@@ -165,7 +165,7 @@ function AvisoGraficoComposer({
         generatedAt: Date.now(),
         imageAt: null,
         imageUrl: null,
-        product: "GOES-19 · Infravermelho canal 13 (10,3 µm)",
+        product: "GOES-19 · Infravermelho realçado · limites municipais",
         credit: "CPTEC / INPE",
         error: "Falha ao consultar o acervo GOES do CPTEC/INPE.",
       });
@@ -358,7 +358,7 @@ function AvisoPreview({
       </p>
       <p className="mt-1 text-sm font-semibold">{joinCalhas(aviso.evolucao)}</p>
       <p className="mt-3 text-[10px] font-black tracking-wide text-sky-200/90 uppercase">
-        Satélite GOES-19 — Infravermelho canal 13 (10,3 µm)
+        Satélite GOES-19 — Infravermelho realçado · limites municipais
       </p>
       <p className="text-[10px] text-sky-200/70">
         Data: {formatManausStamp(aviso.imageAt)} · Horário de Manaus
