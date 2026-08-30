@@ -106,21 +106,29 @@ export async function signInSupabase(
   if (!supabaseConfigured()) {
     return { error: "Supabase não configurado.", status: 400 };
   }
-  const email = await resolveEmail(login.trim());
-  if (!email) {
-    return {
-      error: "Informe o e-mail da conta no Supabase (Authentication → Users).",
-      status: 400,
-    };
+  try {
+    const email = await resolveEmail(login.trim());
+    if (!email) {
+      return {
+        error: "Informe o e-mail da conta no Supabase (Authentication → Users).",
+        status: 400,
+      };
+    }
+    const user = await passwordGrant(email, password);
+    if ("error" in user) return { error: user.error, status: 401 };
+    const admin = adminFromUser(user);
+    try {
+      await upsertRemoteProfile({
+        id: admin.id,
+        name: admin.name,
+        login: admin.login,
+        role: roleForOperator(admin.name, admin.login),
+      });
+    } catch {
+      // Login não depende da tabela profiles (schema ainda não rodado).
+    }
+    return { admin };
+  } catch {
+    return { error: "Não foi possível falar com o Supabase. Confira URL e chaves no Vercel.", status: 502 };
   }
-  const user = await passwordGrant(email, password);
-  if ("error" in user) return { error: user.error, status: 401 };
-  const admin = adminFromUser(user);
-  await upsertRemoteProfile({
-    id: admin.id,
-    name: admin.name,
-    login: admin.login,
-    role: roleForOperator(admin.name, admin.login),
-  });
-  return { admin };
 }

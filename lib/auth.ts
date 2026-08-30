@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { findAdminById, type PublicAdmin } from "@/lib/admins";
 import { withOperatorRole, type EquipeRole } from "@/lib/equipe";
+import { sessionSecret } from "@/lib/session-secret";
+
+export { SessionConfigError, sessionSecret } from "@/lib/session-secret";
 
 export const SESSION_COOKIE = "cemoa_sess";
 export const SESSION_TTL_SEC = 60 * 60 * 8;
@@ -58,17 +61,6 @@ export function attachClearSessionCookie(response: NextResponse, request?: Reque
 }
 
 const loginAttempts = new Map<string, { n: number; reset: number }>();
-
-function sessionSecret(): string {
-  const env = process.env.CEMOA_SESSION_SECRET?.trim();
-  if (env && env.length >= 16) return env;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "CEMOA_SESSION_SECRET ausente ou muito curta (mínimo 16 caracteres).",
-    );
-  }
-  return "cemoa-dev-session-secret-change-me";
-}
 
 function b64url(buf: Buffer | string): string {
   const b = typeof buf === "string" ? Buffer.from(buf, "utf8") : buf;

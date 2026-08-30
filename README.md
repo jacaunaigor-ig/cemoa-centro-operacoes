@@ -107,7 +107,9 @@ CEMOA_ADMIN_PASSWORD=senha-forte-aqui
 CEMOA_ADMIN_NAME=Igor
 ```
 
-`CEMOA_SESSION_SECRET` é obrigatório em produção (mínimo 16 caracteres). O usuário do ambiente não se apaga pela interface. Contas extras em arquivo local **não sobrevivem** a um reciclo no serverless.
+`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão. Se faltar, o servidor usa a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface. Contas extras em arquivo local **não sobrevivem** a um reciclo no serverless.
+
+O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app). O alias `operacoes.vercel.app` não aponta para um deploy — use o endereço completo acima.
 
 ### Persistência recomendada: Supabase
 

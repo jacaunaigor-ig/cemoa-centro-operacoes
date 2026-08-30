@@ -6,6 +6,7 @@ import {
   clearLoginFailures,
   clientIp,
   recordLoginFailure,
+  SessionConfigError,
 } from "@/lib/auth";
 import { enterWithCredentials } from "@/lib/admins";
 import { withOperatorRole } from "@/lib/equipe";
@@ -55,48 +56,70 @@ export async function POST(request: Request) {
   const name = typeof body.name === "string" ? body.name : "";
   const email = login.includes("@") ? login : undefined;
 
-  if (supabaseConfigured()) {
-    const sb = await signInSupabase(login, password);
-    if ("error" in sb) {
-      if (sb.status === 401) recordLoginFailure(ip);
-      return NextResponse.json({ error: sb.error }, { status: sb.status });
+  try {
+    if (supabaseConfigured()) {
+      const sb = await signInSupabase(login, password);
+      if ("error" in sb) {
+        if (sb.status === 401) recordLoginFailure(ip);
+        return NextResponse.json({ error: sb.error }, { status: sb.status });
+      }
+      clearLoginFailures(ip);
+      const response = NextResponse.json({
+        ok: true,
+        created: false,
+        user: withOperatorRole({
+          id: sb.admin.id,
+          login: sb.admin.login,
+          name: sb.admin.name,
+          email: sb.admin.email,
+        }),
+      });
+      return attachSessionCookie(response, sb.admin, request);
     }
+
+    const result = enterWithCredentials({
+      name,
+      login,
+      password,
+      email,
+      reset: body.reset === true,
+    });
+    if ("error" in result) {
+      if (result.status === 401) recordLoginFailure(ip);
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
     clearLoginFailures(ip);
     const response = NextResponse.json({
       ok: true,
-      created: false,
+      created: result.created,
       user: withOperatorRole({
-        id: sb.admin.id,
-        login: sb.admin.login,
-        name: sb.admin.name,
-        email: sb.admin.email,
+        id: result.admin.id,
+        login: result.admin.login,
+        name: result.admin.name,
+        email: result.admin.email,
       }),
     });
-    return attachSessionCookie(response, sb.admin, request);
+    return attachSessionCookie(response, result.admin, request);
+  } catch (err) {
+    console.error("[auth/enter]", err);
+    if (err instanceof SessionConfigError) {
+      return NextResponse.json(
+        {
+          error:
+            "Falta CEMOA_SESSION_SECRET no Vercel (Settings → Environment Variables, mínimo 16 caracteres). Sem isso o admin não consegue gravar a sessão.",
+        },
+        { status: 503 },
+      );
+    }
+    const hint = err instanceof Error ? err.message : "";
+    return NextResponse.json(
+      {
+        error: hint
+          ? `Não foi possível entrar (${hint}). Confira as chaves do Supabase no Vercel.`
+          : "Não foi possível entrar. Tente de novo.",
+      },
+      { status: 500 },
+    );
   }
-
-  const result = enterWithCredentials({
-    name,
-    login,
-    password,
-    email,
-    reset: body.reset === true,
-  });
-  if ("error" in result) {
-    if (result.status === 401) recordLoginFailure(ip);
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-
-  clearLoginFailures(ip);
-  const response = NextResponse.json({
-    ok: true,
-    created: result.created,
-    user: withOperatorRole({
-      id: result.admin.id,
-      login: result.admin.login,
-      name: result.admin.name,
-      email: result.admin.email,
-    }),
-  });
-  return attachSessionCookie(response, result.admin, request);
 }

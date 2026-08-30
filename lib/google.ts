@@ -1,5 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { sessionSecret } from "@/lib/session-secret";
 
 export const GOOGLE_STATE_COOKIE = "cemoa_oauth";
 
@@ -11,9 +12,7 @@ export type GoogleProfile = {
 };
 
 function secret() {
-  const env = process.env.CEMOA_SESSION_SECRET?.trim();
-  if (env && env.length >= 16) return env;
-  return "cemoa-dev-session-secret-change-me";
+  return sessionSecret();
 }
 
 export function isGoogleConfigured(): boolean {

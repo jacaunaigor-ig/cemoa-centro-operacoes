@@ -80,10 +80,18 @@ export function LoginDialog() {
           reset: resetLocal || undefined,
         }),
       });
-      const data = (await res.json()) as {
-        error?: string;
-        user?: { id: string; login: string; name: string; email?: string | null };
-      };
+      const text = await res.text();
+      let data: { error?: string; user?: { id: string; login: string; name: string; email?: string | null } } = {};
+      try {
+        data = text ? (JSON.parse(text) as typeof data) : {};
+      } catch {
+        setError(
+          res.status >= 500
+            ? "O servidor falhou ao entrar. No Vercel, defina CEMOA_SESSION_SECRET (mínimo 16 caracteres) e as chaves do Supabase."
+            : "Resposta inválida do servidor. Tente de novo.",
+        );
+        return;
+      }
       if (!res.ok || !data.user) {
         setError(data.error ?? "Não foi possível entrar.");
         return;
