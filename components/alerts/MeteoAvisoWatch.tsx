@@ -240,7 +240,8 @@ export function MeteoAvisoBanner() {
       role="status"
       className={cn(
         "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-3 py-2 text-center text-[12px] font-semibold sm:text-[13px]",
-        mapFocus && "pointer-events-auto fixed inset-x-0 top-0 z-[2100] shadow-lg",
+        mapFocus &&
+          "pointer-events-auto fixed inset-x-0 top-0 z-[2100] pr-40 shadow-lg sm:pr-56",
         tone === "expired" && "aviso-pulse bg-risco-severo text-white",
         tone === "urgent" && "aviso-pulse bg-risco-severo/90 text-white",
         tone === "warn" && "bg-risco-alto text-bg",

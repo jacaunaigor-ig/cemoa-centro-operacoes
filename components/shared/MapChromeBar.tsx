@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+
 export function MapChromeBar({
   mapFocus,
   status,
@@ -14,8 +15,8 @@ export function MapChromeBar({
       className={cn(
         "z-[1100] flex flex-wrap items-center gap-2 text-[11px] text-text-mute",
         mapFocus
-          ? "pointer-events-none absolute inset-x-0 top-0 justify-end px-2 pt-[max(0.4rem,env(safe-area-inset-top))]"
-          : "relative border-b border-border bg-panel/92 px-3 py-1.5 backdrop-blur-sm",
+          ? "pointer-events-none fixed inset-x-0 top-0 z-[2300] justify-end px-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
+          : "relative z-[1100] border-b border-border bg-panel/92 px-3 py-1.5 backdrop-blur-sm",
       )}
     >
       {status && !mapFocus ? status : null}

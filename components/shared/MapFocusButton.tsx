@@ -20,7 +20,9 @@ export function MapFocusButton() {
       onClick={() => setMapFocus(!mapFocus)}
     >
       {mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-      <span className="hidden sm:inline">{mapFocus ? "Mostrar tudo" : "Somente mapa"}</span>
+      <span className={mapFocus ? "inline" : "hidden sm:inline"}>
+        {mapFocus ? "Mostrar tudo" : "Somente mapa"}
+      </span>
     </Button>
   );
 }
