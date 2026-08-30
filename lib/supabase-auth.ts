@@ -1,5 +1,6 @@
 import type { PublicAdmin } from "@/lib/admins";
 import { memberForOperator, roleForOperator, foldIdent } from "@/lib/equipe";
+import { nodeJsonRequest } from "@/lib/node-json-request";
 import { normalizeEmail, normalizeLogin } from "@/lib/password";
 import {
   supabaseAnonKey,
@@ -40,15 +41,15 @@ function adminFromUser(user: AuthUser): PublicAdmin {
   };
 }
 
-async function passwordGrant(email: string, password: string): Promise<AuthUser | { error: string }> {
+async function passwordGrant(email: string, password: string): Promise<AuthUser | { error: string; status: number }> {
   const url = supabaseUrl();
   const key = supabaseAnonKey();
-  if (!url || !key) return { error: "Supabase ainda sem chaves neste ambiente." };
-  let res: Response;
+  if (!url || !key) return { error: "Supabase ainda sem chaves neste ambiente.", status: 400 };
+  let res: Awaited<ReturnType<typeof nodeJsonRequest>>;
   try {
-    res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+    res = await nodeJsonRequest({
+      url: `${url}/auth/v1/token?grant_type=password`,
       method: "POST",
-      cache: "no-store",
       headers: {
         apikey: key,
         Authorization: `Bearer ${key}`,
@@ -58,9 +59,9 @@ async function passwordGrant(email: string, password: string): Promise<AuthUser 
     });
   } catch (err) {
     const hint = err instanceof Error ? err.message : "rede";
-    return { error: `Não alcançou o Supabase Auth (${hint}).` };
+    return { error: `Não alcançou o Supabase Auth (${hint}).`, status: 502 };
   }
-  const data = (await res.json().catch(() => ({}))) as {
+  const data = res.json as {
     user?: AuthUser;
     error_description?: string;
     msg?: string;
@@ -72,9 +73,10 @@ async function passwordGrant(email: string, password: string): Promise<AuthUser 
       return {
         error:
           "Confirme o e-mail no Supabase (Authentication → Users) ou desligue Confirm email em Authentication → Providers.",
+        status: 401,
       };
     }
-    return { error: "E-mail ou senha incorretos." };
+    return { error: "E-mail ou senha incorretos.", status: 401 };
   }
   return data.user;
 }
@@ -84,17 +86,17 @@ async function resolveEmail(login: string): Promise<string | null> {
   const url = supabaseUrl();
   const key = supabaseKey();
   if (!url || !key) return null;
-  let res: Response;
+  let res: Awaited<ReturnType<typeof nodeJsonRequest>>;
   try {
-    res = await fetch(`${url}/auth/v1/admin/users?per_page=200`, {
-      cache: "no-store",
+    res = await nodeJsonRequest({
+      url: `${url}/auth/v1/admin/users?per_page=200`,
       headers: { apikey: key, Authorization: `Bearer ${key}` },
     });
   } catch {
     return null;
   }
   if (!res.ok) return null;
-  const data = (await res.json().catch(() => ({}))) as { users?: AuthUser[] };
+  const data = res.json as { users?: AuthUser[] };
   const needle = foldIdent(login);
   const hit = (data.users ?? []).find((user) => {
     const email = user.email ?? "";
@@ -128,7 +130,7 @@ export async function signInSupabase(
       };
     }
     const user = await passwordGrant(email, password);
-    if ("error" in user) return { error: user.error, status: 401 };
+    if ("error" in user) return { error: user.error, status: user.status };
     const admin = adminFromUser(user);
     try {
       await upsertRemoteProfile({

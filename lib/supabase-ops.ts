@@ -1,3 +1,4 @@
+import { nodeJsonRequest } from "@/lib/node-json-request";
 import { hydrateOverrideRecord } from "@/lib/overrides";
 import { parseAlertType } from "@/lib/alert-types";
 import { mergeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
@@ -33,21 +34,23 @@ async function rest<T>(path: string, init?: RequestInit): Promise<T | null> {
   const key = supabaseKey();
   if (!url || !key) return null;
   try {
-    const res = await fetch(`${url}/rest/v1/${path}`, {
-      ...init,
+    const method = (init?.method ?? "GET").toUpperCase();
+    const extra = (init?.headers ?? {}) as Record<string, string>;
+    const res = await nodeJsonRequest({
+      url: `${url}/rest/v1/${path}`,
+      method,
       headers: {
         apikey: key,
         Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
-        Prefer: init?.method && init.method !== "GET" ? "return=minimal" : "return=representation",
-        ...(init?.headers ?? {}),
+        Prefer: method !== "GET" ? "return=minimal" : "return=representation",
+        ...extra,
       },
+      body: typeof init?.body === "string" ? init.body : undefined,
     });
     if (!res.ok) return null;
-    if (res.status === 204) return [] as T;
-    const text = await res.text();
-    if (!text) return [] as T;
-    return JSON.parse(text) as T;
+    if (res.status === 204 || !res.text) return [] as T;
+    return res.json as T;
   } catch {
     return null;
   }
