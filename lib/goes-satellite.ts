@@ -1,12 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { cropGoesToAmazonas } from "@/lib/goes-amazonas";
 
-export const GOES_PRODUCT = "GOES-19 · Infravermelho canal 13 (10,3 µm)";
+export const GOES_PRODUCT = "GOES-19 · Infravermelho canal 13 (10,3 µm) · Amazonas";
 export const GOES_CREDIT = "CPTEC / INPE";
 
 const CACHE_DIR = path.join("/tmp", "cemoa-goes");
 const META_PATH = path.join(CACHE_DIR, "latest.json");
-const IMAGE_PATH = path.join(CACHE_DIR, "latest.jpg");
+const IMAGE_PATH = path.join(CACHE_DIR, "latest-am.jpg");
 const STALE_MS = 15 * 60_000;
 const FETCH_MS = 8_000;
 
@@ -157,14 +158,20 @@ export async function getGoesImage(opts?: { refresh?: boolean }): Promise<Cache>
     );
     const hit = hits.find((row) => row != null);
     if (!hit) continue;
+    let framed = hit.buffer;
+    try {
+      framed = await cropGoesToAmazonas(hit.buffer);
+    } catch {
+      /* keep the América Latina frame if the Amazonas crop fails */
+    }
     const cache: Cache = {
-      buffer: hit.buffer,
+      buffer: framed,
       meta: {
         generatedAt: now,
         imageAt: hit.cand.imageAt,
         sourceUrl: hit.cand.url,
         contentType: "image/jpeg",
-        bytes: hit.buffer.length,
+        bytes: framed.length,
         product: GOES_PRODUCT,
         credit: GOES_CREDIT,
         error: null,

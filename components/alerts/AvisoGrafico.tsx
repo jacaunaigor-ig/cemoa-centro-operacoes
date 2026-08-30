@@ -370,7 +370,7 @@ function AvisoPreview({
             ref={imgRef}
             src={`${goes.imageUrl}?t=${goes.generatedAt}`}
             alt="Infravermelho GOES-19 do CPTEC/INPE"
-            className="aspect-[4/3] w-full object-cover"
+            className="aspect-[4/3] w-full object-contain bg-[#0b1d4a]"
           />
         ) : (
           <div className="grid aspect-[4/3] place-items-center px-4 text-center text-xs text-sky-200/70">
