@@ -96,7 +96,7 @@ Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess
 
 ### Primeiro operador
 
-Na primeira execução, **Criar operador** pede nome, usuário e senha (mínimo 10 caracteres, com letras e números). O cadastro fica em `data/admins.json` (fora do git). Em desenvolvimento, se o login falhar porque outro usuário foi gravado neste computador, use **Redefinir acesso local**.
+O botão **Admin** abre o login. Com Supabase ligado, use o **e-mail e a senha** da conta em Authentication → Users. Depois ligue **Edição**. Sem Supabase, o primeiro acesso cria um admin local (`data/admins.json`).
 
 Em produção (Vercel), defina:
 
@@ -128,9 +128,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # só no servidor, nunca no browser
 ```
 
-Com essas variáveis, o painel grava `alert_overrides` e `hydro_overrides` no Postgres. Sem elas, continua o modo local (cookie + memória).
+Com essas variáveis, o painel **entra com a conta do Supabase Auth** e grava `alert_overrides` / `hydro_overrides` no Postgres. Sem elas, continua o modo local (cookie + arquivo).
 
-Auth nativo do Supabase (trocar o cookie `cemoa_sess` por sessão Supabase) é o próximo passo, depois que o projeto e as tabelas existirem. Até lá, o login local continua valendo e as classificações já persistem no banco quando as chaves estão presentes.
+Como entrar:
+
+1. No Supabase: Authentication → Users → Add user (e-mail + senha). Marque o e-mail como confirmado, ou desligue **Confirm email** em Authentication → Providers → Email.
+2. Rode de novo o `schema.sql` se ainda não rodou o trigger de `profiles`.
+3. No painel: **Admin** → e-mail e senha dessa conta → **Edição**.
+
+Se o rodapé ainda diz “Supabase: aguardando chaves”, as variáveis não estão no Vercel (Settings → Environment Variables) — o login local não é a conta do Auth.
 
 ### Entrar com Gmail
 

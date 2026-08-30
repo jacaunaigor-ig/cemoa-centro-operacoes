@@ -13,7 +13,7 @@ export async function GET() {
     authenticated: Boolean(user),
     needsSetup: needsSetup(),
     googleEnabled: isGoogleConfigured(),
-    allowReset: allowLocalReset(),
+    allowReset: allowLocalReset() && !supabaseConfigured(),
     supabase: supabaseConfigured(),
     user,
   });

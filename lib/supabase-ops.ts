@@ -4,16 +4,20 @@ import { mergeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 
 type Json = Record<string, unknown>;
 
-function supabaseUrl() {
+export function supabaseUrl() {
   return process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "") ?? "";
 }
 
-function supabaseKey() {
+export function supabaseKey() {
   return (
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
     ""
   );
+}
+
+export function supabaseAnonKey() {
+  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || supabaseKey();
 }
 
 export function supabaseConfigured() {
@@ -140,6 +144,25 @@ export async function upsertRemoteHydroOverrides(
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(rows),
+  });
+}
+
+export async function upsertRemoteProfile(row: {
+  id: string;
+  name: string;
+  login: string;
+  role: string;
+}) {
+  if (!supabaseConfigured()) return;
+  await rest("profiles", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      id: row.id,
+      name: row.name,
+      login: row.login,
+      role: row.role,
+    }),
   });
 }
 

@@ -8,9 +8,11 @@ export const SESSION_COOKIE = "cemoa_sess";
 export const SESSION_TTL_SEC = 60 * 60 * 8;
 
 type SessionPayload = {
-  v: 1;
+  v: 1 | 2;
   sub: string;
   login: string;
+  name?: string;
+  email?: string | null;
   iat: number;
   exp: number;
 };
@@ -92,7 +94,7 @@ function readPayload(token: string): SessionPayload | null {
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
   try {
     const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as SessionPayload;
-    if (parsed.v !== 1 || typeof parsed.sub !== "string") return null;
+    if ((parsed.v !== 1 && parsed.v !== 2) || typeof parsed.sub !== "string") return null;
     if (parsed.exp * 1000 < Date.now()) return null;
     return parsed;
   } catch {
@@ -103,9 +105,11 @@ function readPayload(token: string): SessionPayload | null {
 export function createSessionToken(admin: PublicAdmin): string {
   const now = Math.floor(Date.now() / 1000);
   return signPayload({
-    v: 1,
+    v: 2,
     sub: admin.id,
     login: admin.login,
+    name: admin.name,
+    email: admin.email,
     iat: now,
     exp: now + SESSION_TTL_SEC,
   });
@@ -136,6 +140,14 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
   const payload = readPayload(token);
   if (!payload) return null;
+  if (payload.v === 2 && payload.name) {
+    return withOperatorRole({
+      id: payload.sub,
+      login: payload.login,
+      name: payload.name,
+      email: payload.email ?? null,
+    });
+  }
   const admin = findAdminById(payload.sub);
   if (!admin || admin.login !== payload.login) return null;
   return withOperatorRole({

@@ -214,8 +214,8 @@ export function AppShell({
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel-2 px-2.5 py-1.5 text-[10px] font-black tracking-wide text-text-mute uppercase transition-colors hover:text-text"
                   onClick={() => setAdmin(true)}
                 >
-                  {needsSetup ? <Shield className="size-3.5" /> : <LogIn className="size-3.5" />}
-                  {needsSetup ? "Criar operador" : "Entrar"}
+                  {needsSetup && !supabaseConfigured ? <Shield className="size-3.5" /> : <LogIn className="size-3.5" />}
+                  Admin
                 </button>
               )}
             </div>

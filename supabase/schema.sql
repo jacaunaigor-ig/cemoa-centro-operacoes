@@ -151,3 +151,29 @@ create policy "operators write avisos"
       where p.id = auth.uid() and p.role in ('chefe', 'meteorologista', 'operacional', 'admin', 'operator')
     )
   );
+
+-- Perfil automático quando a conta nasce no Auth
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, name, login, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', split_part(coalesce(new.email, 'admin'), '@', 1)),
+    lower(coalesce(new.raw_user_meta_data->>'login', split_part(coalesce(new.email, 'admin'), '@', 1))),
+    'operacional'
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
