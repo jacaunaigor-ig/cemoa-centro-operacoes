@@ -20,8 +20,10 @@ import {
   isAlertActive,
   LEVEL_COLORS,
   LEVEL_LABELS,
+  levelRank,
   type AlertType,
 } from "@/lib/alert-types";
+import { buildAlertBriefing } from "@/lib/alert-briefing";
 import { statusAtivo } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib/types";
 import { cn, formatRelative, withAlpha } from "@/lib/utils";
@@ -98,19 +100,49 @@ export function AlertList({
     }
     return map;
   }, [hydro]);
+  const clusters = useMemo(() => {
+    const acc = new Map<string, { ativos: number; max: number }>();
+    for (const m of catalog) {
+      if (!isAlertActive(tipo, m.risco ?? "BAIXO")) continue;
+      const cur = acc.get(m.bacia) ?? { ativos: 0, max: 0 };
+      cur.ativos += 1;
+      cur.max = Math.max(cur.max, levelRank(tipo, m.risco ?? "BAIXO"));
+      acc.set(m.bacia, cur);
+    }
+    return [...acc.entries()]
+      .map(([nome, v]) => ({ nome, ...v }))
+      .sort((a, b) => b.max - a.max || b.ativos - a.ativos)
+      .slice(0, 6);
+  }, [catalog, tipo]);
+
   const grouped = useMemo(() => {
     const acc: Array<{ bacia: string; items: typeof municipios }> = [];
-    for (const m of [...municipios].sort((a, b) => {
-      const baciaComp = a.bacia.localeCompare(b.bacia, "pt-BR");
-      if (baciaComp !== 0) return baciaComp;
+    const sorted = [...municipios].sort((a, b) => {
+      const rank = levelRank(tipo, b.risco) - levelRank(tipo, a.risco);
+      if (rank !== 0) return rank;
+      const aAlert = alertByMuni.get(a.nome);
+      const bAlert = alertByMuni.get(b.nome);
+      const aFlag = (aAlert?.agravado ? 2 : 0) + (aAlert?.novo ? 1 : 0);
+      const bFlag = (bAlert?.agravado ? 2 : 0) + (bAlert?.novo ? 1 : 0);
+      if (bFlag !== aFlag) return bFlag - aFlag;
       return a.nome.localeCompare(b.nome, "pt-BR");
-    })) {
-      const last = acc.at(-1);
-      if (!last || last.bacia !== m.bacia) acc.push({ bacia: m.bacia, items: [m] });
-      else last.items.push(m);
+    });
+    for (const m of sorted) {
+      const group = acc.find((g) => g.bacia === m.bacia);
+      if (!group) acc.push({ bacia: m.bacia, items: [m] });
+      else group.items.push(m);
     }
+    acc.sort((a, b) => {
+      const aMax = Math.max(0, ...a.items.map((m) => levelRank(tipo, m.risco)));
+      const bMax = Math.max(0, ...b.items.map((m) => levelRank(tipo, m.risco)));
+      if (bMax !== aMax) return bMax - aMax;
+      const aAtivos = a.items.filter((m) => isAlertActive(tipo, m.risco)).length;
+      const bAtivos = b.items.filter((m) => isAlertActive(tipo, m.risco)).length;
+      if (bAtivos !== aAtivos) return bAtivos - aAtivos;
+      return a.bacia.localeCompare(b.bacia, "pt-BR");
+    });
     return acc;
-  }, [municipios]);
+  }, [municipios, tipo, alertByMuni]);
 
   const { isMobile } = useOpsMode();
   const fila = useMemo(
@@ -138,7 +170,7 @@ export function AlertList({
       <div className="space-y-3 border-b border-border p-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-            Municípios
+            Lista de municípios
             <span className="ml-1.5 font-mono text-text">
               {loading ? "…" : municipios.length}
             </span>
@@ -165,6 +197,14 @@ export function AlertList({
             onClick={() => onRisco("ATIVOS")}
           >
             Ativos ({counts.ATIVOS ?? 0})
+          </Chip>
+          <Chip
+            active={risco === "AGRAVADOS"}
+            color="#ef4444"
+            disabled={!counts.AGRAVADOS}
+            onClick={() => onRisco("AGRAVADOS")}
+          >
+            Com agravamento ({counts.AGRAVADOS ?? 0})
           </Chip>
           {[...levels].reverse().map((value) => (
             <Chip
@@ -193,12 +233,27 @@ export function AlertList({
                 {c}
               </option>
             ))}
-          </select>
-        </label>
+            </select>
+          </label>
+        {clusters.length ? (
+          <div className={cn("flex gap-1.5", isMobile ? "overflow-x-auto pb-0.5" : "flex-wrap")} role="toolbar" aria-label="Regiões com alerta">
+            {clusters.map((c) => (
+              <Chip
+                key={c.nome}
+                active={bacia === c.nome}
+                color="#38bdf8"
+                onClick={() => onBacia(bacia === c.nome ? null : c.nome)}
+              >
+                {c.nome} ({c.ativos})
+              </Chip>
+            ))}
+          </div>
+        ) : null}
         <Input
+          id="busca-municipio"
           value={busca}
           onChange={(e) => onBusca(e.target.value)}
-          placeholder="Buscar…"
+          placeholder="Buscar município ou região…"
           aria-label="Buscar município ou região"
         />
         <PlantaoQueue
@@ -243,6 +298,15 @@ export function AlertList({
                   const calhaHref = cota?.calha;
                   const color = LEVEL_COLORS[m.risco] ?? "#7c8fab";
                   const highlighted = selected === m.nome || hovered === m.nome;
+                  const briefing = buildAlertBriefing({
+                    nome: m.nome,
+                    risco: m.risco,
+                    tipo,
+                    novo: alert?.novo,
+                    agravado: alert?.agravado,
+                    rain: rain ? rain.byNome[m.nome] ?? null : undefined,
+                    hydro: cota ?? null,
+                  });
                   return (
                     <li
                       key={m.id}
@@ -261,10 +325,10 @@ export function AlertList({
                           highlighted ? "bg-hover" : "hover:bg-hover",
                         )}
                         style={{
-                          boxShadow: `inset 4px 0 0 ${color}`,
+                          boxShadow: `inset 5px 0 0 ${color}`,
                           background: highlighted
-                            ? withAlpha(color, 0.16)
-                            : withAlpha(color, 0.05),
+                            ? withAlpha(color, 0.2)
+                            : withAlpha(color, 0.07),
                         }}
                       >
                         <button
@@ -275,9 +339,12 @@ export function AlertList({
                           <span className="truncate font-bold">{m.nome}</span>
                           <span className="flex shrink-0 items-center gap-1.5">
                             <AlertCountdown expiresAt={m.expiresAt ?? alert?.expiresAt} variant="row" />
-                            <RiskBadge level={m.risco} />
+                            <RiskBadge level={m.risco} strong={isAlertActive(tipo, m.risco)} />
                           </span>
                         </button>
+                        <p className="line-clamp-2 text-[11px] leading-snug text-text-dim">
+                          {briefing.headline}
+                        </p>
                         <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
                           <span className="min-w-0 truncate">
                             {m.fonte === "admin" ? "Operador · " : ""}
@@ -422,21 +489,25 @@ function Chip({
   active,
   onClick,
   color,
+  disabled,
   children,
 }: {
   active: boolean;
   onClick: () => void;
   color?: string;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       aria-pressed={active}
+      disabled={disabled}
       onClick={onClick}
       className={cn(
         "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
         active ? "shadow" : "text-text-dim hover:text-text",
+        disabled && "cursor-not-allowed opacity-45 hover:brightness-100",
       )}
       style={
         active

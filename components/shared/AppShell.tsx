@@ -25,17 +25,24 @@ import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { MeteoAvisoBanner, MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
+import { OpsFooter } from "@/components/shared/OpsFooter";
 
 export function AppShell({
   children,
   syncLabel = "Sincronizado",
   source = "CEMOA / INMET / CENSIPAM / CPTEC-INPE",
   cache,
+  updatedAt,
+  rainAt,
+  hydroAt,
 }: {
   children: React.ReactNode;
   syncLabel?: string;
   source?: string;
   cache?: "HIT" | "MISS";
+  updatedAt?: number | null;
+  rainAt?: number | null;
+  hydroAt?: number | null;
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
@@ -246,6 +253,7 @@ export function AppShell({
       >
         {children}
       </div>
+      <OpsFooter source={source} updatedAt={updatedAt} rainAt={rainAt} hydroAt={hydroAt} />
       <LoginDialog />
       <AdminsDialog />
       </div>

@@ -390,7 +390,12 @@ export function HydrologyWorkbench() {
   }
 
   return (
-    <AppShell cache={data?.cache} source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}>
+    <AppShell
+      cache={data?.cache}
+      source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}
+      updatedAt={data?.generatedAt ?? null}
+      hydroAt={data?.generatedAt ?? null}
+    >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
         isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",

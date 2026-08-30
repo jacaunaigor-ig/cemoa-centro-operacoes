@@ -1,4 +1,4 @@
-import { levelLabel, riskActionFor } from "@/lib/alert-types";
+import { LEVEL_COLORS, levelLabel, riskActionFor } from "@/lib/alert-types";
 import type { AlertLevel } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -18,16 +18,32 @@ const variant: Record<string, "baixo" | "moderado" | "alto" | "severo" | "extrem
 export function RiskBadge({
   level,
   showAction = false,
+  strong = false,
   className,
 }: {
   level: AlertLevel | string;
   showAction?: boolean;
+  strong?: boolean;
   className?: string;
 }) {
+  const label = `${levelLabel(level)}${showAction ? ` · ${riskActionFor(level)}` : ""}`;
+  if (strong) {
+    const color = LEVEL_COLORS[level] ?? "#7c8fab";
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black tracking-wide text-white uppercase shadow-sm",
+          className,
+        )}
+        style={{ background: color }}
+      >
+        {label}
+      </span>
+    );
+  }
   return (
     <Badge variant={variant[level] ?? "default"} className={cn(className)}>
-      {levelLabel(level)}
-      {showAction ? ` · ${riskActionFor(level)}` : ""}
+      {label}
     </Badge>
   );
 }

@@ -6,6 +6,9 @@ import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { type AlertType } from "@/lib/alert-types";
+import { buildAlertBriefing } from "@/lib/alert-briefing";
+import { formatMm } from "@/lib/rainfall-display";
+import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import type { AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
@@ -43,6 +46,15 @@ export function AlertDetail({
   onClose: () => void;
 }) {
   const calha = hydro?.calha ?? null;
+  const briefing = buildAlertBriefing({
+    nome,
+    risco,
+    tipo: tipo ?? "CHUVA",
+    novo: alert?.novo,
+    agravado: alert?.agravado,
+    rain: rain === undefined ? undefined : rain,
+    hydro,
+  });
 
   return (
     <section
@@ -66,7 +78,7 @@ export function AlertDetail({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <RiskBadge level={risco} showAction />
+        <RiskBadge level={risco} showAction strong />
         <span className="text-[11px] text-text-mute">
           {fonte === "admin" ? "Operador" : "Monitor"}
           {alert ? ` · ${formatRelative(alert.updatedAt)}` : issuedAt ? ` · ${formatRelative(issuedAt)}` : ""}
@@ -78,8 +90,35 @@ export function AlertDetail({
         />
       </div>
 
-      {alert?.resumo ? (
-        <p className="mt-2 text-[13px] leading-snug text-text-dim">{alert.resumo}</p>
+      <p className="mt-3 rounded-lg border border-border bg-bg/40 px-3 py-2 text-[13px] leading-snug text-text">
+        {briefing.headline}
+      </p>
+      {briefing.risks.length ? (
+        <ul className="mt-2 flex flex-wrap gap-1">
+          {briefing.risks.map((risk) => (
+            <li
+              key={risk}
+              className="rounded-full border border-border bg-hover px-2 py-0.5 text-[10px] font-bold text-text"
+            >
+              {risk}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+        <TechStat label="1 h" value={rain ? formatMm(rain.mm1h) : "—"} />
+        <TechStat label="6 h" value={rain ? formatMm(rain.mm6h) : "—"} />
+        <TechStat label="24 h" value={rain ? formatMm(rain.mm24h) : "—"} />
+      </div>
+      {hydro ? (
+        <p className="mt-2 text-[11px] text-text-dim">
+          Cota {hydro.semLeitura ? "sem leitura" : `${hydro.cota?.toFixed(2)} m`}
+          {hydro.semLeitura
+            ? ""
+            : ` · inundação ${HYDRO_STATUS_LABELS[statusAtivo(hydro, "enchente")]}`}
+          {calha ? ` · ${calha}` : ""}
+        </p>
       ) : null}
 
       {rain === undefined ? null : rain ? (
@@ -100,5 +139,14 @@ export function AlertDetail({
         Cota no boletim
       </Link>
     </section>
+  );
+}
+
+function TechStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-bg/40 px-2 py-1.5">
+      <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">{label}</small>
+      <strong className="font-mono text-xs tabular-nums">{value}</strong>
+    </div>
   );
 }

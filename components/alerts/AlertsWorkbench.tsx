@@ -86,7 +86,7 @@ const PRODUCT_ICONS = {
 } as const;
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
-  if (value === "ATIVOS") return "ATIVOS";
+  if (value === "ATIVOS" || value === "AGRAVADOS") return value;
   if (value && levels.includes(value)) return value;
   return "TODOS";
 }
@@ -419,10 +419,22 @@ export function AlertsWorkbench() {
     [catalog, geo],
   );
 
+  const mudancas = useMemo(
+    () =>
+      filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
+        (a) =>
+          (a.novo || a.agravado) && matchMunicipioGeo(a.municipio, a.bacia, geo),
+      ),
+    [data, windowFilter, geo],
+  );
+  const mudancaNomes = useMemo(() => new Set(mudancas.map((a) => a.municipio)), [mudancas]);
+
   const filteredAlerts = useMemo(() => {
     if (!data) return [];
     let list = filterAlertsByWindow(data.alerts, windowFilter, data.generatedAt);
-    if (activeFilter === "ATIVOS") {
+    if (activeFilter === "AGRAVADOS") {
+      list = list.filter((a) => a.novo || a.agravado);
+    } else if (activeFilter === "ATIVOS") {
       list = list.filter((a) => isAlertActive(tipo, a.risco));
     } else if (activeFilter !== "TODOS") {
       list = list.filter((a) => a.risco === activeFilter);
@@ -435,7 +447,9 @@ export function AlertsWorkbench() {
   const visibleMunicipios = useMemo(() => {
     const needle = buscaFiltro.trim().toLowerCase();
     return catalog.filter((m) => {
-      if (activeFilter === "ATIVOS") {
+      if (activeFilter === "AGRAVADOS") {
+        if (!mudancaNomes.has(m.nome)) return false;
+      } else if (activeFilter === "ATIVOS") {
         if (!isAlertActive(tipo, m.risco)) return false;
       } else if (activeFilter !== "TODOS" && m.risco !== activeFilter) {
         return false;
@@ -454,10 +468,10 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain]);
+  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain, mudancaNomes]);
 
   const counts = useMemo(() => {
-    const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0 };
+    const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0, AGRAVADOS: mudancas.length };
     for (const level of product.levels) acc[level] = 0;
     for (const m of scopedCatalog) {
       acc[m.risco] = (acc[m.risco] ?? 0) + 1;
@@ -465,7 +479,7 @@ export function AlertsWorkbench() {
       if (isAlertActive(tipo, m.risco)) acc.ATIVOS += 1;
     }
     return acc;
-  }, [scopedCatalog, product.levels, tipo]);
+  }, [scopedCatalog, product.levels, tipo, mudancas.length]);
 
   const pct = (n: number) =>
     counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(0)}%` : "0%";
@@ -492,14 +506,6 @@ export function AlertsWorkbench() {
     const top = list[0];
     return { municipio: top.municipio, risco: top.risco, expiresAt: top.expiresAt };
   }, [data, windowFilter, geo, tipo]);
-  const mudancas = useMemo(
-    () =>
-      filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
-        (a) =>
-          (a.novo || a.agravado) && matchMunicipioGeo(a.municipio, a.bacia, geo),
-      ),
-    [data, windowFilter, geo],
-  );
   const ProductIcon = PRODUCT_ICONS[tipo];
   const listNode = (
     <AlertList
@@ -645,7 +651,13 @@ export function AlertsWorkbench() {
   }
 
   return (
-    <AppShell cache={data?.cache} source={data?.source}>
+    <AppShell
+      cache={data?.cache}
+      source={data?.source}
+      updatedAt={data?.generatedAt ?? null}
+      rainAt={rain?.generatedAt ?? null}
+      hydroAt={hydro?.generatedAt ?? null}
+    >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
         isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
@@ -700,6 +712,11 @@ export function AlertsWorkbench() {
             />
           ) : null}
 
+          {!isMobile ? (
+            <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
+              Resumo geral
+            </p>
+          ) : null}
           <div
             className={cn(
               "grid",
@@ -775,7 +792,7 @@ export function AlertsWorkbench() {
             <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] text-text-mute">
               <span className="inline-flex items-center gap-1.5">
                 <span className="live-dot" />
-                {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
+                Situação no mapa · {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
                 {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
