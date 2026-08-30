@@ -1,0 +1,175 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { ClipboardList, Megaphone, RefreshCw, TimerOff } from "lucide-react";
+import { RiskBadge } from "@/components/shared/RiskBadge";
+import { AlertCountdown } from "@/components/alerts/AlertCountdown";
+import { ALERT_PRODUCTS, type AlertType } from "@/lib/alert-types";
+import {
+  buildPlantaoQueue,
+  countPlantao,
+  plantaoLabel,
+  type PlantaoAction,
+  type PlantaoItem,
+} from "@/lib/plantao-queue";
+import type { HydroStation, RainfallPayload } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const ACTION_TONE: Record<PlantaoAction, string> = {
+  vencido: "border-risco-severo/40 bg-risco-severo/12 text-risco-severo",
+  renovar: "border-risco-alto/40 bg-risco-alto/12 text-risco-alto",
+  emitir: "border-focus/40 bg-focus/12 text-focus",
+};
+
+const ACTION_ICON: Record<PlantaoAction, typeof TimerOff> = {
+  vencido: TimerOff,
+  renovar: RefreshCw,
+  emitir: Megaphone,
+};
+
+export function PlantaoQueue({
+  tipo,
+  municipios,
+  rain,
+  hydro,
+  compact = false,
+  onSelect,
+}: {
+  tipo: AlertType;
+  municipios: Array<{
+    id: string;
+    nome: string;
+    bacia: string;
+    risco: string;
+    expiresAt?: number | null;
+  }>;
+  rain: RainfallPayload | null;
+  hydro: HydroStation[];
+  compact?: boolean;
+  onSelect: (nome: string, bacia: string) => void;
+}) {
+  const [filter, setFilter] = useState<PlantaoAction | "TODOS">("TODOS");
+  const items = useMemo(
+    () => buildPlantaoQueue({ tipo, municipios, rain, hydro }),
+    [tipo, municipios, rain, hydro],
+  );
+  const counts = useMemo(() => countPlantao(items), [items]);
+  const visible = filter === "TODOS" ? items : items.filter((item) => item.action === filter);
+  const shown = compact ? visible.slice(0, 5) : visible.slice(0, 12);
+  const product = ALERT_PRODUCTS[tipo].short;
+
+  return (
+    <div
+      className="rounded-lg border border-border bg-bg/35 p-2"
+      title="Sugestão de plantão — não pinta o mapa. Em Edição, classifique e envie o alerta."
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          <ClipboardList className="size-3" />
+          Plantão
+        </p>
+        <p className="truncate text-[10px] text-text-mute">{product}</p>
+      </div>
+
+      <div className="mt-1.5 flex flex-wrap gap-1" role="toolbar" aria-label="Filtrar a fila do plantão">
+        <FilterChip active={filter === "TODOS"} onClick={() => setFilter("TODOS")}>
+          Todos ({items.length})
+        </FilterChip>
+        {(["vencido", "renovar", "emitir"] as const).map((key) => (
+          <FilterChip key={key} active={filter === key} tone={key} onClick={() => setFilter(key)}>
+            {plantaoLabel(key)} ({counts[key]})
+          </FilterChip>
+        ))}
+      </div>
+
+      {shown.length === 0 ? (
+        <p className="px-1 py-2 text-[11px] text-text-mute">
+          Nada na fila deste produto. Sem vencido, renovação próxima ou limiar cruzado.
+        </p>
+      ) : (
+        <ol className={cn("mt-1.5 space-y-0.5 overflow-auto", compact ? "max-h-40" : "max-h-56")}>
+          {shown.map((item) => (
+            <QueueRow key={`${item.action}-${item.nome}`} item={item} onSelect={onSelect} />
+          ))}
+        </ol>
+      )}
+      {!compact && visible.length > shown.length ? (
+        <p className="mt-1 px-1 text-[10px] text-text-mute">
+          +{visible.length - shown.length} na fila — abra o município pela busca.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function QueueRow({
+  item,
+  onSelect,
+}: {
+  item: PlantaoItem;
+  onSelect: (nome: string, bacia: string) => void;
+}) {
+  const Icon = ACTION_ICON[item.action];
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onSelect(item.nome, item.bacia)}
+        title={item.motivo}
+        className="flex w-full items-start gap-2 rounded-md px-1.5 py-1 text-left text-[11px] hover:bg-hover"
+      >
+        <span
+          className={cn(
+            "mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-md border px-1 py-0.5 text-[9px] font-black tracking-wide uppercase",
+            ACTION_TONE[item.action],
+          )}
+        >
+          <Icon className="size-2.5" />
+          {plantaoLabel(item.action)}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <strong className="truncate">{item.nome}</strong>
+            {item.action === "emitir" && item.suggested ? (
+              <RiskBadge level={item.suggested} className="text-[9px]" />
+            ) : (
+              <RiskBadge level={item.risco} className="text-[9px]" />
+            )}
+            <AlertCountdown expiresAt={item.expiresAt} variant="row" />
+          </span>
+          <span className="mt-0.5 block truncate text-[10px] text-text-mute">{item.motivo}</span>
+        </span>
+      </button>
+    </li>
+  );
+}
+
+function FilterChip({
+  active,
+  tone,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  tone?: PlantaoAction;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-2 py-0.5 text-[10px] font-bold",
+        active && tone
+          ? ACTION_TONE[tone]
+          : active
+            ? "border-focus/50 bg-focus/15 text-text"
+            : "border-border text-text-mute hover:text-text",
+      )}
+    >
+      {children}
+    </button>
+  );
+}

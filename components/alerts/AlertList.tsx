@@ -27,7 +27,7 @@ import type { AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib
 import { cn, formatRelative, withAlpha } from "@/lib/utils";
 import { formatMm } from "@/lib/rainfall-display";
 import { RainMmBadge } from "@/components/alerts/RainfallStrip";
-import { RainRanking, buildRainRanking } from "@/components/alerts/RainRanking";
+import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
 import { useOpsMode } from "@/components/shared/OpsMode";
 
 export function AlertList({
@@ -62,7 +62,13 @@ export function AlertList({
     issuedAt: number | null;
     expiresAt?: number | null;
   }>;
-  catalog: Array<{ id: string; nome: string; bacia: string; risco?: AlertLevel }>;
+  catalog: Array<{
+    id: string;
+    nome: string;
+    bacia: string;
+    risco?: AlertLevel;
+    expiresAt?: number | null;
+  }>;
   alerts: RainAlert[];
   hydro: HydroStation[];
   rain: RainfallPayload | null;
@@ -107,14 +113,19 @@ export function AlertList({
   }, [municipios]);
 
   const { isMobile } = useOpsMode();
-  const ranking = useMemo(() => {
-    const source = catalog.map((m) => ({
-      nome: m.nome,
-      bacia: m.bacia,
-      risco: m.risco ?? municipios.find((row) => row.nome === m.nome)?.risco ?? "BAIXO",
-    }));
-    return buildRainRanking(rain, source, tipo);
-  }, [catalog, rain, tipo, municipios]);
+  const fila = useMemo(
+    () =>
+      catalog
+        .filter((m) => !bacia || m.bacia === bacia)
+        .map((m) => ({
+          id: m.id,
+          nome: m.nome,
+          bacia: m.bacia,
+          risco: m.risco ?? "BAIXO",
+          expiresAt: m.expiresAt ?? null,
+        })),
+    [catalog, bacia],
+  );
 
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   useEffect(() => {
@@ -190,7 +201,14 @@ export function AlertList({
           placeholder="Buscar…"
           aria-label="Buscar município ou região"
         />
-        {!isMobile && rain ? <RainRanking rows={ranking} tipo={tipo} onSelect={onSelect} /> : null}
+        <PlantaoQueue
+          tipo={tipo}
+          municipios={fila}
+          rain={rain}
+          hydro={hydro}
+          compact={isMobile}
+          onSelect={onSelect}
+        />
       </div>
       <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">
         <ul>

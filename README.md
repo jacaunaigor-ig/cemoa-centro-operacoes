@@ -60,6 +60,8 @@ O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e list
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
+A **fila do plantão** (lista da esquerda) junta o que pede ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Não pinta o mapa — o operador classifica em Edição. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila.
+
 O **Aviso Meteorológico** do plantão cobre o turno do meteorologista: **12 horas**, **07–19** (diurno) e **19–07** (noturno), horário de Manaus. O cronômetro vale até o fim daquele plantão. Faltando **1 hora**, o painel mostra um aviso amarelo; faltando **15 minutos**, vira vermelho e pulsa; vencido, pede emissão imediata. Quem está autenticado emite pelo cartão do plantão ou pelo botão **Emitir agora** na faixa.
 
 **Operador** só no Desktop. O fluxo agora é separado:
