@@ -110,7 +110,7 @@ export async function exportAvisoPng(aviso: AvisoGrafico, image: HTMLImageElemen
     ctx.save();
     roundRect(ctx, 48, imgY, 984, imgH, 16);
     ctx.clip();
-    const scale = Math.max(984 / image.naturalWidth, imgH / image.naturalHeight);
+    const scale = Math.min(984 / image.naturalWidth, imgH / image.naturalHeight);
     const dw = image.naturalWidth * scale;
     const dh = image.naturalHeight * scale;
     ctx.drawImage(image, 48 + (984 - dw) / 2, imgY + (imgH - dh) / 2, dw, dh);
