@@ -12,13 +12,11 @@ export function OpsFooter({
   updatedAt,
   rainAt,
   hydroAt,
-  supabase,
 }: {
   source?: string;
   updatedAt?: number | null;
   rainAt?: number | null;
   hydroAt?: number | null;
-  supabase?: "ligado" | "aguardando";
 }) {
   const stamps = [
     updatedAt ? `Alertas ${formatAmazonDateTime(updatedAt)}` : null,
@@ -32,11 +30,6 @@ export function OpsFooter({
         <p className="min-w-0">
           <strong className="font-semibold text-text">CEMOA · Defesa Civil do Amazonas</strong>
           {source ? <span className="ml-1.5">{source}</span> : null}
-          {supabase ? (
-            <span className="ml-1.5">
-              · Supabase: {supabase === "ligado" ? "ligado" : "aguardando chaves"}
-            </span>
-          ) : null}
         </p>
         <nav aria-label="Fontes de dados" className="flex flex-wrap items-center gap-x-2">
           {FONTES.map((f) => (

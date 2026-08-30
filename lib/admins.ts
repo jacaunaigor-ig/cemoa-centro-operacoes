@@ -14,7 +14,6 @@ import {
   verifyPassword,
 } from "@/lib/password";
 import { googleAllowlist, isAllowedGoogleEmail, type GoogleProfile } from "@/lib/google";
-import { supabaseConfigured } from "@/lib/supabase-ops";
 
 export type AdminRecord = {
   id: string;
@@ -34,7 +33,7 @@ export type PublicAdmin = {
   email: string | null;
   googleSub: string | null;
   createdAt: string;
-  source: "file" | "env" | "supabase";
+  source: "file" | "env";
 };
 
 type StoreFile = { admins: AdminRecord[] };
@@ -157,7 +156,6 @@ export function adminCount(): number {
 }
 
 export function needsSetup(): boolean {
-  if (supabaseConfigured()) return false;
   return adminCount() === 0;
 }
 

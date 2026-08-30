@@ -41,7 +41,6 @@ type OpsMode = {
   needsSetup: boolean;
   googleEnabled: boolean;
   allowReset: boolean;
-  supabaseConfigured: boolean;
   authError: string | null;
   loginOpen: boolean;
   adminsOpen: boolean;
@@ -161,7 +160,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const [allowReset, setAllowReset] = useState(true);
-  const [supabaseConfigured, setSupabaseConfigured] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -175,7 +173,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         needsSetup?: boolean;
         googleEnabled?: boolean;
         allowReset?: boolean;
-        supabase?: boolean;
       },
       gen: number,
     ) => {
@@ -184,7 +181,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       setNeedsSetup(Boolean(data.needsSetup));
       setGoogleEnabled(Boolean(data.googleEnabled));
       if (typeof data.allowReset === "boolean") setAllowReset(data.allowReset);
-      if (typeof data.supabase === "boolean") setSupabaseConfigured(data.supabase);
       if (!data.user) {
         sessionStorage.removeItem(TOOLS_KEY);
         emit(toolsListeners);
@@ -214,7 +210,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         needsSetup?: boolean;
         googleEnabled?: boolean;
         allowReset?: boolean;
-        supabase?: boolean;
       };
       applyAuth(data, gen);
     } catch {
@@ -254,7 +249,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
           needsSetup?: boolean;
           googleEnabled?: boolean;
           allowReset?: boolean;
-          supabase?: boolean;
         };
         if (cancelled) return;
         applyAuth(data, gen);
@@ -401,7 +395,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       needsSetup,
       googleEnabled,
       allowReset,
-      supabaseConfigured,
       authError,
       loginOpen,
       adminsOpen,
@@ -430,7 +423,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       needsSetup,
       googleEnabled,
       allowReset,
-      supabaseConfigured,
       authError,
       loginOpen,
       adminsOpen,
@@ -458,7 +450,6 @@ const FALLBACK: OpsMode = {
   needsSetup: false,
   googleEnabled: false,
   allowReset: true,
-  supabaseConfigured: false,
   authError: null,
   loginOpen: false,
   adminsOpen: false,

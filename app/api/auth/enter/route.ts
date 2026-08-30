@@ -10,8 +10,6 @@ import {
 } from "@/lib/auth";
 import { enterWithCredentials } from "@/lib/admins";
 import { withOperatorRole } from "@/lib/equipe";
-import { signInSupabase } from "@/lib/supabase-auth";
-import { supabaseConfigured } from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -57,26 +55,6 @@ export async function POST(request: Request) {
   const email = login.includes("@") ? login : undefined;
 
   try {
-    if (supabaseConfigured()) {
-      const sb = await signInSupabase(login, password);
-      if ("error" in sb) {
-        if (sb.status === 401) recordLoginFailure(ip);
-        return NextResponse.json({ error: sb.error }, { status: sb.status });
-      }
-      clearLoginFailures(ip);
-      const response = NextResponse.json({
-        ok: true,
-        created: false,
-        user: withOperatorRole({
-          id: sb.admin.id,
-          login: sb.admin.login,
-          name: sb.admin.name,
-          email: sb.admin.email,
-        }),
-      });
-      return attachSessionCookie(response, sb.admin, request);
-    }
-
     const result = enterWithCredentials({
       name,
       login,
@@ -107,19 +85,11 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Falta CEMOA_SESSION_SECRET no Vercel (Settings → Environment Variables, mínimo 16 caracteres). Sem isso o admin não consegue gravar a sessão.",
+            "Falta CEMOA_SESSION_SECRET no Vercel (Settings → Environment Variables, mínimo 16 caracteres).",
         },
         { status: 503 },
       );
     }
-    const hint = err instanceof Error ? err.message : "";
-    return NextResponse.json(
-      {
-        error: hint
-          ? `Não foi possível entrar (${hint}). Confira as chaves do Supabase no Vercel.`
-          : "Não foi possível entrar. Tente de novo.",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Não foi possível entrar. Tente de novo." }, { status: 500 });
   }
 }
