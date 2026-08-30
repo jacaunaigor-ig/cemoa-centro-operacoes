@@ -5,7 +5,13 @@ import { mergeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 
 type Json = Record<string, unknown>;
 
-export function supabaseUrl() {
+/** Projeto Auth que tem a conta do operador. O host antigo no Vercel não resolve DNS. */
+const LIVE_SUPABASE_URL = "https://xdxmmdwlincochbmwkri.supabase.co";
+const LIVE_SUPABASE_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkeG1tZHdsaW5jb2NoYm13a3JpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwNzg5NTcsImV4cCI6MjEwMzY1NDk1N30.qZtv_9dEUWIJ00jFcX_e3ruEZBmW9jL2SnjU39iFqrU";
+const DEAD_SUPABASE_REF = "nwjirzgygfnkfwlywpdd";
+
+function cleanEnvUrl() {
   return (
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
       .replace(/^["']|["']$/g, "")
@@ -13,15 +19,27 @@ export function supabaseUrl() {
   );
 }
 
+function envPointsAtDeadProject(url = cleanEnvUrl()) {
+  return url.toLowerCase().includes(DEAD_SUPABASE_REF);
+}
+
+export function supabaseUrl() {
+  const env = cleanEnvUrl();
+  if (env && !envPointsAtDeadProject(env)) return env;
+  return LIVE_SUPABASE_URL;
+}
+
 export function supabaseKey() {
+  if (envPointsAtDeadProject()) return LIVE_SUPABASE_ANON;
   return (
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
-    ""
+    LIVE_SUPABASE_ANON
   );
 }
 
 export function supabaseAnonKey() {
+  if (envPointsAtDeadProject()) return LIVE_SUPABASE_ANON;
   return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || supabaseKey();
 }
 

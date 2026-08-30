@@ -125,7 +125,7 @@ O cadastro em arquivo e as classificações em memória servem para desenvolvime
 3. Defina no Vercel:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://xdxmmdwlincochbmwkri.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # só no servidor, nunca no browser
 ```
