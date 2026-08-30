@@ -87,6 +87,7 @@ export function StationsList({
           {(
             [
               ["Todos", "Todos"],
+              ["SEVERO", "Severo"],
               ["ALTO", "Alto"],
               ["MODERADO", "Moderado"],
               ["NORMAL", "Baixo"],

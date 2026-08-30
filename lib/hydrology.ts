@@ -58,10 +58,13 @@ export function normalizeMunicipio(s: string) {
     .trim();
 }
 
+export const HYDRO_LEVELS: HydroStatus[] = ["NORMAL", "MODERADO", "ALTO", "SEVERO"];
+
 export const HYDRO_STATUS_COLORS: Record<HydroStatus | "SL", string> = {
   NORMAL: "#10b981",
   MODERADO: "#f59e0b",
   ALTO: "#f97316",
+  SEVERO: "#ef4444",
   SL: "#6b7280",
 };
 
@@ -69,6 +72,7 @@ export const HYDRO_STATUS_LABELS: Record<HydroStatus | "SL", string> = {
   NORMAL: "Baixo",
   MODERADO: "Moderado",
   ALTO: "Alto",
+  SEVERO: "Severo",
   SL: "Sem leitura",
 };
 
@@ -93,6 +97,11 @@ export const PNG_HYDRO_ITEMS: Array<{
     text: "Risco relevante de desastre, com possibilidade de danos materiais, interrupção de serviços ou impacto à proteção da população.",
   },
   {
+    key: "SEVERO",
+    title: "Severo – Ação Iminente",
+    text: "Risco com potencial de impacto imediato à população; preparar ações de proteção e evacuação pontual.",
+  },
+  {
     key: "SL",
     title: "Sem leitura",
     text: "Estação sem cota no recorte operacional; o município permanece no monitoramento até nova medição.",
@@ -103,6 +112,7 @@ export const HYDRO_PILL_CLASS: Record<HydroStatus | "SL", string> = {
   NORMAL: "bg-risco-baixo/18 text-risco-baixo border-risco-baixo/35",
   MODERADO: "bg-risco-moderado/18 text-risco-moderado border-risco-moderado/40",
   ALTO: "bg-risco-alto/18 text-risco-alto border-risco-alto/40",
+  SEVERO: "bg-risco-severo/18 text-risco-severo border-risco-severo/40",
   SL: "bg-hover text-text-mute border-border",
 };
 
@@ -145,9 +155,15 @@ export const HYDRO_FONTE = FILE.fonte;
 export const HYDRO_MUDANCAS: HydroChange[] = FILE.mudancas24h;
 export const HYDRO_RIOS: HydroRiver[] = FILE.rios;
 
+export function asHydroStatus(value: string | undefined): HydroStatus | null {
+  if (value === "NORMAL" || value === "MODERADO" || value === "ALTO" || value === "SEVERO") {
+    return value;
+  }
+  return null;
+}
+
 function asStatus(value: string | undefined): HydroStatus {
-  if (value === "ALTO" || value === "MODERADO") return value;
-  return "NORMAL";
+  return asHydroStatus(value) ?? "NORMAL";
 }
 
 function asTendencia(value: string | undefined): HydroTendencia {
@@ -331,7 +347,7 @@ export function filtrarEstacoes(
 }
 
 export function ordenarPorCalha(lista: HydroStation[], modo: HydroMode) {
-  const ordem: Record<string, number> = { ALTO: 0, MODERADO: 1, NORMAL: 2 };
+  const ordem: Record<string, number> = { SEVERO: 0, ALTO: 1, MODERADO: 2, NORMAL: 3 };
   return [...lista].sort((a, b) => {
     const calhaComp = a.calha.localeCompare(b.calha, "pt-BR");
     if (calhaComp !== 0) return calhaComp;
@@ -343,17 +359,19 @@ export function contarStatus(stations: HydroStation[], modo: HydroMode) {
   let baixo = 0;
   let moderado = 0;
   let alto = 0;
+  let severo = 0;
   let comLeitura = 0;
   let semLeitura = 0;
   for (const e of stations) {
     if (e.semLeitura) semLeitura += 1;
     else comLeitura += 1;
     const st = statusAtivo(e, modo);
-    if (st === "ALTO") alto += 1;
+    if (st === "SEVERO") severo += 1;
+    else if (st === "ALTO") alto += 1;
     else if (st === "MODERADO") moderado += 1;
     else baixo += 1;
   }
-  return { total: stations.length, baixo, moderado, alto, comLeitura, semLeitura };
+  return { total: stations.length, baixo, moderado, alto, severo, comLeitura, semLeitura };
 }
 
 export function catalogStations(): HydroStation[] {

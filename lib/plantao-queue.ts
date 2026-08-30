@@ -36,7 +36,7 @@ const ACTION_RANK: Record<PlantaoAction, number> = {
 function hydroApoio(tipo: AlertType, station: HydroStation | undefined): RainApoio | null {
   if (tipo !== "ALAGAMENTO" || !station || station.semLeitura) return null;
   const st = statusAtivo(station, "enchente");
-  if (st !== "MODERADO" && st !== "ALTO") return null;
+  if (st !== "MODERADO" && st !== "ALTO" && st !== "SEVERO") return null;
   const cota = station.cota != null ? `${station.cota.toFixed(2)} m` : "sem cota do dia";
   return {
     level: st,

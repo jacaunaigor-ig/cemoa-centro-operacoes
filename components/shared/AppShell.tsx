@@ -24,6 +24,7 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { MeteoAvisoBanner, MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
+import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
 
 export function AppShell({
   children,
@@ -62,6 +63,7 @@ export function AppShell({
 
   return (
     <MeteoAvisoProvider>
+      <AvisoGraficoProvider>
       <div
         className={cn(
           "flex flex-col transition-[min-height] duration-300",
@@ -247,6 +249,7 @@ export function AppShell({
       <LoginDialog />
       <AdminsDialog />
       </div>
+      </AvisoGraficoProvider>
     </MeteoAvisoProvider>
   );
 }

@@ -13,6 +13,7 @@ import {
   Waves,
 } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
+import { AvisoGraficoButton } from "@/components/alerts/AvisoGrafico";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ import { STATIC_DEPLOY } from "@/lib/site";
 import { toast } from "sonner";
 import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 import {
+  HYDRO_LEVELS,
   HYDRO_STATUS_COLORS,
   HYDRO_STATUS_LABELS,
   PNG_HYDRO_ITEMS,
@@ -79,6 +81,7 @@ function parseStatus(value: string | null): HydroStatusFilter {
     value === "NORMAL" ||
     value === "MODERADO" ||
     value === "ALTO" ||
+    value === "SEVERO" ||
     value === "SL" ||
     value === "COM_LEITURA"
   ) {
@@ -356,7 +359,7 @@ export function HydrologyWorkbench() {
     if (!data) throw new Error("Mapa ainda não carregou");
     const byNome = new Map(catalog.map((s) => [s.municipio, s]));
     const byNorm = new Map(catalog.map((s) => [normalizeMunicipio(s.municipio), s]));
-    const counts = { NORMAL: 0, MODERADO: 0, ALTO: 0, SL: 0 };
+    const counts = { NORMAL: 0, MODERADO: 0, ALTO: 0, SEVERO: 0, SL: 0 };
     for (const s of catalog) {
       counts[statusAtivo(s, modo)] += 1;
       if (s.semLeitura) counts.SL += 1;
@@ -381,7 +384,7 @@ export function HydrologyWorkbench() {
       footerSources: "Fontes de monitoramento: CEMOA · ANA · SGB · SEMA",
       extraNote: {
         title: "Sem cota do dia",
-        text: `${counts.SL} município(s) sem leitura no recorte. O status operacional (Baixo, Moderado ou Alto) permanece pintado no mapa.`,
+        text: `${counts.SL} município(s) sem leitura no recorte. O status operacional (Baixo, Moderado, Alto ou Severo) permanece pintado no mapa.`,
       },
     });
   }
@@ -402,7 +405,7 @@ export function HydrologyWorkbench() {
               {!isMobile && !loading ? (
                 <span>
                   {" · "}
-                  {kpis.alto} alto · {kpis.moderado} moderado · {kpis.comLeitura} com leitura
+                  {kpis.severo} severo · {kpis.alto} alto · {kpis.moderado} moderado · {kpis.comLeitura} com leitura
                 </span>
               ) : null}
             </p>
@@ -413,8 +416,10 @@ export function HydrologyWorkbench() {
               </p>
             ) : null}
           </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <AvisoGraficoButton compact={isMobile} />
           <div
-            className="ml-auto flex rounded-lg border border-border bg-hover p-0.5"
+            className="flex rounded-lg border border-border bg-hover p-0.5"
             role="group"
             aria-label="Tipo de risco"
           >
@@ -439,10 +444,11 @@ export function HydrologyWorkbench() {
               Inundação
             </button>
           </div>
+          </div>
         </div>
 
         <section className="shrink-0" aria-label="Resumo do boletim">
-          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6")}>
+          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7")}>
             <KpiCard
               compact
               label="Municípios"
@@ -483,6 +489,16 @@ export function HydrologyWorkbench() {
               accent="#f97316"
               active={status === "ALTO"}
               onClick={() => setQuery({ status: "ALTO", municipio: null })}
+              loading={loading}
+            />
+            <KpiCard
+              compact
+              label="Severo"
+              value={loading ? "—" : String(kpis.severo)}
+              sub={pct(kpis.severo)}
+              accent="#ef4444"
+              active={status === "SEVERO"}
+              onClick={() => setQuery({ status: "SEVERO", municipio: null })}
               loading={loading}
             />
             <KpiCard
@@ -681,7 +697,13 @@ export function HydrologyWorkbench() {
                           <b className="text-text">
                             {m.nota ??
                               `${m.de === "NORMAL" || m.de === "BAIXO" ? "Baixo" : m.de === "MODERADO" ? "Moderado" : m.de ?? "—"} → ${
-                                m.para === "NORMAL" ? "Baixo" : m.para === "MODERADO" ? "Moderado" : "Alto"
+                                m.para === "NORMAL"
+                                  ? "Baixo"
+                                  : m.para === "MODERADO"
+                                    ? "Moderado"
+                                    : m.para === "SEVERO"
+                                      ? "Severo"
+                                      : "Alto"
                               }`}
                           </b>
                         </li>
@@ -801,9 +823,10 @@ export function HydrologyWorkbench() {
                   {modo === "vazante" ? "Estiagem" : "Inundação"}
                 </div>
                 <ul className="space-y-0.5">
-                  <LegendDot color="#66BB6A" label="Baixo" />
-                  <LegendDot color="#FFEB3B" label="Moderado" />
-                  <LegendDot color="#FF9800" label="Alto" />
+                  <LegendDot color={HYDRO_STATUS_COLORS.NORMAL} label="Baixo" />
+                  <LegendDot color={HYDRO_STATUS_COLORS.MODERADO} label="Moderado" />
+                  <LegendDot color={HYDRO_STATUS_COLORS.ALTO} label="Alto" />
+                  <LegendDot color={HYDRO_STATUS_COLORS.SEVERO} label="Severo" />
                   {status === "SL" ? (
                     <LegendDot color="#7c8fab" label="Sem leitura" />
                   ) : null}
@@ -818,7 +841,7 @@ export function HydrologyWorkbench() {
               drawMode={drawMode}
               paintArmed={paintArmed}
               paintLevel={paintLevel}
-              levels={["NORMAL", "MODERADO", "ALTO"]}
+              levels={HYDRO_LEVELS}
               labels={HYDRO_STATUS_LABELS}
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}

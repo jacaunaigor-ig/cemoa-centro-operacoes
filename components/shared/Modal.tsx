@@ -13,6 +13,7 @@ export function Modal({
   onClose,
   children,
   wide,
+  className,
 }: {
   open: boolean;
   title: string;
@@ -20,6 +21,7 @@ export function Modal({
   onClose: () => void;
   children: React.ReactNode;
   wide?: boolean;
+  className?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -52,6 +54,7 @@ export function Modal({
         className={cn(
           "relative z-10 max-h-[min(92dvh,720px)] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-border bg-panel p-4 shadow-2xl animate-in slide-in-from-bottom-4 fade-in-0 duration-200 sm:rounded-2xl sm:p-5 sm:zoom-in-95 sm:slide-in-from-bottom-0",
           wide ? "sm:max-w-lg" : "sm:max-w-md",
+          className,
         )}
       >
         <div className="mb-3 flex items-start justify-between gap-3">

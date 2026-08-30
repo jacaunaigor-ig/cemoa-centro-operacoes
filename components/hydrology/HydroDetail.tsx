@@ -231,7 +231,7 @@ function HydroAdminForm({
             value={vazante}
             onChange={(e) => setVazante(e.target.value as HydroStatus)}
           >
-            {(["NORMAL", "MODERADO", "ALTO"] as const).map((s) => (
+            {(["NORMAL", "MODERADO", "ALTO", "SEVERO"] as const).map((s) => (
               <option key={s} value={s}>
                 {HYDRO_STATUS_LABELS[s]}
               </option>
@@ -245,7 +245,7 @@ function HydroAdminForm({
             value={enchente}
             onChange={(e) => setEnchente(e.target.value as HydroStatus)}
           >
-            {(["NORMAL", "MODERADO", "ALTO"] as const).map((s) => (
+            {(["NORMAL", "MODERADO", "ALTO", "SEVERO"] as const).map((s) => (
               <option key={s} value={s}>
                 {HYDRO_STATUS_LABELS[s]}
               </option>

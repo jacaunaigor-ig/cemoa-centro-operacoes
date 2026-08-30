@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { Bell, CloudSun, Megaphone } from "lucide-react";
+import { AvisoGraficoButton } from "@/components/alerts/AvisoGrafico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -317,6 +318,7 @@ export function MeteoAvisoDutyCard() {
             <strong className="block text-xs">Sem aviso</strong>
           )}
         </div>
+        <AvisoGraficoButton compact={isMobile} />
         {canEmit ? (
           <Button
             type="button"
@@ -326,7 +328,7 @@ export function MeteoAvisoDutyCard() {
             onClick={() => setOpen(true)}
           >
             <Megaphone className="size-3.5" />
-            {aviso ? "Emitir" : "Emitir aviso"}
+            {aviso ? "Validar 12 h" : "Validar plantão"}
           </Button>
         ) : null}
       </div>

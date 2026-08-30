@@ -111,7 +111,7 @@ export function RiskHelpButton({
                 {!isMobile ? (
                   <p className="text-xs text-text-mute">
                     {variant === "boletim"
-                      ? "Baixo, Moderado e Alto pintam o município mesmo sem cota do dia. Cinza só no filtro Sem leitura."
+                      ? "Baixo, Moderado, Alto e Severo pintam o município mesmo sem cota do dia. Cinza só no filtro Sem leitura."
                       : "Referência: art. 12 da Portaria MIDR nº 2.458/2026."}
                   </p>
                 ) : null}

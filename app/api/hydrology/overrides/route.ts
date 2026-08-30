@@ -25,10 +25,20 @@ function parsePatch(raw: unknown): HydroPatch | null {
       patch.cota = n;
     }
   }
-  if (body.statusVazante === "NORMAL" || body.statusVazante === "MODERADO" || body.statusVazante === "ALTO") {
+  if (
+    body.statusVazante === "NORMAL" ||
+    body.statusVazante === "MODERADO" ||
+    body.statusVazante === "ALTO" ||
+    body.statusVazante === "SEVERO"
+  ) {
     patch.statusVazante = body.statusVazante as HydroStatus;
   }
-  if (body.statusEnchente === "NORMAL" || body.statusEnchente === "MODERADO" || body.statusEnchente === "ALTO") {
+  if (
+    body.statusEnchente === "NORMAL" ||
+    body.statusEnchente === "MODERADO" ||
+    body.statusEnchente === "ALTO" ||
+    body.statusEnchente === "SEVERO"
+  ) {
     patch.statusEnchente = body.statusEnchente as HydroStatus;
   }
   if (typeof body.semLeitura === "boolean") patch.semLeitura = body.semLeitura;

@@ -10,7 +10,7 @@ export type HydroPatch = {
 const store = new Map<string, HydroPatch>();
 
 function isStatus(value: unknown): value is HydroStatus {
-  return value === "NORMAL" || value === "MODERADO" || value === "ALTO";
+  return value === "NORMAL" || value === "MODERADO" || value === "ALTO" || value === "SEVERO";
 }
 
 export function getHydroOverrides() {

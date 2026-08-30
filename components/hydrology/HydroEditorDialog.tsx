@@ -9,7 +9,7 @@ import { HYDRO_STATUS_COLORS, HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hyd
 import type { HydroPatch } from "@/lib/hydro-overrides";
 import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
 
-const LEVELS: HydroStatus[] = ["NORMAL", "MODERADO", "ALTO"];
+const LEVELS: HydroStatus[] = ["NORMAL", "MODERADO", "ALTO", "SEVERO"];
 
 export function HydroEditorDialog({
   open,

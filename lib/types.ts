@@ -80,7 +80,7 @@ export type AlertsPayload = {
 
 export type HydroMode = "vazante" | "enchente";
 
-export type HydroStatus = "NORMAL" | "MODERADO" | "ALTO";
+export type HydroStatus = "NORMAL" | "MODERADO" | "ALTO" | "SEVERO";
 
 export type HydroStatusFilter = "Todos" | HydroStatus | "SL" | "COM_LEITURA";
 
