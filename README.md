@@ -5,7 +5,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. O operador entra com usuário e senha locais; as classificações ficam em memória nesta sessão.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -96,7 +96,7 @@ Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess
 
 ### Primeiro operador
 
-O botão **Admin** abre o login. No primeiro acesso, cadastre **usuário e senha** (mínimo 10 caracteres, com letras e números). Depois ligue **Edição**. A conta local fica em `data/admins.json` (não vai para o git).
+O botão **Admin** abre o login. Com Supabase ligado, use o **e-mail e a senha** da conta em Authentication → Users. Depois ligue **Edição**. Sem Supabase, o primeiro acesso cria um admin local (`data/admins.json`).
 
 Em produção (Vercel), defina o operador do ambiente — o arquivo local **não sobrevive** a um reciclo serverless:
 
@@ -107,15 +107,39 @@ CEMOA_ADMIN_PASSWORD=senha-forte-aqui
 CEMOA_ADMIN_NAME=Igor
 ```
 
-`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). O usuário do ambiente não se apaga pela interface.
+`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface.
 
-Como entrar no site publicado:
+O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app). O alias `operacoes.vercel.app` não aponta para um deploy — use o endereço completo acima.
 
-1. No Vercel, grave as três variáveis acima (Production) e faça Redeploy.
-2. Abra [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app) (não use `operacoes.vercel.app`).
-3. **Admin** → usuário e senha do ambiente → **Edição**.
+### Persistência: Supabase (mesmo projeto do Vercel)
 
-Não há vínculo com Supabase. Classificações e avisos ficam na memória do servidor até o reciclo.
+O cadastro em arquivo e as classificações em memória servem para desenvolvimento. Em produção o caminho é **Supabase** (Postgres + Auth + RLS), no **mesmo projeto** já associado ao Vercel:
+
+- os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel
+- vários operadores veem o mesmo mapa
+- Auth com e-mail/senha da equipe CEMOA
+- políticas RLS: `chefe`, `meteorologista`, `geologo` e `operacional` escrevem; o painel público só lê
+
+O host canônico é `https://xdxmmdwlincochbmwkri.supabase.co`. Se o Vercel ainda tiver o host antigo `nwjirzgygfnkfwlywpdd` (não resolve DNS), o centro troca sozinho para o canônico.
+
+1. No [SQL Editor](https://supabase.com/dashboard/project/xdxmmdwlincochbmwkri/sql) rode `supabase/schema.sql` (uma vez).
+2. A integração Vercel ↔ Supabase deve injetar no deploy:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xdxmmdwlincochbmwkri.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...   # só no servidor, nunca no browser
+```
+
+O centro também aceita `SUPABASE_URL` e `SUPABASE_ANON_KEY` (nomes que a integração às vezes usa). Com essas variáveis, **Admin** entra pela conta do Auth e grava `alert_overrides` / `hydro_overrides` / avisos no Postgres. Sem elas, continua o modo local (cookie + arquivo).
+
+Como entrar:
+
+1. No Supabase: Authentication → Users → Add user (e-mail + senha). Marque o e-mail como confirmado, ou desligue **Confirm email** em Authentication → Providers → Email.
+2. Rode de novo o `schema.sql` se ainda não rodou o trigger de `profiles`.
+3. No painel: **Admin** → e-mail e senha dessa conta → **Edição**.
+
+Se o rodapé ainda diz “Supabase: aguardando chaves”, as variáveis não estão no ambiente do deploy — faça Redeploy depois de associar o projeto.
 
 ### Entrar com Gmail
 

@@ -54,6 +54,7 @@ export function AppShell({
     mapFocus,
     session,
     needsSetup,
+    supabaseConfigured,
     setLayout,
     setTheme,
     setAdmin,
@@ -214,9 +215,14 @@ export function AppShell({
                 <button
                   type="button"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel-2 px-2.5 py-1.5 text-[10px] font-black tracking-wide text-text-mute uppercase transition-colors hover:text-text"
+                  title={
+                    supabaseConfigured
+                      ? "Entrar com a conta do Supabase Auth"
+                      : "Entrar como admin (usuário e senha locais)"
+                  }
                   onClick={() => setAdmin(true)}
                 >
-                  {needsSetup ? <Shield className="size-3.5" /> : <LogIn className="size-3.5" />}
+                  {needsSetup && !supabaseConfigured ? <Shield className="size-3.5" /> : <LogIn className="size-3.5" />}
                   Admin
                 </button>
               )}
@@ -227,7 +233,11 @@ export function AppShell({
             <InfoTooltip
               label="Sobre a sincronização"
               title="Sincronizado"
-              body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} Classificações ficam nesta sessão (memória). Em produção, o admin vem de CEMOA_ADMIN_LOGIN e CEMOA_ADMIN_PASSWORD.`}
+              body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} ${
+                supabaseConfigured
+                  ? "Supabase ligado: classificações e cotas gravam no Postgres do mesmo projeto associado ao Vercel."
+                  : "Supabase aguardando chaves: o centro está pronto — cole URL e chave no Vercel (ou em .env.local). Até lá, cookie + memória."
+              }`}
             >
               <button
                 type="button"
@@ -277,6 +287,7 @@ export function AppShell({
         updatedAt={updatedAt}
         rainAt={rainAt}
         hydroAt={hydroAt}
+        supabase={supabaseConfigured ? "ligado" : "aguardando"}
       />
       )}
       <LoginDialog />

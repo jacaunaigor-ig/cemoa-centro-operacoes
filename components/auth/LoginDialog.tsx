@@ -23,6 +23,7 @@ export function LoginDialog() {
     googleEnabled,
     allowReset,
     authError,
+    supabaseConfigured,
     closeLogin,
     completeLogin,
   } = useOpsMode();
@@ -30,7 +31,7 @@ export function LoginDialog() {
   const [busy, setBusy] = useState(false);
   const [forceCreate, setForceCreate] = useState(false);
   const [resetLocal, setResetLocal] = useState(false);
-  const creating = needsSetup || forceCreate || resetLocal;
+  const creating = !supabaseConfigured && (needsSetup || forceCreate || resetLocal);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,7 +87,7 @@ export function LoginDialog() {
       } catch {
         setError(
           res.status >= 500
-            ? "O servidor falhou ao entrar. No Vercel, defina CEMOA_SESSION_SECRET e CEMOA_ADMIN_LOGIN / CEMOA_ADMIN_PASSWORD."
+            ? "O servidor falhou ao entrar. No Vercel, defina CEMOA_SESSION_SECRET (mínimo 16 caracteres) e as chaves do Supabase."
             : "Resposta inválida do servidor. Tente de novo.",
         );
         return;
@@ -126,8 +127,10 @@ export function LoginDialog() {
       description={
         resetLocal
           ? "Apaga o administrador gravado neste computador e cria o seu. Use a mesma senha no próximo login."
-          : creating
-              ? "Cadastre usuário e senha do admin. Mínimo 10 caracteres, com letras e números. Depois ligue Edição no mapa."
+          : supabaseConfigured
+            ? "E-mail e senha da conta em Authentication → Users no Supabase. Depois ligue Edição no mapa."
+            : creating
+              ? "Cadastre usuário e senha do admin. Mínimo 10 caracteres, com letras e números."
               : "Usuário e senha do admin. A edição do mapa só liga depois do login."
       }
     >
@@ -166,11 +169,11 @@ export function LoginDialog() {
           </label>
         ) : null}
         <label className="grid gap-1 text-xs font-semibold">
-          Usuário
+          {supabaseConfigured ? "E-mail" : "Usuário"}
           <Input
             name="username"
-            autoComplete="username"
-            placeholder="ex.: igor"
+            autoComplete={supabaseConfigured ? "username email" : "username"}
+            placeholder={supabaseConfigured ? "e-mail da conta no Supabase" : "ex.: igor"}
             required
             minLength={3}
             autoFocus={!creating}
@@ -183,7 +186,7 @@ export function LoginDialog() {
             type="password"
             autoComplete={creating ? "new-password" : "current-password"}
             required
-            minLength={creating ? 10 : 1}
+            minLength={creating ? 10 : supabaseConfigured ? 6 : 1}
           />
         </label>
         {creating ? (
@@ -202,6 +205,12 @@ export function LoginDialog() {
           <p className="text-[11px] text-text-mute">
             Esta senha é a que você vai usar no próximo login. Ela não fica visível depois de
             gravada.
+          </p>
+        ) : null}
+        {supabaseConfigured ? (
+          <p className="text-[11px] text-text-mute">
+            Se o login falhar com conta nova, no Supabase desligue <strong>Confirm email</strong>{" "}
+            (Authentication → Providers → Email) ou marque o usuário como confirmado.
           </p>
         ) : null}
         {!creating && allowReset ? (

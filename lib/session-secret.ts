@@ -8,6 +8,11 @@ export class SessionConfigError extends Error {
 export function sessionSecret(): string {
   const env = process.env.CEMOA_SESSION_SECRET?.trim();
   if (env && env.length >= 16) return env;
+  const derived =
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    "";
+  if (derived.length >= 16) return `cemoa-derived:${derived.slice(0, 80)}`;
   if (process.env.NODE_ENV !== "production") {
     return "cemoa-dev-session-secret-change-me";
   }
