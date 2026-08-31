@@ -183,6 +183,8 @@ export type RainfallStation = {
   mm1h: number | null;
   mm6h: number | null;
   mm24h: number | null;
+  mm72h: number | null;
+  mm96h: number | null;
   ultimoMm: number | null;
   observedAt: number | null;
 };
@@ -191,6 +193,8 @@ export type RainfallWindows = {
   mm1h: number | null;
   mm6h: number | null;
   mm24h: number | null;
+  mm72h: number | null;
+  mm96h: number | null;
 };
 
 export type RainfallMunicipio = RainfallWindows & {
@@ -223,6 +227,7 @@ export type RainfallPayload = {
       mm1h: RainfallPico | null;
       mm6h: RainfallPico | null;
       mm24h: RainfallPico | null;
+      mm72h: RainfallPico | null;
     };
   };
   maior: (RainfallWindows & { nome: string }) | null;
@@ -321,5 +326,24 @@ export type WeatherForecast = {
     ventoDir: string | null;
     ventoInt: string | null;
   } | null;
+  station: {
+    codigo: string;
+    nome: string;
+    km: number | null;
+    tempNow: number | null;
+    tempMaxObs: number | null;
+    tempMinObs: number | null;
+    chuva: number | null;
+    observedAt: number | null;
+  } | null;
+  horizons: Array<{
+    id: "24h" | "48h" | "72h" | "5d";
+    label: string;
+    dateLabel: string | null;
+    weekday: string | null;
+    resumo: string | null;
+    tempMax: number | null;
+    tempMin: number | null;
+  }>;
   days: WeatherForecastDay[];
 };

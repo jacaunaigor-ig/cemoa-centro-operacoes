@@ -2,8 +2,16 @@ import { getMunicipality, MUNICIPALITIES } from "@/lib/municipalities";
 import type { WeatherForecast, WeatherForecastDay, WeatherPeriod } from "@/lib/types";
 
 export const INMET_PREVMET_URL = "https://apiprevmet3.inmet.gov.br/previsao";
+export const INMET_STATION_URL = "https://apiprevmet3.inmet.gov.br/estacao/proxima";
 export const INMET_PORTAL_URL = "https://portal.inmet.gov.br/";
 export const INMET_SOURCE = "INMET · Prevmet";
+
+const HORIZON_SPECS = [
+  { id: "24h" as const, label: "24 h", offset: 1 },
+  { id: "48h" as const, label: "48 h", offset: 2 },
+  { id: "72h" as const, label: "72 h", offset: 3 },
+  { id: "5d" as const, label: "5 dias", offset: 4 },
+];
 
 const TTL_MS = 30 * 60_000;
 const FETCH_MS = 12_000;
@@ -115,6 +123,16 @@ function parseDay(dateLabel: string, raw: unknown): WeatherForecastDay | null {
   };
 }
 
+function parseBrDate(label: string): number {
+  const m = label.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return Number.POSITIVE_INFINITY;
+  return Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+}
+
+function sortDays(days: WeatherForecastDay[]): WeatherForecastDay[] {
+  return [...days].sort((a, b) => parseBrDate(a.dateLabel) - parseBrDate(b.dateLabel));
+}
+
 function pickToday(days: WeatherForecastDay[], now = Date.now()): WeatherForecastDay | null {
   const today = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Manaus",
@@ -123,6 +141,65 @@ function pickToday(days: WeatherForecastDay[], now = Date.now()): WeatherForecas
     year: "numeric",
   }).format(new Date(now));
   return days.find((d) => d.dateLabel === today) ?? days[0] ?? null;
+}
+
+function horizonsFromDays(
+  days: WeatherForecastDay[],
+  today: WeatherForecastDay | null,
+): WeatherForecast["horizons"] {
+  const idx = today ? days.findIndex((d) => d.dateLabel === today.dateLabel) : 0;
+  const start = idx >= 0 ? idx : 0;
+  return HORIZON_SPECS.map((spec) => {
+    const day = days[start + spec.offset] ?? null;
+    return {
+      id: spec.id,
+      label: spec.label,
+      dateLabel: day?.dateLabel ?? null,
+      weekday: day?.weekday ?? null,
+      resumo: day?.resumo ?? null,
+      tempMax: day?.tempMax ?? null,
+      tempMin: day?.tempMin ?? null,
+    };
+  });
+}
+
+function parseStationObservedAt(dt: unknown, hr: unknown): number | null {
+  const date = str(dt);
+  if (!date) return null;
+  const dm = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dm) return null;
+  const hourRaw = str(hr) ?? "0000";
+  const padded = hourRaw.replace(/\D/g, "").padStart(4, "0").slice(0, 4);
+  const hour = Number(padded.slice(0, 2));
+  const minute = Number(padded.slice(2, 4));
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return Date.UTC(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]), hour, minute);
+}
+
+export function parseInmetStation(raw: unknown): WeatherForecast["station"] {
+  if (!raw || typeof raw !== "object") return null;
+  const root = raw as Record<string, unknown>;
+  const est =
+    root.estacao && typeof root.estacao === "object"
+      ? (root.estacao as Record<string, unknown>)
+      : {};
+  const dados =
+    root.dados && typeof root.dados === "object"
+      ? (root.dados as Record<string, unknown>)
+      : root;
+  const codigo = str(est.CODIGO) ?? str(dados.CD_ESTACAO);
+  const tempNow = num(dados.TEM_INS);
+  if (!codigo && tempNow == null) return null;
+  return {
+    codigo: codigo ?? "—",
+    nome: str(est.NOME) ?? str(dados.DC_NOME) ?? codigo ?? "Estação INMET",
+    km: num(est.DISTANCIA_EM_KM),
+    tempNow,
+    tempMaxObs: num(dados.TEM_MAX),
+    tempMinObs: num(dados.TEM_MIN),
+    chuva: num(dados.CHUVA),
+    observedAt: parseStationObservedAt(dados.DT_MEDICAO, dados.HR_MEDICAO),
+  };
 }
 
 export function parseInmetForecast(
@@ -140,8 +217,9 @@ export function parseInmetForecast(
     if (day) days.push(day);
   }
   if (!days.length) return null;
+  const ordered = sortDays(days);
   const muni = MUNICIPALITIES.find((m) => m.codigoIbge === ibge || m.id === ibge);
-  const today = pickToday(days, now);
+  const today = pickToday(ordered, now);
   const period = currentWeatherPeriod(now);
   const nowSnap =
     today?.periods[period] ?? today?.periods.manha ?? today?.periods.tarde ?? today?.periods.noite ?? null;
@@ -163,11 +241,17 @@ export function parseInmetForecast(
           ventoInt: nowSnap.ventoInt,
         }
       : null,
-    days,
+    station: null,
+    horizons: horizonsFromDays(ordered, today),
+    days: ordered,
   };
 }
 
-function emptyForecast(ibge: string, error: string | null): WeatherForecast {
+function emptyForecast(
+  ibge: string,
+  error: string | null,
+  extra?: Partial<Pick<WeatherForecast, "station">>,
+): WeatherForecast {
   const muni = MUNICIPALITIES.find((m) => m.codigoIbge === ibge || m.id === ibge);
   return {
     generatedAt: Date.now(),
@@ -178,20 +262,24 @@ function emptyForecast(ibge: string, error: string | null): WeatherForecast {
     nome: muni?.nome ?? ibge,
     today: null,
     now: null,
+    station: extra?.station ?? null,
+    horizons: horizonsFromDays([], null),
     days: [],
   };
 }
 
-async function fetchInmet(ibge: string): Promise<unknown> {
+const INMET_HEADERS = {
+  Accept: "application/json",
+  "User-Agent": "CEMOA-Centro-Operacoes/1.0 (Defesa Civil do Amazonas)",
+};
+
+async function fetchJson(url: string): Promise<unknown> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_MS);
   try {
-    const res = await fetch(`${INMET_PREVMET_URL}/${ibge}`, {
+    const res = await fetch(url, {
       signal: ctrl.signal,
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "CEMOA-Centro-Operacoes/1.0 (Defesa Civil do Amazonas)",
-      },
+      headers: INMET_HEADERS,
       cache: "no-store",
     });
     if (!res.ok) throw new Error(`INMET ${res.status}`);
@@ -199,6 +287,14 @@ async function fetchInmet(ibge: string): Promise<unknown> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchInmet(ibge: string): Promise<unknown> {
+  return fetchJson(`${INMET_PREVMET_URL}/${ibge}`);
+}
+
+async function fetchInmetStation(ibge: string): Promise<unknown> {
+  return fetchJson(`${INMET_STATION_URL}/${ibge}`);
 }
 
 export async function getWeatherForecast(ibgeOrNome: string): Promise<WeatherForecast> {
@@ -214,13 +310,27 @@ export async function getWeatherForecast(ibgeOrNome: string): Promise<WeatherFor
     return { ...hit.data, cache: "HIT" };
   }
   try {
-    const raw = await fetchInmet(ibge);
-    const parsed = parseInmetForecast(ibge, raw);
+    const [forecastSettled, stationSettled] = await Promise.allSettled([
+      fetchInmet(ibge),
+      fetchInmetStation(ibge),
+    ]);
+    const station =
+      stationSettled.status === "fulfilled" ? parseInmetStation(stationSettled.value) : null;
+    if (forecastSettled.status === "rejected") {
+      const message =
+        forecastSettled.reason instanceof Error
+          ? forecastSettled.reason.message
+          : "Falha ao consultar o INMET.";
+      if (hit) return { ...hit.data, cache: "HIT", error: `${message} · último lote.`, station: hit.data.station ?? station };
+      return emptyForecast(ibge, message, { station });
+    }
+    const parsed = parseInmetForecast(ibge, forecastSettled.value);
     if (!parsed) {
-      if (hit) return { ...hit.data, cache: "HIT", error: "Previsão INMET incompleta; último lote." };
-      return emptyForecast(ibge, "INMET não devolveu previsão para este município.");
+      if (hit) return { ...hit.data, cache: "HIT", error: "Previsão INMET incompleta; último lote.", station: hit.data.station ?? station };
+      return emptyForecast(ibge, "INMET não devolveu previsão para este município.", { station });
     }
     parsed.nome = muni?.nome ?? parsed.nome;
+    parsed.station = station;
     memo.set(ibge, { at: Date.now(), data: parsed });
     if (memo.size > 80) {
       const oldest = [...memo.entries()].sort((a, b) => a[1].at - b[1].at)[0];

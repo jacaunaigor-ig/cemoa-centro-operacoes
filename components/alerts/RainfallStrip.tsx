@@ -49,6 +49,8 @@ export function RainfallStrip({
     mm1h: picos?.mm1h?.mm ?? null,
     mm6h: picos?.mm6h?.mm ?? null,
     mm24h: picos?.mm24h?.mm ?? null,
+    mm72h: picos?.mm72h?.mm ?? null,
+    mm96h: null,
   };
 
   return (

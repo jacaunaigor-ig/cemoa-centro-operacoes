@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { classificationByline, type AlertType } from "@/lib/alert-types";
 import { buildAlertBriefing } from "@/lib/alert-briefing";
-import { formatMm } from "@/lib/rainfall-display";
 import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
@@ -122,7 +121,9 @@ export function AlertDetail({
         </ul>
       ) : null}
 
-      {municipioId ? <WeatherForecastPanel ibge={municipioId} nome={nome} /> : null}
+      {municipioId ? (
+        <WeatherForecastPanel ibge={municipioId} nome={nome} rain={rain} />
+      ) : null}
 
       {tipo === "INCENDIO" ? (
         <div className="mt-3 grid grid-cols-2 gap-1.5 text-center">
@@ -132,13 +133,7 @@ export function AlertDetail({
             value={air ? String(air.sensors.length) : "—"}
           />
         </div>
-      ) : (
-        <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
-          <TechStat label="1 h" value={rain ? formatMm(rain.mm1h) : "—"} />
-          <TechStat label="6 h" value={rain ? formatMm(rain.mm6h) : "—"} />
-          <TechStat label="24 h" value={rain ? formatMm(rain.mm24h) : "—"} />
-        </div>
-      )}
+      ) : null}
       {hydro ? (
         <p className="mt-2 text-[11px] text-text-dim">
           Cota {hydro.semLeitura ? "sem leitura" : `${hydro.cota?.toFixed(2)} m`}

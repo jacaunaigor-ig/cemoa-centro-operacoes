@@ -21,6 +21,8 @@ type CemadenRow = {
   acc1hr?: unknown;
   acc6hr?: unknown;
   acc24hr?: unknown;
+  acc72hr?: unknown;
+  acc96hr?: unknown;
   ultimovalor?: unknown;
   datahoraUltimovalor?: string;
 };
@@ -94,6 +96,7 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
     mm1h: null,
     mm6h: null,
     mm24h: null,
+    mm72h: null,
   };
   let maior: RainfallPayload["maior"] = null;
 
@@ -111,12 +114,16 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
       mm1h: parseMm(row.acc1hr),
       mm6h: parseMm(row.acc6hr),
       mm24h: parseMm(row.acc24hr),
+      mm72h: parseMm(row.acc72hr),
+      mm96h: parseMm(row.acc96hr),
       ultimoMm: parseMm(row.ultimovalor),
       observedAt: parseCemadenTime(row.datahoraUltimovalor),
     }));
     const mm24h = maxMm(estacoes.map((s) => s.mm24h));
     const mm6h = maxMm(estacoes.map((s) => s.mm6h));
     const mm1h = maxMm(estacoes.map((s) => s.mm1h));
+    const mm72h = maxMm(estacoes.map((s) => s.mm72h));
+    const mm96h = maxMm(estacoes.map((s) => s.mm96h));
     const ultimoMm = maxMm(estacoes.map((s) => s.ultimoMm));
     const observedAt = latestAt(estacoes.map((s) => s.observedAt));
     const rec: RainfallMunicipio = {
@@ -127,6 +134,8 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
       mm1h,
       mm6h,
       mm24h,
+      mm72h,
+      mm96h,
       ultimoMm,
       observedAt,
       estacoes,
@@ -139,10 +148,11 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
       mm1h: bumpPico(picos.mm1h, muni.nome, mm1h),
       mm6h: bumpPico(picos.mm6h, muni.nome, mm6h),
       mm24h: bumpPico(picos.mm24h, muni.nome, mm24h),
+      mm72h: bumpPico(picos.mm72h, muni.nome, mm72h),
     };
     const score = mm24h ?? mm6h ?? mm1h;
     if (score != null && (!maior || score > (maior.mm24h ?? maior.mm6h ?? maior.mm1h ?? -1))) {
-      maior = { nome: muni.nome, mm1h, mm6h, mm24h };
+      maior = { nome: muni.nome, mm1h, mm6h, mm24h, mm72h, mm96h };
     }
     byId[muni.id] = rec;
     byNome[muni.nome] = rec;
@@ -150,7 +160,7 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
 
   return {
     generatedAt: Date.now(),
-    source: "CEMADEN · pluviômetros automáticos do Amazonas (1 h / 6 h / 24 h)",
+    source: "CEMADEN · pluviômetros automáticos do Amazonas (1 h / 6 h / 24 h / 72 h / 96 h)",
     cache: "MISS",
     error,
     coverage: {

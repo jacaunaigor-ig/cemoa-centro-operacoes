@@ -26,8 +26,8 @@ export function CemadenRainPanel({
 }) {
   const latest = rain.observedAt;
   const estacoes = [...rain.estacoes].sort((a, b) => {
-    const aPeak = Math.max(a.mm24h ?? -1, a.mm6h ?? -1, a.mm1h ?? -1);
-    const bPeak = Math.max(b.mm24h ?? -1, b.mm6h ?? -1, b.mm1h ?? -1);
+    const aPeak = Math.max(a.mm72h ?? -1, a.mm24h ?? -1, a.mm6h ?? -1, a.mm1h ?? -1);
+    const bPeak = Math.max(b.mm72h ?? -1, b.mm24h ?? -1, b.mm6h ?? -1, b.mm1h ?? -1);
     return bPeak - aPeak || a.nome.localeCompare(b.nome, "pt-BR");
   });
   const showApoio = tipo === "CHUVA" || tipo === "ALAGAMENTO" || tipo === "MOVIMENTO";
@@ -73,13 +73,14 @@ export function CemadenRainPanel({
       )}
 
       <div className="mt-2 max-h-48 overflow-auto">
-        <table className="w-full min-w-[280px] text-left text-[11px]">
+        <table className="w-full min-w-[320px] text-left text-[11px]">
           <thead className="sticky top-0 bg-bg/95 text-[10px] font-semibold tracking-wide text-text-mute uppercase">
             <tr>
               <th className="py-1 pr-2 font-semibold">Estação</th>
               <th className="py-1 pr-2 text-right font-semibold">1 h</th>
               <th className="py-1 pr-2 text-right font-semibold">6 h</th>
               <th className="py-1 pr-2 text-right font-semibold">24 h</th>
+              <th className="py-1 pr-2 text-right font-semibold">72 h</th>
               <th className="py-1 text-right font-semibold">
                 <span className="sr-only">Gráfico</span>
               </th>
@@ -108,6 +109,12 @@ export function CemadenRainPanel({
                   style={{ color: rainBandColor(rainBand(s.mm24h)) }}
                 >
                   {formatMmShort(s.mm24h)}
+                </td>
+                <td
+                  className="py-1 pr-2 text-right font-mono font-bold tabular-nums"
+                  style={{ color: rainBandColor(rainBand(s.mm72h)) }}
+                >
+                  {formatMmShort(s.mm72h)}
                 </td>
                 <td className="py-1 text-right">
                   {isCemadenStationId(s.id) ? (

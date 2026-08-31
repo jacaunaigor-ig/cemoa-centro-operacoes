@@ -2,7 +2,7 @@
 
 Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
 
-- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir via App SELVA**, comunidades rurais e indígenas), ticker e ficha de alerta (**previsão e temperatura máxima do INMET**, CEMADEN, **MP2,5 PurpleAir/SELVA no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
+- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir via App SELVA**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir/SELVA no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
 Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**30/08/2026**, relatórios CEMOA de inundação e estiagem): estiagem 38 baixo / 10 moderado / 14 alto; inundação 60 baixo / 1 moderado (Maraã) / 1 alto (Japurá). Onde há **estação automática ANA**, a telemetria atualiza a cota ao vivo — **não muda o grau**. Onde a leitura é **DC-AM/SEMA**, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento e movimento só pintam com o operador (abrem em baixo). No produto **Incêndio florestal**, a mediana de MP2,5 PurpleAir/SELVA classifica o município na escala da legenda (Boa → Péssima); o operador pode sobrepor. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. Chuva CEMADEN e a fila do plantão sugerem emitir, elevar ou renovar — não pintam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
@@ -61,18 +61,24 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | `/boletim` | Boletim Hidrológico |
 | `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|INCENDIO`) |
 | `/api/hydrology` | JSON das estações e cotas |
-| `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h por município e estação |
+| `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h / 72 h / 96 h por município e estação |
 | `/api/air-quality` | MP2,5 PurpleAir via App SELVA (SEMA/DC-AM · UEA EducAIR), 24 h, por município |
-| `/api/weather` | Previsão INMET Prevmet (`?ibge=` ou `?municipio=`), T máx/mín e manhã/tarde/noite |
+| `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
 | `/api/logs` | Log de erros de mapa/dados no front |
 | `/api/satellite/goes` | Metadados do infravermelho GOES-19 (CPTEC/INPE); `?refresh=1` força nova busca |
 | `/api/satellite/goes/image` | JPEG do último recorte em cache |
 
 Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 municípios) e `calha` (calha fluviométrica do boletim). Os dois recortes não são o mesmo mapa — Japurá no painel não vira Médio Solimões no boletim; Baixo Solimões no boletim não vira Médio Solimões no painel. No painel também: `risco` (`ATIVOS`, `AGRAVADOS` ou o nível), `tipo`, `chuva` (filtro CEMADEN) e `ar` (filtro PurpleAir no incêndio). No boletim: `modo`, `status`.
 
-No Painel de Alertas a lista ordena região e município pela gravidade, os chips **Ativos** / **Com agravamento** e as bacias com alerta filtram o recorte, a busca acha o município pelo nome e a ficha abre um briefing automático (nível, **previsão INMET**, chuva 1/6/24 h e cota). O rodapé traz CEMADEN, INMET, CPTEC/INPE, App SELVA, PurpleAir e o horário da última atualização.
+No Painel de Alertas a lista ordena região e município pela gravidade, os chips **Ativos** / **Com agravamento** e as bacias com alerta filtram o recorte, a busca acha o município pelo nome e a ficha abre um briefing automático (nível, **clima na ficha** e cota). O rodapé traz CEMADEN, INMET, CPTEC/INPE, App SELVA, PurpleAir e o horário da última atualização.
 
-A previsão na ficha vem da API pública **INMET Prevmet** (`apiprevmet3.inmet.gov.br/previsao/{IBGE}`), a mesma do código IBGE dos 62 municípios: condição do período (manhã/tarde/noite, horário de Manaus), **temperatura máxima e mínima** do dia e os próximos quatro dias. Não pinta o mapa. O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
+A ficha do alerta junta três blocos de clima (não pintam o mapa):
+
+- **Chuva · CEMADEN** — acumulados **1 h, 6 h, 24 h e 72 h**. A célula **7 dias** fica em — : o CEMADEN fecha no máximo em **96 h** (mostrado em nota quando há leitura) e a série de 7 dias do INMET Tempo não devolve dados neste recorte.
+- **Temperatura · INMET** — **atual** da estação automática mais próxima (`estacao/proxima/{IBGE}`, campo `TEM_INS`, horário tratado como UTC e convertido para Manaus), **máxima** e **mínima** da previsão do dia (Prevmet), com a observação da estação como reserva.
+- **Previsão · INMET** — horizontes **24 h, 48 h, 72 h e 5 dias** (resumo + T máx) a partir de `apiprevmet3.inmet.gov.br/previsao/{IBGE}`.
+
+O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
 
 ## Desktop, mobile e operador
 
@@ -190,13 +196,13 @@ No boletim, a ficha do município mostra só o extremo do modo ativo: **máxima 
 
 A ficha de qualquer produto (e a do boletim) diz se o município **tem área mapeada** de movimento de massa / deslizamento. Se tiver, mostra setores, tipo (deslizamento, movimento de massa, erosão de margem) e o **quantitativo de pessoas em área de risco** do levantamento federal (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem mapeamento, a ficha diz isso com clareza.
 
-## Chuva 1 h / 6 h / 24 h (CEMADEN)
+## Chuva 1 h / 6 h / 24 h / 72 h (CEMADEN)
 
 O painel consulta a API pública do **CEMADEN** (`getJson2.php?uf=AM`): 95 pluviômetros automáticos em **58 dos 62** municípios. Sem estação nesta rede: Barcelos, Santa Isabel do Rio Negro, São Sebastião do Uatumã e Tefé.
 
 A chuva CEMADEN fica no **Painel de Alertas** (faixa do topo, lista e ficha). O Boletim Hidrológico não mistura esses acumulados — a ficha de lá é só cota e limiar.
 
-Cada município no painel mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h**, em gráfico de barras (ficha e faixa geral). A ficha de alerta lista as estações (último valor + 1/6/24 h) e abre o gráfico oficial:
+Cada município no painel mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h**, em gráfico de barras (faixa geral e detalhe das estações). A ficha do alerta traz também **72 h** (e nota de **96 h** quando o CEMADEN publicou). A tabela das estações lista 1/6/24/72 h e abre o gráfico oficial:
 
 `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
 
@@ -228,7 +234,7 @@ A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 
 Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e **≥ 20 mm/h** (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`).
 
-A API horária do INMET (estações automáticas A101 Manaus, A128 Barcelos etc.) existe, mas neste recorte o endpoint de série 24 h não devolveu dados para acumulado municipal. A **previsão** na ficha usa o Prevmet (`/api/weather`), não essa série horária.
+A API horária do INMET Tempo (estações automáticas A101 Manaus, A128 Barcelos etc.) existe, mas neste recorte o endpoint de série diária/horária não devolveu dados para montar acumulado de **7 dias**. A temperatura **atual** na ficha usa `estacao/proxima`; a previsão usa o Prevmet (`/api/weather`).
 
 ## Empilhar
 

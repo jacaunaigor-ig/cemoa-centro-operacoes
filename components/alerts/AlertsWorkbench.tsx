@@ -1552,7 +1552,7 @@ export function AlertsWorkbench() {
                     expiresAt={selectedRow.expiresAt ?? selectedAlert?.expiresAt}
                     alert={selectedAlert}
                     hydro={selectedHydro}
-                    rain={tipo === "INCENDIO" ? undefined : rain ? rain.byNome[selectedRow.nome] ?? null : undefined}
+                    rain={rain ? rain.byNome[selectedRow.nome] ?? null : undefined}
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}

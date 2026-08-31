@@ -490,6 +490,8 @@ export const AlertsMap = forwardRef<
                         mm1h: m.mm1h ?? null,
                         mm6h: m.mm6h ?? null,
                         mm24h: m.mm24h ?? null,
+                        mm72h: null,
+                        mm96h: null,
                       })} mm${
                         (m.mm1h ?? 0) >= INTENSE_MM_PER_H
                           ? ` · chuva ≥ ${INTENSE_MM_PER_H} mm/h`
