@@ -142,6 +142,8 @@ type RawStation = {
   rio: string;
   limitesVazante: { alto: number | null; moderado: number | null };
   limitesEnchente: { alto: number | null; moderado: number | null };
+  maximaHistorica?: { data: string | null; cota: number } | null;
+  minimaHistorica?: { data: string | null; cota: number } | null;
 };
 
 type RawFile = {
@@ -420,6 +422,8 @@ export function catalogStations(): HydroStation[] {
       limitesEnchente: d.limitesEnchente,
       semLeitura: d.cota == null,
       semEstacao,
+      maximaHistorica: d.maximaHistorica ?? null,
+      minimaHistorica: d.minimaHistorica ?? null,
     };
   });
 }

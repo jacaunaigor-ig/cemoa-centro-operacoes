@@ -1,13 +1,13 @@
 {
   "dias": [
-    "24/08",
-    "25/08",
     "26/08",
     "27/08",
-    "28/08"
+    "28/08",
+    "29/08",
+    "30/08"
   ],
-  "referencia": "2026-08-28",
-  "fonte": "CEMOA · Relatório diário 28/08/2026 · ANA / SGB / SEMA",
+  "referencia": "2026-08-30",
+  "fonte": "CEMOA · Relatório diário 30/08/2026 · ANA / SGB / SEMA · DC-AM",
   "calhas": [
     "Alto Solimões",
     "Baixo Amazonas",
@@ -132,15 +132,15 @@
       "municipio": "GUAJARÁ (CRUZEIRO SUL)",
       "ana": "12500000",
       "cotas": [
-        4.27,
-        4.27,
         4.3,
         4.4,
-        4.4
+        4.4,
+        4.32,
+        4.22
       ],
-      "cota": 4.4,
-      "variacao": 0.0,
-      "tendencia": "PARADO",
+      "cota": 4.22,
+      "variacao": -0.1,
+      "tendencia": "BAIXANDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
       "status_vazante": "ALTO",
@@ -157,6 +157,14 @@
       "limitesEnchente": {
         "alto": 13.0,
         "moderado": 11.0
+      },
+      "maximaHistorica": {
+        "data": "13/05/2009",
+        "cota": 14.62
+      },
+      "minimaHistorica": {
+        "data": "15/09/2022",
+        "cota": 2.08
       }
     },
     {
@@ -164,15 +172,15 @@
       "municipio": "IPIXUNA",
       "ana": "12520000",
       "cotas": [
-        3.23,
-        3.16,
         3.21,
         3.24,
-        3.25
+        3.25,
+        3.28,
+        null
       ],
-      "cota": 3.25,
-      "variacao": 0.01,
-      "tendencia": "SUBINDO",
+      "cota": 3.28,
+      "variacao": null,
+      "tendencia": "SL",
       "status": "ALTO",
       "status_enchente": "NORMAL",
       "status_vazante": "ALTO",
@@ -189,6 +197,14 @@
       "limitesEnchente": {
         "alto": 13.0,
         "moderado": 12.0
+      },
+      "maximaHistorica": {
+        "data": "18/04/1986",
+        "cota": 13.96
+      },
+      "minimaHistorica": {
+        "data": "08/10/1998",
+        "cota": 1.75
       }
     },
     {
@@ -196,15 +212,15 @@
       "municipio": "ENVIRA",
       "ana": "12680000",
       "cotas": [
-        5.07,
-        5.02,
         4.96,
         4.96,
-        4.99
+        4.99,
+        4.99,
+        4.95
       ],
-      "cota": 4.99,
-      "variacao": 0.03,
-      "tendencia": "SUBINDO",
+      "cota": 4.95,
+      "variacao": -0.04,
+      "tendencia": "BAIXANDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
       "status_vazante": "ALTO",
@@ -221,6 +237,14 @@
       "limitesEnchente": {
         "alto": 15.0,
         "moderado": 13.0
+      },
+      "maximaHistorica": {
+        "data": "25/02/2021",
+        "cota": 17.34
+      },
+      "minimaHistorica": {
+        "data": "28/09/2024",
+        "cota": 0.72
       }
     },
     {
@@ -228,15 +252,15 @@
       "municipio": "ITAMARATI",
       "ana": "12700000",
       "cotas": [
-        7.54,
-        7.5,
         7.48,
         7.44,
-        null
+        7.4,
+        7.36,
+        7.3
       ],
-      "cota": null,
-      "variacao": null,
-      "tendencia": "SL",
+      "cota": 7.3,
+      "variacao": -0.06,
+      "tendencia": "BAIXANDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
       "status_vazante": "ALTO",
@@ -253,6 +277,14 @@
       "limitesEnchente": {
         "alto": 19.5,
         "moderado": 18.0
+      },
+      "maximaHistorica": {
+        "data": "07/04/2015",
+        "cota": 21.91
+      },
+      "minimaHistorica": {
+        "data": "03/10/2024",
+        "cota": 4.83
       }
     },
     {
@@ -260,15 +292,15 @@
       "municipio": "EIRUNEPÉ",
       "ana": "12550000",
       "cotas": [
-        4.24,
-        4.23,
         4.2,
         4.16,
-        null
+        4.1,
+        4.07,
+        4.03
       ],
-      "cota": null,
-      "variacao": null,
-      "tendencia": "SL",
+      "cota": 4.03,
+      "variacao": -0.04,
+      "tendencia": "BAIXANDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
       "status_vazante": "ALTO",
@@ -285,6 +317,14 @@
       "limitesEnchente": {
         "alto": 16.0,
         "moderado": 15.0
+      },
+      "maximaHistorica": {
+        "data": "08/03/2021",
+        "cota": 17.32
+      },
+      "minimaHistorica": {
+        "data": "10/09/1995",
+        "cota": 1.43
       }
     },
     {
@@ -317,7 +357,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Juruá",
@@ -349,7 +391,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Purus",
@@ -381,6 +425,14 @@
       "limitesEnchente": {
         "alto": 18.0,
         "moderado": 16.5
+      },
+      "maximaHistorica": {
+        "data": "21/03/1997",
+        "cota": 21.04
+      },
+      "minimaHistorica": {
+        "data": "07/10/1998",
+        "cota": 3.49
       }
     },
     {
@@ -388,13 +440,13 @@
       "municipio": "PAUINI",
       "ana": "13750000",
       "cotas": [
-        8.61,
-        8.6,
         8.56,
         8.53,
+        null,
+        null,
         null
       ],
-      "cota": null,
+      "cota": 8.53,
       "variacao": null,
       "tendencia": "SL",
       "status": "ALTO",
@@ -413,6 +465,14 @@
       "limitesEnchente": {
         "alto": 22.0,
         "moderado": 21.5
+      },
+      "maximaHistorica": {
+        "data": "28/03/1997",
+        "cota": 25.0
+      },
+      "minimaHistorica": {
+        "data": "16/09/1967",
+        "cota": 6.18
       }
     },
     {
@@ -420,14 +480,14 @@
       "municipio": "LÁBREA",
       "ana": "13870000",
       "cotas": [
-        5.95,
-        5.9,
         5.85,
         5.81,
-        5.78
+        5.78,
+        5.73,
+        5.68
       ],
-      "cota": 5.78,
-      "variacao": -0.03,
+      "cota": 5.68,
+      "variacao": -0.05,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
@@ -445,6 +505,14 @@
       "limitesEnchente": {
         "alto": 19.0,
         "moderado": 17.43
+      },
+      "maximaHistorica": {
+        "data": "13/04/1997",
+        "cota": 21.79
+      },
+      "minimaHistorica": {
+        "data": "17/10/1937",
+        "cota": 0.45
       }
     },
     {
@@ -477,6 +545,14 @@
       "limitesEnchente": {
         "alto": 23.0,
         "moderado": 22.0
+      },
+      "maximaHistorica": {
+        "data": "17/04/1997",
+        "cota": 25.31
+      },
+      "minimaHistorica": {
+        "data": "13/10/1998",
+        "cota": 7.33
       }
     },
     {
@@ -484,15 +560,15 @@
       "municipio": "TAPAUÁ",
       "ana": "DCAM",
       "cotas": [
-        null,
-        14.07,
         13.93,
         13.8,
-        13.68
+        13.68,
+        null,
+        null
       ],
       "cota": 13.68,
-      "variacao": -0.12,
-      "tendencia": "BAIXANDO",
+      "variacao": null,
+      "tendencia": "SL",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
@@ -509,21 +585,23 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Purus",
       "municipio": "BERURI",
       "ana": "13990000",
       "cotas": [
-        17.11,
-        16.98,
         16.84,
         16.7,
-        16.55
+        16.55,
+        16.4,
+        16.24
       ],
-      "cota": 16.55,
-      "variacao": -0.15,
+      "cota": 16.24,
+      "variacao": -0.16,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
@@ -541,6 +619,14 @@
       "limitesEnchente": {
         "alto": 19.5,
         "moderado": 17.0
+      },
+      "maximaHistorica": {
+        "data": "24/06/2015",
+        "cota": 22.36
+      },
+      "minimaHistorica": {
+        "data": "11/10/2024",
+        "cota": 2.54
       }
     },
     {
@@ -548,15 +634,15 @@
       "municipio": "HUMAITÁ",
       "ana": "15630000",
       "cotas": [
-        11.91,
-        11.93,
         12.11,
         12.49,
-        12.95
+        12.95,
+        13.18,
+        13.14
       ],
-      "cota": 12.95,
-      "variacao": 0.46,
-      "tendencia": "SUBINDO",
+      "cota": 13.14,
+      "variacao": -0.04,
+      "tendencia": "BAIXANDO",
       "status": "MODERADO",
       "status_enchente": "NORMAL",
       "status_vazante": "MODERADO",
@@ -573,6 +659,14 @@
       "limitesEnchente": {
         "alto": 23.0,
         "moderado": 21.0
+      },
+      "maximaHistorica": {
+        "data": "09/04/2014",
+        "cota": 25.63
+      },
+      "minimaHistorica": {
+        "data": "16/10/2024",
+        "cota": 8.0
       }
     },
     {
@@ -605,7 +699,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Madeira",
@@ -613,10 +709,10 @@
       "ana": "15700000",
       "cotas": [
         null,
-        15.02,
         null,
+        14.9,
         null,
-        14.9
+        null
       ],
       "cota": 14.9,
       "variacao": null,
@@ -637,6 +733,14 @@
       "limitesEnchente": {
         "alto": 26.0,
         "moderado": 25.0
+      },
+      "maximaHistorica": {
+        "data": "19/04/2014",
+        "cota": 28.87
+      },
+      "minimaHistorica": {
+        "data": "01/10/1969",
+        "cota": 5.42
       }
     },
     {
@@ -669,22 +773,27 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": {
+        "data": "10/04/1989",
+        "cota": 23.94
+      },
+      "minimaHistorica": null
     },
     {
       "calha": "Madeira",
       "municipio": "BORBA",
       "ana": "15900000",
       "cotas": [
-        14.61,
-        14.5,
         14.38,
         14.24,
-        14.14
+        14.14,
+        14.04,
+        null
       ],
-      "cota": 14.14,
-      "variacao": -0.1,
-      "tendencia": "BAIXANDO",
+      "cota": 14.04,
+      "variacao": null,
+      "tendencia": "SL",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
@@ -701,6 +810,14 @@
       "limitesEnchente": {
         "alto": 19.5,
         "moderado": 18.0
+      },
+      "maximaHistorica": {
+        "data": "22/04/2014",
+        "cota": 22.87
+      },
+      "minimaHistorica": {
+        "data": "14/10/2010",
+        "cota": 7.62
       }
     },
     {
@@ -733,6 +850,14 @@
       "limitesEnchente": {
         "alto": 18.0,
         "moderado": 17.0
+      },
+      "maximaHistorica": {
+        "data": "05/05/2009",
+        "cota": 20.8
+      },
+      "minimaHistorica": {
+        "data": "15/10/2024",
+        "cota": 4.92
       }
     },
     {
@@ -740,8 +865,8 @@
       "municipio": "ATALAIA DO NORTE",
       "ana": "10200000",
       "cotas": [
-        9.24,
-        9.76,
+        null,
+        null,
         null,
         null,
         null
@@ -765,6 +890,14 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
+      },
+      "maximaHistorica": {
+        "data": null,
+        "cota": 3.78
+      },
+      "minimaHistorica": {
+        "data": "31/08/1986",
+        "cota": 3.65
       }
     },
     {
@@ -797,22 +930,24 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Alto Solimões",
       "municipio": "TABATINGA",
       "ana": "10100000",
       "cotas": [
-        3.32,
-        3.17,
         3.05,
         2.96,
-        2.82
+        2.82,
+        2.8,
+        2.84
       ],
-      "cota": 2.82,
-      "variacao": -0.14,
-      "tendencia": "BAIXANDO",
+      "cota": 2.84,
+      "variacao": 0.04,
+      "tendencia": "SUBINDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
       "status_vazante": "ALTO",
@@ -829,6 +964,14 @@
       "limitesEnchente": {
         "alto": 12.0,
         "moderado": 11.0
+      },
+      "maximaHistorica": {
+        "data": "28/05/1999",
+        "cota": 13.82
+      },
+      "minimaHistorica": {
+        "data": "26/09/2024",
+        "cota": -2.54
       }
     },
     {
@@ -836,14 +979,14 @@
       "municipio": "SÃO PAULO DE OLIVENÇA",
       "ana": "11400000",
       "cotas": [
-        5.65,
-        5.63,
         5.53,
         5.43,
-        5.33
+        5.33,
+        5.25,
+        5.22
       ],
-      "cota": 5.33,
-      "variacao": -0.1,
+      "cota": 5.22,
+      "variacao": -0.03,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
       "status_enchente": "NORMAL",
@@ -861,6 +1004,14 @@
       "limitesEnchente": {
         "alto": 13.38,
         "moderado": 12.59
+      },
+      "maximaHistorica": {
+        "data": "21/05/2015",
+        "cota": 15.74
+      },
+      "minimaHistorica": {
+        "data": "15/09/2024",
+        "cota": 0.5
       }
     },
     {
@@ -893,20 +1044,22 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Alto Solimões",
       "municipio": "SANTO ANTÔNIO DO IÇÁ",
       "ana": "11500000",
       "cotas": [
-        5.38,
-        5.27,
         5.13,
         null,
+        null,
+        4.79,
         null
       ],
-      "cota": null,
+      "cota": 4.79,
       "variacao": null,
       "tendencia": "SL",
       "status": "MODERADO",
@@ -925,6 +1078,14 @@
       "limitesEnchente": {
         "alto": 13.3,
         "moderado": 12.42
+      },
+      "maximaHistorica": {
+        "data": "30/05/2015",
+        "cota": 15.05
+      },
+      "minimaHistorica": {
+        "data": "28/09/2024",
+        "cota": -1.99
       }
     },
     {
@@ -932,14 +1093,14 @@
       "municipio": "TONANTINS",
       "ana": "DCAM",
       "cotas": [
-        8.33,
-        8.21,
         8.08,
         7.89,
-        7.76
+        7.76,
+        7.91,
+        7.47
       ],
-      "cota": 7.76,
-      "variacao": -0.13,
+      "cota": 7.47,
+      "variacao": -0.44,
       "tendencia": "BAIXANDO",
       "status": "MODERADO",
       "status_enchente": "NORMAL",
@@ -957,7 +1118,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Solimões",
@@ -989,21 +1152,23 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Solimões",
       "municipio": "FONTE BOA",
       "ana": "12351000",
       "cotas": [
-        15.43,
-        15.28,
         15.14,
         15.05,
-        14.93
+        14.93,
+        14.8,
+        14.67
       ],
-      "cota": 14.93,
-      "variacao": -0.12,
+      "cota": 14.67,
+      "variacao": -0.13,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
@@ -1021,6 +1186,14 @@
       "limitesEnchente": {
         "alto": 21.0,
         "moderado": 19.0
+      },
+      "maximaHistorica": {
+        "data": "07/07/1989",
+        "cota": 22.82
+      },
+      "minimaHistorica": {
+        "data": "17/10/2024",
+        "cota": 7.12
       }
     },
     {
@@ -1028,14 +1201,14 @@
       "municipio": "JAPURÁ",
       "ana": "12850000",
       "cotas": [
-        12.57,
-        12.5,
         12.43,
         12.36,
-        12.31
+        12.31,
+        12.24,
+        12.17
       ],
-      "cota": 12.31,
-      "variacao": -0.05,
+      "cota": 12.17,
+      "variacao": -0.07,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "ALTO",
@@ -1053,6 +1226,14 @@
       "limitesEnchente": {
         "alto": 12.0,
         "moderado": 11.0
+      },
+      "maximaHistorica": {
+        "data": "07/07/1989",
+        "cota": 15.27
+      },
+      "minimaHistorica": {
+        "data": "10/02/1992",
+        "cota": 4.25
       }
     },
     {
@@ -1060,15 +1241,15 @@
       "municipio": "MARAÃ",
       "ana": "12872000",
       "cotas": [
-        12.46,
-        12.35,
         12.22,
         12.1,
-        12.0
+        12.0,
+        11.9,
+        null
       ],
-      "cota": 12.0,
-      "variacao": -0.1,
-      "tendencia": "BAIXANDO",
+      "cota": 11.9,
+      "variacao": null,
+      "tendencia": "SL",
       "status": "NORMAL",
       "status_enchente": "MODERADO",
       "status_vazante": "NORMAL",
@@ -1085,6 +1266,14 @@
       "limitesEnchente": {
         "alto": 14.0,
         "moderado": 11.0
+      },
+      "maximaHistorica": {
+        "data": "18/06/2015",
+        "cota": 16.87
+      },
+      "minimaHistorica": {
+        "data": "02/10/2024",
+        "cota": 4.49
       }
     },
     {
@@ -1117,7 +1306,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Solimões",
@@ -1149,6 +1340,14 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
+      },
+      "maximaHistorica": {
+        "data": "10/06/2012",
+        "cota": 16.57
+      },
+      "minimaHistorica": {
+        "data": "16/11/2023",
+        "cota": 0.38
       }
     },
     {
@@ -1156,14 +1355,14 @@
       "municipio": "TEFÉ",
       "ana": "12900001",
       "cotas": [
-        14.59,
-        14.44,
         14.29,
         14.13,
-        13.99
+        13.99,
+        13.8,
+        13.64
       ],
-      "cota": 13.99,
-      "variacao": -0.14,
+      "cota": 13.64,
+      "variacao": -0.16,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
@@ -1181,20 +1380,22 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Solimões",
       "municipio": "COARI (ITAPÉUA)",
       "ana": "13150000",
       "cotas": [
-        12.86,
-        12.64,
         12.5,
+        null,
+        null,
         null,
         null
       ],
-      "cota": null,
+      "cota": 12.5,
       "variacao": null,
       "tendencia": "SL",
       "status": "NORMAL",
@@ -1213,6 +1414,14 @@
       "limitesEnchente": {
         "alto": 16.9,
         "moderado": 14.6
+      },
+      "maximaHistorica": {
+        "data": "24/06/2015",
+        "cota": 18.01
+      },
+      "minimaHistorica": {
+        "data": "07/10/2024",
+        "cota": -0.29
       }
     },
     {
@@ -1245,6 +1454,14 @@
       "limitesEnchente": {
         "alto": 17.1,
         "moderado": null
+      },
+      "maximaHistorica": {
+        "data": "01/07/2012",
+        "cota": 18.41
+      },
+      "minimaHistorica": {
+        "data": "20/10/2010",
+        "cota": 0.22
       }
     },
     {
@@ -1277,7 +1494,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Solimões",
@@ -1309,21 +1528,26 @@
       "limitesEnchente": {
         "alto": 15.4,
         "moderado": null
-      }
+      },
+      "maximaHistorica": {
+        "data": "25/06/2015",
+        "cota": 18.25
+      },
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Solimões",
       "municipio": "CAAPIRANGA",
       "ana": "DCAM",
       "cotas": [
-        10.52,
-        10.41,
         10.29,
         10.18,
-        10.06
+        10.06,
+        9.94,
+        9.83
       ],
-      "cota": 10.06,
-      "variacao": -0.12,
+      "cota": 9.83,
+      "variacao": -0.11,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
@@ -1341,21 +1565,23 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Solimões",
       "municipio": "MANACAPURU",
       "ana": "14100000",
       "cotas": [
-        16.05,
-        15.93,
         15.79,
         15.66,
-        15.53
+        15.53,
+        15.38,
+        15.23
       ],
-      "cota": 15.53,
-      "variacao": -0.13,
+      "cota": 15.23,
+      "variacao": -0.15,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
@@ -1373,6 +1599,14 @@
       "limitesEnchente": {
         "alto": 18.0,
         "moderado": 17.0
+      },
+      "maximaHistorica": {
+        "data": "17/06/2021",
+        "cota": 20.86
+      },
+      "minimaHistorica": {
+        "data": "12/10/2024",
+        "cota": 2.06
       }
     },
     {
@@ -1405,20 +1639,22 @@
       "limitesEnchente": {
         "alto": 16.8,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Solimões",
       "municipio": "MANAQUIRI",
       "ana": "DCAM",
       "cotas": [
-        11.05,
-        null,
         10.81,
         10.68,
+        null,
+        null,
         null
       ],
-      "cota": null,
+      "cota": 10.68,
       "variacao": null,
       "tendencia": "SL",
       "status": "NORMAL",
@@ -1437,6 +1673,11 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": {
+        "data": "20/11/2023",
+        "cota": 1.02
       }
     },
     {
@@ -1444,15 +1685,15 @@
       "municipio": "CAREIRO",
       "ana": "DCAM",
       "cotas": [
-        16.18,
-        16.06,
         15.92,
         15.8,
-        null
+        null,
+        15.54,
+        15.41
       ],
-      "cota": null,
-      "variacao": null,
-      "tendencia": "SL",
+      "cota": 15.41,
+      "variacao": -0.13,
+      "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
@@ -1469,6 +1710,11 @@
       "limitesEnchente": {
         "alto": 14.5,
         "moderado": 13.0
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": {
+        "data": "21/11/2023",
+        "cota": 5.63
       }
     },
     {
@@ -1501,6 +1747,14 @@
       "limitesEnchente": {
         "alto": 14.5,
         "moderado": 13.0
+      },
+      "maximaHistorica": {
+        "data": "06/06/2021",
+        "cota": 17.46
+      },
+      "minimaHistorica": {
+        "data": "12/10/2024",
+        "cota": -0.26
       }
     },
     {
@@ -1508,13 +1762,13 @@
       "municipio": "ITACOATIARA",
       "ana": "16030000",
       "cotas": [
-        10.87,
-        10.77,
         10.66,
         10.53,
-        10.41
+        10.41,
+        10.29,
+        10.17
       ],
-      "cota": 10.41,
+      "cota": 10.17,
       "variacao": -0.12,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
@@ -1533,6 +1787,14 @@
       "limitesEnchente": {
         "alto": 14.0,
         "moderado": 13.0
+      },
+      "maximaHistorica": {
+        "data": "20/05/2021",
+        "cota": 15.2
+      },
+      "minimaHistorica": {
+        "data": "13/10/2024",
+        "cota": -0.14
       }
     },
     {
@@ -1565,7 +1827,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Amazonas",
@@ -1597,22 +1861,27 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": {
+        "data": "13/05/2008",
+        "cota": 6.84
+      },
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Amazonas",
       "municipio": "SILVES",
       "ana": "DCAM",
       "cotas": [
-        9.21,
-        9.11,
         9.01,
         8.89,
-        null
+        8.78,
+        8.67,
+        8.58
       ],
-      "cota": null,
-      "variacao": null,
-      "tendencia": "SL",
+      "cota": 8.58,
+      "variacao": -0.09,
+      "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
@@ -1629,15 +1898,17 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Amazonas",
       "municipio": "AUTAZES",
       "ana": "DCAM",
       "cotas": [
-        17.47,
-        17.36,
+        null,
+        null,
         null,
         null,
         null
@@ -1661,6 +1932,11 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": {
+        "data": "18/11/2023",
+        "cota": 3.96
       }
     },
     {
@@ -1693,7 +1969,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Médio Amazonas",
@@ -1725,7 +2003,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Amazonas",
@@ -1757,7 +2037,9 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Amazonas",
@@ -1789,20 +2071,22 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Amazonas",
       "municipio": "NHAMUNDÁ",
       "ana": "DCAM",
       "cotas": [
-        13.05,
-        12.98,
         12.9,
         12.82,
+        12.74,
+        null,
         null
       ],
-      "cota": null,
+      "cota": 12.74,
       "variacao": null,
       "tendencia": "SL",
       "status": "NORMAL",
@@ -1821,20 +2105,22 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Amazonas",
       "municipio": "URUCARÁ",
       "ana": "DCAM",
       "cotas": [
-        null,
-        22.83,
         22.71,
         22.63,
+        null,
+        null,
         null
       ],
-      "cota": null,
+      "cota": 22.63,
       "variacao": null,
       "tendencia": "SL",
       "status": "NORMAL",
@@ -1853,18 +2139,20 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Amazonas",
       "municipio": "SÃO SEBASTIÃO DO UATUMÃ",
       "ana": "DCAM",
       "cotas": [
-        null,
-        9.6,
         9.5,
         null,
-        9.3
+        9.3,
+        null,
+        null
       ],
       "cota": 9.3,
       "variacao": null,
@@ -1885,20 +2173,22 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Baixo Amazonas",
       "municipio": "PARINTINS",
       "ana": "16350002",
       "cotas": [
-        5.8,
-        5.7,
         5.6,
         5.5,
+        null,
+        5.34,
         null
       ],
-      "cota": null,
+      "cota": 5.34,
       "variacao": null,
       "tendencia": "SL",
       "status": "NORMAL",
@@ -1917,6 +2207,14 @@
       "limitesEnchente": {
         "alto": 8.0,
         "moderado": 7.0
+      },
+      "maximaHistorica": {
+        "data": "21/05/2021",
+        "cota": 9.46
+      },
+      "minimaHistorica": {
+        "data": "07/11/2024",
+        "cota": -2.68
       }
     },
     {
@@ -1924,15 +2222,15 @@
       "municipio": "MAUÉS",
       "ana": "DCAM",
       "cotas": [
-        18.55,
-        18.47,
         18.39,
         18.3,
-        null
+        18.22,
+        18.13,
+        18.04
       ],
-      "cota": null,
-      "variacao": null,
-      "tendencia": "SL",
+      "cota": 18.04,
+      "variacao": -0.09,
+      "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
@@ -1949,22 +2247,24 @@
       "limitesEnchente": {
         "alto": null,
         "moderado": null
-      }
+      },
+      "maximaHistorica": null,
+      "minimaHistorica": null
     },
     {
       "calha": "Negro",
       "municipio": "SÃO GABRIEL DA CACHOEIRA",
       "ana": "14320001",
       "cotas": [
-        8.58,
-        8.7,
         8.82,
         8.84,
-        8.88
+        8.88,
+        null,
+        null
       ],
       "cota": 8.88,
-      "variacao": 0.04,
-      "tendencia": "SUBINDO",
+      "variacao": null,
+      "tendencia": "SL",
       "status": "MODERADO",
       "status_enchente": "NORMAL",
       "status_vazante": "MODERADO",
@@ -1981,6 +2281,14 @@
       "limitesEnchente": {
         "alto": 11.0,
         "moderado": 9.0
+      },
+      "maximaHistorica": {
+        "data": "11/06/2021",
+        "cota": 12.68
+      },
+      "minimaHistorica": {
+        "data": "07/02/1992",
+        "cota": 3.3
       }
     },
     {
@@ -1988,7 +2296,7 @@
       "municipio": "SANTA ISABEL DO RIO NEGRO",
       "ana": "14400000",
       "cotas": [
-        5.78,
+        null,
         null,
         null,
         null,
@@ -2013,6 +2321,14 @@
       "limitesEnchente": {
         "alto": 7.5,
         "moderado": 6.0
+      },
+      "maximaHistorica": {
+        "data": "02/06/1976",
+        "cota": 8.9
+      },
+      "minimaHistorica": {
+        "data": "13/03/1980",
+        "cota": 0.28
       }
     },
     {
@@ -2020,15 +2336,15 @@
       "municipio": "BARCELOS",
       "ana": "14480002",
       "cotas": [
-        5.48,
-        5.36,
         5.26,
         5.16,
-        5.08
+        5.08,
+        5.0,
+        5.0
       ],
-      "cota": 5.08,
-      "variacao": -0.08,
-      "tendencia": "BAIXANDO",
+      "cota": 5.0,
+      "variacao": 0.0,
+      "tendencia": "PARADO",
       "status": "MODERADO",
       "status_enchente": "NORMAL",
       "status_vazante": "MODERADO",
@@ -2045,6 +2361,14 @@
       "limitesEnchente": {
         "alto": 8.0,
         "moderado": 7.0
+      },
+      "maximaHistorica": {
+        "data": "22/06/2022",
+        "cota": 10.52
+      },
+      "minimaHistorica": {
+        "data": "18/03/1980",
+        "cota": 0.58
       }
     },
     {
@@ -2052,15 +2376,15 @@
       "municipio": "NOVO AIRÃO",
       "ana": "14900050",
       "cotas": [
-        14.51,
-        14.37,
         14.21,
         null,
-        null
+        null,
+        13.82,
+        13.68
       ],
-      "cota": null,
-      "variacao": null,
-      "tendencia": "SL",
+      "cota": 13.68,
+      "variacao": -0.14,
+      "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
@@ -2077,6 +2401,14 @@
       "limitesEnchente": {
         "alto": 19.0,
         "moderado": 17.0
+      },
+      "maximaHistorica": {
+        "data": "29/10/2015",
+        "cota": 18.85
+      },
+      "minimaHistorica": {
+        "data": "07/01/2010",
+        "cota": 0.93
       }
     },
     {
@@ -2084,14 +2416,14 @@
       "municipio": "MANAUS",
       "ana": "14990000",
       "cotas": [
-        25.19,
-        25.07,
         24.93,
         24.79,
-        24.65
+        24.65,
+        24.46,
+        24.33
       ],
-      "cota": 24.65,
-      "variacao": -0.14,
+      "cota": 24.33,
+      "variacao": -0.13,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
       "status_enchente": "NORMAL",
@@ -2109,6 +2441,14 @@
       "limitesEnchente": {
         "alto": 27.0,
         "moderado": 26.0
+      },
+      "maximaHistorica": {
+        "data": "16/06/2021",
+        "cota": 30.02
+      },
+      "minimaHistorica": {
+        "data": "09/10/2024",
+        "cota": 12.11
       }
     }
   ]

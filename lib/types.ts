@@ -112,6 +112,11 @@ export type HydroRiver = {
   municipios: string[];
 };
 
+export type HydroExtremo = {
+  data: string | null;
+  cota: number;
+};
+
 export type HydroStation = {
   id: string;
   municipio: string;
@@ -137,6 +142,8 @@ export type HydroStation = {
   editadoPorOperador?: boolean;
   cotaFonte?: "snapshot" | "ANA" | "operador";
   cotaLidaEm?: number | null;
+  maximaHistorica?: HydroExtremo | null;
+  minimaHistorica?: HydroExtremo | null;
 };
 
 export type HydrologyPayload = {

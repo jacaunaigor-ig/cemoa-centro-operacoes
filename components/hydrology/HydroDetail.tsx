@@ -10,6 +10,8 @@ import { CotaChart } from "@/components/hydrology/CotaChart";
 import {
   HYDRO_STATUS_LABELS,
   limitesDoModo,
+  formatHydroRef,
+  HYDRO_REFERENCIA,
   rotuloSituacao,
   situacaoLeitura,
   statusAtivo,
@@ -107,10 +109,28 @@ export function HydroDetail({
                 }).format(new Date(station.cotaLidaEm))
               : station.cotaFonte === "ANA"
                 ? "Estação automática"
-                : undefined
+                : station.fonte === "Defesa Civil AM"
+                  ? `Boletim CEMOA · ${formatHydroRef(HYDRO_REFERENCIA)}`
+                  : undefined
           }
         />
       </div>
+
+      {modo === "enchente" ? (
+        <HistoricoCard
+          titulo="Máxima histórica"
+          extremo={station.maximaHistorica}
+          atual={sit.cotaRecente}
+          sentido="enchente"
+        />
+      ) : (
+        <HistoricoCard
+          titulo="Mínima histórica"
+          extremo={station.minimaHistorica}
+          atual={sit.cotaRecente}
+          sentido="vazante"
+        />
+      )}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <RiskCard
@@ -287,6 +307,48 @@ function HydroAdminForm({
         Salvar cota e status
       </Button>
     </form>
+  );
+}
+
+function HistoricoCard({
+  titulo,
+  extremo,
+  atual,
+  sentido,
+}: {
+  titulo: string;
+  extremo?: { data: string | null; cota: number } | null;
+  atual: number | null;
+  sentido: "enchente" | "vazante";
+}) {
+  const delta =
+    extremo && atual != null ? Math.round((atual - extremo.cota) * 100) / 100 : null;
+  return (
+    <div className="mt-3 rounded-lg border border-border bg-bg/40 px-3 py-2.5">
+      <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+        {titulo}
+      </small>
+      {extremo ? (
+        <>
+          <p className="font-mono text-lg font-black tabular-nums">
+            {extremo.cota.toFixed(2)}
+            <span className="ml-1 text-[11px] font-semibold text-text-mute">m</span>
+          </p>
+          <p className="text-[11px] text-text-dim">
+            {extremo.data ? `Registrada em ${extremo.data}` : "Data não informada no boletim"}
+            {delta != null
+              ? sentido === "enchente"
+                ? ` · ${delta >= 0 ? `${delta.toFixed(2)} m acima` : `${Math.abs(delta).toFixed(2)} m abaixo`} da máxima`
+                : ` · ${delta <= 0 ? `${Math.abs(delta).toFixed(2)} m abaixo` : `${delta.toFixed(2)} m acima`} da mínima`
+              : ""}
+          </p>
+        </>
+      ) : (
+        <p className="mt-0.5 text-[13px] font-semibold text-text">
+          Sem {sentido === "enchente" ? "máxima" : "mínima"} histórica neste recorte.
+        </p>
+      )}
+    </div>
   );
 }
 
