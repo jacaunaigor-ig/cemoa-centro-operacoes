@@ -1062,7 +1062,14 @@ export function HydrologyWorkbench() {
             </div>
 
             {selectedStation ? (
-              <div className={cn(mapFocus && "absolute inset-x-2 bottom-2 z-[1200] max-h-[min(48vh,28rem)] overflow-auto rounded-xl shadow-lg")}>
+              <div
+                className={cn(
+                  isMobile || mapFocus
+                    ? "pointer-events-auto absolute inset-x-1.5 bottom-1.5 z-[1200] flex max-h-[calc(100%-2.75rem)] flex-col overflow-hidden rounded-xl shadow-lg"
+                    : undefined,
+                  mapFocus && !isMobile && "top-auto inset-x-2 bottom-2 max-h-[min(48vh,28rem)]",
+                )}
+              >
               <HydroDetail
                 station={selectedStation}
                 modo={modo}

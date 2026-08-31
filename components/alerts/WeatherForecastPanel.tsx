@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { CloudRain, CloudSun, ExternalLink, Thermometer } from "lucide-react";
 import { fetchJson } from "@/lib/client";
-import { formatMm } from "@/lib/rainfall-display";
+import { formatMm, formatMmShort } from "@/lib/rainfall-display";
 import { STATIC_DEPLOY } from "@/lib/site";
 import type { RainfallMunicipio, WeatherForecast } from "@/lib/types";
-import { cn, formatAmazonDateTime } from "@/lib/utils";
+import { formatAmazonDateTime } from "@/lib/utils";
 import {
   formatTempC,
   INMET_PORTAL_URL,
@@ -87,7 +87,7 @@ export function WeatherForecastPanel({
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
             Tempo
           </small>
-          <p className="truncate text-xs text-text-mute">
+          <p className="text-xs leading-snug text-text-mute">
             {now
               ? `${periodLabel(now.period)} · ${now.resumo ?? "—"}`
               : loading
@@ -97,12 +97,12 @@ export function WeatherForecastPanel({
         </div>
       </div>
 
-      <SectionLabel icon={<CloudRain className="size-3.5" />}>Chuva · CEMADEN</SectionLabel>
+      <SectionLabel icon={<CloudRain className="size-3.5" />}>Chuva · CEMADEN · mm</SectionLabel>
       <div className="mt-1.5 grid grid-cols-5 gap-1">
-        <ClimaStat label="1 h" value={rain ? formatMm(rain.mm1h) : "—"} />
-        <ClimaStat label="6 h" value={rain ? formatMm(rain.mm6h) : "—"} />
-        <ClimaStat label="24 h" value={rain ? formatMm(rain.mm24h) : "—"} />
-        <ClimaStat label="72 h" value={rain ? formatMm(rain.mm72h) : "—"} />
+        <ClimaStat label="1 h" value={rain ? formatMmShort(rain.mm1h) : "—"} />
+        <ClimaStat label="6 h" value={rain ? formatMmShort(rain.mm6h) : "—"} />
+        <ClimaStat label="24 h" value={rain ? formatMmShort(rain.mm24h) : "—"} />
+        <ClimaStat label="72 h" value={rain ? formatMmShort(rain.mm72h) : "—"} />
         <ClimaStat
           label="7 d"
           value="—"
@@ -153,17 +153,15 @@ export function WeatherForecastPanel({
           {horizons.map((h) => (
             <li
               key={h.id}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-md border border-border bg-panel/50 px-1.5 py-1.5 text-center",
-              )}
+              className="flex flex-col items-center justify-center rounded-md border border-border bg-panel/50 px-1.5 py-1.5 text-center"
             >
               <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
                 {h.label}
               </small>
-              <span className="block w-full truncate text-[10px] leading-tight text-text" title={h.resumo ?? undefined}>
+              <span className="mt-0.5 line-clamp-2 w-full text-[10px] leading-snug text-text" title={h.resumo ?? undefined}>
                 {h.resumo ?? "—"}
               </span>
-              <strong className="font-mono text-[11px] tabular-nums">
+              <strong className="mt-0.5 font-mono text-[11px] tabular-nums">
                 {formatTempC(h.tempMax)}
               </strong>
             </li>
@@ -221,7 +219,7 @@ function ClimaStat({
       <small className="block w-full text-[9px] font-bold tracking-wide text-text-mute uppercase">
         {label}
       </small>
-      <strong className="font-mono text-[11px] tabular-nums sm:text-sm">{value}</strong>
+      <strong className="break-words font-mono text-[11px] leading-tight tabular-nums sm:text-sm">{value}</strong>
     </div>
   );
 }

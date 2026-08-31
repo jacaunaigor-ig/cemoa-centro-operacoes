@@ -46,17 +46,19 @@ export function HydroDetail({
   return (
     <section
       className={cn(
-        "overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
-        compact ? "max-h-[52vh]" : "max-h-[min(62vh,560px)]",
+        "overflow-y-auto overscroll-contain bg-panel/95 px-4 py-3",
+        compact
+          ? "min-h-0 max-h-full flex-1 rounded-xl border border-border pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          : "max-h-[min(62vh,560px)] border-t border-border",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="sticky top-0 z-10 -mx-4 -mt-3 mb-2 flex items-start justify-between gap-3 bg-panel/95 px-4 pt-3 pb-2 backdrop-blur-md">
+        <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
             Detalhe hidrológico
           </p>
-          <h3 className="text-base font-black">{station.municipio}</h3>
-          <p className="text-xs text-text-mute">
+          <h3 className="text-base font-black break-words">{station.municipio}</h3>
+          <p className="text-xs text-text-mute break-words">
             {station.calha} · {station.rio}
           </p>
         </div>

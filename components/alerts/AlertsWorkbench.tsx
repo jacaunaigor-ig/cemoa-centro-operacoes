@@ -1562,7 +1562,14 @@ export function AlertsWorkbench() {
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
               {selectedRow && !paintArmed && !drawMode && !eraseMode ? (
-                  <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),32rem)] sm:top-2">
+                  <div
+                    className={cn(
+                      "pointer-events-auto absolute z-[1200]",
+                      isMobile
+                        ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
+                        : "right-2 top-12 w-[min(calc(100%-1rem),32rem)] sm:top-2",
+                    )}
+                  >
                   <AlertDetail
                     overlay
                     municipioId={selectedRow.id}

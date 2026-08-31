@@ -11,6 +11,7 @@ import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
@@ -53,6 +54,7 @@ export function AlertDetail({
   overlay?: boolean;
   onClose: () => void;
 }) {
+  const { isMobile } = useOpsMode();
   const calha = hydro?.calha ?? null;
   const briefing = buildAlertBriefing({
     nome,
@@ -69,17 +71,22 @@ export function AlertDetail({
     <section
       className={cn(
         overlay
-          ? "max-h-[min(78vh,640px)] overflow-y-auto rounded-xl border border-border bg-panel p-3 shadow-[var(--shadow-card)] backdrop-blur-md"
+          ? cn(
+              "overflow-y-auto overscroll-contain rounded-xl border border-border bg-panel p-3 shadow-[var(--shadow-card)] backdrop-blur-md",
+              isMobile
+                ? "flex min-h-0 max-h-full flex-1 flex-col pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+                : "max-h-[min(78vh,640px)]",
+            )
           : "max-h-[min(52vh,520px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className={cn("flex items-start justify-between gap-3", isMobile && overlay && "sticky top-0 z-10 -mx-3 -mt-3 bg-panel/95 px-3 pt-3 pb-2 backdrop-blur-md")}>
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
-            Ficha · {productLabel}
+            {productLabel}
           </p>
-          <h3 className="truncate text-base font-bold tracking-tight">{nome}</h3>
-          <p className="text-xs text-text-mute">{bacia}</p>
+          <h3 className="text-base font-bold tracking-tight break-words">{nome}</h3>
+          <p className="text-xs text-text-mute break-words">{bacia}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar detalhe">
           <X />
