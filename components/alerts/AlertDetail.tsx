@@ -8,10 +8,12 @@ import { RiskBadge } from "@/components/shared/RiskBadge";
 import { classificationByline, type AlertType } from "@/lib/alert-types";
 import { buildAlertBriefing } from "@/lib/alert-briefing";
 import { formatMm } from "@/lib/rainfall-display";
+import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
-import type { AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
+import type { AirQualityMunicipio, AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
+import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 
 export function AlertDetail({
@@ -27,6 +29,7 @@ export function AlertDetail({
   alert,
   hydro,
   rain,
+  air,
   productLabel,
   tipo,
   overlay,
@@ -44,6 +47,7 @@ export function AlertDetail({
   alert: RainAlert | null;
   hydro: HydroStation | null;
   rain?: RainfallMunicipio | null;
+  air?: AirQualityMunicipio | null;
   productLabel: string;
   tipo?: AlertType;
   overlay?: boolean;
@@ -58,6 +62,7 @@ export function AlertDetail({
     agravado: alert?.agravado,
     rain: rain === undefined ? undefined : rain,
     hydro,
+    air: air === undefined ? undefined : air,
   });
 
   return (
@@ -116,11 +121,21 @@ export function AlertDetail({
         </ul>
       ) : null}
 
-      <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
-        <TechStat label="1 h" value={rain ? formatMm(rain.mm1h) : "—"} />
-        <TechStat label="6 h" value={rain ? formatMm(rain.mm6h) : "—"} />
-        <TechStat label="24 h" value={rain ? formatMm(rain.mm24h) : "—"} />
-      </div>
+      {tipo === "INCENDIO" ? (
+        <div className="mt-3 grid grid-cols-2 gap-1.5 text-center">
+          <TechStat label="MP2,5" value={air ? formatUg(air.pm25) : "—"} />
+          <TechStat
+            label="Monitores"
+            value={air ? String(air.sensors.length) : "—"}
+          />
+        </div>
+      ) : (
+        <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+          <TechStat label="1 h" value={rain ? formatMm(rain.mm1h) : "—"} />
+          <TechStat label="6 h" value={rain ? formatMm(rain.mm6h) : "—"} />
+          <TechStat label="24 h" value={rain ? formatMm(rain.mm24h) : "—"} />
+        </div>
+      )}
       {hydro ? (
         <p className="mt-2 text-[11px] text-text-dim">
           Cota {hydro.semLeitura ? "sem leitura" : `${hydro.cota?.toFixed(2)} m`}
@@ -131,7 +146,15 @@ export function AlertDetail({
         </p>
       ) : null}
 
-      {rain === undefined ? null : rain ? (
+      {tipo === "INCENDIO" ? (
+        air === undefined ? null : air ? (
+          <AirQualityPanel rec={air} />
+        ) : (
+          <p className="mt-3 text-[11px] text-text-mute">
+            Sem monitor PurpleAir neste município (App SELVA, 24 h, até 55 km da sede).
+          </p>
+        )
+      ) : rain === undefined ? null : rain ? (
         <CemadenRainPanel rain={rain} tipo={tipo} />
       ) : (
         <p className="mt-3 text-[11px] text-text-mute">

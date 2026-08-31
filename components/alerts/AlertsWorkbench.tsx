@@ -80,7 +80,7 @@ import { cn } from "@/lib/utils";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
-import type { AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
+import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
 import {
   hasRain,
   hasRainReading,
@@ -88,6 +88,7 @@ import {
   isIntense1h,
   parseRainFilter,
 } from "@/lib/rainfall-display";
+import { airSensorsForMap, matchesAirFilter, parseAirFilter } from "@/lib/air-quality-display";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
@@ -98,6 +99,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
+import { AirQualityStrip } from "@/components/alerts/AirQualityStrip";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
@@ -226,12 +228,14 @@ export function AlertsWorkbench() {
   const calha = parseSharedCalha(params.get("calha"));
   const tipo = parseAlertType(params.get("tipo"));
   const rainFilter = parseRainFilter(params.get("chuva"));
+  const airFilter = parseAirFilter(params.get("ar"));
   const product = productOf(tipo);
   const activeFilter = parseLevel(params.get("risco"), product.levels);
 
   const [data, setData] = useState<AlertsPayload | null>(null);
   const [hydro, setHydro] = useState<HydrologyPayload | null>(null);
   const [rain, setRain] = useState<RainfallPayload | null>(null);
+  const [air, setAir] = useState<AirQualityPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
@@ -255,6 +259,7 @@ export function AlertsWorkbench() {
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
   const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
+  const airPoints = useMemo(() => airSensorsForMap(air), [air]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -287,6 +292,12 @@ export function AlertsWorkbench() {
 
   useEffect(() => {
     setEraseMode(false);
+  }, [tipo]);
+
+  useEffect(() => {
+    if (tipo === "INCENDIO") {
+      setOverlays((prev) => (prev.pluvio ? prev : { ...prev, pluvio: true }));
+    }
   }, [tipo]);
 
   useEffect(() => {
@@ -597,13 +608,15 @@ export function AlertsWorkbench() {
           localPushed.current = true;
           await hydrateLocal();
         }
-        const [payload, hydroPayload, rainPayload] = await Promise.all([
+        const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
           fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
+          fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
         ]);
         if (cancelled) return;
         if (rainPayload) setRain(rainPayload);
+        if (airPayload) setAir(airPayload);
         if (hydroPayload) setHydro(hydroPayload);
         if (!editBusy.current || !gotAlerts) {
           setData(payload);
@@ -635,14 +648,16 @@ export function AlertsWorkbench() {
         setError(null);
         return;
       }
-      const [payload, hydroPayload, rainPayload] = await Promise.all([
+      const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
         fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
         fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
+        fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
       ]);
       setData(payload);
       if (hydroPayload) setHydro(hydroPayload);
       if (rainPayload) setRain(rainPayload);
+      if (airPayload) setAir(airPayload);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
@@ -754,9 +769,13 @@ export function AlertsWorkbench() {
       }
       if (!matchMunicipioGeo(m.nome, m.bacia, geo)) return false;
       if (selected && m.nome !== selected) return false;
-      if (rainFilter === "COM_LEITURA" && !hasRainReading(rain?.byNome[m.nome])) return false;
-      if (rainFilter === "COM_CHUVA" && !hasRain(rain?.byNome[m.nome])) return false;
-      if (rainFilter === "INTENSO" && !isIntense1h(rain?.byNome[m.nome]?.mm1h)) return false;
+      if (tipo === "INCENDIO") {
+        if (!matchesAirFilter(air?.byNome[m.nome], airFilter)) return false;
+      } else {
+        if (rainFilter === "COM_LEITURA" && !hasRainReading(rain?.byNome[m.nome])) return false;
+        if (rainFilter === "COM_CHUVA" && !hasRain(rain?.byNome[m.nome])) return false;
+        if (rainFilter === "INTENSO" && !isIntense1h(rain?.byNome[m.nome]?.mm1h)) return false;
+      }
       if (
         needle &&
         !m.nome.toLowerCase().includes(needle) &&
@@ -766,7 +785,7 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain, mudancaNomes]);
+  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain, airFilter, air, mudancaNomes]);
 
   const counts = useMemo(() => {
     const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0, AGRAVADOS: mudancas.length };
@@ -817,15 +836,38 @@ export function AlertsWorkbench() {
             expiresAt: m.expiresAt ?? null,
           })),
           rain,
+          air,
           hydro: hydroStations,
         }),
       ),
-    [tipo, catalog, rain, hydroStations],
+    [tipo, catalog, rain, air, hydroStations],
   );
   const plantaoTotal =
     plantaoCounts.vencido + plantaoCounts.renovar + plantaoCounts.emitir;
   usePlantaoExpiryChime(tipo, catalog, !isMobile);
   const ProductIcon = PRODUCT_ICONS[tipo];
+  const monitorStrip = (className?: string) =>
+    tipo === "INCENDIO" ? (
+      <AirQualityStrip
+        className={className}
+        air={air}
+        loading={!air && !STATIC_DEPLOY}
+        filter={airFilter}
+        onFilter={(next) =>
+          setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
+        }
+      />
+    ) : (
+      <RainfallStrip
+        className={className}
+        rain={rain}
+        loading={!rain && !STATIC_DEPLOY}
+        filter={rainFilter}
+        onFilter={(next) =>
+          setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
+        }
+      />
+    );
   const listNode = (
     <AlertList
       municipios={visibleMunicipios}
@@ -833,6 +875,7 @@ export function AlertsWorkbench() {
       alerts={filteredAlerts}
       hydro={hydroStations}
       rain={rain}
+      air={air}
       selected={selected}
       hovered={hovered}
       bacia={bacia}
@@ -872,7 +915,7 @@ export function AlertsWorkbench() {
       }}
       onLimpar={() => {
         setBusca("");
-        setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null });
+        setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null, ar: null });
       }}
     />
   );
@@ -1107,7 +1150,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³ (microgramas por metro cúbico de ar). Incêndio em áreas não protegidas com reflexos na qualidade do ar.",
+              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Monitores PurpleAir da rede SEMA/DC-AM e UEA EducAIR via App SELVA — leitura de baixo custo, não regulatória. Só o operador classifica o município.",
             }
           : undefined,
     });
@@ -1119,6 +1162,7 @@ export function AlertsWorkbench() {
       source={data?.source}
       updatedAt={data?.generatedAt ?? null}
       rainAt={rain?.generatedAt ?? null}
+      airAt={air?.generatedAt ?? null}
       hydroAt={hydro?.generatedAt ?? null}
     >
       <div className={cn(
@@ -1194,12 +1238,7 @@ export function AlertsWorkbench() {
 
           {isMobile ? (
             <div className="border-b border-border px-2 py-1.5">
-            <RainfallStrip
-              rain={rain}
-              loading={!rain && !STATIC_DEPLOY}
-              filter={rainFilter}
-              onFilter={(next) => setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })}
-            />
+            {monitorStrip()}
             </div>
           ) : null}
 
@@ -1214,15 +1253,7 @@ export function AlertsWorkbench() {
           >
             {!isMobile ? (
               <div className="col-span-2 sm:col-span-3 xl:col-span-1">
-                <RainfallStrip
-                  className="h-full"
-                  rain={rain}
-                  loading={!rain && !STATIC_DEPLOY}
-                  filter={rainFilter}
-                  onFilter={(next) =>
-                    setQuery({ chuva: next === "TODOS" ? null : next, municipio: null })
-                  }
-                />
+                {monitorStrip("h-full")}
               </div>
             ) : null}
             <KpiCard
@@ -1233,7 +1264,7 @@ export function AlertsWorkbench() {
               accent="#2563eb"
               active={activeFilter === "TODOS" && !bacia && !calha && !selected}
               onClick={() =>
-                setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null })
+                setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null, ar: null })
               }
               loading={loading}
             />
@@ -1452,6 +1483,8 @@ export function AlertsWorkbench() {
                   showRivers={showRivers}
                   overlays={overlayVis}
                   pluvio={pluvio}
+                  airSensors={airPoints}
+                  pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
                   eraseMode={admin && eraseMode}
@@ -1488,7 +1521,8 @@ export function AlertsWorkbench() {
                     expiresAt={selectedRow.expiresAt ?? selectedAlert?.expiresAt}
                     alert={selectedAlert}
                     hydro={selectedHydro}
-                    rain={rain ? rain.byNome[selectedRow.nome] ?? null : undefined}
+                    rain={tipo === "INCENDIO" ? undefined : rain ? rain.byNome[selectedRow.nome] ?? null : undefined}
+                    air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
                     onClose={() => setQuery({ municipio: null })}
@@ -1533,6 +1567,24 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                {tipo === "INCENDIO" ? (
+                  <button
+                    type="button"
+                    className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
+                    aria-pressed={airFilter === "RUIM"}
+                    onClick={() =>
+                      setQuery({
+                        ar: airFilter === "RUIM" ? null : "RUIM",
+                        chuva: null,
+                        municipio: null,
+                      })
+                    }
+                  >
+                    <span className="size-2.5 rounded-full bg-risco-alto" />
+                    MP2,5 ≥ 50 µg/m³
+                    <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
+                  </button>
+                ) : (
                 <button
                   type="button"
                   className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
@@ -1548,6 +1600,7 @@ export function AlertsWorkbench() {
                   Chuva ≥ {INTENSE_MM_PER_H} mm/h
                   <span className="ml-auto font-mono">{rain?.coverage.intenso1h ?? 0}</span>
                 </button>
+                )}
               </MapLegendCard>
             </div>
 
@@ -1570,7 +1623,7 @@ export function AlertsWorkbench() {
               paintHint={
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
-                  : "Só o operador classifica o grau. Polígono pinta a mancha; chuva e cota só sugerem."
+                  : "Só o operador classifica o grau. Polígono pinta a mancha; chuva, cota e MP2,5 só sugerem."
               }
               onDraw={() => {
                 setDrawMode((v) => {

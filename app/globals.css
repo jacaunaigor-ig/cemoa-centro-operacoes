@@ -389,6 +389,28 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   box-shadow: 0 0 0 1px #fff;
 }
 
+.map-legend-air {
+  width: 6px !important;
+  height: 6px !important;
+  background: #10b981;
+  box-shadow: 0 0 0 1px #fff;
+}
+
+.leaflet-div-icon.map-air-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-air-dot {
+  display: block;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1.5px #fff, 0 1px 2px rgba(15, 23, 42, 0.28);
+}
+
+.map-air-dot.is-anom {
+  box-shadow: 0 0 0 2px #fbbf24, 0 1px 2px rgba(15, 23, 42, 0.28);
+}
+
 .map-cluster-rural span { background: #ca8a04; }
 .map-cluster-indio span { background: #7c3aed; }
 

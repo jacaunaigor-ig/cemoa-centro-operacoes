@@ -101,7 +101,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     scale: "ar",
     levels: AIR_LEVELS,
     low: "BOA",
-    sources: "CEMOA · INPE/CENSIPAM · qualidade do ar",
+    sources: "CEMOA · PurpleAir via App SELVA (SEMA/DC-AM · UEA EducAIR)",
   },
 };
 
@@ -133,6 +133,15 @@ export function levelRank(tipo: AlertType, level: string) {
 
 export function defaultPaintLevel(tipo: AlertType) {
   return productOf(tipo).scale === "ar" ? "RUIM" : "ALTO";
+}
+
+/** Faixas do produto INCÊNDIO (não são o art. 12 da Portaria MIDR). */
+export function airLevelFromPm25(pm25: number): AirLevel {
+  if (!Number.isFinite(pm25) || pm25 < 15) return "BOA";
+  if (pm25 < 50) return "MODERADO";
+  if (pm25 < 75) return "RUIM";
+  if (pm25 < 125) return "MUITO_RUIM";
+  return "PESSIMA";
 }
 
 export function levelLabel(level: string) {

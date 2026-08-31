@@ -13,7 +13,7 @@ import {
   type PlantaoAction,
   type PlantaoItem,
 } from "@/lib/plantao-queue";
-import type { HydroStation, RainfallPayload } from "@/lib/types";
+import type { AirQualityPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const ACTION_TONE: Record<PlantaoAction, string> = {
@@ -33,6 +33,7 @@ export function PlantaoQueue({
   municipios,
   rain,
   hydro,
+  air,
   compact = false,
   onSelect,
 }: {
@@ -46,13 +47,14 @@ export function PlantaoQueue({
   }>;
   rain: RainfallPayload | null;
   hydro: HydroStation[];
+  air?: AirQualityPayload | null;
   compact?: boolean;
   onSelect: (nome: string, bacia: string) => void;
 }) {
   const [filter, setFilter] = useState<PlantaoAction | "TODOS">("TODOS");
   const items = useMemo(
-    () => buildPlantaoQueue({ tipo, municipios, rain, hydro }),
-    [tipo, municipios, rain, hydro],
+    () => buildPlantaoQueue({ tipo, municipios, rain, hydro, air }),
+    [tipo, municipios, rain, hydro, air],
   );
   const counts = useMemo(() => countPlantao(items), [items]);
 
@@ -70,7 +72,7 @@ export function PlantaoQueue({
     <div
       id="fila-plantao"
       className="rounded-lg border border-border bg-bg/35 p-2"
-      title="Sugestão de plantão. Só o operador classifica o grau — chuva e cota não pintam o mapa."
+      title="Sugestão de plantão. Só o operador classifica o grau — chuva, cota e MP2,5 não pintam o mapa."
     >
       <div className="flex items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">

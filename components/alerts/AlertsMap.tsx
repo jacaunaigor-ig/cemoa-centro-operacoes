@@ -30,11 +30,13 @@ import { addAmazonasRiverFlow } from "@/lib/map-rivers";
 import {
   addTerritoryOverlays,
   applyTerritoryVisibility,
+  syncAirSensors,
   syncPluviometers,
   type PluvioStation,
   type TerritoryLayers,
   type TerritoryVisibility,
 } from "@/lib/map-overlays";
+import type { AirQualitySensor } from "@/lib/types";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
 import { withBase } from "@/lib/site";
@@ -76,6 +78,8 @@ export const AlertsMap = forwardRef<
     showRivers: boolean;
     overlays: TerritoryVisibility;
     pluvio: PluvioStation[];
+    airSensors?: AirQualitySensor[];
+    pointKind?: "cemaden" | "air";
     onlyRisk: boolean;
     hovered?: string | null;
     drawMode?: boolean;
@@ -102,6 +106,8 @@ export const AlertsMap = forwardRef<
     showRivers,
     overlays,
     pluvio,
+    airSensors = [],
+    pointKind = "cemaden",
     onlyRisk,
     hovered,
     drawMode = false,
@@ -150,6 +156,8 @@ export const AlertsMap = forwardRef<
     opacity,
     overlays,
     pluvio,
+    airSensors,
+    pointKind,
     drawMode,
     eraseMode,
     stains,
@@ -174,6 +182,8 @@ export const AlertsMap = forwardRef<
       opacity,
       overlays,
       pluvio,
+      airSensors,
+      pointKind,
       drawMode,
       eraseMode,
       stains,
@@ -196,6 +206,8 @@ export const AlertsMap = forwardRef<
     opacity,
     overlays,
     pluvio,
+    airSensors,
+    pointKind,
     drawMode,
     eraseMode,
     stains,
@@ -534,9 +546,19 @@ export const AlertsMap = forwardRef<
       });
       const territory = addTerritoryOverlays(L, map);
       territoryRef.current = territory;
-      applyTerritoryVisibility(L, map, territory, stateRef.current.overlays);
+      applyTerritoryVisibility(
+        L,
+        map,
+        territory,
+        stateRef.current.overlays,
+        stateRef.current.pointKind === "air" ? "PurpleAir" : "CEMADEN",
+      );
       if (stateRef.current.overlays.pluvio) {
-        syncPluviometers(L, territory.pluvio, stateRef.current.pluvio);
+        if (stateRef.current.pointKind === "air") {
+          syncAirSensors(L, territory.pluvio, stateRef.current.airSensors);
+        } else {
+          syncPluviometers(L, territory.pluvio, stateRef.current.pluvio);
+        }
       }
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
@@ -572,7 +594,7 @@ export const AlertsMap = forwardRef<
 
   const riscoSig = municipios.map((m) => `${m.id}:${m.risco}`).join("|");
   const rainBurstSig = municipios
-    .filter((m) => (m.mm1h ?? 0) >= INTENSE_MM_PER_H)
+    .filter((m) => pointKind !== "air" && (m.mm1h ?? 0) >= INTENSE_MM_PER_H)
     .map((m) => `${m.id}:${m.mm1h}`)
     .join("|");
   const stainSig = stains.map((s) => `${s.id}:${s.level}`).join("|");
@@ -671,15 +693,22 @@ export const AlertsMap = forwardRef<
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    applyTerritoryVisibility(leafletRef.current, map, territoryRef.current, overlays);
-  }, [overlays]);
+    applyTerritoryVisibility(
+      leafletRef.current,
+      map,
+      territoryRef.current,
+      overlays,
+      pointKind === "air" ? "PurpleAir" : "CEMADEN",
+    );
+  }, [overlays, pointKind]);
 
   useEffect(() => {
     const L = leafletRef.current;
     const layer = territoryRef.current?.pluvio;
     if (!L || !layer || !overlays.pluvio) return;
-    syncPluviometers(L, layer, pluvio);
-  }, [pluvio, overlays.pluvio]);
+    if (pointKind === "air") syncAirSensors(L, layer, airSensors);
+    else syncPluviometers(L, layer, pluvio);
+  }, [pluvio, airSensors, overlays.pluvio, pointKind]);
 
   return (
     <div

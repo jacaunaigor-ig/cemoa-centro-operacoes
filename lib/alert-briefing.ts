@@ -1,7 +1,8 @@
-import { isAlertActive, levelLabel, riskActionFor, type AlertType } from "@/lib/alert-types";
+import { AIR_LABELS, isAlertActive, levelLabel, riskActionFor, type AlertType } from "@/lib/alert-types";
+import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import { formatMm, INTENSE_MM_PER_H, isIntense1h } from "@/lib/rainfall-display";
-import type { AlertLevel, HydroStation, RainfallMunicipio } from "@/lib/types";
+import type { AirQualityMunicipio, AlertLevel, HydroStation, RainfallMunicipio } from "@/lib/types";
 
 export type AlertBriefing = {
   headline: string;
@@ -14,6 +15,7 @@ export function buildAlertBriefing({
   tipo,
   rain,
   hydro,
+  air,
 }: {
   nome: string;
   risco: AlertLevel | string;
@@ -22,12 +24,19 @@ export function buildAlertBriefing({
   agravado?: boolean;
   rain?: RainfallMunicipio | null;
   hydro?: HydroStation | null;
+  air?: AirQualityMunicipio | null;
 }): AlertBriefing {
   const nivel = levelLabel(risco);
   const tendencia = isAlertActive(tipo, risco) ? "" : " em monitoramento";
   const parts: string[] = [`${nome}: alerta ${nivel}${tendencia}.`];
 
-  if (rain) {
+  if (tipo === "INCENDIO") {
+    if (air && air.pm25 != null) {
+      parts.push(`MP2,5 ${formatUg(air.pm25)} nos monitores PurpleAir via App SELVA`);
+    } else if (air === null) {
+      parts.push("Sem monitor PurpleAir neste município");
+    }
+  } else if (rain) {
     if (rain.mm6h != null) parts.push(`Acumulado de ${formatMm(rain.mm6h)} nas últimas 6 h`);
     else if (rain.mm1h != null) parts.push(`${formatMm(rain.mm1h)} na última hora`);
     else if (rain.mm24h != null) parts.push(`${formatMm(rain.mm24h)} nas últimas 24 h`);
@@ -37,9 +46,11 @@ export function buildAlertBriefing({
   if (isAlertActive(tipo, risco)) {
     risks.push(`${riskActionFor(risco)} · ${nivel}`);
   }
-  if (rain && isIntense1h(rain.mm1h)) {
+  if (tipo === "INCENDIO" && air?.level && air.level !== "BOA" && air.pm25 != null) {
+    risks.push(`Qualidade ${AIR_LABELS[air.level]} · ${formatUg(air.pm25)}`);
+  } else if (tipo !== "INCENDIO" && rain && isIntense1h(rain.mm1h)) {
     risks.push(`Chuva intensa na última hora (${formatMm(rain.mm1h)} ≥ ${INTENSE_MM_PER_H} mm)`);
-  } else if (rain && (rain.mm6h ?? 0) >= 50) {
+  } else if (tipo !== "INCENDIO" && rain && (rain.mm6h ?? 0) >= 50) {
     risks.push(`Acumulado alto em 6 h (${formatMm(rain.mm6h)})`);
   }
   if (hydro && !hydro.semLeitura && hydro.cota != null) {
@@ -60,7 +71,7 @@ export function buildAlertBriefing({
     risks.push("Risco de movimento de massa onde houver setor mapeado");
   }
 
-  if (rain === null) {
+  if (tipo !== "INCENDIO" && rain === null) {
     parts.push("Sem pluviômetro CEMADEN neste município");
   }
 

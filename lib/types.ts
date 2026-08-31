@@ -229,3 +229,55 @@ export type RainfallPayload = {
   byId: Record<string, RainfallMunicipio>;
   byNome: Record<string, RainfallMunicipio>;
 };
+
+export type AirNetwork = "SEMA_DCAM" | "UEA_EDUCAIR" | "OUTRO";
+
+export type AirFilter = "TODOS" | "COM_SENSOR" | "ATENCAO" | "RUIM";
+
+export type AirQualitySensor = {
+  sensorIndex: number;
+  name: string;
+  lat: number;
+  lon: number;
+  pm25: number;
+  temperatureC: number | null;
+  lastSeen: number;
+  municipioId: string | null;
+  municipioNome: string | null;
+  kmSede: number | null;
+  anomalous: boolean;
+  network: AirNetwork;
+};
+
+export type AirQualityMunicipio = {
+  id: string;
+  nome: string;
+  bacia: string;
+  pm25: number | null;
+  level: AirLevel | null;
+  sensors: AirQualitySensor[];
+  observedAt: number | null;
+};
+
+export type AirQualityPayload = {
+  generatedAt: number;
+  source: string;
+  cache: "HIT" | "MISS";
+  error: string | null;
+  coverage: {
+    municipiosCemoa: number;
+    sensores: number;
+    comSensor: number;
+    comLeitura: number;
+    anomolos: number;
+    semaDcam: number;
+    ueaEducair: number;
+    atencao: number;
+    ruim: number;
+    pessima: number;
+    pico: { nome: string; pm25: number } | null;
+  };
+  byId: Record<string, AirQualityMunicipio>;
+  byNome: Record<string, AirQualityMunicipio>;
+  sensors: AirQualitySensor[];
+};

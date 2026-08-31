@@ -5,6 +5,8 @@ const FONTES = [
   { href: "https://portal.inmet.gov.br", label: "INMET" },
   { href: "https://www.cptec.inpe.br", label: "CPTEC/INPE" },
   { href: "https://www.gov.br/ana/pt-br", label: "ANA" },
+  { href: "https://www.appselva.com.br/", label: "App SELVA" },
+  { href: "https://www.purpleair.com/", label: "PurpleAir" },
   { href: "https://www.defesacivil.am.gov.br", label: "Defesa Civil AM" },
 ] as const;
 
@@ -12,18 +14,21 @@ export function OpsFooter({
   source,
   updatedAt,
   rainAt,
+  airAt,
   hydroAt,
   supabase,
 }: {
   source?: string;
   updatedAt?: number | null;
   rainAt?: number | null;
+  airAt?: number | null;
   hydroAt?: number | null;
   supabase?: "ligado" | "aguardando";
 }) {
   const stamps = [
     updatedAt ? `Alertas ${formatAmazonDateTime(updatedAt)}` : null,
     rainAt ? `Chuva ${formatAmazonDateTime(rainAt)}` : null,
+    airAt ? `Ar ${formatAmazonDateTime(airAt)}` : null,
     hydroAt ? `Cotas ${formatAmazonDateTime(hydroAt)}` : null,
   ].filter(Boolean);
 

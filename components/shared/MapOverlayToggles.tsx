@@ -2,6 +2,7 @@
 
 import { MapToolButton } from "@/components/shared/MapToolButton";
 import {
+  showsAirSensors,
   showsPluvio,
   type OverlayProduct,
   type TerritoryVisibility,
@@ -21,6 +22,7 @@ export function MapOverlayToggles({
   }
 
   const pluvio = showsPluvio(product);
+  const air = showsAirSensors(product);
 
   return (
     <div className="mt-1.5 border-t border-border pt-1.5">
@@ -33,6 +35,11 @@ export function MapOverlayToggles({
       {pluvio ? (
         <MapToolButton active={vis.pluvio} onClick={() => toggle("pluvio")}>
           {vis.pluvio ? "Ocultar pluviômetros" : "Pluviômetros CEMADEN"}
+        </MapToolButton>
+      ) : null}
+      {air ? (
+        <MapToolButton active={vis.pluvio} onClick={() => toggle("pluvio")}>
+          {vis.pluvio ? "Ocultar sensores PurpleAir" : "Sensores PurpleAir · SELVA"}
         </MapToolButton>
       ) : null}
       <MapToolButton active={vis.rurais} onClick={() => toggle("rurais")}>

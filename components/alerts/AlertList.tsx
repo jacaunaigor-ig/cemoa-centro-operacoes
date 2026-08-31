@@ -26,10 +26,11 @@ import {
 } from "@/lib/alert-types";
 import { buildAlertBriefing } from "@/lib/alert-briefing";
 import { statusAtivo } from "@/lib/hydrology";
-import type { AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib/types";
+import type { AirQualityPayload, AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib/types";
 import { cn, formatRelative, withAlpha } from "@/lib/utils";
 import { formatMm } from "@/lib/rainfall-display";
 import { RainMmBadge } from "@/components/alerts/RainfallStrip";
+import { AirPmBadge } from "@/components/alerts/AirQualityStrip";
 import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { massRiskDo, pessoasRiscoDo } from "@/lib/mass-risk";
@@ -41,6 +42,7 @@ export function AlertList({
   alerts,
   hydro,
   rain,
+  air,
   selected,
   hovered,
   bacia,
@@ -78,6 +80,7 @@ export function AlertList({
   alerts: RainAlert[];
   hydro: HydroStation[];
   rain: RainfallPayload | null;
+  air?: AirQualityPayload | null;
   selected: string | null;
   hovered: string | null;
   bacia: string | null;
@@ -264,6 +267,7 @@ export function AlertList({
           tipo={tipo}
           municipios={fila}
           rain={rain}
+          air={air ?? null}
           hydro={hydro}
           compact={isMobile}
           onSelect={onSelect}
@@ -309,6 +313,7 @@ export function AlertList({
                     novo: alert?.novo,
                     agravado: alert?.agravado,
                     rain: rain ? rain.byNome[m.nome] ?? null : undefined,
+                    air: air ? air.byNome[m.nome] ?? null : undefined,
                     hydro: cota ?? null,
                   });
                   return (
@@ -372,7 +377,9 @@ export function AlertList({
                                 : "Aguardando operador"}
                           </span>
                           <div className="flex shrink-0 items-center gap-1">
-                            {rain ? (
+                            {tipo === "INCENDIO" ? (
+                              <AirPmBadge rec={air?.byNome[m.nome] ?? null} />
+                            ) : rain ? (
                               <RainMmBadge
                                 rain={rain.byNome[m.nome] ?? null}
                                 hasStation={Boolean(rain.byNome[m.nome])}

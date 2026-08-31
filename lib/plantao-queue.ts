@@ -8,7 +8,8 @@ import {
   rainScore,
   type RainApoio,
 } from "@/lib/rainfall-display";
-import type { HydroStation, RainfallPayload, RiskLevel } from "@/lib/types";
+import { airApoio, airRankAction } from "@/lib/air-quality-display";
+import type { AirQualityPayload, HydroStation, RainfallPayload, RiskLevel } from "@/lib/types";
 
 export const PLANTAO_ACTIONS = ["vencido", "renovar", "emitir"] as const;
 export type PlantaoAction = (typeof PLANTAO_ACTIONS)[number];
@@ -64,6 +65,7 @@ export function buildPlantaoQueue({
   municipios,
   rain,
   hydro,
+  air,
   now = Date.now(),
 }: {
   tipo: AlertType;
@@ -76,6 +78,7 @@ export function buildPlantaoQueue({
   }>;
   rain: RainfallPayload | null;
   hydro: HydroStation[];
+  air?: AirQualityPayload | null;
   now?: number;
 }): PlantaoItem[] {
   const hydroByNome = new Map<string, HydroStation>();
@@ -96,9 +99,17 @@ export function buildPlantaoQueue({
       apoio = null;
     }
     const hydroHint = hydroApoio(tipo, hydroByNome.get(m.nome));
-    const merged = mergeApoio(apoio, hydroHint);
-    const suggested = merged && merged.level !== "BAIXO" ? merged.level : null;
-    const rainAction = rainRankAction(m.risco, (suggested as RiskLevel | null) ?? null);
+    const merged = tipo === "INCENDIO" ? null : mergeApoio(apoio, hydroHint);
+    const airHint = tipo === "INCENDIO" ? airApoio(air?.byNome[m.nome]) : null;
+    const suggested = airHint
+      ? airHint.level
+      : merged && merged.level !== "BAIXO"
+        ? merged.level
+        : null;
+    const rainAction = airHint
+      ? airRankAction(m.risco, airHint.level)
+      : rainRankAction(m.risco, (suggested as RiskLevel | null) ?? null);
+    const hintMotivo = airHint?.motivo ?? merged?.motivo;
 
     let action: PlantaoAction | null = null;
     let motivo = "";
@@ -106,20 +117,20 @@ export function buildPlantaoQueue({
     if (active && tone === "expired") {
       action = "vencido";
       motivo = `Alerta ${m.risco.toLowerCase()} vencido — renovar ou rebaixar.`;
-      if (merged?.motivo && suggested) motivo = `${motivo} ${merged.motivo}`;
+      if (hintMotivo && suggested) motivo = `${motivo} ${hintMotivo}`;
     } else if (active && (tone === "urgent" || tone === "warn")) {
       action = "renovar";
       motivo =
         tone === "urgent"
           ? "Prazo do alerta abaixo de 10 minutos."
           : "Prazo do alerta abaixo de 30 minutos.";
-      if (rainAction === "elevar" && merged?.motivo) motivo = `${motivo} ${merged.motivo}`;
-    } else if (rainAction === "elevar" && merged) {
+      if (rainAction === "elevar" && hintMotivo) motivo = `${motivo} ${hintMotivo}`;
+    } else if (rainAction === "elevar" && (merged || airHint)) {
       action = "renovar";
-      motivo = merged.motivo;
-    } else if (rainAction === "emitir" && merged) {
+      motivo = hintMotivo ?? "";
+    } else if (rainAction === "emitir" && (merged || airHint)) {
       action = "emitir";
-      motivo = merged.motivo;
+      motivo = hintMotivo ?? "";
     }
 
     if (!action) continue;
@@ -145,8 +156,10 @@ export function buildPlantaoQueue({
     }
     const sa = rain?.byNome[a.nome];
     const sb = rain?.byNome[b.nome];
-    const scoreA = sa ? rainScore(tipo, sa) : 0;
-    const scoreB = sb ? rainScore(tipo, sb) : 0;
+    const airA = air?.byNome[a.nome]?.pm25 ?? 0;
+    const airB = air?.byNome[b.nome]?.pm25 ?? 0;
+    const scoreA = tipo === "INCENDIO" ? airA : sa ? rainScore(tipo, sa) : 0;
+    const scoreB = tipo === "INCENDIO" ? airB : sb ? rainScore(tipo, sb) : 0;
     return scoreB - scoreA || a.nome.localeCompare(b.nome, "pt-BR");
   });
 }

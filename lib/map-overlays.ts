@@ -9,8 +9,15 @@ import {
   type LocalidadePonto,
 } from "@/lib/localidades";
 import { MUNICIPALITIES } from "@/lib/municipalities";
-import type { AlertType } from "@/lib/alert-types";
-import type { RainfallPayload } from "@/lib/types";
+import { AIR_LABELS, airLevelFromPm25, type AlertType } from "@/lib/alert-types";
+import type { AirQualitySensor, RainfallPayload } from "@/lib/types";
+import {
+  AIR_NETWORK_LABELS,
+  airDotColor,
+  airDotSize,
+  formatUg,
+} from "@/lib/air-quality-display";
+import { formatRelative } from "@/lib/utils";
 
 type LeafletNS = typeof import("leaflet");
 
@@ -53,6 +60,14 @@ export function showsPluvio(product: OverlayProduct) {
   return product === "CHUVA" || product === "ALAGAMENTO" || product === "MOVIMENTO";
 }
 
+export function showsAirSensors(product: OverlayProduct) {
+  return product === "INCENDIO";
+}
+
+export function showsPointOverlay(product: OverlayProduct) {
+  return showsPluvio(product) || showsAirSensors(product);
+}
+
 export function effectiveOverlays(
   vis: TerritoryVisibility,
   product: OverlayProduct,
@@ -61,7 +76,7 @@ export function effectiveOverlays(
     sedes: vis.sedes,
     rurais: vis.rurais,
     indigenas: vis.indigenas,
-    pluvio: vis.pluvio && showsPluvio(product),
+    pluvio: vis.pluvio && showsPointOverlay(product),
   };
 }
 
@@ -144,12 +159,21 @@ function fillIndigenas(L: LeafletNS, layer: LayerGroup) {
   }
 }
 
-function paintLegend(el: HTMLElement | null, vis: TerritoryVisibility) {
+function paintLegend(
+  el: HTMLElement | null,
+  vis: TerritoryVisibility,
+  pointLegend = "CEMADEN",
+) {
   if (!el) return;
   const rows: string[] = [];
   const extra = vis.pluvio || vis.rurais || vis.indigenas;
   if (vis.sedes && extra) rows.push(`<span><i class="map-legend-sede"></i> Sede</span>`);
-  if (vis.pluvio) rows.push(`<span><i class="map-legend-pluvio"></i> CEMADEN</span>`);
+  if (vis.pluvio) {
+    const air = pointLegend.toLowerCase().includes("purple");
+    rows.push(
+      `<span><i class="${air ? "map-legend-air" : "map-legend-pluvio"}"></i> ${pointLegend}</span>`,
+    );
+  }
   if (vis.rurais) rows.push(`<span><i style="background:#ca8a04"></i> Rural</span>`);
   if (vis.indigenas) rows.push(`<span><i style="background:#7c3aed"></i> Indígena</span>`);
   if (!rows.length) {
@@ -264,6 +288,39 @@ export function syncPluviometers(L: LeafletNS, layer: LayerGroup, stations: Pluv
   }
 }
 
+export function syncAirSensors(L: LeafletNS, layer: LayerGroup, sensors: AirQualitySensor[]) {
+  layer.clearLayers();
+  for (const s of sensors) {
+    const size = airDotSize(s.pm25);
+    const color = airDotColor(s);
+    const level = s.anomalous ? "leitura anômala" : AIR_LABELS[airLevelFromPm25(s.pm25)];
+    const where = s.municipioNome
+      ? `${s.municipioNome}${s.kmSede != null ? ` · ${s.kmSede.toLocaleString("pt-BR")} km da sede` : ""}`
+      : "fora da malha CEMOA";
+    const icon = L.divIcon({
+      className: "map-air-icon",
+      html: `<span class="map-air-dot${s.anomalous ? " is-anom" : ""}" style="background:${color};width:${size}px;height:${size}px"></span>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+    });
+    L.marker([s.lat, s.lon], {
+      icon,
+      keyboard: false,
+      pane: "pointsPane",
+      zIndexOffset: s.anomalous ? 55 : 45,
+    })
+      .bindTooltip(
+        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${where}<br/>MP2,5 ${formatUg(s.pm25)} · ${level}${
+          s.temperatureC != null ? `<br/>${s.temperatureC.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} °C` : ""
+        }<br/>${formatRelative(s.lastSeen)} · coordenada real PurpleAir${
+          s.anomalous ? "<br/><em>Valor acima de 500 µg/m³ — fora da mediana municipal</em>" : ""
+        }`,
+        { direction: "top", className: "map-point-tip" },
+      )
+      .addTo(layer);
+  }
+}
+
 export function setLayerVisible(map: LeafletMap, layer: LayerGroup | null, on: boolean) {
   if (!map || !layer) return;
   if (on) {
@@ -276,6 +333,7 @@ export function applyTerritoryVisibility(
   map: LeafletMap,
   layers: TerritoryLayers | null,
   vis: TerritoryVisibility | null | undefined,
+  pointLegend = "CEMADEN",
 ) {
   if (!layers || !vis) return;
   if (L) {
@@ -292,5 +350,5 @@ export function applyTerritoryVisibility(
   setLayerVisible(map, layers.rurais, vis.rurais);
   setLayerVisible(map, layers.indigenas, vis.indigenas);
   setLayerVisible(map, layers.pluvio, vis.pluvio);
-  paintLegend(layers.legendEl, vis);
+  paintLegend(layers.legendEl, vis, pointLegend);
 }

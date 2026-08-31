@@ -35,6 +35,7 @@ export function AppShell({
   cache,
   updatedAt,
   rainAt,
+  airAt,
   hydroAt,
 }: {
   children: React.ReactNode;
@@ -43,6 +44,7 @@ export function AppShell({
   cache?: "HIT" | "MISS";
   updatedAt?: number | null;
   rainAt?: number | null;
+  airAt?: number | null;
   hydroAt?: number | null;
 }) {
   const pathname = usePathname();
@@ -291,6 +293,7 @@ export function AppShell({
         source={source}
         updatedAt={updatedAt}
         rainAt={rainAt}
+        airAt={airAt}
         hydroAt={hydroAt}
         supabase={supabaseConfigured ? "ligado" : "aguardando"}
       />
