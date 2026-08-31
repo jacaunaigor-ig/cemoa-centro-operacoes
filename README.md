@@ -79,7 +79,7 @@ O **Aviso Meteorológico** tem duas camadas:
 
 Com a edição ligada, o operador classifica no **clique**, em **lote** ou por **mancha** (polígono), e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias). O polígono existe só no Painel de Alertas — no boletim a edição continua no clique e no lote.
 
-- **Clique** — escolha o grau e a duração e toque nos municípios. O mapa pinta na hora; a ficha não abre. **Encerrar edição** (ou Esc) fecha a sessão.
+- **Clique** — escolha o grau e a duração e toque nos municípios. O mapa pinta na hora; a ficha não abre. **Encerrar edição** (ou Esc) fecha a sessão. Na edição, **Ocultar** some com a legenda do mapa (o chip **Legenda** devolve). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
 - **Polígono (mancha)** — clique para marcar vértices e **Fechar mancha** (ou duplo clique). Só a área desenhada recebe a cor do grau; o município não é classificado por inteiro. Em Barcelos, Tapauá, Jutaí e outros de grande extensão, um risco local fica na mancha. **Esc** cancela o desenho.
 - **Lote** — escolha grau e duração, cole os nomes **por extenso** (um por linha ou separados por vírgula) e **Encerrar edição**.
 

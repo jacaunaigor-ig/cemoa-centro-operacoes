@@ -72,6 +72,7 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
 import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
+import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
 
@@ -143,6 +144,7 @@ export function HydrologyWorkbench() {
   const overlayVis = useMemo(() => effectiveOverlays(overlays, "BOLETIM"), [overlays]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [paintArmed, setPaintArmed] = useState(true);
+  const [legendHidden, setLegendHidden] = useState(false);
   const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
   const [editorOpen, setEditorOpen] = useState(false);
   const [pendingClassify, setPendingClassify] = useState<{
@@ -158,6 +160,10 @@ export function HydrologyWorkbench() {
   const mapRef = useRef<StationsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
+
+  useEffect(() => {
+    if (!admin) setLegendHidden(false);
+  }, [admin]);
 
   useEffect(() => {
     if (mapFocus) setMobileListOpen(false);
@@ -943,10 +949,12 @@ export function HydrologyWorkbench() {
                 variant="boletim"
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
               />
-              <div className="pointer-events-none absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
-                <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
-                  {modo === "vazante" ? "Estiagem" : "Inundação"}
-                </div>
+              <MapLegendCard
+                title={modo === "vazante" ? "Estiagem" : "Inundação"}
+                hideable={admin}
+                hidden={admin && legendHidden}
+                onHiddenChange={setLegendHidden}
+              >
                 <ul className="space-y-0.5">
                   <LegendDot color={HYDRO_STATUS_COLORS.NORMAL} label="Baixo" />
                   <LegendDot color={HYDRO_STATUS_COLORS.MODERADO} label="Moderado" />
@@ -956,7 +964,7 @@ export function HydrologyWorkbench() {
                     <LegendDot color="#7c8fab" label="Sem leitura" />
                   ) : null}
                 </ul>
-              </div>
+              </MapLegendCard>
             </div>
 
             {isMobile || mapFocus ? null : <HydroTicker stations={visible} modo={modo} />}

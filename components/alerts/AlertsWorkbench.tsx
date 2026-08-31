@@ -76,6 +76,7 @@ import {
 } from "@/lib/stains";
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
+import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { useDebouncedValue } from "@/lib/client-hooks";
 import type { AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
 import {
@@ -231,6 +232,7 @@ export function AlertsWorkbench() {
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
+  const [legendHidden, setLegendHidden] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [clickSessionCount, setClickSessionCount] = useState(0);
@@ -265,6 +267,7 @@ export function AlertsWorkbench() {
     if (!admin) {
       setPaintArmed(false);
       setDrawMode(false);
+      setLegendHidden(false);
     }
     wasAdmin.current = admin;
     // setQuery is stable enough for arming edição
@@ -1374,10 +1377,12 @@ export function AlertsWorkbench() {
                   />
                 </div>
               ) : null}
-              <div className="pointer-events-auto absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
-                <div className="mb-1 font-bold tracking-wide text-text-mute uppercase">
-                  {product.legendTitle}
-                </div>
+              <MapLegendCard
+                title={product.legendTitle}
+                hideable={admin}
+                hidden={admin && legendHidden}
+                onHiddenChange={setLegendHidden}
+              >
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
                     <li key={level}>
@@ -1422,7 +1427,7 @@ export function AlertsWorkbench() {
                   Chuva ≥ {INTENSE_MM_PER_H} mm/h
                   <span className="ml-auto font-mono">{rain?.coverage.intenso1h ?? 0}</span>
                 </button>
-              </div>
+              </MapLegendCard>
             </div>
 
             {isMobile || mapFocus ? null : <AlertTicker alerts={filteredAlerts} />}
@@ -1446,8 +1451,12 @@ export function AlertsWorkbench() {
               onDraw={() => {
                 setDrawMode((v) => {
                   const next = !v;
-                  if (next) setQuery({ municipio: null });
-                  else mapApi.current?.cancelDraw();
+                  if (next) {
+                    setQuery({ municipio: null });
+                    setLegendHidden(true);
+                  } else {
+                    mapApi.current?.cancelDraw();
+                  }
                   return next;
                 });
               }}
