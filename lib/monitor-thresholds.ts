@@ -41,13 +41,13 @@ export const ESTADO_MONITOR: MonitorProfile = {
 };
 
 /**
- * Manaus: o plantão só sugere envio no severo.
+ * Manaus: o plantão sugere envio no severo.
  * Alagamento a partir de 40 mm/h; movimento de massa a partir de 50 mm/24 h
  * (faixa operacional 50–70 mm/24 h; acima de 70 continua severo).
  */
 export const MANAUS_MONITOR: MonitorProfile = {
   id: "manaus",
-  label: "Manaus · só severo",
+  label: "Manaus · severo",
   alertaMinimo: "SEVERO",
   alagamento: [{ level: "SEVERO", min: 40, max: null, window: "1h" }],
   movimento: [{ level: "SEVERO", min: 50, max: 70, window: "24h" }],

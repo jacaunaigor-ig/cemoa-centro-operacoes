@@ -44,9 +44,7 @@ export function MonitorThresholdLegend({
           ))}
         </ul>
         <p className="mt-1 text-[10px] text-text-mute">
-          {profile.id === "manaus"
-            ? "Manaus: o plantão só sugere emitir no severo."
-            : "Sugestão de monitoramento — só o operador classifica."}
+          Sugestão de monitoramento — só o operador classifica.
         </p>
       </div>
     );
@@ -77,9 +75,6 @@ function ProfileBlock({ tipo, profile }: { tipo: AlertType; profile: MonitorProf
           </li>
         ))}
       </ul>
-      {profile.id === "manaus" ? (
-        <p className="mt-1 text-[10px] text-text-mute">Alerta só no severo.</p>
-      ) : null}
     </div>
   );
 }

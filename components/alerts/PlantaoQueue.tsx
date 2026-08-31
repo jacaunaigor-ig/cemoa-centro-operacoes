@@ -92,8 +92,8 @@ export function PlantaoQueue({
       {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
         <p className="mt-1 text-[10px] leading-snug text-text-dim">
           {tipo === "ALAGAMENTO"
-            ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: só severo ≥ 40 mm/h."
-            : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: só severo ≥ 50 mm/24 h."}{" "}
+            ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo ≥ 40 mm/h."
+            : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo ≥ 50 mm/24 h."}{" "}
           Não classifica o grau.
         </p>
       ) : null}

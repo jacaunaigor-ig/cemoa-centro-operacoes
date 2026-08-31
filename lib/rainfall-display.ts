@@ -161,11 +161,11 @@ export function rainApoio(
       return {
         level: "BAIXO",
         motivo: isManaus(where)
-          ? `1 h com ${formatMm(mm)} — Manaus só sugere alerta no severo (≥ 40 mm/h).`
+          ? `1 h com ${formatMm(mm)} — Manaus · severo (≥ 40 mm/h).`
           : `1 h com ${formatMm(mm)} — abaixo do limiar de alagamento do estado (20 mm/h).`,
       };
     }
-    const recorte = classified.profile.id === "manaus" ? "Manaus · só severo" : "estado";
+    const recorte = classified.profile.id === "manaus" ? "Manaus · severo" : "estado";
     return {
       level: classified.level,
       motivo: `1 h com ${formatMm(mm)} — ${recorte}, ${LEVEL_MOTIVO[classified.level]} de alagamento (${formatBandRange(classified.band)}).`,
@@ -184,11 +184,11 @@ export function rainApoio(
     return {
       level: "BAIXO",
       motivo: isManaus(where)
-        ? `24 h com ${formatMm(mm24)} — Manaus só sugere alerta no severo (≥ 50 mm/24 h).`
+        ? `24 h com ${formatMm(mm24)} — Manaus · severo (≥ 50 mm/24 h).`
         : `24 h com ${formatMm(mm24)} — abaixo do limiar de movimento de massa do estado (50 mm/24 h).`,
     };
   }
-  const recorte = classified.profile.id === "manaus" ? "Manaus · só severo" : "estado";
+  const recorte = classified.profile.id === "manaus" ? "Manaus · severo" : "estado";
   return {
     level: classified.level,
     motivo: `24 h com ${formatMm(mm24)} — ${recorte}, ${LEVEL_MOTIVO[classified.level]} de movimento de massa (${formatBandFloor(classified.band)}).`,

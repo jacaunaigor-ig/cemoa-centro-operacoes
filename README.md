@@ -247,9 +247,9 @@ A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 | --- | --- | --- | --- | --- |
 | Chuva intensa | Estado | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h (extremo: 60 mm/1 h ou 90 mm/6 h) |
 | Alagamento | Estado (exceto Manaus) | 20–40 mm/h | 40–70 mm/h | >70 mm/h |
-| Alagamento | Manaus | — | — | ≥ 40 mm/h (só se emite o severo) |
+| Alagamento | Manaus | — | — | ≥ 40 mm/h (severo) |
 | Movimento de massa | Estado (exceto Manaus) | 50–85 mm/24 h | 85–140 mm/24 h | >140 mm/24 h |
-| Movimento de massa | Manaus | — | — | 50–70 mm/24 h (≥ 50 mm/24 h; só se emite o severo) |
+| Movimento de massa | Manaus | — | — | 50–70 mm/24 h (severo, ≥ 50 mm/24 h) |
 
 Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e o limiar do produto (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`: ≥ 20 mm/h na chuva/alagamento, ≥ 50 mm/24 h no movimento de massa).
 
