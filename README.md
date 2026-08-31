@@ -22,7 +22,7 @@ O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa oc
 
 ## Abertura do plantão
 
-O Painel de Alertas nasce limpo (as quatro abas em **baixo**, sem mancha de polígono). O cartão **Situação hidrológica** no painel mostra o recorte CEMOA vigente (estiagem e inundação) e abre o boletim — **não pinta** o mapa de alertas. O Boletim Hidrológico permanece com o cenário e as cotas do relatório (**30/08/2026**).
+O Painel de Alertas nasce limpo (as quatro abas em **baixo**, sem mancha de polígono). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente.
 
 Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, os 62 municípios ficam em **baixo**. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
 
