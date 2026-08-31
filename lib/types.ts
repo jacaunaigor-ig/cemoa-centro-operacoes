@@ -281,3 +281,45 @@ export type AirQualityPayload = {
   byNome: Record<string, AirQualityMunicipio>;
   sensors: AirQualitySensor[];
 };
+
+export type WeatherPeriod = "manha" | "tarde" | "noite";
+
+export type WeatherPeriodSnap = {
+  resumo: string | null;
+  tempMax: number | null;
+  tempMin: number | null;
+  ventoDir: string | null;
+  ventoInt: string | null;
+  umidadeMax: number | null;
+  umidadeMin: number | null;
+};
+
+export type WeatherForecastDay = {
+  dateLabel: string;
+  weekday: string | null;
+  resumo: string | null;
+  tempMax: number | null;
+  tempMin: number | null;
+  nascer: string | null;
+  ocaso: string | null;
+  periods: Record<WeatherPeriod, WeatherPeriodSnap | null>;
+};
+
+export type WeatherForecast = {
+  generatedAt: number;
+  source: string;
+  cache: "HIT" | "MISS";
+  error: string | null;
+  ibge: string;
+  nome: string;
+  today: WeatherForecastDay | null;
+  now: {
+    period: WeatherPeriod;
+    resumo: string | null;
+    tempMax: number | null;
+    tempMin: number | null;
+    ventoDir: string | null;
+    ventoInt: string | null;
+  } | null;
+  days: WeatherForecastDay[];
+};

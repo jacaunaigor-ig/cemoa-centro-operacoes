@@ -15,6 +15,7 @@ import { cn, formatRelative } from "@/lib/utils";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
+import { WeatherForecastPanel } from "@/components/alerts/WeatherForecastPanel";
 
 export function AlertDetail({
   municipioId,
@@ -120,6 +121,8 @@ export function AlertDetail({
           ))}
         </ul>
       ) : null}
+
+      {municipioId ? <WeatherForecastPanel ibge={municipioId} nome={nome} /> : null}
 
       {tipo === "INCENDIO" ? (
         <div className="mt-3 grid grid-cols-2 gap-1.5 text-center">
