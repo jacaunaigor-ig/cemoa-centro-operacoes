@@ -22,11 +22,6 @@ export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
             {` · ${riskActionFor(e.risco)}`}
           </span>
           <AlertCountdown expiresAt={e.expiresAt} variant="row" />
-          {e.agravado ? (
-            <span className="text-[10px] font-bold text-risco-severo">Agravamento</span>
-          ) : e.novo ? (
-            <span className="text-[10px] font-bold text-risco-alto">Novo</span>
-          ) : null}
         </span>
       );
     });

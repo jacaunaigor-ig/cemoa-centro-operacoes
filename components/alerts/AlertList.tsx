@@ -366,7 +366,7 @@ export function AlertList({
                                 : "Operador · "
                               : "Sem classificação · "}
                             {alert
-                              ? `${alert.novo ? "Novo" : alert.agravado ? "Agravou" : "Alerta"} · ${formatRelative(alert.updatedAt)}`
+                              ? `Alerta · ${formatRelative(alert.updatedAt)}`
                               : isAlertActive(tipo, m.risco)
                                 ? LEVEL_LABELS[m.risco] ?? m.risco
                                 : "Aguardando operador"}

@@ -18,6 +18,7 @@ import {
   catalogStations,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
+import { meteoShiftAt } from "@/lib/meteo-aviso";
 import type {
   AlertLevel,
   AlertsPayload,
@@ -93,6 +94,8 @@ export function buildAlertsPayload(
     const issuedAt = admin && isAlertActive(tipo, risco) ? admin.issuedAt : null;
     const expiresAt = issuedAt ? alertExpiresAt(issuedAt, risco, admin?.ttlMs) : null;
     if (admin && isAlertActive(tipo, risco) && issuedAt) {
+      const nestePlantao = issuedAt >= meteoShiftAt(now).startAt;
+      const jaTinhaAlerta = isAlertActive(tipo, previous);
       alerts.push({
         id: `${tipo.toLowerCase()}-${m.id}`,
         municipioId: m.id,
@@ -103,8 +106,9 @@ export function buildAlertsPayload(
         expiresAt,
         updatedAt: admin.issuedAt,
         previousRisco: previous,
-        agravado: levelRank(tipo, risco) > levelRank(tipo, previous),
-        novo: !isAlertActive(tipo, previous) && isAlertActive(tipo, risco),
+        agravado:
+          nestePlantao && jaTinhaAlerta && levelRank(tipo, risco) > levelRank(tipo, previous),
+        novo: nestePlantao && !jaTinhaAlerta,
         tipo,
         resumo: alertCopy(tipo, m.nome, risco, m.bacia, m.id),
       });

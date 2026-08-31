@@ -246,6 +246,7 @@ export function AlertsWorkbench() {
   const [undoStack, setUndoStack] = useState<UndoItem[]>([]);
   const [classifying, setClassifying] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const editBusy = useRef(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
@@ -262,6 +263,11 @@ export function AlertsWorkbench() {
   const localPushed = useRef(false);
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
   const wasAdmin = useRef(false);
+  editBusy.current = paintArmed || drawMode || eraseMode || classifying;
+
+  useEffect(() => {
+    if (paintArmed || drawMode || eraseMode) toast.dismiss();
+  }, [paintArmed, drawMode, eraseMode]);
 
   useEffect(() => {
     if (admin && !wasAdmin.current) {
@@ -572,6 +578,7 @@ export function AlertsWorkbench() {
       }
     }
 
+    let gotAlerts = false;
     async function load() {
       if (cancelled) return;
       try {
@@ -596,9 +603,12 @@ export function AlertsWorkbench() {
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
         ]);
         if (cancelled) return;
-        setData(payload);
-        if (hydroPayload) setHydro(hydroPayload);
         if (rainPayload) setRain(rainPayload);
+        if (hydroPayload) setHydro(hydroPayload);
+        if (!editBusy.current || !gotAlerts) {
+          setData(payload);
+          gotAlerts = true;
+        }
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -1322,46 +1332,6 @@ export function AlertsWorkbench() {
                 ) : (
                   !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
                 )}
-                {mapFocus ? null : (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-panel-2 px-2.5 py-1 text-[11px] font-semibold text-text hover:border-border-strong"
-                    >
-                      <span className="size-1.5 rounded-full bg-risco-severo" />
-                      Alterações
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-80">
-                    <p className="mb-2 text-xs font-bold text-text">
-                      Novos e agravamentos ({windowFilter})
-                    </p>
-                    {mudancas.length === 0 ? (
-                      <p className="text-xs">Nenhuma alteração nesta janela.</p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        {mudancas.map((m) => (
-                          <li
-                            key={m.id}
-                            className="flex items-center justify-between gap-2 rounded-lg bg-hover px-2 py-1.5 text-xs"
-                          >
-                            <span>
-                              <strong className="text-text">{m.municipio}</strong>
-                              <small className="ml-1 text-text-mute">{m.bacia}</small>
-                            </span>
-                            <b className="text-text">
-                              {m.novo
-                                ? `Novo · ${levelLabel(m.risco)}`
-                                : `${levelLabel(m.previousRisco)} → ${levelLabel(m.risco)}`}
-                            </b>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </PopoverContent>
-                </Popover>
-                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1581,7 +1551,9 @@ export function AlertsWorkbench() {
               </MapLegendCard>
             </div>
 
-            {isMobile ? null : <AlertTicker alerts={filteredAlerts} />}
+            {isMobile || paintArmed || drawMode || eraseMode ? null : (
+              <AlertTicker alerts={filteredAlerts} />
+            )}
 
             <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar

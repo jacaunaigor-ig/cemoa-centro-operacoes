@@ -24,7 +24,7 @@ O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa oc
 
 O Painel de Alertas nasce limpo (as quatro abas em **baixo**, sem mancha de polígono). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente. A primeira abertura deste recorte apaga classificações e manchas do **painel** gravadas neste computador; com operador autenticado, apaga também no servidor (uma vez). Ajustes do operador no boletim são removidos e o mapa volta ao relatório.
 
-Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. A fila, o banner do aviso e o sino cobrem o que antes subia em pop.
+Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, os 62 municípios ficam em **baixo**. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
 
 O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
 

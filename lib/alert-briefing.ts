@@ -12,8 +12,6 @@ export function buildAlertBriefing({
   nome,
   risco,
   tipo,
-  novo,
-  agravado,
   rain,
   hydro,
 }: {
@@ -26,13 +24,7 @@ export function buildAlertBriefing({
   hydro?: HydroStation | null;
 }): AlertBriefing {
   const nivel = levelLabel(risco);
-  const tendencia = agravado
-    ? " com tendência de agravamento"
-    : novo
-      ? " recém-emitido"
-      : isAlertActive(tipo, risco)
-        ? ""
-        : " em monitoramento";
+  const tendencia = isAlertActive(tipo, risco) ? "" : " em monitoramento";
   const parts: string[] = [`${nome}: alerta ${nivel}${tendencia}.`];
 
   if (rain) {
