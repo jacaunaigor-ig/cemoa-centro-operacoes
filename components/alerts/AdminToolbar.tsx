@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MousePointerClick, Pentagon, RotateCcw, Undo2 } from "lucide-react";
+import { Check, MousePointerClick, RotateCcw, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ALERT_DURATION_PRESETS, durationLabel } from "@/lib/alert-duration";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 export function AdminToolbar({
   enabled,
-  drawMode,
+  drawMode = false,
   paintArmed = false,
   paintLevel,
   paintTtlMs = 0,
@@ -31,7 +31,7 @@ export function AdminToolbar({
   extra,
 }: {
   enabled: boolean;
-  drawMode: boolean;
+  drawMode?: boolean;
   paintArmed?: boolean;
   paintLevel: string;
   paintTtlMs?: number;
@@ -41,14 +41,14 @@ export function AdminToolbar({
   overrideCount: number;
   sessionCount?: number;
   paintHint?: string;
-  onDraw: () => void;
+  onDraw?: () => void;
   onPaintArmed?: (on: boolean) => void;
   onPaintLevel: (level: string) => void;
   onPaintTtl?: (ms: number) => void;
   onFinishClick?: () => void;
   onOpenBatch: () => void;
   onRestore: () => void;
-  onFinishPolygon: () => void;
+  onFinishPolygon?: () => void;
   onUndo?: () => void;
   canUndo?: boolean;
   extra?: React.ReactNode;
@@ -73,17 +73,18 @@ export function AdminToolbar({
         <Button type="button" size="sm" variant="secondary" onClick={onOpenBatch}>
           Classificar em lote
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={drawMode ? "default" : "outline"}
-          onClick={onDraw}
-          aria-pressed={drawMode}
-        >
-          <Pentagon />
-          Polígono
-        </Button>
-        {drawMode ? (
+        {onDraw ? (
+          <Button
+            type="button"
+            size="sm"
+            variant={drawMode ? "default" : "outline"}
+            onClick={onDraw}
+            aria-pressed={drawMode}
+          >
+            Polígono
+          </Button>
+        ) : null}
+        {drawMode && onFinishPolygon ? (
           <Button type="button" size="sm" variant="outline" onClick={onFinishPolygon}>
             <Check />
             Fechar polígono
@@ -105,11 +106,11 @@ export function AdminToolbar({
         ) : null}
         <span className="ml-auto text-[11px] text-text-mute">
           {drawMode
-            ? `Clique para vértices · duplo clique classifica como ${labels[paintLevel] ?? paintLevel} · ${durationLabel(paintTtlMs)}`
+            ? `Clique para vértices · duplo clique classifica como ${labels[paintLevel] ?? paintLevel}`
             : paintHint ??
               (paintArmed
                 ? `Clique nos municípios: ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}. Encerrar quando terminar.`
-                : "Defina o grau, depois clique no mapa ou abra o lote.")}
+                : "Defina o grau e clique no mapa.")}
           {overrideCount ? ` · ${overrideCount} classificado(s)` : ""}
         </span>
         <Button type="button" size="sm" variant="ghost" onClick={onRestore} disabled={overrideCount === 0}>

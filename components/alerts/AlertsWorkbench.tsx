@@ -40,7 +40,6 @@ import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides,
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { DEFAULT_ALERT_DURATION_MS, durationLabel } from "@/lib/alert-duration";
-import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
   DEFAULT_OVERLAYS,
@@ -85,8 +84,6 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
-import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
-
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
@@ -186,16 +183,9 @@ export function AlertsWorkbench() {
   const [busca, setBusca] = useState("");
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(false);
-  const [drawMode, setDrawMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [clickSessionCount, setClickSessionCount] = useState(0);
-  const [pendingClassify, setPendingClassify] = useState<{
-    updates: Record<string, string>;
-    names: string[];
-    source: "clique" | "lote" | "poligono";
-    level: string;
-  } | null>(null);
   const [undoStack, setUndoStack] = useState<
     Array<{ tipo: AlertType; previous: Record<string, string | null>; next: Record<string, string> }>
   >([]);
@@ -218,6 +208,19 @@ export function AlertsWorkbench() {
   const prevRef = useRef<AlertsPayload | null>(null);
   const firstRef = useRef(true);
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
+  const wasAdmin = useRef(false);
+
+  useEffect(() => {
+    if (admin && !wasAdmin.current) {
+      setPaintArmed(true);
+      setClickSessionCount(0);
+      setQuery({ municipio: null });
+    }
+    if (!admin) setPaintArmed(false);
+    wasAdmin.current = admin;
+    // setQuery is stable enough for arming edição
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [admin]);
 
   useEffect(() => {
     if (mapFocus) setMobileListOpen(false);
@@ -232,9 +235,10 @@ export function AlertsWorkbench() {
         replace?: boolean;
         remove?: string[];
         skipHistory?: boolean;
-        source?: "clique" | "lote" | "poligono" | "desfazer";
+        source?: "clique" | "lote" | "desfazer";
         tipo?: AlertType;
         ttlMs?: number;
+        skipRefresh?: boolean;
       },
     ) => {
       const tipoAlvo = opts?.tipo ?? tipo;
@@ -294,8 +298,10 @@ export function AlertsWorkbench() {
       } catch {
         /* ignore quota */
       }
-      const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
-      setData(payload);
+      if (!opts?.skipRefresh) {
+        const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
+        setData(payload);
+      }
       if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
         setUndoStack((stack) => [{ tipo: tipoAlvo, previous, next: updates }, ...stack].slice(0, 20));
       }
@@ -501,10 +507,6 @@ export function AlertsWorkbench() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (pendingClassify) {
-          setPendingClassify(null);
-          return;
-        }
         if (editorOpen) return;
         if (paintArmed) {
           finishClickSession();
@@ -520,7 +522,7 @@ export function AlertsWorkbench() {
             target.tagName === "TEXTAREA" ||
             target.tagName === "SELECT" ||
             target.isContentEditable);
-        if (typing || !admin || classifying || pendingClassify) return;
+        if (typing || !admin || classifying) return;
         if (!undoStack.length) return;
         event.preventDefault();
         void undoLast();
@@ -529,7 +531,7 @@ export function AlertsWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, pendingClassify, paintArmed, admin, classifying, undoStack.length, undoLast]);
+  }, [selected, editorOpen, paintArmed, admin, classifying, undoStack.length, undoLast]);
 
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
@@ -652,6 +654,11 @@ export function AlertsWorkbench() {
       busca={busca}
       loading={loading}
       onSelect={(nome, basinName) => {
+        if (admin && paintArmed) {
+          const row = catalog.find((m) => m.nome === nome);
+          if (row) paintMunicipio(row.id, row.nome, row.bacia);
+          return;
+        }
         setHovered(null);
         setQuery(geoForNome(nome, basinName));
         if (isMobile) setMobileListOpen(false);
@@ -703,8 +710,7 @@ export function AlertsWorkbench() {
     }
   }
 
-  function paintMunicipio(id: string, nome: string, baciaName: string) {
-    setQuery(geoForNome(nome, baciaName));
+  function paintMunicipio(id: string, nome: string, _baciaName: string) {
     const now = Date.now();
     setData((prev) => {
       if (!prev) return prev;
@@ -728,54 +734,10 @@ export function AlertsWorkbench() {
     setClickSessionCount((n) => n + 1);
     void persistOverrides(
       { [id]: paintLevel },
-      { source: "clique", ttlMs: paintTtlMs },
+      { source: "clique", ttlMs: paintTtlMs, skipRefresh: true },
     ).then((ok) => {
       if (!ok) toast.error(`Não gravou ${nome}.`);
     });
-  }
-
-  function applyPolygon(points: Array<{ lat: number; lng: number }>) {
-    if (!data) return;
-    const ring = latLngsToRing(points);
-    const updates: Record<string, string> = {};
-    const names: string[] = [];
-    for (const m of data.municipios) {
-      if (!pointInRing(m.lon, m.lat, ring)) continue;
-      updates[m.id] = paintLevel;
-      names.push(m.nome);
-    }
-    if (!names.length) {
-      toast.error("Nenhum município dentro do polígono.");
-      return;
-    }
-    setPendingClassify({
-      updates,
-      names,
-      source: "poligono",
-      level: paintLevel,
-    });
-  }
-
-  async function confirmClassify() {
-    if (!pendingClassify) return;
-    setClassifying(true);
-    try {
-      const ok = await persistOverrides(pendingClassify.updates, {
-        source: pendingClassify.source,
-        ttlMs: paintTtlMs,
-      });
-      if (!ok) return;
-      const n = pendingClassify.names.length;
-      toast.success(
-        n === 1
-          ? `${pendingClassify.names[0]}: ${levelLabel(pendingClassify.level)}`
-          : `${n} municípios classificados como ${levelLabel(pendingClassify.level)}.`,
-      );
-      if (pendingClassify.source === "poligono") setDrawMode(false);
-      setPendingClassify(null);
-    } finally {
-      setClassifying(false);
-    }
   }
 
   async function restoreLive() {
@@ -877,7 +839,6 @@ export function AlertsWorkbench() {
                     onChange={(e) => {
                       const next = parseAlertType(e.target.value);
                       setEditorOpen(false);
-                      setDrawMode(false);
                       setQuery({
                         tipo: next === "CHUVA" ? null : next,
                         risco: null,
@@ -1007,7 +968,6 @@ export function AlertsWorkbench() {
                       onChange={(e) => {
                         const next = parseAlertType(e.target.value);
                         setEditorOpen(false);
-                        setDrawMode(false);
                         setQuery({
                           tipo: next === "CHUVA" ? null : next,
                           risco: null,
@@ -1171,13 +1131,13 @@ export function AlertsWorkbench() {
                       hasRainStation: Boolean(row),
                     };
                   })}
-                  selected={selected}
+                  selected={paintArmed ? null : selected}
                   hovered={hovered}
                   filter={activeFilter}
                   basin={bacia}
                   calhaNomes={nomesCalha ? [...nomesCalha] : null}
                   adminMode={admin && paintArmed}
-                  drawMode={admin && drawMode}
+                  paintLevel={paintLevel}
                   opacity={mapOpacity}
                   showNames={showNames}
                   showRivers={showRivers}
@@ -1190,7 +1150,6 @@ export function AlertsWorkbench() {
                   }}
                   onHover={setHovered}
                   onPaint={paintMunicipio}
-                  onPolygonComplete={applyPolygon}
                   onGeoError={setGeoError}
                 />
               ) : null}
@@ -1200,7 +1159,7 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
-              {selectedRow ? (
+              {selectedRow && !paintArmed ? (
                   <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),32rem)] sm:top-2">
                   <AlertDetail
                     overlay
@@ -1278,7 +1237,6 @@ export function AlertsWorkbench() {
             <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar
               enabled={admin}
-              drawMode={drawMode}
               paintArmed={paintArmed}
               paintLevel={paintLevel}
               paintTtlMs={paintTtlMs}
@@ -1290,11 +1248,12 @@ export function AlertsWorkbench() {
                   ? `Clique nos municípios. Encerrar quando terminar.`
                   : "Defina grau e duração, depois Classificar no clique ou em lote."
               }
-              onDraw={() => setDrawMode((v) => !v)}
               onPaintArmed={(on) => {
-                setPaintArmed(on);
-                if (!on) finishClickSession();
-                else setClickSessionCount(0);
+                if (on) {
+                  setPaintArmed(true);
+                  setClickSessionCount(0);
+                  setQuery({ municipio: null });
+                } else finishClickSession();
               }}
               onPaintLevel={(level) =>
                 setPaintByTipo((prev) => ({ ...prev, [tipo]: level }))
@@ -1303,7 +1262,6 @@ export function AlertsWorkbench() {
               onFinishClick={finishClickSession}
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreLive()}
-              onFinishPolygon={() => mapApi.current?.finishPolygon()}
               onUndo={() => void undoLast()}
               canUndo={undoStack.length > 0 && !classifying}
             />
@@ -1326,17 +1284,6 @@ export function AlertsWorkbench() {
             );
           }
         }}
-      />
-      <ClassifyConfirm
-        open={Boolean(pendingClassify)}
-        title="Confirmar classificação"
-        description={`A classificação entra no mapa deste produto por ${durationLabel(paintTtlMs)}. Use Desfazer se precisar voltar.`}
-        level={pendingClassify ? `${levelLabel(pendingClassify.level)} · ${durationLabel(paintTtlMs)}` : ""}
-        names={pendingClassify?.names ?? []}
-        by={session?.name}
-        busy={classifying}
-        onCancel={() => !classifying && setPendingClassify(null)}
-        onConfirm={() => void confirmClassify()}
       />
     </AppShell>
   );
