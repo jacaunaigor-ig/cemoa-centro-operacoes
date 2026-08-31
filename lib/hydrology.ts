@@ -151,6 +151,13 @@ const FILE = raw as RawFile;
 
 export const HYDRO_DIAS = FILE.dias;
 export const HYDRO_REFERENCIA = FILE.referencia;
+
+export function formatHydroRef(ref: string | null | undefined) {
+  if (!ref) return "—";
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(ref.trim());
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return ref;
+}
 export const HYDRO_FONTE = FILE.fonte;
 export const HYDRO_MUDANCAS: HydroChange[] = FILE.mudancas24h;
 export const HYDRO_RIOS: HydroRiver[] = FILE.rios;

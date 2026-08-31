@@ -41,6 +41,7 @@ import {
   PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
+  formatHydroRef,
   normalizeMunicipio,
   statusAtivo,
   statusMapa,
@@ -292,14 +293,6 @@ export function HydrologyWorkbench() {
   }, [catalog, modo, calha, bacia, status, selected, buscaFiltro]);
 
   const kpis = useMemo(() => contarStatus(geoStations, modo), [geoStations, modo]);
-  const destaqueCota = useMemo(() => {
-    let best: HydroStation | null = null;
-    for (const s of geoStations) {
-      if (s.semLeitura || s.cota == null) continue;
-      if (!best || s.cota > (best.cota ?? 0)) best = s;
-    }
-    return best;
-  }, [geoStations]);
   const loading = !data && !error;
   const selectedStation =
     catalog.find((s) => s.municipio === selected) ??
@@ -523,26 +516,9 @@ export function HydrologyWorkbench() {
         {mapFocus ? null : (
         <DashboardPanel>
         <DashboardRow>
-          {!isMobile ? (
-            <h2 className="shrink-0 text-lg font-bold tracking-tight">Boletim</h2>
-          ) : null}
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-[11px] text-text-mute">
-              Ref. {data?.referencia ?? "—"}
-              {!isMobile && !loading ? (
-                <span>
-                  {" · "}
-                  {kpis.severo} severo · {kpis.alto} alto · {kpis.moderado} moderado · {kpis.comLeitura} com leitura
-                </span>
-              ) : null}
-            </p>
-            {!isMobile && destaqueCota ? (
-              <p className="truncate text-xs text-text">
-                Maior cota {destaqueCota.municipio} {destaqueCota.cota?.toFixed(2)} m
-                <span className="text-text-mute"> · {destaqueCota.calha}</span>
-              </p>
-            ) : null}
-          </div>
+          <p className="shrink-0 font-mono text-xs tabular-nums text-text-mute">
+            {formatHydroRef(data?.referencia)}
+          </p>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <AvisoGraficoButton compact={isMobile} />
           <div
@@ -575,7 +551,7 @@ export function HydrologyWorkbench() {
         </DashboardRow>
 
         <DashboardBody aria-label="Resumo do boletim">
-          <div className={cn("grid", isMobile ? "grid-cols-3 gap-1.5" : "grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-7")}>
+          <div className={cn("grid", isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-7")}>
             <KpiCard
               compact
               label="Municípios"
@@ -1048,11 +1024,7 @@ export function HydrologyWorkbench() {
                 }}
               />
               </div>
-            ) : mapFocus ? null : (
-              <p className="border-t border-border px-4 py-3 text-xs text-text-mute">
-                Selecione um município.
-              </p>
-            )}
+            ) : null}
           </Card>
         </div>
       </div>

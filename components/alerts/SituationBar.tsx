@@ -5,7 +5,6 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { SectionHeading } from "@/components/shared/SectionHeading";
 import { useOpsMode } from "@/components/shared/OpsMode";
 
 export function SituationBar({
@@ -33,9 +32,6 @@ export function SituationBar({
         isMobile ? "justify-between gap-1.5" : "gap-3",
       )}
     >
-      {!isMobile ? (
-        <SectionHeading compact className="shrink-0" title="Alertas" />
-      ) : null}
       {tools ? (
         <div className={cn("flex min-w-0 items-center gap-2", isMobile ? "w-full" : "min-w-0")}>
           {tools}

@@ -343,9 +343,11 @@ export function AlertList({
                             <RiskBadge level={m.risco} strong={isAlertActive(tipo, m.risco)} />
                           </span>
                         </button>
-                        <p className="line-clamp-2 text-[11px] leading-snug text-text-dim">
-                          {briefing.headline}
-                        </p>
+                        {!isMobile ? (
+                          <p className="line-clamp-2 text-[11px] leading-snug text-text-dim">
+                            {briefing.headline}
+                          </p>
+                        ) : null}
                         <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
                           <span className="min-w-0 truncate">
                             {m.fonte === "admin"
