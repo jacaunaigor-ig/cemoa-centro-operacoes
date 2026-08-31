@@ -8,12 +8,10 @@ import {
   Info,
   LogIn,
   LogOut,
-  Monitor,
   Moon,
   Pencil,
   Radio,
   Shield,
-  Smartphone,
   Sun,
   Users,
 } from "lucide-react";
@@ -50,16 +48,13 @@ export function AppShell({
   const pathname = usePathname();
   const params = useSearchParams();
   const {
-    layout,
     theme,
     admin,
     isMobile,
-    narrow,
     mapFocus,
     session,
     needsSetup,
     supabaseConfigured,
-    setLayout,
     setTheme,
     setAdmin,
     openAdmins,
@@ -173,38 +168,6 @@ export function AppShell({
         </nav>
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
-          {narrow ? null : (
-          <div
-            className="flex rounded-lg border border-border bg-hover p-0.5"
-            role="group"
-            aria-label="Modo de visualização"
-          >
-            <button
-              type="button"
-              className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-colors duration-200 touch-manipulation",
-                layout === "desktop" ? "bg-brand text-white" : "text-text-mute hover:text-text",
-              )}
-              aria-pressed={layout === "desktop"}
-              onClick={() => setLayout("desktop")}
-            >
-              <Monitor className="size-3.5" />
-              <span className="hidden sm:inline">Desktop</span>
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-bold transition-colors duration-200 touch-manipulation",
-                layout === "mobile" ? "bg-brand text-white" : "text-text-mute hover:text-text",
-              )}
-              aria-pressed={layout === "mobile"}
-              onClick={() => setLayout("mobile")}
-            >
-              <Smartphone className="size-3.5" />
-              <span className="hidden sm:inline">Mobile</span>
-            </button>
-          </div>
-          )}
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute transition-colors hover:text-text"
@@ -217,7 +180,7 @@ export function AppShell({
             <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Escuro"}</span>
           </button>
           {!isMobile ? <PlantaoSoundButton labeled /> : null}
-          {layout === "desktop" ? (
+          {!isMobile ? (
             <div className="flex items-center gap-1.5">
               {session ? (
                 <>

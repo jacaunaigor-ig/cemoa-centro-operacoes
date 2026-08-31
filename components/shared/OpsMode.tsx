@@ -46,7 +46,6 @@ type OpsMode = {
   authError: string | null;
   loginOpen: boolean;
   adminsOpen: boolean;
-  setLayout: (layout: LayoutMode) => void;
   setTheme: (theme: ThemeMode) => void;
   setMapFocus: (on: boolean) => void;
   setAdmin: (on: boolean) => void;
@@ -66,7 +65,6 @@ const MAP_FOCUS_KEY = "cemoa_map_focus";
 const TOOLS_KEY = "cemoa_admin_tools";
 const NARROW_QUERY = "(max-width: 767px)";
 
-const layoutListeners = new Set<() => void>();
 const themeListeners = new Set<() => void>();
 const mapFocusListeners = new Set<() => void>();
 const toolsListeners = new Set<() => void>();
@@ -83,12 +81,6 @@ function getNarrow() {
 
 function emit(listeners: Set<() => void>) {
   for (const listener of listeners) listener();
-}
-
-function getLayout(): LayoutMode {
-  const stored = localStorage.getItem(LAYOUT_KEY);
-  if (stored === "mobile" || stored === "desktop") return stored;
-  return window.matchMedia("(max-width: 767px)").matches ? "mobile" : "desktop";
 }
 
 function applyThemeAttr(theme: ThemeMode) {
@@ -124,14 +116,6 @@ function applyMapFocusAttr(on: boolean) {
 }
 
 export function OpsModeProvider({ children }: { children: React.ReactNode }) {
-  const layout = useSyncExternalStore(
-    (cb) => {
-      layoutListeners.add(cb);
-      return () => layoutListeners.delete(cb);
-    },
-    getLayout,
-    () => "desktop" as const,
-  );
   const theme = useSyncExternalStore(
     (cb) => {
       themeListeners.add(cb);
@@ -157,6 +141,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     () => false,
   );
   const narrow = useSyncExternalStore(subscribeNarrow, getNarrow, () => false);
+  const layout: LayoutMode = narrow ? "mobile" : "desktop";
 
   const [session, setSession] = useState<SessionUser | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -287,14 +272,20 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [applyAuth]);
 
-  const setLayout = useCallback((next: LayoutMode) => {
-    localStorage.setItem(LAYOUT_KEY, next);
-    if (next === "mobile") {
-      sessionStorage.removeItem(TOOLS_KEY);
-      emit(toolsListeners);
+  useEffect(() => {
+    try {
+      localStorage.removeItem(LAYOUT_KEY);
+    } catch {
+      /* quota / private mode */
     }
-    emit(layoutListeners);
   }, []);
+
+  useEffect(() => {
+    if (!narrow) return;
+    if (sessionStorage.getItem(TOOLS_KEY) !== "1") return;
+    sessionStorage.removeItem(TOOLS_KEY);
+    emit(toolsListeners);
+  }, [narrow]);
 
   const setTheme = useCallback((next: ThemeMode) => {
     try {
@@ -388,7 +379,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAuth]);
 
   const admin = layout === "desktop" && Boolean(session) && toolsOn;
-  const isMobile = layout === "mobile" || narrow;
+  const isMobile = narrow;
 
   const value = useMemo<OpsMode>(
     () => ({
@@ -407,7 +398,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       authError,
       loginOpen,
       adminsOpen,
-      setLayout,
       setTheme,
       setMapFocus,
       setAdmin,
@@ -437,7 +427,6 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       authError,
       loginOpen,
       adminsOpen,
-      setLayout,
       setTheme,
       setMapFocus,
       setAdmin,
@@ -466,7 +455,6 @@ const FALLBACK: OpsMode = {
   authError: null,
   loginOpen: false,
   adminsOpen: false,
-  setLayout: () => {},
   setTheme: () => {},
   setMapFocus: () => {},
   setAdmin: () => {},
