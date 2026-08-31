@@ -23,7 +23,7 @@ import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
-import { MeteoAvisoBanner, MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
+import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
 import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
 import { OpsFooter } from "@/components/shared/OpsFooter";
@@ -277,7 +277,6 @@ export function AppShell({
           terminar. Desfazer (Ctrl+Z).
         </div>
       ) : null}
-      <MeteoAvisoBanner />
       <div
         id="conteudo"
         className={cn(

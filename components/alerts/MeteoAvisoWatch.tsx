@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Bell, CloudSun, Megaphone } from "lucide-react";
+import { CloudSun, Megaphone } from "lucide-react";
 import { AvisoGraficoButton } from "@/components/alerts/AvisoGrafico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ import {
   AVISO_URGENT_MS,
   AVISO_WARN_MS,
   avisoExpiresAt,
-  avisoNearExpiry,
   avisoTone,
   formatShiftHours,
   meteoShiftAt,
@@ -97,7 +96,7 @@ function notifyAvisoStage(aviso: MeteoAviso, stage: string, notified: { current:
     if (notified.current === key) return;
   }
   notified.current = key;
-  // The banner already carries warn / urgent / expired. Only the chime fires here.
+  // O cartão do plantão já mostra warn / urgent / expired. Só o sino toca aqui.
   if (stage === "expired") playVencimentoChime();
 }
 
@@ -219,56 +218,6 @@ export function useMeteoAviso() {
   return ctx;
 }
 
-export function MeteoAvisoBanner() {
-  const { aviso, emit, emitting } = useMeteoAviso();
-  const { session, mapFocus } = useOpsMode();
-  const now = useNow();
-  if (!aviso) return null;
-  const tone = avisoTone(aviso.expiresAt, now);
-  if (!avisoNearExpiry(tone)) return null;
-  const left = now ? remainingMs(aviso.expiresAt, now) : null;
-  const clock = left == null || left <= 0 ? "00:00:00" : formatCountdown(left);
-
-  return (
-    <div
-      role="status"
-      className={cn(
-        "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-3 py-2 text-center text-[12px] font-semibold sm:text-[13px]",
-        mapFocus &&
-          "pointer-events-auto fixed inset-x-0 top-0 z-[2100] pr-40 shadow-lg sm:pr-56",
-        tone === "expired" && "aviso-pulse bg-risco-severo text-white",
-        tone === "urgent" && "aviso-pulse bg-risco-severo/90 text-white",
-        tone === "warn" && "bg-risco-alto text-bg",
-      )}
-    >
-      <Bell className="size-4 shrink-0" />
-      <span>
-        {tone === "expired"
-          ? "Aviso vencido — emitir o próximo agora."
-          : tone === "urgent"
-            ? `Emitir aviso agora. Restam ${clock}.`
-            : `Aviso vence em ${clock}.`}
-      </span>
-      {session ? (
-        <Button
-          type="button"
-          size="sm"
-          variant={tone === "warn" ? "secondary" : "default"}
-          className={cn(
-            "min-h-9",
-            tone !== "warn" && "bg-panel text-risco-severo hover:bg-panel/90",
-          )}
-          disabled={emitting}
-          onClick={() => void emit()}
-        >
-          <Megaphone className="size-3.5" />
-          Emitir agora
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
 export function MeteoAvisoDutyCard() {
   const { aviso, emit, emitting } = useMeteoAviso();
   const { session, isMobile } = useOpsMode();
@@ -280,12 +229,15 @@ export function MeteoAvisoDutyCard() {
   const left = now ? remainingMs(aviso?.expiresAt, now) : null;
   const clock = left == null ? "--:--:--" : left <= 0 ? "00:00:00" : formatCountdown(left);
   const canEmit = Boolean(session) && !isMobile;
+  const needsImmediate = tone === "expired" || tone === "urgent";
 
   return (
     <>
       <div
+        role={needsImmediate ? "status" : undefined}
         className={cn(
           "inline-flex min-h-10 max-w-full flex-wrap items-center gap-1.5 rounded-lg border px-2 py-1",
+          needsImmediate && "aviso-pulse",
           tone === "expired" && "border-risco-severo/70 bg-risco-severo/12",
           tone === "urgent" && "border-risco-severo/50 bg-risco-severo/10",
           tone === "warn" && "border-risco-alto/50 bg-risco-alto/10",
@@ -313,18 +265,31 @@ export function MeteoAvisoDutyCard() {
           ) : (
             <strong className="block text-xs">Sem aviso</strong>
           )}
+          {tone === "expired" ? (
+            <p className="max-w-[16rem] text-[10px] font-semibold text-risco-severo">
+              Aviso vencido — emitir o próximo agora.
+            </p>
+          ) : tone === "urgent" ? (
+            <p className="max-w-[16rem] text-[10px] font-semibold text-risco-severo">
+              Emitir aviso agora. Restam {clock}.
+            </p>
+          ) : tone === "warn" ? (
+            <p className="max-w-[16rem] text-[10px] font-semibold text-risco-alto">
+              Aviso vence em {clock}.
+            </p>
+          ) : null}
         </div>
         <AvisoGraficoButton compact={isMobile} />
         {canEmit ? (
           <Button
             type="button"
             size="sm"
-            className="min-h-8"
+            className={cn("min-h-8", needsImmediate && "bg-risco-severo text-white hover:bg-risco-severo/90")}
             disabled={emitting}
-            onClick={() => setOpen(true)}
+            onClick={() => (needsImmediate ? void emit() : setOpen(true))}
           >
             <Megaphone className="size-3.5" />
-            {aviso ? "Validar 12 h" : "Validar plantão"}
+            {needsImmediate ? "Emitir agora" : aviso ? "Validar 12 h" : "Validar plantão"}
           </Button>
         ) : null}
       </div>
