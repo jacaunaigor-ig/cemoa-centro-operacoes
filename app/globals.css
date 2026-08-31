@@ -185,6 +185,13 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow-card);
+  pointer-events: none;
+}
+
+.muni-hover-tip {
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 6px 8px;
 }
 
 .leaflet-popup-tip { background: var(--panel); }

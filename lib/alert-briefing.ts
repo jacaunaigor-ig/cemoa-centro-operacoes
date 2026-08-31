@@ -31,7 +31,7 @@ export function buildAlertBriefing({
     tipo === "INCENDIO"
       ? [
           air && air.pm25 != null
-            ? `${nome}: qualidade do ar ${nivel} (MP2,5 ${formatUg(air.pm25)} na mediana PurpleAir via App SELVA).`
+            ? `${nome}: qualidade do ar ${nivel} (Raw MP2,5 média de 1 dia ${formatUg(air.pm25)}).`
             : `${nome}: qualidade do ar ${nivel}${air === null ? " — sem monitor PurpleAir neste município" : ""}.`,
         ]
       : [`${nome}: alerta ${nivel}${isAlertActive(tipo, risco) ? "" : " em monitoramento"}.`];

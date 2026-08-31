@@ -5,11 +5,13 @@ import type {
   CircleMarker,
   GeoJSON as GeoJSONType,
   LayerGroup,
+  LeafletMouseEvent,
   Map as LeafletMap,
   Path,
   PathOptions,
   Polyline,
   TileLayer,
+  Tooltip,
 } from "leaflet";
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
@@ -39,6 +41,7 @@ import {
 } from "@/lib/map-overlays";
 import type { AirQualitySensor } from "@/lib/types";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
+import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
 import { reportClientError } from "@/lib/client";
 import { withBase } from "@/lib/site";
 import type { AlertStain } from "@/lib/stains";
@@ -136,6 +139,7 @@ export const AlertsMap = forwardRef<
   const rainLayerRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
   const stainLayerRef = useRef<GeoJSONType | null>(null);
+  const hoverTipRef = useRef<Tooltip | null>(null);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
   const drawLineRef = useRef<Polyline | null>(null);
@@ -439,6 +443,7 @@ export const AlertsMap = forwardRef<
       }).addTo(map);
       tilesRef.current = tiles;
       mapRef.current = map;
+      hoverTipRef.current = createMapHoverTip(L, map);
       cancelFit = scheduleAmazonasFit(map, L);
 
       const rios = addAmazonasRiverFlow(L, map);
@@ -457,7 +462,6 @@ export const AlertsMap = forwardRef<
           onEachFeature: (feature, lyr) => {
             const nome = String(feature.properties?.nome ?? "");
             layersByNameRef.current.set(nome, lyr as Path);
-            lyr.bindTooltip("", { sticky: true });
             lyr.on("click", (ev) => {
               if (stateRef.current.drawMode) {
                 addVertex(ev.latlng.lat, ev.latlng.lng);
@@ -471,7 +475,7 @@ export const AlertsMap = forwardRef<
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
               onSelectRef.current(nome, m?.bacia ?? "");
             });
-            lyr.on("mouseover", () => {
+            lyr.on("mousemove", (ev: LeafletMouseEvent) => {
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
               const prefix = stateRef.current.drawMode
                 ? "Vértice · "
@@ -483,7 +487,7 @@ export const AlertsMap = forwardRef<
               const airTip =
                 stateRef.current.pointKind === "air"
                   ? m?.hasAirSensor
-                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)}`
+                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (1 dia)`
                     : " · s/ sensor PurpleAir"
                   : m?.hasRainStation
                     ? ` · 1/6/24 h ${formatWindowsCompact({
@@ -498,14 +502,22 @@ export const AlertsMap = forwardRef<
                           : ""
                       }`
                     : "";
-              lyr.setTooltipContent(
-                `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}`,
-              );
-              lyr.openTooltip();
+              const map = mapRef.current;
+              const tip = hoverTipRef.current;
+              if (map && tip) {
+                showMapHoverTip(
+                  map,
+                  tip,
+                  ev.latlng,
+                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}`,
+                );
+              }
               onHoverRef.current?.(nome);
             });
             lyr.on("mouseout", () => {
-              lyr.closeTooltip();
+              const map = mapRef.current;
+              const tip = hoverTipRef.current;
+              if (map && tip) hideMapHoverTip(map, tip);
               onHoverRef.current?.(null);
             });
           },

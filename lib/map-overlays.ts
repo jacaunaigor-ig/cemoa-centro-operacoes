@@ -310,7 +310,7 @@ export function syncAirSensors(L: LeafletNS, layer: LayerGroup, sensors: AirQual
       zIndexOffset: s.anomalous ? 55 : 45,
     })
       .bindTooltip(
-        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${where}<br/>MP2,5 ${formatUg(s.pm25)} · ${level}${
+        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${where}<br/>Raw MP2,5 1 dia ${formatUg(s.pm25)} · ${level}${
           s.temperatureC != null ? `<br/>${s.temperatureC.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} °C` : ""
         }<br/>${formatRelative(s.lastSeen)} · coordenada real PurpleAir${
           s.anomalous ? "<br/><em>Valor acima de 500 µg/m³ — fora da mediana municipal</em>" : ""

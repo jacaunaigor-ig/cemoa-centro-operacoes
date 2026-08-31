@@ -9,10 +9,12 @@ import {
 import type {
   GeoJSON as GeoJSONType,
   LayerGroup,
+  LeafletMouseEvent,
   Map as LeafletMap,
   Path,
   PathOptions,
   TileLayer,
+  Tooltip,
 } from "leaflet";
 import type { HydroMode, HydroStation, HydroStatusFilter } from "@/lib/types";
 import {
@@ -35,6 +37,7 @@ import {
 } from "@/lib/map";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
+import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
 import {
   addTerritoryOverlays,
   applyTerritoryVisibility,
@@ -105,6 +108,7 @@ export const StationsMap = forwardRef<
   const riversRef = useRef<LayerGroup | null>(null);
   const namesRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
+  const hoverTipRef = useRef<Tooltip | null>(null);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
   const onSelectRef = useRef(onSelect);
@@ -239,6 +243,7 @@ export const StationsMap = forwardRef<
       }).addTo(map);
       tilesRef.current = tiles;
       mapRef.current = map;
+      hoverTipRef.current = createMapHoverTip(L, map);
       cancelFit = scheduleAmazonasFit(map, L);
 
       const rios = addAmazonasRiverFlow(L, map);
@@ -257,7 +262,6 @@ export const StationsMap = forwardRef<
           onEachFeature: (feature, lyr) => {
             const nome = String(feature.properties?.nome ?? "");
             layersByNameRef.current.set(nome, lyr as Path);
-            lyr.bindTooltip("", { sticky: true });
             lyr.on("click", () => {
               const { adminMode: admin } = stateRef.current;
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
@@ -267,24 +271,31 @@ export const StationsMap = forwardRef<
               }
               if (s) onSelectRef.current(s);
             });
-            lyr.on("mouseover", () => {
+            lyr.on("mousemove", (ev: LeafletMouseEvent) => {
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
               const st = statusMapa(s, stateRef.current.modo, stateRef.current.status);
               const prefix = stateRef.current.adminMode ? "Editar · " : "";
-              lyr.setTooltipContent(
-                `<strong>${prefix}${nome}</strong><br/>${s?.calha ?? ""} · ${HYDRO_STATUS_LABELS[st]}${
-                  s?.semLeitura
-                    ? "<br/>Sem cota do dia"
-                    : s?.cota != null
-                      ? `<br/>Cota ${s.cota.toFixed(2)} m`
-                      : ""
-                }`,
-              );
-              lyr.openTooltip();
+              const extra = s?.semLeitura
+                ? "<br/>Sem cota do dia"
+                : s?.cota != null
+                  ? `<br/>Cota ${s.cota.toFixed(2)} m`
+                  : "";
+              const map = mapRef.current;
+              const tip = hoverTipRef.current;
+              if (map && tip) {
+                showMapHoverTip(
+                  map,
+                  tip,
+                  ev.latlng,
+                  `<strong>${prefix}${nome}</strong><br/>${s?.calha ?? ""} · ${HYDRO_STATUS_LABELS[st]}${extra}`,
+                );
+              }
               onHoverRef.current?.(nome);
             });
             lyr.on("mouseout", () => {
-              lyr.closeTooltip();
+              const map = mapRef.current;
+              const tip = hoverTipRef.current;
+              if (map && tip) hideMapHoverTip(map, tip);
               onHoverRef.current?.(null);
             });
           },

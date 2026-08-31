@@ -11,17 +11,20 @@ import type {
 } from "@/lib/types";
 
 const SELVA_ORIGIN = "https://www.appselva.com.br";
+const PURPLEAIR_API = "https://api.purpleair.com/v1/sensors";
 const UA = "CEMOA-CentroOperacoes/1.0 (Defesa Civil do Amazonas)";
 const TTL_MS = 90_000;
 const COOKIE_TTL_MS = 20 * 60_000;
-const FRESH_MS = 24 * 60 * 60 * 1000;
+const FRESH_MS = 48 * 60 * 60 * 1000;
 const MAX_KM = 55;
 const ANOMALOUS_UG = 500;
 const AM_BBOX = { west: -73.9, south: -11.2, east: -56.0, north: 2.4 };
 const MESH_PATH = join(process.cwd(), "public/geo/amazonas-municipios.json");
 
-const SOURCE =
-  "PurpleAir via App SELVA · monitores SEMA/DC-AM e UEA EducAIR (MP2,5 não regulatório)";
+const SOURCE_PURPLEAIR =
+  "PurpleAir · Raw MP2,5 média de 1 dia (CF=1), sensores externos no recorte do Amazonas";
+const SOURCE_SELVA =
+  "App SELVA · MP2,5 leitura atual (fallback). O índice do incêndio é o Raw MP2,5 média de 1 dia da PurpleAir";
 
 type Memo = { at: number; data: AirQualityPayload };
 let memo: Memo | null = null;
@@ -94,6 +97,62 @@ function cookieFromHeaders(headers: Headers): string | null {
     if (match) return match[1];
   }
   return null;
+}
+
+function purpleAirKey(): string | null {
+  const key =
+    process.env.PURPLEAIR_API_KEY?.trim() || process.env.PURPLEAIR_READ_KEY?.trim() || "";
+  return key || null;
+}
+
+function pm25FromRow(row: unknown[], fields: string[]): number | null {
+  for (const name of ["pm2.5_cf_1", "pm2.5_cf_1_24hour", "pm2.5_24hour", "pm2.5_atm", "pm2.5"]) {
+    const i = fields.indexOf(name);
+    if (i < 0) continue;
+    const n = Number(row[i]);
+    if (Number.isFinite(n)) return n;
+  }
+  const iStats = fields.indexOf("stats");
+  if (iStats < 0) return null;
+  let stats: unknown = row[iStats];
+  if (typeof stats === "string") {
+    try {
+      stats = JSON.parse(stats);
+    } catch {
+      return null;
+    }
+  }
+  if (!stats || typeof stats !== "object") return null;
+  const rec = stats as Record<string, unknown>;
+  for (const name of ["pm2.5_24hour", "pm2.5_cf_1", "pm2.5"]) {
+    const n = Number(rec[name]);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+async function fetchPurpleAirPacket(key: string): Promise<SelvaPacket> {
+  const params = new URLSearchParams({
+    fields: "sensor_index,last_seen,name,latitude,longitude,pm2.5_cf_1",
+    average: "1440",
+    max_age: String(48 * 3600),
+    nwlng: String(AM_BBOX.west),
+    nwlat: String(AM_BBOX.north),
+    selng: String(AM_BBOX.east),
+    selat: String(AM_BBOX.south),
+    location_type: "0",
+  });
+  const res = await fetch(`${PURPLEAIR_API}?${params}`, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": UA,
+      "X-API-Key": key,
+    },
+    signal: AbortSignal.timeout(20_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`PurpleAir HTTP ${res.status}`);
+  return parseJsonBody(await res.text());
 }
 
 async function fetchSelvaCookie(): Promise<string> {
@@ -186,10 +245,10 @@ function municipioOf(lat: number, lon: number) {
   return nearestMunicipio(lat, lon);
 }
 
-function emptyPayload(error: string | null): AirQualityPayload {
+function emptyPayload(error: string | null, source = SOURCE_PURPLEAIR): AirQualityPayload {
   return {
     generatedAt: Date.now(),
-    source: SOURCE,
+    source,
     cache: "MISS",
     error,
     coverage: {
@@ -219,7 +278,11 @@ function fieldIndex(fields: string[], names: string[]) {
   return -1;
 }
 
-function buildFromPacket(packet: SelvaPacket, error: string | null): AirQualityPayload {
+function buildFromPacket(
+  packet: SelvaPacket,
+  error: string | null,
+  source: string,
+): AirQualityPayload {
   const fields = Array.isArray(packet.fields) ? packet.fields : [];
   const rows = Array.isArray(packet.data) ? packet.data : [];
   const iIndex = fieldIndex(fields, ["sensor_index"]);
@@ -228,9 +291,17 @@ function buildFromPacket(packet: SelvaPacket, error: string | null): AirQualityP
   const iLat = fieldIndex(fields, ["latitude"]);
   const iLon = fieldIndex(fields, ["longitude"]);
   const iTemp = fieldIndex(fields, ["temperature"]);
-  const iPm = fieldIndex(fields, ["pm2.5", "pm2.5_atm", "pm2.5_cf_1"]);
-  if (iIndex < 0 || iLat < 0 || iLon < 0 || iPm < 0 || iName < 0) {
-    return emptyPayload("SELVA não enviou os campos PurpleAir esperados.");
+  const hasPm =
+    fieldIndex(fields, [
+      "pm2.5_cf_1",
+      "pm2.5_cf_1_24hour",
+      "pm2.5_24hour",
+      "pm2.5_atm",
+      "pm2.5",
+      "stats",
+    ]) >= 0;
+  if (iIndex < 0 || iLat < 0 || iLon < 0 || !hasPm || iName < 0) {
+    return emptyPayload("A API não enviou os campos de MP2,5 esperados.", source);
   }
 
   const nowSec = Number(packet.time_stamp) || Math.floor(Date.now() / 1000);
@@ -242,9 +313,9 @@ function buildFromPacket(packet: SelvaPacket, error: string | null): AirQualityP
     if (!Array.isArray(row)) continue;
     const lat = Number(row[iLat]);
     const lon = Number(row[iLon]);
-    const pm25 = Number(row[iPm]);
+    const pm25 = pm25FromRow(row, fields);
     const lastSeenSec = Number(row[iSeen]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(pm25)) continue;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || pm25 == null) continue;
     if (lat < AM_BBOX.south || lat > AM_BBOX.north || lon < AM_BBOX.west || lon > AM_BBOX.east) {
       continue;
     }
@@ -314,7 +385,7 @@ function buildFromPacket(packet: SelvaPacket, error: string | null): AirQualityP
 
   return {
     generatedAt: Date.now(),
-    source: SOURCE,
+    source,
     cache: "MISS",
     error,
     coverage: {
@@ -343,15 +414,36 @@ export async function getAirQualityPayload(): Promise<AirQualityPayload> {
   if (!inflight) {
     inflight = (async () => {
       try {
-        const packet = await fetchSelvaPacket();
-        const data = buildFromPacket(packet, null);
-        memo = { at: Date.now(), data };
-        return data;
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Falha ao consultar o App SELVA.";
-        if (memo) return { ...memo.data, cache: "HIT", error: `Usando última leitura: ${message}` };
-        return emptyPayload(message);
+        const key = purpleAirKey();
+        let purpleError: string | null = null;
+        if (key) {
+          try {
+            const packet = await fetchPurpleAirPacket(key);
+            const data = buildFromPacket(packet, null, SOURCE_PURPLEAIR);
+            memo = { at: Date.now(), data };
+            return data;
+          } catch (err) {
+            purpleError = err instanceof Error ? err.message : "Falha no PurpleAir.";
+          }
+        }
+        try {
+          const packet = await fetchSelvaPacket();
+          const data = buildFromPacket(
+            packet,
+            purpleError
+              ? `${purpleError}. Usando SELVA (leitura atual, não o Raw média de 1 dia).`
+              : null,
+            SOURCE_SELVA,
+          );
+          memo = { at: Date.now(), data };
+          return data;
+        } catch (err) {
+          const message =
+            err instanceof Error ? err.message : "Falha ao consultar a qualidade do ar.";
+          const combined = purpleError ? `${purpleError} · ${message}` : message;
+          if (memo) return { ...memo.data, cache: "HIT" as const, error: `Usando última leitura: ${combined}` };
+          return emptyPayload(combined);
+        }
       } finally {
         inflight = null;
       }

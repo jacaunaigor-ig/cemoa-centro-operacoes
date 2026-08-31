@@ -101,7 +101,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     scale: "ar",
     levels: AIR_LEVELS,
     low: "BOA",
-    sources: "CEMOA · PurpleAir via App SELVA (SEMA/DC-AM · UEA EducAIR)",
+    sources: "CEMOA · PurpleAir Raw MP2,5 média de 1 dia",
   },
 };
 

@@ -80,7 +80,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
-/** Chuva, alagamento e movimento: o grau no mapa é só do operador. Incêndio: a qualidade do ar entra no cliente pela mediana de MP2,5. Sem classificação, o município fica no nível baixo do produto. */
+/** Chuva, alagamento e movimento: o grau no mapa é só do operador. Incêndio: a qualidade do ar entra no cliente pelo Raw MP2,5 média de 1 dia. Sem classificação, o município fica no nível baixo do produto. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",

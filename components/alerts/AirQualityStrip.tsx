@@ -43,7 +43,7 @@ export function AirQualityStrip({
         </span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-            PurpleAir · SELVA
+            PurpleAir · Raw 1 dia
           </p>
           {loading && !air ? (
             <p className="text-xs text-text-mute">Consultando monitores…</p>
@@ -150,7 +150,7 @@ export function AirPmBadge({
     <span
       className="inline-flex items-center gap-1 font-mono text-[10px] font-bold tabular-nums"
       style={{ color: LEVEL_COLORS[level] }}
-      title={`MP2,5 mediana PurpleAir: ${formatUg(rec.pm25)}`}
+      title={`Raw MP2,5 média de 1 dia: ${formatUg(rec.pm25)}`}
     >
       <Wind className="size-3.5" />
       {formatUgShort(rec.pm25)}

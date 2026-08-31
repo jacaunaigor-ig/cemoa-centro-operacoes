@@ -5,7 +5,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir via App SELVA**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir/SELVA no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**30/08/2026**, relatórios CEMOA de inundação e estiagem): estiagem 38 baixo / 10 moderado / 14 alto; inundação 60 baixo / 1 moderado (Maraã) / 1 alto (Japurá). Onde há **estação automática ANA**, a telemetria atualiza a cota ao vivo — **não muda o grau**. Onde a leitura é **DC-AM/SEMA**, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento e movimento só recebem grau com o operador (abrem em baixo). No produto **Incêndio florestal**, a mediana de MP2,5 PurpleAir/SELVA classifica o município na escala da legenda (Boa → Péssima); o operador pode sobrepor. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. Chuva CEMADEN e a fila do plantão sugerem emitir, elevar ou renovar — não classificam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**30/08/2026**, relatórios CEMOA de inundação e estiagem): estiagem 38 baixo / 10 moderado / 14 alto; inundação 60 baixo / 1 moderado (Maraã) / 1 alto (Japurá). Onde há **estação automática ANA**, a telemetria atualiza a cota ao vivo — **não muda o grau**. Onde a leitura é **DC-AM/SEMA**, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento e movimento só recebem grau com o operador (abrem em baixo). No produto **Incêndio florestal**, o Raw MP2,5 média de 1 dia (PurpleAir) classifica o município na escala da legenda (Boa → Péssima); o operador pode sobrepor. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. Chuva CEMADEN e a fila do plantão sugerem emitir, elevar ou renovar — não classificam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -18,7 +18,7 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 
 A classificação de qualidade do ar não segue o art. 12 da Portaria MIDR nº 2.458/2026. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³.
 
-No produto **Incêndio florestal** o painel puxa os monitores **PurpleAir** da rede **SEMA/DC-AM** e **UEA EducAIR** pelo **App SELVA** (`/api/air-quality`). Só entram sensores com leitura nas últimas **24 h** que caem no polígono de um dos 62 municípios (com folga de 55 km da sede se a malha simplificada falhar — para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. A camada **Sensores PurpleAir · SELVA** marca a coordenada real do monitor. A mediana de MP2,5 **classifica** o município na escala da legenda (Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³). Sem sensor, o município permanece em **Boa**. O operador pode sobrepor o grau. Leitura de baixo custo, a mesma do App SELVA: não substitui estação regulatória.
+No produto **Incêndio florestal** o painel usa o índice **Raw PM2.5 (µg/m³) média de 1 dia** da **PurpleAir** (`pm2.5_cf_1` com `average=1440`) — sensores **externos** no recorte do Amazonas (`/api/air-quality`). Só entram no polígono de um dos 62 municípios (com folga de 55 km da sede se a malha simplificada falhar — para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. Sem `PURPLEAIR_API_KEY`, o centro cai no App SELVA (leitura **atual**, não a média de 1 dia). A camada de sensores marca a coordenada real. Essa média de 1 dia **classifica** o município na escala da legenda (Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³). Sem sensor, o município permanece em **Boa**. O operador pode sobrepor o grau. Leitura de baixo custo: não substitui estação regulatória.
 
 Ainda não entram no recorte (dados que o SELVA também publica em `route=files`): estimado CAMS e focos FIRMS. Quando entrar, ficam no mesmo produto de incêndio — sem cartão novo no centro.
 
@@ -26,9 +26,9 @@ O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa oc
 
 ## Abertura do plantão
 
-O Painel de Alertas nasce limpo nas abas de chuva, alagamento e movimento (em **baixo**, sem mancha de polígono). O produto de incêndio já abre com a qualidade do ar medida. O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente.
+O Painel de Alertas nasce limpo nas abas de chuva, alagamento e movimento (em **baixo**, sem mancha de polígono). O produto de incêndio já abre com a qualidade do ar medida (Raw MP2,5 média de 1 dia). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente.
 
-Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento e movimento ficam em **baixo**; incêndio segue a mediana de MP2,5. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
+Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento e movimento ficam em **baixo**; incêndio segue o Raw MP2,5 média de 1 dia. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
 
 O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s, qualidade do ar ~90 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
 
@@ -62,7 +62,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|INCENDIO`) |
 | `/api/hydrology` | JSON das estações e cotas |
 | `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h / 72 h / 96 h por município e estação |
-| `/api/air-quality` | MP2,5 PurpleAir via App SELVA (SEMA/DC-AM · UEA EducAIR), 24 h, por município |
+| `/api/air-quality` | Raw MP2,5 média de 1 dia (PurpleAir CF=1); fallback SELVA (leitura atual) |
 | `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
 | `/api/indice` | Índice de Vulnerabilidade 0–100 (sessão autenticada; só no Desktop com Edição). |
 | `/api/logs` | Log de erros de mapa/dados no front |
@@ -88,7 +88,7 @@ Controle interno do operador: aparece só no **Desktop** com **Edição** ligada
 Dois blocos, cada um até 50 pontos:
 
 - **Base estrutural (50)** — muda pouco. Crianças 0–14 + idosos 60+ (Censo 2022, até 15), áreas de risco mapeadas SGB (até 20; sem mapeamento = 0), capacidade de resposta pelo **IDHM 2010** (até 15). O IDHM entra no lugar do PIB total: Coari pode ser a segunda economia e mesmo assim pontuar vulnerabilidade, porque a renda do Atlas não acompanha o PIB do gás.
-- **Monitoramento (50)** — ao vivo, 10 pontos por evento. Cheia e estiagem vêm do boletim (o operador pode sobrepor; a cota ANA não altera o grau). Chuva intensa e alagamento entram no **maior** dos dois graus, para não contar duas vezes o mesmo temporal. Movimento de massa usa a classificação do operador. Qualidade do ar usa a mediana de MP2,5 (o operador pode sobrepor).
+- **Monitoramento (50)** — ao vivo, 10 pontos por evento. Cheia e estiagem vêm do boletim (o operador pode sobrepor; a cota ANA não altera o grau). Chuva intensa e alagamento entram no **maior** dos dois graus, para não contar duas vezes o mesmo temporal. Movimento de massa usa a classificação do operador. Qualidade do ar usa o Raw MP2,5 média de 1 dia (o operador pode sobrepor).
 
 Cada grau vira o teto da faixa: Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10. Soma 0–20 baixo, 21–40 moderado, 41–60 alto, 61–80 severo, 81–100 extremo.
 
@@ -102,9 +102,9 @@ O posto segue a largura da tela: no **telefone** (largura &lt; 768 px) o layout 
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
-A **fila do plantão** (lista da esquerda) junta o que **sugere** ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Em chuva, alagamento e movimento a ação do operador é soberana — não classifica o município. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila. Em incêndio, a mediana de MP2,5 já classifica o município; a fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer.
+A **fila do plantão** (lista da esquerda) junta o que **sugere** ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Em chuva, alagamento e movimento a ação do operador é soberana — não classifica o município. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila. Em incêndio, o Raw MP2,5 média de 1 dia já classifica o município; a fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer.
 
-No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). Chuva, alagamento e movimento não mudam de cor sozinhos; o incêndio segue a mediana de MP2,5. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
+No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). Chuva, alagamento e movimento não mudam de cor sozinhos; o incêndio segue o Raw MP2,5 média de 1 dia. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
 
 O **Aviso Meteorológico** tem duas camadas:
 
@@ -152,9 +152,10 @@ CEMOA_SESSION_SECRET=uma-string-longa-aleatoria
 CEMOA_ADMIN_LOGIN=igor
 CEMOA_ADMIN_PASSWORD=senha-forte-aqui
 CEMOA_ADMIN_NAME=Igor
+PURPLEAIR_API_KEY=chave-de-leitura-purpleair
 ```
 
-`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface.
+`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface. `PURPLEAIR_API_KEY` é a chave de leitura em [develop.purpleair.com](https://develop.purpleair.com/) — sem ela o incêndio cai no App SELVA (leitura atual, não o Raw média de 1 dia).
 
 O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app). O alias `operacoes.vercel.app` não aponta para um deploy — use o endereço completo acima.
 

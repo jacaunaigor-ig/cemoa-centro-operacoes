@@ -184,7 +184,7 @@ export function RiskHelpButton({
                   </p>
                   <p className="mt-1 text-xs text-text-dim">
                     Não segue o art. 12 da Portaria MIDR nº 2.458/2026. No produto Incêndio
-                    florestal, a mediana de MP2,5 classifica o município nesta mesma escala.
+                    florestal, o Raw MP2,5 média de 1 dia (PurpleAir) classifica o município nesta mesma escala.
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {AIR_CHIPS.map(([key, label, color]) => (

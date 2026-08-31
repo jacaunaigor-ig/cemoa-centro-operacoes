@@ -59,13 +59,13 @@ export function airApoio(rec: AirQualityMunicipio | null | undefined): AirApoio 
   if (!rec || rec.pm25 == null || !rec.level || rec.level === "BOA") return null;
   return {
     level: rec.level,
-    motivo: `MP2,5 ${formatUg(rec.pm25)} (mediana PurpleAir via SELVA) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}.`,
+    motivo: `MP2,5 ${formatUg(rec.pm25)} (Raw PurpleAir, média de 1 dia) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}.`,
   };
 }
 
 const AIR_MONITOR_FONTE = "PurpleAir · SELVA";
 
-/** Pinta o município na escala da legenda a partir da mediana de MP2,5. O operador ainda pode sobrepor. */
+/** Classifica o município na escala da legenda a partir da mediana do Raw MP2,5 média de 1 dia. O operador ainda pode sobrepor. */
 export function applyAirClassification<
   T extends {
     id: string;

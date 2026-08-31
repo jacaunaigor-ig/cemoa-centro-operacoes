@@ -40,7 +40,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       <div className="mt-2 grid grid-cols-2 gap-1.5 text-center">
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-            MP2,5 mediana
+            MP2,5 mediana · 1 dia
           </small>
           <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25)}</strong>
         </div>
@@ -72,7 +72,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        A mediana municipal classifica o município na escala da legenda (Boa → Péssima).
+        A mediana municipal do Raw MP2,5 (média de 1 dia, CF=1) classifica o município na escala da legenda (Boa → Péssima).
         Leitura de baixo custo, a mesma rede do App SELVA — não substitui estação
         regulatória. O operador pode sobrepor o grau.
       </p>
