@@ -98,8 +98,7 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
-import { RainfallStrip } from "@/components/alerts/RainfallStrip";
-import { AirQualityStrip } from "@/components/alerts/AirQualityStrip";
+import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
@@ -846,28 +845,6 @@ export function AlertsWorkbench() {
     plantaoCounts.vencido + plantaoCounts.renovar + plantaoCounts.emitir;
   usePlantaoExpiryChime(tipo, catalog, !isMobile);
   const ProductIcon = PRODUCT_ICONS[tipo];
-  const monitorStrip = (className?: string) =>
-    tipo === "INCENDIO" ? (
-      <AirQualityStrip
-        className={className}
-        air={air}
-        loading={!air && !STATIC_DEPLOY}
-        filter={airFilter}
-        onFilter={(next) =>
-          setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
-        }
-      />
-    ) : (
-      <RainfallStrip
-        className={className}
-        rain={rain}
-        loading={!rain && !STATIC_DEPLOY}
-        filter={rainFilter}
-        onFilter={(next) =>
-          setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
-        }
-      />
-    );
   const listNode = (
     <AlertList
       municipios={visibleMunicipios}
@@ -1238,7 +1215,21 @@ export function AlertsWorkbench() {
 
           {isMobile ? (
             <div className="border-b border-border px-2 py-1.5">
-            {monitorStrip()}
+            <ProductMonitorStrip
+              tipo={tipo}
+              air={air}
+              rain={rain}
+              airFilter={airFilter}
+              rainFilter={rainFilter}
+              loadingAir={!air && !STATIC_DEPLOY}
+              loadingRain={!rain && !STATIC_DEPLOY}
+              onAirFilter={(next) =>
+                setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
+              }
+              onRainFilter={(next) =>
+                setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
+              }
+            />
             </div>
           ) : null}
 
@@ -1253,7 +1244,22 @@ export function AlertsWorkbench() {
           >
             {!isMobile ? (
               <div className="col-span-2 sm:col-span-3 xl:col-span-1">
-                {monitorStrip("h-full")}
+                <ProductMonitorStrip
+                  className="h-full"
+                  tipo={tipo}
+                  air={air}
+                  rain={rain}
+                  airFilter={airFilter}
+                  rainFilter={rainFilter}
+                  loadingAir={!air && !STATIC_DEPLOY}
+                  loadingRain={!rain && !STATIC_DEPLOY}
+                  onAirFilter={(next) =>
+                    setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
+                  }
+                  onRainFilter={(next) =>
+                    setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
+                  }
+                />
               </div>
             ) : null}
             <KpiCard
@@ -1459,9 +1465,17 @@ export function AlertsWorkbench() {
               ) : null}
               {ready && data ? (
                 <AlertsMap
-                  key={OSM_BASEMAP_ID}
+                  key={`${OSM_BASEMAP_ID}-${tipo}`}
                   ref={mapApi}
                   municipios={data.municipios.map((m) => {
+                    if (tipo === "INCENDIO") {
+                      const rec = air?.byId[m.id];
+                      return {
+                        ...m,
+                        pm25: rec?.pm25 ?? null,
+                        hasAirSensor: Boolean(rec?.sensors.length),
+                      };
+                    }
                     const row = rain?.byId[m.id];
                     return {
                       ...m,

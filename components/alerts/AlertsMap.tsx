@@ -14,6 +14,7 @@ import type {
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import { formatMm, formatMmShort, formatWindowsCompact, INTENSE_MM_PER_H } from "@/lib/rainfall-display";
+import { formatUg } from "@/lib/air-quality-display";
 import {
   AMAZONAS_CENTER,
   OSM_ATTRIBUTION,
@@ -55,6 +56,8 @@ type Muni = {
   mm6h?: number | null;
   mm24h?: number | null;
   hasRainStation?: boolean;
+  pm25?: number | null;
+  hasAirSensor?: boolean;
 };
 
 export type AlertsMapHandle = {
@@ -477,9 +480,12 @@ export const AlertsMap = forwardRef<
                   : stateRef.current.adminMode
                     ? "Classificar · "
                     : "";
-              lyr.setTooltipContent(
-                `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${
-                  m?.hasRainStation
+              const airTip =
+                stateRef.current.pointKind === "air"
+                  ? m?.hasAirSensor
+                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)}`
+                    : " · s/ sensor PurpleAir"
+                  : m?.hasRainStation
                     ? ` · 1/6/24 h ${formatWindowsCompact({
                         mm1h: m.mm1h ?? null,
                         mm6h: m.mm6h ?? null,
@@ -489,8 +495,9 @@ export const AlertsMap = forwardRef<
                           ? ` · chuva ≥ ${INTENSE_MM_PER_H} mm/h`
                           : ""
                       }`
-                    : ""
-                }`,
+                    : "";
+              lyr.setTooltipContent(
+                `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}`,
               );
               lyr.openTooltip();
               onHoverRef.current?.(nome);
