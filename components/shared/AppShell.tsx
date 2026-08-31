@@ -84,7 +84,57 @@ export function AppShell({
           !mapFocus && !isMobile && "max-lg:h-auto max-lg:min-h-dvh max-lg:overflow-visible",
         )}
       >
-      {mapFocus ? null : (
+      {mapFocus ? null : isMobile ? (
+      <header className="sticky top-0 z-30 shrink-0 border-b border-border bg-panel/95 px-2.5 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl">
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex min-w-0 items-center gap-2">
+            <CemoaMark compact />
+            <h1 className="truncate text-sm font-bold tracking-tight">CEMOA</h1>
+          </Link>
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+            <div className="text-right leading-tight">
+              <small className="block text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
+                Ao vivo
+              </small>
+              <strong className="inline-flex items-center gap-1 text-xs font-semibold text-live">
+                <span className="live-dot" aria-hidden />
+                <HeaderClock compact />
+              </strong>
+            </div>
+            <button
+              type="button"
+              className="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-panel-2 text-text-mute"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-pressed={theme === "dark"}
+              aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            >
+              {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </button>
+          </div>
+        </div>
+        <nav
+          aria-label="Produtos"
+          className="mt-1.5 grid grid-cols-2 gap-1 rounded-xl border border-border bg-hover p-1"
+        >
+          <NavTab
+            href={`/${suffix}`}
+            active={pathname === "/"}
+            icon={<Radio className="size-3.5" />}
+            compact
+          >
+            Alertas
+          </NavTab>
+          <NavTab
+            href={`/boletim${suffix}`}
+            active={pathname.startsWith("/boletim")}
+            icon={<Droplets className="size-3.5" />}
+            compact
+          >
+            Boletim
+          </NavTab>
+        </nav>
+      </header>
+      ) : mapFocus ? null : (
       <header className="sticky top-0 z-30 flex flex-wrap items-center gap-1.5 border-b border-border bg-panel/95 px-2 py-1.5 pt-[max(0.4rem,env(safe-area-inset-top))] shadow-[var(--shadow-card)] backdrop-blur-xl sm:gap-3 sm:px-6 sm:py-2.5">
         <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <CemoaMark compact={isMobile} />
@@ -233,18 +283,7 @@ export function AppShell({
               )}
             </div>
           ) : null}
-          <HeaderClock compact={isMobile} />
-          {isMobile ? (
-            <div className="text-right leading-tight">
-              <small className="block text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-                Status operacional
-              </small>
-              <strong className="inline-flex items-center gap-1.5 text-xs font-semibold text-live">
-                <span className="live-dot" aria-hidden />
-                Ao vivo
-              </strong>
-            </div>
-          ) : (
+          <HeaderClock compact={false} />
             <InfoTooltip
               label="Sobre a sincronização"
               title="Sincronizado"
@@ -272,7 +311,6 @@ export function AppShell({
                 </span>
               </button>
             </InfoTooltip>
-          )}
         </div>
       </header>
       )}
@@ -317,7 +355,7 @@ function HeaderClock({ compact }: { compact: boolean }) {
   const now = useNow();
   const clock = now ? formatAmazonTime(now) : "--:--:--";
   if (compact) {
-    return <strong className="font-mono text-xs tabular-nums">{clock}</strong>;
+    return <span className="font-mono text-xs tabular-nums text-text">{clock}</span>;
   }
   return (
     <div className="hidden text-right md:block">

@@ -37,7 +37,7 @@ export function KpiCard({
       className={cn(
         "group card-in relative cursor-pointer overflow-hidden rounded-xl border border-border bg-panel text-left shadow-[var(--shadow-card)] transition-all duration-200 touch-manipulation active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-md",
         dense
-          ? "h-full px-1 py-1.5 text-center"
+          ? "flex h-full flex-col items-center justify-center gap-0.5 px-1 py-2 text-center"
           : compact || isMobile
             ? "h-full px-2 py-1.5 pl-3"
             : "px-3.5 py-3 pl-4 sm:min-h-[5.5rem]",
@@ -49,18 +49,18 @@ export function KpiCard({
     >
       <span
         aria-hidden
-        className="absolute inset-y-0 left-0 w-1"
+        className={dense ? "absolute inset-x-0 top-0 h-0.5" : "absolute inset-y-0 left-0 w-1"}
         style={{ background: accent, opacity: active ? 1 : 0.45 }}
       />
       {dense ? (
         <>
-          <small className="block truncate text-[9px] font-bold tracking-wide text-text-mute uppercase">
+          <small className="block w-full truncate text-center text-[9px] font-bold tracking-wide text-text-mute uppercase">
             {label}
           </small>
           {loading ? (
-            <Skeleton className="mx-auto mt-1 h-6 w-8" />
+            <Skeleton className="mt-1 h-6 w-8" />
           ) : (
-            <p className="mt-0.5 font-semibold tabular-nums leading-none tracking-tight text-lg">
+            <p className="text-center text-lg font-semibold tabular-nums leading-none tracking-tight">
               {value}
             </p>
           )}

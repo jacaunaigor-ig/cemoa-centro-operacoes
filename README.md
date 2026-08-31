@@ -70,7 +70,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 
 Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 municípios) e `calha` (calha fluviométrica do boletim). Os dois recortes não são o mesmo mapa — Japurá no painel não vira Médio Solimões no boletim; Baixo Solimões no boletim não vira Médio Solimões no painel. No painel também: `risco` (`ATIVOS`, `AGRAVADOS` ou o nível), `tipo`, `chuva` (filtro CEMADEN) e `ar` (filtro PurpleAir no incêndio). No boletim: `modo`, `status`.
 
-No Painel de Alertas a lista ordena região e município pela gravidade, os chips **Ativos** / **Com agravamento** e as bacias com alerta filtram o recorte, a busca acha o município pelo nome e a ficha abre um briefing automático (nível, **clima na ficha** e cota). O rodapé traz CEMADEN, INMET, CPTEC/INPE, App SELVA, PurpleAir e o horário da última atualização.
+No Painel de Alertas a lista ordena região e município pela gravidade, os chips **Ativos** / **Com agravamento** e as bacias com alerta filtram o recorte, a busca acha o município pelo nome e a ficha abre um briefing automático (nível, **tempo (chuva, temperatura e previsão)** e cota). O rodapé traz CEMADEN, INMET, CPTEC/INPE, App SELVA, PurpleAir e o horário da última atualização.
 
 A ficha do alerta junta três blocos de clima (não pintam o mapa):
 
