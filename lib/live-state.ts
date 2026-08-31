@@ -164,7 +164,7 @@ export function buildHydrologyPayload(
     generatedAt: now,
     source:
       atualizadas > 0
-        ? `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA} · ANA telemetria (${atualizadas} estação${atualizadas === 1 ? "" : "s"})`
+        ? `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA} · ANA telemetria (${atualizadas} ${atualizadas === 1 ? "estação" : "estações"})`
         : `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
     referencia: HYDRO_REFERENCIA,
     dias: stations[0]?.dias ?? [],
