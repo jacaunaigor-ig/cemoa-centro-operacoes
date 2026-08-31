@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 } from "@/lib/hydrology";
 import type { HydroPatch } from "@/lib/hydro-overrides";
 import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
+import { cotaOnIso, hydroTodayIso } from "@/lib/hydro-series";
 import { cn } from "@/lib/utils";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 import { IndiceCard } from "@/components/shared/IndiceCard";
@@ -176,7 +177,7 @@ export function HydroDetail({
         </span>
       </div>
 
-      <div className="mt-2 max-w-[22rem]">
+      <div className="mt-2 max-w-[32rem]">
         <CotaChart
           station={station}
           status={statusAtivo(station, modo)}
@@ -202,8 +203,8 @@ export function HydroDetail({
             <thead className="text-[10px] tracking-wide text-text-mute uppercase">
               <tr>
                 <th className="py-1 pr-2">Dia</th>
-                {station.dias.map((d) => (
-                  <th key={d} className="py-1 pr-2 font-mono">
+                {station.dias.slice(Math.max(0, station.dias.length - 14)).map((d, i) => (
+                  <th key={`${d}-${i}`} className="py-1 pr-2 font-mono">
                     {d}
                   </th>
                 ))}
@@ -212,14 +213,19 @@ export function HydroDetail({
             <tbody>
               <tr>
                 <td className="py-1 pr-2 text-text-mute">Cota (m)</td>
-                {station.cotas.map((c, i) => (
-                  <td key={station.dias[i] ?? i} className="py-1 pr-2 font-mono">
+                {station.cotas.slice(Math.max(0, station.dias.length - 14)).map((c, i) => (
+                  <td key={`${station.dias[Math.max(0, station.dias.length - 14) + i] ?? i}`} className="py-1 pr-2 font-mono">
                     {c == null ? "—" : c.toFixed(2)}
                   </td>
                 ))}
               </tr>
             </tbody>
           </table>
+          {station.dias.length > 14 ? (
+            <p className="mt-1 text-[10px] text-text-mute">
+              Últimos 14 dias da série. Leituras mais antigas entram no gráfico.
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -240,10 +246,22 @@ function HydroAdminForm({
   station: HydroStation;
   onSave: (patch: HydroPatch) => void;
 }) {
-  const [cota, setCota] = useState(station.cota != null ? String(station.cota) : "");
+  const today = hydroTodayIso();
+  const [cotaData, setCotaData] = useState(today);
+  const [cota, setCota] = useState("");
   const [vazante, setVazante] = useState<HydroStatus>(station.statusVazante);
   const [enchente, setEnchente] = useState<HydroStatus>(station.statusEnchente);
-  const [semCota, setSemCota] = useState(station.semLeitura);
+  const [semCota, setSemCota] = useState(false);
+
+  const seriesKey = `${station.id}|${station.referencia ?? ""}|${station.cotas.join(",")}`;
+  useEffect(() => {
+    const v = cotaOnIso(station, cotaData);
+    setCota(v != null ? String(v) : "");
+    setSemCota(v == null && cotaData === today);
+    setVazante(station.statusVazante);
+    setEnchente(station.statusEnchente);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seriesKey captures the cota timeline
+  }, [seriesKey, cotaData, today, station.statusVazante, station.statusEnchente]);
 
   return (
     <form
@@ -251,9 +269,11 @@ function HydroAdminForm({
       onSubmit={(e) => {
         e.preventDefault();
         const n = Number(cota.replace(",", "."));
+        const empty = semCota || !cota.trim();
         onSave({
-          cota: semCota || !Number.isFinite(n) ? null : n,
-          semLeitura: semCota || !cota.trim(),
+          cota: empty || !Number.isFinite(n) ? null : n,
+          cotaData,
+          semLeitura: empty && cotaData === today,
           statusVazante: vazante,
           statusEnchente: enchente,
         });
@@ -262,14 +282,29 @@ function HydroAdminForm({
       <p className="text-[10px] font-black tracking-[0.12em] text-brand-2 uppercase">
         Atualizar cota e status
       </p>
-      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+      <p className="mt-1 text-[11px] text-text-dim">
+        Escolha a data da medição — município que fica semanas sem enviar não precisa usar o dia de
+        hoje.
+      </p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-4">
+        <label className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Data da cota
+          <Input
+            type="date"
+            value={cotaData}
+            max={today}
+            onChange={(e) => setCotaData(e.target.value || today)}
+            className="mt-1"
+            aria-label="Data da cota"
+          />
+        </label>
         <label className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
           Cota (m)
           <Input
             value={cota}
             onChange={(e) => {
               setCota(e.target.value);
-              setSemCota(e.target.value.trim() === "");
+              setSemCota(e.target.value.trim() === "" && cotaData === today);
             }}
             inputMode="decimal"
             disabled={semCota}
@@ -312,7 +347,7 @@ function HydroAdminForm({
           checked={semCota}
           onChange={(e) => setSemCota(e.target.checked)}
         />
-        Sem cota do dia (o grau permanece no mapa)
+        Sem cota nesta data (o grau permanece no mapa)
       </label>
       <Button type="submit" size="sm" className="mt-2">
         Salvar cota e status

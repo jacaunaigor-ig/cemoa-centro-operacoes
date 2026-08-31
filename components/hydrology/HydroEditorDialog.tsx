@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HYDRO_STATUS_COLORS, HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import type { HydroPatch } from "@/lib/hydro-overrides";
+import { cotaOnIso, hydroTodayIso, isoToHydroDay } from "@/lib/hydro-series";
 import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
 
 const LEVELS: HydroStatus[] = ["NORMAL", "MODERADO", "ALTO", "SEVERO"];
@@ -24,7 +25,9 @@ export function HydroEditorDialog({
   onClose: () => void;
   onApply: (updates: Record<string, HydroPatch>) => void | Promise<void>;
 }) {
+  const today = hydroTodayIso();
   const [query, setQuery] = useState("");
+  const [cotaData, setCotaData] = useState(today);
   const [draftStatus, setDraftStatus] = useState<Record<string, HydroStatus>>({});
   const [draftCota, setDraftCota] = useState<Record<string, string>>({});
   const [batch, setBatch] = useState<HydroStatus>("ALTO");
@@ -32,12 +35,15 @@ export function HydroEditorDialog({
 
   const merged = useMemo(
     () =>
-      rows.map((row) => ({
-        ...row,
-        status: draftStatus[row.id] ?? statusAtivo(row, modo),
-        cotaText: draftCota[row.id] ?? (row.cota != null ? String(row.cota) : ""),
-      })),
-    [rows, draftStatus, draftCota, modo],
+      rows.map((row) => {
+        const existing = cotaOnIso(row, cotaData);
+        return {
+          ...row,
+          status: draftStatus[row.id] ?? statusAtivo(row, modo),
+          cotaText: draftCota[row.id] ?? (existing != null ? String(existing) : ""),
+        };
+      }),
+    [rows, draftStatus, draftCota, modo, cotaData],
   );
 
   const visible = useMemo(() => {
@@ -54,6 +60,14 @@ export function HydroEditorDialog({
 
   useEffect(() => {
     if (!open) return;
+    setCotaData(hydroTodayIso());
+    setDraftCota({});
+    setDraftStatus({});
+    setQuery("");
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -64,6 +78,8 @@ export function HydroEditorDialog({
   if (!open) return null;
 
   const statusKey = modo === "enchente" ? "statusEnchente" : "statusVazante";
+  const dataDoDia = isoToHydroDay(cotaData);
+  const vazios = visible.filter((row) => !row.cotaText.trim()).length;
 
   return (
     <div
@@ -84,8 +100,8 @@ export function HydroEditorDialog({
             </p>
             <h2 className="text-lg font-black">Cotas e status em lote</h2>
             <p className="text-xs text-text-mute">
-              {modo === "vazante" ? "Estiagem" : "Inundação"} — as alterações só entram no mapa ao
-              aplicar.
+              {modo === "vazante" ? "Estiagem" : "Inundação"} — cota vazia em {dataDoDia} vira sem
+              leitura e entra no painel de cima.
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-border p-1.5" aria-label="Fechar">
@@ -93,6 +109,20 @@ export function HydroEditorDialog({
           </button>
         </header>
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+          <label className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+            Data da cota
+            <Input
+              type="date"
+              value={cotaData}
+              max={today}
+              onChange={(e) => {
+                setCotaData(e.target.value || today);
+                setDraftCota({});
+              }}
+              className="mt-1 w-[11.5rem]"
+              aria-label="Data da cota em lote"
+            />
+          </label>
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -123,13 +153,18 @@ export function HydroEditorDialog({
             Aplicar status aos visíveis
           </Button>
         </div>
+        <p className="px-4 py-2 text-[11px] text-text-dim">
+          {visible.length} município{visible.length === 1 ? "" : "s"} visíveis
+          {vazios ? ` · ${vazios} sem cota em ${dataDoDia}` : ""}. Campo vazio nesta data = sem
+          leitura.
+        </p>
         <ScrollArea className="min-h-0 flex-1">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-panel-2 text-left text-[10px] tracking-wide text-text-mute uppercase">
               <tr>
                 <th className="px-4 py-2">Município</th>
                 <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Cota (m)</th>
+                <th className="px-4 py-2">Cota {dataDoDia} (m)</th>
               </tr>
             </thead>
             <tbody>
@@ -163,6 +198,8 @@ export function HydroEditorDialog({
                       }
                       className="h-8 max-w-28"
                       inputMode="decimal"
+                      placeholder="sem leitura"
+                      aria-label={`Cota de ${row.municipio} em ${dataDoDia}`}
                     />
                   </td>
                 </tr>
@@ -176,30 +213,23 @@ export function HydroEditorDialog({
           </Button>
           <Button
             type="button"
-            disabled={
-              applying ||
-              (Object.keys(draftStatus).length === 0 && Object.keys(draftCota).length === 0)
-            }
+            disabled={applying || visible.length === 0}
             onClick={async () => {
               const updates: Record<string, HydroPatch> = {};
-              const ids = new Set([...Object.keys(draftStatus), ...Object.keys(draftCota)]);
-              for (const id of ids) {
-                const patch: HydroPatch = {};
-                if (draftStatus[id]) patch[statusKey] = draftStatus[id];
-                if (id in draftCota) {
-                  const raw = draftCota[id].trim();
-                  if (!raw) {
-                    patch.cota = null;
-                    patch.semLeitura = true;
-                  } else {
-                    const n = Number(raw.replace(",", "."));
-                    if (Number.isFinite(n)) {
-                      patch.cota = n;
-                      patch.semLeitura = false;
-                    }
-                  }
+              for (const row of visible) {
+                const patch: HydroPatch = { cotaData };
+                if (draftStatus[row.id]) patch[statusKey] = draftStatus[row.id];
+                const raw = row.cotaText.trim();
+                if (!raw) {
+                  patch.cota = null;
+                  patch.semLeitura = cotaData === today;
+                } else {
+                  const n = Number(raw.replace(",", "."));
+                  if (!Number.isFinite(n)) continue;
+                  patch.cota = n;
+                  patch.semLeitura = false;
                 }
-                updates[id] = patch;
+                updates[row.id] = patch;
               }
               setApplying(true);
               try {

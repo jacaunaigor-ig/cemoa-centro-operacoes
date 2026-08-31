@@ -132,6 +132,7 @@ export type HydroStation = {
   variacao: number | null;
   cotas: Array<number | null>;
   dias: string[];
+  referencia?: string;
   tendencia: HydroTendencia;
   statusVazante: HydroStatus;
   statusEnchente: HydroStatus;

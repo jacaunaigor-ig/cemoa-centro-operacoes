@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { HydroStatus } from "@/lib/types";
 import {
   clearHydroOverrides,
+  getHydroOverride,
   getHydroOverrides,
   mergeHydroOverrides,
   removeHydroOverrides,
@@ -15,6 +16,7 @@ import {
   deleteRemoteHydroOverrides,
   upsertRemoteHydroOverrides,
 } from "@/lib/supabase-ops";
+import { isIsoDate } from "@/lib/hydro-series";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,21 @@ function parsePatch(raw: unknown): HydroPatch | null {
       if (!Number.isFinite(n)) return null;
       patch.cota = n;
     }
+  }
+  if (typeof body.cotaData === "string" && isIsoDate(body.cotaData)) {
+    patch.cotaData = body.cotaData;
+  }
+  if (body.cotasPorData && typeof body.cotasPorData === "object" && !Array.isArray(body.cotasPorData)) {
+    const map: Record<string, number | null> = {};
+    for (const [k, v] of Object.entries(body.cotasPorData as Record<string, unknown>)) {
+      if (!isIsoDate(k)) continue;
+      if (v == null || v === "") map[k] = null;
+      else {
+        const n = Number(v);
+        if (Number.isFinite(n)) map[k] = n;
+      }
+    }
+    if (Object.keys(map).length) patch.cotasPorData = map;
   }
   if (
     body.statusVazante === "NORMAL" ||
@@ -74,7 +91,12 @@ export async function POST(request: Request) {
     if (body.replace) replaceHydroOverrides(updates);
     else if (Object.keys(updates).length) mergeHydroOverrides(updates);
     if (remove.length) removeHydroOverrides(remove);
-    await upsertRemoteHydroOverrides(updates, {
+    const remote: Record<string, HydroPatch> = {};
+    for (const id of Object.keys(updates)) {
+      const merged = getHydroOverride(id);
+      if (merged) remote[id] = merged;
+    }
+    await upsertRemoteHydroOverrides(remote, {
       issuedBy: gate.user.name,
       issuedById: gate.user.id,
     });

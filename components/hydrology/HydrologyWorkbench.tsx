@@ -32,7 +32,7 @@ import { buildIndicePayload } from "@/lib/indice-build";
 import type { IndicePayload } from "@/lib/indice";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { toast } from "sonner";
-import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, removeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
+import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, removeHydroOverrides, mergeHydroPatch, type HydroPatch } from "@/lib/hydro-overrides";
 import {
   HYDRO_LEVELS,
   HYDRO_STATUS_COLORS,
@@ -95,7 +95,7 @@ function rememberHydroLocal(
   >;
   const next: Record<string, HydroPatch> = replace ? {} : { ...current };
   for (const [id, patch] of Object.entries(updates)) {
-    next[id] = { ...(replace ? {} : current[id]), ...patch };
+    next[id] = mergeHydroPatch(replace ? {} : current[id] ?? {}, patch);
   }
   for (const id of remove) delete next[id];
   localStorage.setItem(HYDRO_STORAGE, JSON.stringify(next));
@@ -204,6 +204,8 @@ export function HydrologyWorkbench() {
                 const next: HydroPatch = {};
                 if ("cota" in patch) next.cota = patch.cota ?? null;
                 if (typeof patch.semLeitura === "boolean") next.semLeitura = patch.semLeitura;
+                if (typeof patch.cotaData === "string") next.cotaData = patch.cotaData;
+                if (patch.cotasPorData) next.cotasPorData = patch.cotasPorData;
                 if (patch.statusVazante && patch.statusVazante !== "NORMAL") {
                   next.statusVazante = patch.statusVazante;
                 }
@@ -605,9 +607,9 @@ export function HydrologyWorkbench() {
               <KpiCard
                 dense
                 compact
-                label="s/ leit."
+                label="s/ cota"
                 value={loading ? "—" : String(kpis.semLeitura)}
-                sub="Sem leitura"
+                sub="Sem cota hoje"
                 accent="#6b7280"
                 icon={<RadioTower className="size-3.5" />}
                 active={status === "SL"}
@@ -684,7 +686,7 @@ export function HydrologyWorkbench() {
               compact
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
-              sub={pct(kpis.semLeitura)}
+              sub={`${pct(kpis.semLeitura)} · sem cota hoje`}
               accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}
@@ -1183,7 +1185,7 @@ export function HydrologyWorkbench() {
         onClose={() => setEditorOpen(false)}
         onApply={async (updates) => {
           const ok = await persistHydro(updates);
-          if (ok) toast.success("Classificação em lote aplicada.");
+          if (ok) toast.success("Cotas e status em lote aplicados.");
         }}
       />
     </AppShell>

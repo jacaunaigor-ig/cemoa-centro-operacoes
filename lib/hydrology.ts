@@ -8,6 +8,7 @@ import type {
   HydroTendencia,
 } from "@/lib/types";
 import raw from "@/data/hydrology.json";
+import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
 export const CALHAS = [
   "Alto Solimões",
@@ -111,7 +112,7 @@ export const PNG_HYDRO_ITEMS: Array<{
   {
     key: "SL",
     title: "Sem leitura",
-    text: "Estação sem cota no recorte operacional; o município permanece no monitoramento até nova medição.",
+    text: "Município sem cota no dia operacional (horário de Manaus); permanece no monitoramento até nova medição.",
   },
 ];
 
@@ -232,6 +233,8 @@ export function tendenciaTexto(tend: HydroTendencia) {
 export function situacaoLeitura(station: HydroStation) {
   const labels = station.dias;
   const serie = station.cotas;
+  const today = hydroTodayIso();
+  const ref = station.referencia && station.referencia.length >= 8 ? station.referencia : today;
   let idxValido = -1;
   for (let i = serie.length - 1; i >= 0; i--) {
     if (serie[i] != null && Number.isFinite(Number(serie[i]))) {
@@ -240,7 +243,11 @@ export function situacaoLeitura(station: HydroStation) {
     }
   }
   const temLeitura = idxValido >= 0;
-  const atual = temLeitura && idxValido === labels.length - 1;
+  const lastIso = labels.length ? hydroDayToIso(String(labels[labels.length - 1] ?? ""), ref) : null;
+  const atual =
+    temLeitura &&
+    idxValido === labels.length - 1 &&
+    (lastIso == null || lastIso === today);
   return {
     semEstacao: station.semEstacao,
     temLeitura,
@@ -283,9 +290,10 @@ export function projecaoLinear(station: HydroStation): HydroProjecao | null {
     if (v != null && Number.isFinite(v)) pontos.push({ x: i, y: v });
   }
   if (station.cota != null && Number.isFinite(station.cota)) {
-    const ultimo = pontos.at(-1)?.y ?? null;
-    if (ultimo == null || Math.abs(station.cota - ultimo) > 0.0001) {
-      pontos.push({ x: serie.length, y: station.cota });
+    const ultimo = pontos.at(-1);
+    const lastIdx = serie.length ? serie.length - 1 : 0;
+    if (!ultimo || Math.abs(station.cota - ultimo.y) > 0.0001) {
+      pontos.push({ x: Math.max(ultimo?.x ?? -1, lastIdx), y: station.cota });
     }
   }
   if (pontos.length < 3) return null;
@@ -403,7 +411,7 @@ export function catalogStations(): HydroStation[] {
   return FILE.stations.map((d) => {
     const ana = String(d.ana ?? "");
     const semEstacao = !ana || ana === "—" || ana === "-";
-    return {
+    return withSeriesThroughToday({
       id: d.id,
       municipio: d.nomeMalha,
       municipioBoletim: d.municipio,
@@ -418,6 +426,7 @@ export function catalogStations(): HydroStation[] {
       variacao: d.variacao,
       cotas: d.cotas,
       dias: FILE.dias,
+      referencia: FILE.referencia,
       tendencia: asTendencia(d.tendencia),
       // Grau oficial do boletim CEMOA (estiagem / inundação). Operador pode ajustar por cima.
       statusVazante: asStatus(d.status_vazante),
@@ -428,6 +437,6 @@ export function catalogStations(): HydroStation[] {
       semEstacao,
       maximaHistorica: d.maximaHistorica ?? null,
       minimaHistorica: d.minimaHistorica ?? null,
-    };
+    });
   });
 }

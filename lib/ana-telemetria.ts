@@ -1,4 +1,6 @@
 import https from "node:https";
+import { hydroTodayIso, isoFromTimestamp, upsertCotaOnDate } from "@/lib/hydro-series";
+import type { HydroStation } from "@/lib/types";
 
 export type AnaReading = {
   codigo: string;
@@ -148,42 +150,15 @@ export async function getAnaReadings(codes: string[]): Promise<{
   return { byCode: new Map(), pending: true, fetchedAt: null };
 }
 
-export function applyAnaReading<
-  T extends {
-    estacao: string;
-    cota: number | null;
-    cotas: Array<number | null>;
-    variacao: number | null;
-    tendencia: string;
-    semLeitura: boolean;
-    semEstacao?: boolean;
-    cotaFonte?: string;
-    cotaLidaEm?: number | null;
-  },
->(station: T, reading: AnaReading | undefined): T {
+export function applyAnaReading(station: HydroStation, reading: AnaReading | undefined): HydroStation {
   if (!reading || station.semEstacao) return station;
-  const prev = station.cota;
-  const cota = reading.cotaM;
-  const variacao =
-    prev != null && Number.isFinite(prev) ? Math.round((cota - prev) * 100) / 100 : station.variacao;
-  const cotas = station.cotas.slice();
-  if (cotas.length) cotas[cotas.length - 1] = cota;
-  const tendencia =
-    variacao == null
-      ? station.tendencia
-      : variacao > 0.03
-        ? "SUBINDO"
-        : variacao < -0.03
-          ? "BAIXANDO"
-          : "PARADO";
+  const iso = reading.lidaEm > 0 ? isoFromTimestamp(reading.lidaEm) : hydroTodayIso();
+  const next = upsertCotaOnDate(station, iso, reading.cotaM);
+  const today = hydroTodayIso();
+  const liveToday = iso === today;
   return {
-    ...station,
-    cota,
-    cotas,
-    variacao,
-    tendencia,
-    semLeitura: false,
-    cotaFonte: "ANA",
-    cotaLidaEm: reading.lidaEm,
+    ...next,
+    cotaFonte: liveToday ? "ANA" : next.cotaFonte,
+    cotaLidaEm: liveToday ? reading.lidaEm : next.cotaLidaEm,
   };
 }

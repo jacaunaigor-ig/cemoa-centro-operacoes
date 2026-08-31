@@ -20,11 +20,11 @@ export const CotaChart = memo(function CotaChart({
   compact?: boolean;
   limites?: Limite[];
 }) {
-  const width = 360;
-  const height = compact ? 108 : 118;
+  const width = 420;
+  const height = compact ? 148 : 176;
   const pad = compact
-    ? { l: 30, r: 8, t: 12, b: 20 }
-    : { l: 34, r: 8, t: 14, b: 22 };
+    ? { l: 34, r: 10, t: 16, b: 24 }
+    : { l: 38, r: 12, t: 18, b: 26 };
   const innerW = width - pad.l - pad.r;
   const innerH = height - pad.t - pad.b;
   const color = HYDRO_STATUS_COLORS[status];
@@ -93,10 +93,10 @@ export const CotaChart = memo(function CotaChart({
   const yTicks = [yMin + ySpan * 0.15, (yMin + yMax) / 2, yMax - ySpan * 0.15];
 
   return (
-    <div className={cn("mx-auto grid w-full max-w-[22rem] gap-1.5")}>
+    <div className={cn("mx-auto grid w-full max-w-[32rem] gap-2")}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className={cn("w-full", compact ? "h-[6.25rem]" : "h-[7rem]")}
+        className={cn("w-full", compact ? "h-36" : "h-44")}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`Cota observada e projeção linear de 3, 5 e 7 dias em ${station.municipio}`}
@@ -191,7 +191,7 @@ export const CotaChart = memo(function CotaChart({
         ))}
 
         {observed.map((p, i) =>
-          compact && i > 0 && i < observed.length - 1 && observed.length > 3 ? null : (
+          observed.length > 8 && i > 0 && i < observed.length - 1 && i % Math.ceil(observed.length / 6) !== 0 ? null : (
             <text
               key={`xl-${p.x}`}
               x={xOf(p.x)}
