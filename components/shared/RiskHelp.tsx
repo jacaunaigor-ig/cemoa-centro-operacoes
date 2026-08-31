@@ -1,19 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AIR_RANGES, RISK_LEGEND_COPY } from "@/lib/alert-types";
+import { AIR_COLORS, AIR_LABELS, AIR_RANGES, RISK_LEGEND_COPY } from "@/lib/alert-types";
 import { RISK_COLORS } from "@/lib/risk";
 import { HYDRO_STATUS_COLORS, PNG_HYDRO_ITEMS } from "@/lib/hydrology";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { cn } from "@/lib/utils";
 
-const AIR_CHIPS = [
-  ["BOA", "Boa", "#27ae52"],
-  ["MODERADO", "Moderada", "#f0b90b"],
-  ["RUIM", "Ruim", "#f2790f"],
-  ["MUITO_RUIM", "Muito Ruim", "#e21c2b"],
-  ["PESSIMA", "Péssimo", "#9026c9"],
-] as const;
+const AIR_CHIPS = (["BOA", "MODERADO", "RUIM", "MUITO_RUIM", "PESSIMA"] as const).map(
+  (key) => [key, AIR_LABELS[key], AIR_COLORS[key]] as const,
+);
 
 const RISK_SUMMARY = [
   ["MODERADO", "Moderado", "Atenção e prevenção"],
@@ -180,11 +176,13 @@ export function RiskHelpButton({
 
                 <div className="mx-4 mb-5 rounded-xl border border-border bg-hover p-3.5">
                   <p className="text-[11px] font-semibold tracking-[0.08em] text-text-mute uppercase">
-                    Qualidade do ar — classificação própria
+                    Qualidade do ar — mapa PurpleAir
                   </p>
                   <p className="mt-1 text-xs text-text-dim">
                     Não segue o art. 12 da Portaria MIDR nº 2.458/2026. No produto Incêndio
-                    florestal, o Raw MP2,5 média de 1 dia (PurpleAir) classifica o município nesta mesma escala.
+                    florestal vale a configuração do mapa PurpleAir: camada Raw PM2.5 (µg/m³),
+                    conversão = Não, média de 1 dia, sensores internos e externos. As cores
+                    seguem o AQI dos EUA aplicado ao µg/m³ bruto (sem conversão EPA).
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {AIR_CHIPS.map(([key, label, color]) => (
@@ -193,7 +191,7 @@ export function RiskHelpButton({
                         className="rounded-full px-2.5 py-1 text-[10px] font-bold"
                         style={{
                           background: color,
-                          color: key === "MODERADO" ? "#25323b" : "#fff",
+                          color: key === "BOA" || key === "MODERADO" ? "#1a1a1a" : "#fff",
                         }}
                       >
                         {label}

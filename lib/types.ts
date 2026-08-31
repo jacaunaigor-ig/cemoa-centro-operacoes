@@ -251,6 +251,7 @@ export type AirQualitySensor = {
   municipioNome: string | null;
   kmSede: number | null;
   anomalous: boolean;
+  indoor: boolean;
   network: AirNetwork;
 };
 

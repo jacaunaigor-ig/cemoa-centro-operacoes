@@ -1197,7 +1197,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Índice: Raw PM2.5 média de 1 dia (CF=1) da PurpleAir, sensores externos. A mediana municipal classifica o município na escala da legenda; o operador pode sobrepor.",
+              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Índice igual ao mapa PurpleAir: Raw PM2.5, conversão = Não, média de 1 dia (CF=1), sensores internos e externos. A mediana municipal classifica o município; o operador pode sobrepor.",
             }
           : undefined,
     });
@@ -1721,7 +1721,7 @@ export function AlertsWorkbench() {
                     }
                   >
                     <span className="size-2.5 rounded-full bg-risco-alto" />
-                    MP2,5 ≥ 50 µg/m³
+                    MP2,5 ≥ 35,5 µg/m³
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
                 ) : (
@@ -1764,7 +1764,7 @@ export function AlertsWorkbench() {
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
                   : tipo === "INCENDIO"
-                    ? "O Raw MP2,5 média de 1 dia classifica o município na legenda. Clique, lote ou polígono sobrepõe o grau."
+                    ? "O Raw MP2,5 média de 1 dia (sem conversão, internos e externos) classifica o município. Clique, lote ou polígono sobrepõe o grau."
                     : "Só o operador classifica o grau. Polígono aplica o grau na mancha; chuva e cota só sugerem."
               }
               onDraw={() => {

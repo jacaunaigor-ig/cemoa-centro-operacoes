@@ -21,13 +21,26 @@ export const AIR_LEVELS = [
 export type AirLevel = (typeof AIR_LEVELS)[number];
 export type AlertLevel = RiskLevel | AirLevel;
 
+/** Cores sólidas das faixas PurpleAir (US AQI) no µg/m³ bruto, sem conversão EPA. */
 export const AIR_COLORS: Record<AirLevel, string> = {
-  BOA: "#10b981",
-  MODERADO: "#f59e0b",
-  RUIM: "#f97316",
-  MUITO_RUIM: "#ef4444",
-  PESSIMA: "#7c3aed",
+  BOA: "#00e400",
+  MODERADO: "#ffff00",
+  RUIM: "#ff7e00",
+  MUITO_RUIM: "#ff0000",
+  PESSIMA: "#8f3f97",
 };
+
+/** Limiares US EPA PM2.5 (µg/m³) usados pelo mapa PurpleAir com conversão = Não. */
+export const AIR_PM25 = {
+  boaMax: 12,
+  moderadoMin: 12.1,
+  moderadoMax: 35.4,
+  ruimMin: 35.5,
+  ruimMax: 55.4,
+  muitoRuimMin: 55.5,
+  muitoRuimMax: 150.4,
+  pessimaMin: 150.5,
+} as const;
 
 export const AIR_LABELS: Record<AirLevel, string> = {
   BOA: "Boa",
@@ -38,11 +51,11 @@ export const AIR_LABELS: Record<AirLevel, string> = {
 };
 
 export const AIR_RANGES: Record<AirLevel, string> = {
-  BOA: "0–15 µg/m³",
-  MODERADO: "15–50 µg/m³",
-  RUIM: "50–75 µg/m³",
-  MUITO_RUIM: "75–125 µg/m³",
-  PESSIMA: ">125 µg/m³",
+  BOA: "0–12 µg/m³",
+  MODERADO: "12,1–35,4 µg/m³",
+  RUIM: "35,5–55,4 µg/m³",
+  MUITO_RUIM: "55,5–150,4 µg/m³",
+  PESSIMA: ">150,4 µg/m³",
 };
 
 export type AlertProduct = {
@@ -101,7 +114,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     scale: "ar",
     levels: AIR_LEVELS,
     low: "BOA",
-    sources: "CEMOA · PurpleAir Raw MP2,5 média de 1 dia",
+    sources: "CEMOA · PurpleAir Raw MP2,5 1 dia · sem conversão · interno e externo",
   },
 };
 
@@ -135,13 +148,29 @@ export function defaultPaintLevel(tipo: AlertType) {
   return productOf(tipo).scale === "ar" ? "RUIM" : "ALTO";
 }
 
-/** Faixas do produto INCÊNDIO (não são o art. 12 da Portaria MIDR). */
+/**
+ * Faixas do produto INCÊNDIO = mapa PurpleAir ( Raw PM2.5, conversão = Não ).
+ * Os cortes são os breakpoints US EPA de MP2,5 aplicados ao µg/m³ bruto.
+ * Péssima junta Very Unhealthy + Hazardous (>150,4).
+ */
 export function airLevelFromPm25(pm25: number): AirLevel {
-  if (!Number.isFinite(pm25) || pm25 < 15) return "BOA";
-  if (pm25 < 50) return "MODERADO";
-  if (pm25 < 75) return "RUIM";
-  if (pm25 < 125) return "MUITO_RUIM";
+  if (!Number.isFinite(pm25) || pm25 < AIR_PM25.moderadoMin) return "BOA";
+  if (pm25 < AIR_PM25.ruimMin) return "MODERADO";
+  if (pm25 < AIR_PM25.muitoRuimMin) return "RUIM";
+  if (pm25 < AIR_PM25.pessimaMin) return "MUITO_RUIM";
   return "PESSIMA";
+}
+
+/** Texto sobre o verde/amarelo PurpleAir precisa ser escuro. */
+export function contrastInk(level: string) {
+  return level === "BOA" || level === "MODERADO" ? "#1a1a1a" : "#ffffff";
+}
+
+/** Texto de MP2,5 sobre o fundo do painel (não é o preenchimento do mapa). */
+export function airUiInk(level: string) {
+  if (level === "BOA") return "#128a18";
+  if (level === "MODERADO") return "#b88600";
+  return AIR_COLORS[level as AirLevel] ?? "#7c8fab";
 }
 
 export function levelLabel(level: string) {
@@ -263,27 +292,27 @@ export const PNG_AIR_ITEMS: Array<{
 }> = [
   {
     key: "BOA",
-    title: "Boa · 0–15",
-    text: "Concentração de MP2,5 dentro da faixa indicada para a classificação Boa.",
+    title: "Boa · 0–12",
+    text: "Raw MP2,5 média de 1 dia na faixa Boa do mapa PurpleAir (sem conversão).",
   },
   {
     key: "MODERADO",
-    title: "Moderada · 15–50",
-    text: "Concentração de MP2,5 dentro da faixa indicada para a classificação Moderada.",
+    title: "Moderada · 12,1–35,4",
+    text: "Raw MP2,5 média de 1 dia na faixa Moderada do mapa PurpleAir (sem conversão).",
   },
   {
     key: "RUIM",
-    title: "Ruim · 50–75",
-    text: "Concentração de MP2,5 dentro da faixa indicada para a classificação Ruim.",
+    title: "Ruim · 35,5–55,4",
+    text: "Raw MP2,5 média de 1 dia na faixa Ruim do mapa PurpleAir (sem conversão).",
   },
   {
     key: "MUITO_RUIM",
-    title: "Muito Ruim · 75–125",
-    text: "Concentração de MP2,5 dentro da faixa indicada para a classificação Muito Ruim.",
+    title: "Muito Ruim · 55,5–150,4",
+    text: "Raw MP2,5 média de 1 dia na faixa Muito Ruim do mapa PurpleAir (sem conversão).",
   },
   {
     key: "PESSIMA",
-    title: "Péssimo · >125",
-    text: "Concentração de MP2,5 acima de 125 µg/m³.",
+    title: "Péssima · >150,4",
+    text: "Raw MP2,5 média de 1 dia acima de 150,4 µg/m³ (Very Unhealthy / Hazardous no PurpleAir).",
   },
 ];

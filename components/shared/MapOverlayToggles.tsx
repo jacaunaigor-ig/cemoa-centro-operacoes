@@ -39,7 +39,7 @@ export function MapOverlayToggles({
       ) : null}
       {air ? (
         <MapToolButton active={vis.pluvio} onClick={() => toggle("pluvio")}>
-          {vis.pluvio ? "Ocultar sensores PurpleAir" : "Sensores PurpleAir · SELVA"}
+          {vis.pluvio ? "Ocultar sensores PurpleAir" : "Sensores PurpleAir"}
         </MapToolButton>
       ) : null}
       <MapToolButton active={vis.rurais} onClick={() => toggle("rurais")}>

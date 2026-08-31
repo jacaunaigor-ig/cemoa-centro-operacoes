@@ -62,11 +62,11 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   }
   if (tipo === "INCENDIO") {
     const copy: Record<string, string> = {
-      BOA: `Qualidade do ar boa em ${nome} (MP2,5 0–15 µg/m³).`,
-      MODERADO: `Qualidade do ar moderada em ${nome} (MP2,5 15–50 µg/m³), com reflexo de queima em área não protegida.`,
-      RUIM: `Qualidade do ar ruim em ${nome} (MP2,5 50–75 µg/m³). Incêndio florestal com impacto na população.`,
-      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (MP2,5 75–125 µg/m³). Restringir exposição ao ar livre.`,
-      PESSIMA: `Qualidade do ar péssima em ${nome} (>125 µg/m³). Ação imediata de proteção da saúde.`,
+      BOA: `Qualidade do ar boa em ${nome} (Raw MP2,5 0–12 µg/m³, média de 1 dia).`,
+      MODERADO: `Qualidade do ar moderada em ${nome} (Raw MP2,5 12,1–35,4 µg/m³), com reflexo de queima em área não protegida.`,
+      RUIM: `Qualidade do ar ruim em ${nome} (Raw MP2,5 35,5–55,4 µg/m³). Incêndio florestal com impacto na população.`,
+      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (Raw MP2,5 55,5–150,4 µg/m³). Restringir exposição ao ar livre.`,
+      PESSIMA: `Qualidade do ar péssima em ${nome} (Raw MP2,5 >150,4 µg/m³). Ação imediata de proteção da saúde.`,
     };
     return copy[risco] ?? copy.BOA;
   }

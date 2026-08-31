@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { airLevelFromPm25 } from "@/lib/alert-types";
+import { AIR_PM25, airLevelFromPm25 } from "@/lib/alert-types";
 import { pointInRing } from "@/lib/geo";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import type {
@@ -15,16 +15,17 @@ const PURPLEAIR_API = "https://api.purpleair.com/v1/sensors";
 const UA = "CEMOA-CentroOperacoes/1.0 (Defesa Civil do Amazonas)";
 const TTL_MS = 90_000;
 const COOKIE_TTL_MS = 20 * 60_000;
-const FRESH_MS = 48 * 60 * 60 * 1000;
+const FRESH_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_AGE_SEC = 7 * 24 * 3600;
 const MAX_KM = 55;
 const ANOMALOUS_UG = 500;
 const AM_BBOX = { west: -73.9, south: -11.2, east: -56.0, north: 2.4 };
 const MESH_PATH = join(process.cwd(), "public/geo/amazonas-municipios.json");
 
 const SOURCE_PURPLEAIR =
-  "PurpleAir · Raw MP2,5 média de 1 dia (CF=1), sensores externos no recorte do Amazonas";
+  "PurpleAir · Raw MP2,5 média de 1 dia (CF=1), sem conversão, sensores internos e externos no recorte do Amazonas";
 const SOURCE_SELVA =
-  "App SELVA · MP2,5 leitura atual (fallback). O índice do incêndio é o Raw MP2,5 média de 1 dia da PurpleAir";
+  "App SELVA · MP2,5 leitura atual (fallback). O índice do incêndio é o Raw MP2,5 média de 1 dia da PurpleAir, sem conversão, internos e externos";
 
 type Memo = { at: number; data: AirQualityPayload };
 let memo: Memo | null = null;
@@ -133,14 +134,13 @@ function pm25FromRow(row: unknown[], fields: string[]): number | null {
 
 async function fetchPurpleAirPacket(key: string): Promise<SelvaPacket> {
   const params = new URLSearchParams({
-    fields: "sensor_index,last_seen,name,latitude,longitude,pm2.5_cf_1",
+    fields: "sensor_index,last_seen,name,latitude,longitude,pm2.5_cf_1,location_type",
     average: "1440",
-    max_age: String(48 * 3600),
+    max_age: String(MAX_AGE_SEC),
     nwlng: String(AM_BBOX.west),
     nwlat: String(AM_BBOX.north),
     selng: String(AM_BBOX.east),
     selat: String(AM_BBOX.south),
-    location_type: "0",
   });
   const res = await fetch(`${PURPLEAIR_API}?${params}`, {
     headers: {
@@ -291,6 +291,7 @@ function buildFromPacket(
   const iLat = fieldIndex(fields, ["latitude"]);
   const iLon = fieldIndex(fields, ["longitude"]);
   const iTemp = fieldIndex(fields, ["temperature"]);
+  const iLoc = fieldIndex(fields, ["location_type"]);
   const hasPm =
     fieldIndex(fields, [
       "pm2.5_cf_1",
@@ -324,6 +325,7 @@ function buildFromPacket(
     const hit = municipioOf(lat, lon);
     if (!hit) continue;
     const name = String(row[iName] ?? `sensor ${row[iIndex]}`);
+    const indoor = iLoc >= 0 && Number(row[iLoc]) === 1;
     sensors.push({
       sensorIndex: Number(row[iIndex]) || 0,
       name,
@@ -336,6 +338,7 @@ function buildFromPacket(
       municipioNome: hit.nome,
       kmSede: Math.round(hit.km * 10) / 10,
       anomalous: pm25 > ANOMALOUS_UG,
+      indoor,
       network: networkOf(name),
     });
   }
@@ -376,9 +379,9 @@ function buildFromPacket(
     byNome[m.nome] = rec;
     if (pm25 != null) {
       comLeitura += 1;
-      if (pm25 >= 15) atencao += 1;
-      if (pm25 >= 50) ruim += 1;
-      if (pm25 > 125) pessima += 1;
+      if (pm25 >= AIR_PM25.moderadoMin) atencao += 1;
+      if (pm25 >= AIR_PM25.ruimMin) ruim += 1;
+      if (pm25 >= AIR_PM25.pessimaMin) pessima += 1;
       if (!pico || pm25 > pico.pm25) pico = { nome: m.nome, pm25 };
     }
   }

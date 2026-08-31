@@ -1,4 +1,4 @@
-import { LEVEL_COLORS, levelLabel, riskActionFor } from "@/lib/alert-types";
+import { LEVEL_COLORS, contrastInk, levelLabel, riskActionFor } from "@/lib/alert-types";
 import type { AlertLevel } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -32,10 +32,10 @@ export function RiskBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black tracking-wide text-white uppercase shadow-sm",
+          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black tracking-wide uppercase shadow-sm",
           className,
         )}
-        style={{ background: color }}
+        style={{ background: color, color: contrastInk(level) }}
       >
         {label}
       </span>

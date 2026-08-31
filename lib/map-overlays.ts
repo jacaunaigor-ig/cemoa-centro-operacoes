@@ -13,8 +13,10 @@ import { AIR_LABELS, airLevelFromPm25, type AlertType } from "@/lib/alert-types"
 import type { AirQualitySensor, RainfallPayload } from "@/lib/types";
 import {
   AIR_NETWORK_LABELS,
+  airBadgeInteger,
+  airBadgeSize,
+  airBadgeTextColor,
   airDotColor,
-  airDotSize,
   formatUg,
 } from "@/lib/air-quality-display";
 import { formatRelative } from "@/lib/utils";
@@ -290,27 +292,32 @@ export function syncPluviometers(L: LeafletNS, layer: LayerGroup, stations: Pluv
 
 export function syncAirSensors(L: LeafletNS, layer: LayerGroup, sensors: AirQualitySensor[]) {
   layer.clearLayers();
-  for (const s of sensors) {
-    const size = airDotSize(s.pm25);
+  const ordered = [...sensors].sort((a, b) => a.pm25 - b.pm25);
+  for (const s of ordered) {
+    const n = airBadgeInteger(s.pm25);
+    const size = airBadgeSize(s.pm25);
     const color = airDotColor(s);
+    const ink = s.anomalous ? "#ffffff" : airBadgeTextColor(s.pm25);
     const level = s.anomalous ? "leitura anômala" : AIR_LABELS[airLevelFromPm25(s.pm25)];
+    const place = s.indoor ? "interno" : "externo";
     const where = s.municipioNome
       ? `${s.municipioNome}${s.kmSede != null ? ` · ${s.kmSede.toLocaleString("pt-BR")} km da sede` : ""}`
       : "fora da malha CEMOA";
+    const padTop = s.indoor ? 8 : 0;
     const icon = L.divIcon({
       className: "map-air-icon",
-      html: `<span class="map-air-dot${s.anomalous ? " is-anom" : ""}" style="background:${color};width:${size}px;height:${size}px"></span>`,
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
+      html: `<span class="map-air-badge${s.indoor ? " is-indoor" : ""}${s.anomalous ? " is-anom" : ""}" style="--air:${color};color:${ink};width:${size}px;height:${size}px;font-size:${size >= 38 ? 12 : 11}px">${s.indoor ? '<i class="map-air-house" aria-hidden="true"></i>' : ""}<b>${n}</b></span>`,
+      iconSize: [size, size + padTop],
+      iconAnchor: [size / 2, size / 2 + padTop],
     });
     L.marker([s.lat, s.lon], {
       icon,
       keyboard: false,
       pane: "pointsPane",
-      zIndexOffset: s.anomalous ? 55 : 45,
+      zIndexOffset: 40 + Math.min(90, n),
     })
       .bindTooltip(
-        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${where}<br/>Raw MP2,5 1 dia ${formatUg(s.pm25)} · ${level}${
+        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${place} · ${where}<br/>Raw MP2,5 1 dia ${formatUg(s.pm25)} · ${level}${
           s.temperatureC != null ? `<br/>${s.temperatureC.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} °C` : ""
         }<br/>${formatRelative(s.lastSeen)} · coordenada real PurpleAir${
           s.anomalous ? "<br/><em>Valor acima de 500 µg/m³ — fora da mediana municipal</em>" : ""

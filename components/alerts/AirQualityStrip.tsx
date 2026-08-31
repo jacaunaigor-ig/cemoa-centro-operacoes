@@ -2,7 +2,7 @@
 
 import { Wind } from "lucide-react";
 import { useOpsMode } from "@/components/shared/OpsMode";
-import { AIR_LABELS, airLevelFromPm25, LEVEL_COLORS } from "@/lib/alert-types";
+import { AIR_LABELS, airLevelFromPm25, airUiInk } from "@/lib/alert-types";
 import {
   formatUg,
   formatUgShort,
@@ -43,7 +43,7 @@ export function AirQualityStrip({
         </span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-            PurpleAir · Raw 1 dia
+            PurpleAir · Raw 1 dia · sem conversão
           </p>
           {loading && !air ? (
             <p className="text-xs text-text-mute">Consultando monitores…</p>
@@ -77,18 +77,18 @@ export function AirQualityStrip({
           Com sensor ({cov?.comSensor ?? 0})
         </AirChip>
         <AirChip active={filter === "ATENCAO"} onClick={() => onFilter("ATENCAO")}>
-          ≥15 ({cov?.atencao ?? 0})
+          ≥12,1 ({cov?.atencao ?? 0})
         </AirChip>
         <AirChip active={filter === "RUIM"} onClick={() => onFilter("RUIM")}>
-          ≥50 ({cov?.ruim ?? 0})
+          ≥35,5 ({cov?.ruim ?? 0})
         </AirChip>
       </div>
       {picoLevel && picoLevel !== "BOA" ? (
         <span
           className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold lg:inline"
           style={{
-            color: LEVEL_COLORS[picoLevel],
-            background: `${LEVEL_COLORS[picoLevel]}22`,
+            color: airUiInk(picoLevel),
+            background: `${airUiInk(picoLevel)}22`,
           }}
         >
           {AIR_LABELS[picoLevel]}
@@ -149,7 +149,7 @@ export function AirPmBadge({
   return (
     <span
       className="inline-flex items-center gap-1 font-mono text-[10px] font-bold tabular-nums"
-      style={{ color: LEVEL_COLORS[level] }}
+      style={{ color: airUiInk(level) }}
       title={`Raw MP2,5 média de 1 dia: ${formatUg(rec.pm25)}`}
     >
       <Wind className="size-3.5" />

@@ -572,7 +572,7 @@ export const AlertsMap = forwardRef<
         map,
         territory,
         stateRef.current.overlays,
-        stateRef.current.pointKind === "air" ? "PurpleAir" : "CEMADEN",
+        stateRef.current.pointKind === "air" ? "PurpleAir Raw 1 dia" : "CEMADEN",
       );
       if (stateRef.current.overlays.pluvio) {
         if (stateRef.current.pointKind === "air") {
@@ -719,7 +719,7 @@ export const AlertsMap = forwardRef<
       map,
       territoryRef.current,
       overlays,
-      pointKind === "air" ? "PurpleAir" : "CEMADEN",
+        pointKind === "air" ? "PurpleAir Raw 1 dia" : "CEMADEN",
     );
   }, [overlays, pointKind]);
 

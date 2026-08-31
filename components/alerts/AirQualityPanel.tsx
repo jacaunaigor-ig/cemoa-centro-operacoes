@@ -28,7 +28,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         </span>
         <div className="min-w-0">
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            PurpleAir · App SELVA
+            PurpleAir
           </small>
           <p className="text-xs text-text-mute">
             {sensors.length} {sensors.length === 1 ? "monitor" : "monitores"}
@@ -72,9 +72,9 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        A mediana municipal do Raw MP2,5 (média de 1 dia, CF=1) classifica o município na escala da legenda (Boa → Péssima).
-        Leitura de baixo custo, a mesma rede do App SELVA — não substitui estação
-        regulatória. O operador pode sobrepor o grau.
+        A mediana municipal do Raw MP2,5 (média de 1 dia, CF=1, sem conversão, internos e externos)
+        classifica o município na escala do mapa PurpleAir (Boa → Péssima).
+        Leitura de baixo custo — não substitui estação regulatória. O operador pode sobrepor o grau.
       </p>
 
       <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs">
@@ -110,6 +110,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
                   <span className="block truncate font-semibold text-text">{s.name}</span>
                   <span className="block truncate text-[10px] text-text-mute">
                     {AIR_NETWORK_LABELS[s.network]}
+                    {s.indoor ? " · interno" : " · externo"}
                     {s.kmSede != null ? ` · ${s.kmSede.toLocaleString("pt-BR")} km` : ""}
                     {s.anomalous ? " · anômalo" : ""}
                     {` · ${formatRelative(s.lastSeen)}`}

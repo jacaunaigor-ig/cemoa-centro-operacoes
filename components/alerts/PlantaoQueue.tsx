@@ -74,7 +74,7 @@ export function PlantaoQueue({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         tipo === "INCENDIO"
-          ? "O Raw MP2,5 média de 1 dia classifica o município na legenda. A fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer."
+          ? "O Raw MP2,5 média de 1 dia (sem conversão, internos e externos) classifica o município. A fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer."
           : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não alteram o grau."
       }
     >
