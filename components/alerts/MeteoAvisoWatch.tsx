@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/shared/Modal";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { fetchJson } from "@/lib/client";
-import { useNow } from "@/lib/client-hooks";
+import { startVisiblePoll, useNow } from "@/lib/client-hooks";
 import {
   AVISO_URGENT_MS,
   AVISO_WARN_MS,
@@ -47,7 +47,7 @@ function emitSuccessMessage(issuedAt: number) {
 
 const STORAGE_KEY = "cemoa_meteo_aviso_v1";
 const NOTIFY_KEY = "cemoa_meteo_notify_v1";
-const POLL_MS = 8000;
+const POLL_MS = 20_000;
 
 type Ctx = {
   aviso: MeteoAviso | null;
@@ -97,14 +97,8 @@ function notifyAvisoStage(aviso: MeteoAviso, stage: string, notified: { current:
     if (notified.current === key) return;
   }
   notified.current = key;
-  if (stage === "expired") {
-    playVencimentoChime();
-    toast.error("Aviso Meteorológico vencido. O plantão precisa emitir o próximo agora.");
-  } else if (stage === "urgent") {
-    toast.warning("Faltam menos de 15 min para o Aviso Meteorológico vencer.");
-  } else {
-    toast.warning("O Aviso Meteorológico vence em menos de 1 hora. Prepare o próximo boletim.");
-  }
+  // The banner already carries warn / urgent / expired. Only the chime fires here.
+  if (stage === "expired") playVencimentoChime();
 }
 
 export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) {
@@ -135,9 +129,7 @@ export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) 
     const local = readLocal();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hidrata o último aviso do plantão após o mount
     if (local) apply(local);
-    const id = window.setInterval(() => void loadRemote(), POLL_MS);
-    void loadRemote();
-    return () => window.clearInterval(id);
+    return startVisiblePoll(loadRemote, POLL_MS);
   }, [apply, loadRemote]);
 
   useEffect(() => {

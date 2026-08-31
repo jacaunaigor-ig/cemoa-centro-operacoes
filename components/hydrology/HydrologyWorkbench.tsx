@@ -73,13 +73,13 @@ import { MapChromeBar } from "@/components/shared/MapChromeBar";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
-import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { cn } from "@/lib/utils";
-import { useDebouncedValue } from "@/lib/client-hooks";
+import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
+import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
 
-const POLL_MS = 12_000;
+const POLL_MS = 25_000;
 const HYDRO_STORAGE = "cemoa_hydro_overrides_v1";
 
 function rememberHydroLocal(
@@ -150,12 +150,6 @@ export function HydrologyWorkbench() {
   const [legendHidden, setLegendHidden] = useState(false);
   const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
   const [editorOpen, setEditorOpen] = useState(false);
-  const [pendingClassify, setPendingClassify] = useState<{
-    updates: Record<string, HydroPatch>;
-    names: string[];
-    source: "clique" | "lote";
-    level: HydroStatus;
-  } | null>(null);
   const [undoStack, setUndoStack] = useState<
     Array<{ previous: Record<string, HydroPatch | null>; next: Record<string, HydroPatch> }>
   >([]);
@@ -175,10 +169,11 @@ export function HydrologyWorkbench() {
   }, [mapFocus]);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
     async function load() {
+      if (cancelled) return;
       try {
+        ensureOpsBoardReset();
         if (!hydrated.current) hydrated.current = true;
         if (STATIC_DEPLOY) {
           try {
@@ -192,6 +187,7 @@ export function HydrologyWorkbench() {
           setError(null);
           return;
         }
+        if (session) await maybeWipeRemoteOpsBoard();
         if (session && !localPushed.current) {
           localPushed.current = true;
           try {
@@ -199,17 +195,12 @@ export function HydrologyWorkbench() {
             if (raw) {
               const updates = JSON.parse(raw) as Record<string, HydroPatch>;
               if (Object.keys(updates).length) {
-                const res = await fetch("/api/hydrology/overrides", {
+                await fetch("/api/hydrology/overrides", {
                   method: "POST",
                   credentials: "same-origin",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ updates, replace: true }),
                 });
-                if (res.status === 401) {
-                  toast.error("Entre como operador para sincronizar as cotas locais.");
-                } else if (!res.ok) {
-                  toast.error("Não foi possível sincronizar as cotas gravadas neste computador.");
-                }
               }
             }
           } catch {
@@ -225,14 +216,12 @@ export function HydrologyWorkbench() {
         const message = err instanceof Error ? err.message : "Falha no boletim";
         setError(message);
         reportClientError(message, "Boletim Hidrológico");
-      } finally {
-        if (!cancelled) timer = setTimeout(load, POLL_MS);
       }
     }
-    void load();
+    const stop = startVisiblePoll(load, POLL_MS);
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      stop();
     };
   }, [session]);
 
@@ -249,10 +238,6 @@ export function HydrologyWorkbench() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (pendingClassify) {
-          setPendingClassify(null);
-          return;
-        }
         if (selected && !editorOpen) setQuery({ municipio: null });
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
@@ -263,7 +248,7 @@ export function HydrologyWorkbench() {
             target.tagName === "TEXTAREA" ||
             target.tagName === "SELECT" ||
             target.isContentEditable);
-        if (typing || !admin || classifying || pendingClassify) return;
+        if (typing || !admin || classifying) return;
         if (!undoStack.length) return;
         event.preventDefault();
         void undoLast();
@@ -272,7 +257,7 @@ export function HydrologyWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, pendingClassify, admin, classifying, undoStack.length]);
+  }, [selected, editorOpen, admin, classifying, undoStack.length]);
 
   const catalog = useMemo(() => data?.stations ?? [], [data]);
   const geoStations = useMemo(
@@ -313,7 +298,7 @@ export function HydrologyWorkbench() {
   const persistHydro = useCallback(
     async (
       updates: Record<string, HydroPatch>,
-      opts?: { replace?: boolean; remove?: string[]; skipHistory?: boolean },
+      opts?: { replace?: boolean; remove?: string[]; skipHistory?: boolean; skipRefresh?: boolean },
     ) => {
       const replace = Boolean(opts?.replace);
       const remove = opts?.remove ?? [];
@@ -366,8 +351,10 @@ export function HydrologyWorkbench() {
       } catch {
         /* ignore */
       }
-      const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
-      setData(payload);
+      if (!opts?.skipRefresh) {
+        const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
+        setData(payload);
+      }
       if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
         setUndoStack((stack) => [{ previous, next: updates }, ...stack].slice(0, 20));
       }
@@ -397,35 +384,25 @@ export function HydrologyWorkbench() {
   }, [undoStack, classifying, persistHydro]);
 
   function paintStation(station: HydroStation) {
-    setQuery({
-      municipio: station.municipio,
-      bacia: station.bacia,
-      calha: station.calha,
+    const patch: HydroPatch = { [statusKey]: paintLevel };
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        stations: prev.stations.map((row) =>
+          row.id === station.id
+            ? {
+                ...row,
+                [statusKey]: paintLevel,
+                editadoPorOperador: true,
+              }
+            : row,
+        ),
+      };
     });
-    setPendingClassify({
-      updates: { [station.id]: { [statusKey]: paintLevel } },
-      names: [station.municipio],
-      source: "clique",
-      level: paintLevel,
+    void persistHydro({ [station.id]: patch }, { skipRefresh: true }).then((ok) => {
+      if (!ok) toast.error(`Não gravou ${station.municipio}.`);
     });
-  }
-
-  async function confirmClassify() {
-    if (!pendingClassify) return;
-    setClassifying(true);
-    try {
-      const ok = await persistHydro(pendingClassify.updates);
-      if (!ok) return;
-      const n = pendingClassify.names.length;
-      toast.success(
-        n === 1
-          ? `${pendingClassify.names[0]}: ${HYDRO_STATUS_LABELS[pendingClassify.level]}`
-          : `${n} municípios com status ${HYDRO_STATUS_LABELS[pendingClassify.level]}.`,
-      );
-      setPendingClassify(null);
-    } finally {
-      setClassifying(false);
-    }
   }
 
   async function restoreHydro() {
@@ -1094,17 +1071,6 @@ export function HydrologyWorkbench() {
           const ok = await persistHydro(updates);
           if (ok) toast.success("Classificação em lote aplicada.");
         }}
-      />
-      <ClassifyConfirm
-        open={Boolean(pendingClassify)}
-        title="Confirmar classificação hidrológica"
-        description="O status entra no mapa deste modo. Use Desfazer se precisar voltar."
-        level={pendingClassify ? HYDRO_STATUS_LABELS[pendingClassify.level] : ""}
-        names={pendingClassify?.names ?? []}
-        by={session?.name}
-        busy={classifying}
-        onCancel={() => !classifying && setPendingClassify(null)}
-        onConfirm={() => void confirmClassify()}
       />
     </AppShell>
   );

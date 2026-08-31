@@ -5,7 +5,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). **Só o operador classifica o grau no mapa.** Chuva CEMADEN, cota e a fila do plantão sugerem emitir, elevar ou renovar — não pintam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). **Só o operador classifica o grau no mapa** — Painel de Alertas e Boletim Hidrológico abrem em **baixo** até o plantão pintar. Chuva CEMADEN, cota e a fila do plantão sugerem emitir, elevar ou renovar — não pintam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -19,6 +19,14 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 A classificação de qualidade do ar não segue o art. 12 da Portaria MIDR nº 2.458/2026. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³.
 
 O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa ocupa a tela com os totais (grau + ação da Portaria) e a faixa de alertas. **Operação** ou **Esc** restaura o posto de trabalho. A escolha fica em `localStorage` (`cemoa_map_focus`).
+
+## Abertura do plantão
+
+O quadro operacional nasce limpo: as quatro abas de alerta e os dois modos do boletim ficam em **baixo**, sem mancha de polígono. A primeira abertura deste recorte apaga classificações e manchas gravadas neste computador; com operador autenticado, apaga também no servidor (uma vez). A cota hidrológica continua no gráfico — só o grau do mapa zera.
+
+Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. A fila, o banner do aviso e o sino cobrem o que antes subia em pop.
+
+O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
 
 ## Exportar PNG
 
@@ -169,7 +177,7 @@ Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acr
 
 Sem as chaves do Google, o botão aparece desativado e o login por senha continua valendo.
 
-No boletim, Moderado e Alto continuam pintados mesmo sem cota do dia. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
+No boletim, a cota do dia permanece no gráfico e na ficha. O mapa só sobe de Baixo quando o operador classifica. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
 
 ## Chuva 1 h / 6 h / 24 h (CEMADEN)
 
@@ -214,3 +222,10 @@ A API horária do INMET (estações automáticas A101 Manaus, A128 Barcelos etc.
 ## Empilhar
 
 Next.js (App Router), TypeScript, Tailwind CSS, componentes no padrão shadcn/ui, Leaflet. Mapa-base via proxy local de tiles OpenStreetMap (`/tiles/osm/...`) — sem Carto.
+
+## Próximas melhorias (não neste recorte)
+
+- Botão **Abrir plantão** no posto do operador, em vez de epoch no código, para zerar o quadro no início de cada dia.
+- Lista virtualizada se a fila e os 62 municípios pesarem em hardware fraco da sala.
+- Prefetch do GeoJSON da malha no idle, para o primeiro polígono não esperar o recorte.
+- Um único poll compartilhado entre painel e boletim quando as duas abas existirem na mesma sessão.

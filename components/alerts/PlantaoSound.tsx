@@ -117,12 +117,7 @@ export function PlantaoSoundButton({
         const next = !on;
         setPlantaoSoundEnabled(next);
         unlockPlantaoAudio();
-        if (next) {
-          playVencimentoChime();
-          toast.success("Som de vencimento ligado. O mapa não pinta sozinho.");
-        } else {
-          toast.message("Som de vencimento mudo.");
-        }
+        if (next) playVencimentoChime();
       }}
     >
       {on ? <Bell className="size-3.5" /> : <BellOff className="size-3.5" />}

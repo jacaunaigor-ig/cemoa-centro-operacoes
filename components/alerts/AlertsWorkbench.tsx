@@ -79,7 +79,7 @@ import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, 
 import { cn } from "@/lib/utils";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
-import { useDebouncedValue } from "@/lib/client-hooks";
+import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
 import type { AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
 import {
   hasRain,
@@ -100,7 +100,8 @@ import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
-const POLL_MS = 8000;
+import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
+const POLL_MS = 20_000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
 const STORAGE_STAINS = "cemoa_alert_stains_v1";
@@ -257,8 +258,6 @@ export function AlertsWorkbench() {
   const mapApi = useRef<AlertsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
-  const prevRef = useRef<AlertsPayload | null>(null);
-  const firstRef = useRef(true);
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
   const wasAdmin = useRef(false);
 
@@ -439,7 +438,6 @@ export function AlertsWorkbench() {
   }, [undoStack, classifying, persistOverrides]);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
 
     async function hydrateLocal() {
@@ -470,11 +468,9 @@ export function AlertsWorkbench() {
             body: JSON.stringify({ tipo: t, updates, replace: true }),
           });
           if (res.status === 401) {
-            toast.error("Entre como operador para sincronizar as classificações locais.");
             return;
           }
           if (!res.ok) {
-            toast.error("Não foi possível sincronizar as classificações gravadas neste computador.");
             return;
           }
         }
@@ -493,7 +489,9 @@ export function AlertsWorkbench() {
     }
 
     async function load() {
+      if (cancelled) return;
       try {
+        ensureOpsBoardReset();
         if (!hydrated.current) hydrated.current = true;
         if (STATIC_DEPLOY) {
           hydrateClientOverrides();
@@ -503,6 +501,7 @@ export function AlertsWorkbench() {
           setError(null);
           return;
         }
+        if (session) await maybeWipeRemoteOpsBoard();
         if (session && !localPushed.current) {
           localPushed.current = true;
           await hydrateLocal();
@@ -522,15 +521,13 @@ export function AlertsWorkbench() {
         const message = err instanceof Error ? err.message : "Falha ao carregar alertas";
         setError(message);
         reportClientError(message, "Painel de Alertas");
-      } finally {
-        if (!cancelled) timer = setTimeout(load, POLL_MS);
       }
     }
 
-    void load();
+    const stop = startVisiblePoll(load, POLL_MS);
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      stop();
     };
   }, [tipo, session]);
 
@@ -561,50 +558,6 @@ export function AlertsWorkbench() {
       setRefreshing(false);
     }
   }
-
-  useEffect(() => {
-    if (!data || data.tipo !== tipo) return;
-    if (firstRef.current) {
-      firstRef.current = false;
-      prevRef.current = data;
-      return;
-    }
-    const prev = prevRef.current;
-    prevRef.current = data;
-    if (!prev || prev.tipo !== data.tipo) return;
-
-    const novos: string[] = [];
-    const agravos: string[] = [];
-    for (const alert of data.alerts) {
-      const old = prev.alerts.find((item) => item.id === alert.id);
-      const row = data.municipios.find((m) => m.id === alert.municipioId);
-      if (row?.fonte === "admin") continue;
-      if (!old) novos.push(`${alert.municipio} (${levelLabel(alert.risco)})`);
-      else if (levelRank(tipo, alert.risco) > levelRank(tipo, old.risco)) {
-        agravos.push(`${alert.municipio}: ${levelLabel(old.risco)} → ${levelLabel(alert.risco)}`);
-      }
-    }
-    if (novos.length + agravos.length > 3) {
-      toast.custom(() => (
-        <ToastCard
-          tone={agravos.length ? "agravo" : "novo"}
-          title={`${novos.length} novo(s) e ${agravos.length} agravamento(s)`}
-          body="Veja a lista e o mapa do recorte atual."
-        />
-      ));
-      return;
-    }
-    for (const title of novos) {
-      toast.custom(() => (
-        <ToastCard tone="novo" title={`Novo alerta em ${title.split(" (")[0]}`} body={title} />
-      ));
-    }
-    for (const body of agravos) {
-      toast.custom(() => (
-        <ToastCard tone="agravo" title="Agravamento" body={body} />
-      ));
-    }
-  }, [data, tipo]);
 
   function setQuery(next: Record<string, string | null>) {
     const usp = new URLSearchParams(params.toString());
@@ -1574,28 +1527,5 @@ export function AlertsWorkbench() {
         }}
       />
     </AppShell>
-  );
-}
-
-function ToastCard({
-  tone,
-  title,
-  body,
-}: {
-  tone: "novo" | "agravo";
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="flex min-w-[280px] items-start gap-3 rounded-xl border border-border bg-panel-2 p-3 shadow-2xl">
-      <span
-        className="mt-0.5 size-2.5 rounded-full"
-        style={{ background: tone === "agravo" ? LEVEL_COLORS.SEVERO : LEVEL_COLORS.ALTO }}
-      />
-      <div>
-        <p className="text-sm font-bold text-text">{title}</p>
-        <p className="text-xs text-text-dim">{body}</p>
-      </div>
-    </div>
   );
 }

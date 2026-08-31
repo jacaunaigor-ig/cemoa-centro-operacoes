@@ -545,11 +545,19 @@ export const AlertsMap = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const riscoSig = municipios.map((m) => `${m.id}:${m.risco}`).join("|");
+  const rainBurstSig = municipios
+    .filter((m) => (m.mm1h ?? 0) >= INTENSE_MM_PER_H)
+    .map((m) => `${m.id}:${m.mm1h}`)
+    .join("|");
+  const stainSig = stains.map((s) => `${s.id}:${s.level}`).join("|");
+  const calhaSig = (calhaNomes ?? []).join("|");
+
   useEffect(() => {
     const layer = layerRef.current;
     layer?.setStyle((feature) => styleFor(feature));
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
-  }, [municipios, selected, filter, basin, calhaNomes, adminMode, opacity, theme]);
+  }, [riscoSig, selected, filter, basin, calhaSig, adminMode, opacity, theme]);
 
   useEffect(() => {
     const L = leafletRef.current;
@@ -560,7 +568,9 @@ export const AlertsMap = forwardRef<
       if (stateRef.current.adminMode) paintFeature(nome);
       else onSelectRef.current(nome, bacia);
     });
-  }, [municipios]);
+    // municipios is read when the rain signature changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rainBurstSig]);
 
   const prevSelectedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -584,7 +594,7 @@ export const AlertsMap = forwardRef<
 
   useEffect(() => {
     syncStains();
-  }, [stains, drawMode]);
+  }, [stainSig, drawMode]);
 
   // Hover restyles only the two affected polygons directly — avoids re-styling
   // all ~62 features on every mouseover/mouseout (see full setStyle effect above).

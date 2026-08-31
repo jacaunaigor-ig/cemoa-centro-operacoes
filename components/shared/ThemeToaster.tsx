@@ -9,10 +9,11 @@ export function ThemeToaster() {
     <Toaster
       theme={theme}
       position="top-right"
-      duration={4000}
-      visibleToasts={4}
+      duration={2200}
+      visibleToasts={1}
       gap={8}
       toastOptions={{
+        duration: 2200,
         className: "!bg-panel !border-border !text-text !shadow-[var(--shadow-card)]",
       }}
     />

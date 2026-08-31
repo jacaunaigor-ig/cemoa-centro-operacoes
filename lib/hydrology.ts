@@ -176,10 +176,6 @@ export function asHydroStatus(value: string | undefined): HydroStatus | null {
   return null;
 }
 
-function asStatus(value: string | undefined): HydroStatus {
-  return asHydroStatus(value) ?? "NORMAL";
-}
-
 function asTendencia(value: string | undefined): HydroTendencia {
   if (
     value === "SUBINDO" ||
@@ -408,8 +404,9 @@ export function catalogStations(): HydroStation[] {
       cotas: d.cotas,
       dias: FILE.dias,
       tendencia: asTendencia(d.tendencia),
-      statusVazante: asStatus(d.status_vazante),
-      statusEnchente: asStatus(d.status_enchente),
+      // Cotas vêm do boletim. O grau no mapa só entra com classificação do operador.
+      statusVazante: "NORMAL",
+      statusEnchente: "NORMAL",
       limitesVazante: d.limitesVazante,
       limitesEnchente: d.limitesEnchente,
       semLeitura: d.cota == null,

@@ -92,3 +92,51 @@ export function usePauseMotionWhenHidden() {
     };
   }, []);
 }
+
+/**
+ * Polls while the tab is visible. Hidden tabs skip the network round-trip
+ * and resume as soon as the operator comes back.
+ */
+export function startVisiblePoll(load: () => Promise<void> | void, intervalMs: number) {
+  let cancelled = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const arm = () => {
+    if (cancelled) return;
+    timer = setTimeout(() => {
+      void run();
+    }, intervalMs);
+  };
+
+  const run = async () => {
+    if (cancelled) return;
+    if (typeof document !== "undefined" && document.hidden) {
+      arm();
+      return;
+    }
+    try {
+      await load();
+    } finally {
+      if (!cancelled) arm();
+    }
+  };
+
+  const onVis = () => {
+    if (cancelled || document.hidden) return;
+    if (timer) clearTimeout(timer);
+    void run();
+  };
+
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", onVis);
+  }
+  void run();
+
+  return () => {
+    cancelled = true;
+    if (timer) clearTimeout(timer);
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", onVis);
+    }
+  };
+}

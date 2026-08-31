@@ -346,11 +346,14 @@ export const StationsMap = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const statusSig = stations
+    .map((s) => `${s.id}:${s.statusVazante}:${s.statusEnchente}`)
+    .join("|");
+
   useEffect(() => {
     layerRef.current?.setStyle((feature) => styleFor(feature));
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stations, selected, calha, bacia, status, modo, opacity, adminMode, theme]);
+  }, [statusSig, selected, calha, bacia, status, modo, opacity, adminMode, theme]);
 
   const prevSelectedRef = useRef<string | null>(null);
   useEffect(() => {
