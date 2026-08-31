@@ -79,11 +79,13 @@ export const AlertsMap = forwardRef<
     onlyRisk: boolean;
     hovered?: string | null;
     drawMode?: boolean;
+    eraseMode?: boolean;
     stains?: AlertStain[];
     onSelect: (nome: string, bacia: string) => void;
     onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
     onPolygonComplete?: (points: Array<{ lat: number; lng: number }>) => void;
+    onStainClick?: (stain: AlertStain) => void;
     onGeoError?: (message: string | null) => void;
   }
 >(function AlertsMap(
@@ -103,11 +105,13 @@ export const AlertsMap = forwardRef<
     onlyRisk,
     hovered,
     drawMode = false,
+    eraseMode = false,
     stains = [],
     onSelect,
     onHover,
     onPaint,
     onPolygonComplete,
+    onStainClick,
     onGeoError,
   },
   ref,
@@ -132,6 +136,7 @@ export const AlertsMap = forwardRef<
   const onHoverRef = useRef(onHover);
   const onPaintRef = useRef(onPaint);
   const onPolygonRef = useRef(onPolygonComplete);
+  const onStainClickRef = useRef(onStainClick);
   const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     municipios,
@@ -146,6 +151,7 @@ export const AlertsMap = forwardRef<
     overlays,
     pluvio,
     drawMode,
+    eraseMode,
     stains,
   });
 
@@ -154,6 +160,7 @@ export const AlertsMap = forwardRef<
     onHoverRef.current = onHover;
     onPaintRef.current = onPaint;
     onPolygonRef.current = onPolygonComplete;
+    onStainClickRef.current = onStainClick;
     onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       municipios,
@@ -168,6 +175,7 @@ export const AlertsMap = forwardRef<
       overlays,
       pluvio,
       drawMode,
+      eraseMode,
       stains,
     };
   }, [
@@ -175,6 +183,7 @@ export const AlertsMap = forwardRef<
     onHover,
     onPaint,
     onPolygonComplete,
+    onStainClick,
     onGeoError,
     municipios,
     selected,
@@ -188,6 +197,7 @@ export const AlertsMap = forwardRef<
     overlays,
     pluvio,
     drawMode,
+    eraseMode,
     stains,
   ]);
 
@@ -269,6 +279,7 @@ export const AlertsMap = forwardRef<
       if (pane) pane.style.pointerEvents = stateRef.current.drawMode ? "none" : "auto";
     }
     const drawing = stateRef.current.drawMode;
+    const erasing = stateRef.current.eraseMode;
     const layer = L.geoJSON(
       {
         type: "FeatureCollection",
@@ -293,10 +304,11 @@ export const AlertsMap = forwardRef<
           return {
             color,
             fillColor: color,
-            fillOpacity: 0.72,
-            weight: 2.2,
+            fillOpacity: erasing ? 0.55 : 0.72,
+            weight: erasing ? 3 : 2.2,
             opacity: 0.95,
-            className: "alert-stain",
+            dashArray: erasing ? "5 3" : undefined,
+            className: erasing ? "alert-stain alert-stain-erase" : "alert-stain",
           };
         },
         onEachFeature: (feature, lyr) => {
@@ -311,11 +323,21 @@ export const AlertsMap = forwardRef<
           const ttl = Number(feature.properties?.ttlMs ?? 0);
           const by = String(feature.properties?.issuedBy ?? "");
           lyr.bindTooltip(
-            `<strong>Mancha ${LEVEL_LABELS[level] ?? level}</strong><br/>${where}${
-              ttl ? ` · ${durationLabel(ttl)}` : ""
-            }${by ? ` · ${by}` : ""}<br/><span>Não classifica o município inteiro</span>`,
+            erasing
+              ? `<strong>Clique para apagar esta mancha</strong><br/>Mancha ${LEVEL_LABELS[level] ?? level}<br/>${where}`
+              : `<strong>Mancha ${LEVEL_LABELS[level] ?? level}</strong><br/>${where}${
+                  ttl ? ` · ${durationLabel(ttl)}` : ""
+                }${by ? ` · ${by}` : ""}<br/><span>Não classifica o município inteiro</span>`,
             { sticky: true },
           );
+          if (!erasing) return;
+          lyr.on("click", (ev) => {
+            L.DomEvent.stopPropagation(ev);
+            ev.originalEvent?.preventDefault?.();
+            const id = String(feature.properties?.id ?? "");
+            const stain = stateRef.current.stains.find((row) => row.id === id);
+            if (stain) onStainClickRef.current?.(stain);
+          });
         },
       },
     ).addTo(map);
@@ -426,6 +448,7 @@ export const AlertsMap = forwardRef<
                 addVertex(ev.latlng.lat, ev.latlng.lng);
                 return;
               }
+              if (stateRef.current.eraseMode) return;
               if (stateRef.current.adminMode) {
                 paintFeature(nome);
                 return;
@@ -437,9 +460,11 @@ export const AlertsMap = forwardRef<
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
               const prefix = stateRef.current.drawMode
                 ? "Vértice · "
-                : stateRef.current.adminMode
-                  ? "Classificar · "
-                  : "";
+                : stateRef.current.eraseMode
+                  ? "Apagar mancha · "
+                  : stateRef.current.adminMode
+                    ? "Classificar · "
+                    : "";
               lyr.setTooltipContent(
                 `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${
                   m?.hasRainStation
@@ -503,7 +528,7 @@ export const AlertsMap = forwardRef<
       rainLayer.addTo(map);
       rainLayerRef.current = rainLayer;
       syncRainBursts(L, rainLayer, stateRef.current.municipios, (nome, bacia) => {
-        if (stateRef.current.drawMode) return;
+        if (stateRef.current.drawMode || stateRef.current.eraseMode) return;
         if (stateRef.current.adminMode) paintFeature(nome);
         else onSelectRef.current(nome, bacia);
       });
@@ -564,7 +589,7 @@ export const AlertsMap = forwardRef<
     const layer = rainLayerRef.current;
     if (!L || !layer) return;
     syncRainBursts(L, layer, municipios, (nome, bacia) => {
-      if (stateRef.current.drawMode) return;
+      if (stateRef.current.drawMode || stateRef.current.eraseMode) return;
       if (stateRef.current.adminMode) paintFeature(nome);
       else onSelectRef.current(nome, bacia);
     });
@@ -594,7 +619,7 @@ export const AlertsMap = forwardRef<
 
   useEffect(() => {
     syncStains();
-  }, [stainSig, drawMode]);
+  }, [stainSig, drawMode, eraseMode]);
 
   // Hover restyles only the two affected polygons directly — avoids re-styling
   // all ~62 features on every mouseover/mouseout (see full setStyle effect above).
@@ -660,7 +685,7 @@ export const AlertsMap = forwardRef<
     <div
       ref={hostRef}
       className={
-        adminMode || drawMode
+        adminMode || drawMode || eraseMode
           ? "hydro-map absolute inset-0 cursor-crosshair"
           : "hydro-map absolute inset-0"
       }

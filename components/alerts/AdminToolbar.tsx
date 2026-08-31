@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MousePointerClick, Pentagon, RotateCcw, Undo2 } from "lucide-react";
+import { Check, MousePointerClick, Pentagon, RotateCcw, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ALERT_DURATION_PRESETS, durationLabel } from "@/lib/alert-duration";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
@@ -18,8 +18,12 @@ export function AdminToolbar({
   overrideCount,
   sessionCount = 0,
   stainCount = 0,
+  eraseMode = false,
   paintHint,
   onDraw,
+  onErase,
+  onEraseAll,
+  onCancelErase,
   onPaintArmed,
   onPaintLevel,
   onPaintTtl,
@@ -42,8 +46,12 @@ export function AdminToolbar({
   overrideCount: number;
   sessionCount?: number;
   stainCount?: number;
+  eraseMode?: boolean;
   paintHint?: string;
   onDraw?: () => void;
+  onErase?: () => void;
+  onEraseAll?: () => void;
+  onCancelErase?: () => void;
   onPaintArmed?: (on: boolean) => void;
   onPaintLevel: (level: string) => void;
   onPaintTtl?: (ms: number) => void;
@@ -93,6 +101,31 @@ export function AdminToolbar({
             Fechar mancha
           </Button>
         ) : null}
+        {onErase ? (
+          <Button
+            type="button"
+            size="sm"
+            variant={eraseMode ? "default" : "outline"}
+            onClick={onErase}
+            disabled={stainCount === 0 && !eraseMode}
+            aria-pressed={eraseMode}
+          >
+            <Trash2 />
+            Apagar polígono
+          </Button>
+        ) : null}
+        {eraseMode && stainCount > 1 && onEraseAll ? (
+          <Button type="button" size="sm" variant="outline" onClick={onEraseAll}>
+            <Trash2 />
+            Apagar todas
+          </Button>
+        ) : null}
+        {eraseMode && onCancelErase ? (
+          <Button type="button" size="sm" variant="ghost" onClick={onCancelErase}>
+            <X />
+            Cancelar
+          </Button>
+        ) : null}
         {paintArmed && onFinishClick ? (
           <Button type="button" size="sm" onClick={onFinishClick}>
             <Check />
@@ -108,7 +141,9 @@ export function AdminToolbar({
           </Button>
         ) : null}
         <span className="ml-auto text-[11px] text-text-mute">
-          {drawMode
+          {eraseMode
+            ? "Clique na mancha para apagar · Esc cancela"
+            : drawMode
             ? `Clique os vértices · Fechar pinta só a mancha (${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}) — o município não muda por inteiro`
             : paintHint ??
               (paintArmed
@@ -117,7 +152,7 @@ export function AdminToolbar({
           {overrideCount ? ` · ${overrideCount} município(s)` : ""}
           {stainCount ? ` · ${stainCount} mancha(s)` : ""}
         </span>
-        <Button type="button" size="sm" variant="ghost" onClick={onRestore} disabled={overrideCount === 0}>
+        <Button type="button" size="sm" variant="ghost" onClick={onRestore} disabled={overrideCount === 0 && stainCount === 0}>
           <RotateCcw />
           Restaurar monitoramento
         </Button>

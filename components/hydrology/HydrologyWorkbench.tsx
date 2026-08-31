@@ -406,7 +406,7 @@ export function HydrologyWorkbench() {
       localStorage.removeItem(HYDRO_STORAGE);
       setData({ ...buildHydrologyPayload(), cache: "MISS" });
       setUndoStack([]);
-      toast.success("Cotas e status do operador removidos.");
+      toast.success("Volta ao cenário do boletim CEMOA.");
       return;
     }
     const res = await fetch("/api/hydrology/overrides", {
@@ -421,7 +421,7 @@ export function HydrologyWorkbench() {
     const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
     setData(payload);
     setUndoStack([]);
-    toast.success("Cotas e status do operador removidos.");
+    toast.success("Volta ao cenário do boletim CEMOA.");
   }
 
   async function exportMapPng() {
@@ -1024,7 +1024,7 @@ export function HydrologyWorkbench() {
               labels={HYDRO_STATUS_LABELS}
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}
-              paintHint="A cota é leitura. Só o operador substitui o status no mapa."
+              paintHint="O mapa segue o boletim CEMOA. Clique ou lote ajusta o grau; a cota ANA não pinta."
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}
               onOpenBatch={() => setEditorOpen(true)}

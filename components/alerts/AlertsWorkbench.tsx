@@ -108,7 +108,9 @@ const STORAGE_STAINS = "cemoa_alert_stains_v1";
 
 type UndoItem =
   | { kind: "override"; tipo: AlertType; previous: Record<string, string | null>; next: Record<string, string> }
-  | { kind: "stain"; tipo: AlertType; stainId: string };
+  | { kind: "stain"; tipo: AlertType; stainId: string }
+  | { kind: "stain-restore"; stain: AlertStain }
+  | { kind: "stain-restore-all"; stains: AlertStain[] };
 
 const PRODUCT_ICONS = {
   CHUVA: CloudRain,
@@ -237,6 +239,7 @@ export function AlertsWorkbench() {
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
+  const [eraseMode, setEraseMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [clickSessionCount, setClickSessionCount] = useState(0);
@@ -269,11 +272,16 @@ export function AlertsWorkbench() {
     if (!admin) {
       setPaintArmed(false);
       setDrawMode(false);
+      setEraseMode(false);
     }
     wasAdmin.current = admin;
     // setQuery is stable enough for arming edição
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [admin]);
+
+  useEffect(() => {
+    setEraseMode(false);
+  }, [tipo]);
 
   useEffect(() => {
     if (mapFocus) setMobileListOpen(false);
@@ -383,36 +391,114 @@ export function AlertsWorkbench() {
     [tipo, data, session],
   );
 
+  const persistStain = useCallback(async (stain: AlertStain): Promise<boolean> => {
+    if (STATIC_DEPLOY) {
+      addStain(stain);
+      rememberLocalStain(stain);
+      setData(localAlerts(stain.tipo));
+      return true;
+    }
+    const res = await fetch("/api/alerts/stains", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stain }),
+    });
+    if (res.status === 401) {
+      toast.error("Entre como operador para gravar a mancha.");
+      return false;
+    }
+    if (!res.ok) {
+      toast.error("Não gravou a mancha.");
+      return false;
+    }
+    rememberLocalStain(stain);
+    setData((prev) =>
+      prev ? { ...prev, stains: [...(prev.stains ?? []).filter((row) => row.id !== stain.id), stain] } : prev,
+    );
+    return true;
+  }, []);
+
+  const persistDeleteStain = useCallback(async (id: string, tipoAlvo: AlertType): Promise<boolean> => {
+    if (STATIC_DEPLOY) {
+      removeStain(id);
+      forgetLocalStain(id);
+      setData(localAlerts(tipoAlvo));
+      return true;
+    }
+    const res = await fetch(`/api/alerts/stains?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    if (res.status === 401) {
+      toast.error("Entre como operador para apagar a mancha.");
+      return false;
+    }
+    if (!res.ok) {
+      toast.error("Não foi possível apagar a mancha.");
+      return false;
+    }
+    forgetLocalStain(id);
+    setData((prev) =>
+      prev ? { ...prev, stains: (prev.stains ?? []).filter((row) => row.id !== id) } : prev,
+    );
+    return true;
+  }, []);
+
+  const persistDeleteAllStains = useCallback(async (tipoAlvo: AlertType): Promise<AlertStain[] | null> => {
+    const snapshot = (data?.stains ?? []).filter((row) => row.tipo === tipoAlvo);
+    if (!snapshot.length) return [];
+    if (STATIC_DEPLOY) {
+      clearStains(tipoAlvo);
+      clearLocalStains(tipoAlvo);
+      setData(localAlerts(tipoAlvo));
+      return snapshot;
+    }
+    const res = await fetch(`/api/alerts/stains?tipo=${encodeURIComponent(tipoAlvo)}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    if (res.status === 401) {
+      toast.error("Entre como operador para apagar as manchas.");
+      return null;
+    }
+    if (!res.ok) {
+      toast.error("Não foi possível apagar as manchas.");
+      return null;
+    }
+    clearLocalStains(tipoAlvo);
+    setData((prev) => (prev ? { ...prev, stains: [] } : prev));
+    return snapshot;
+  }, [data]);
+
   const undoLast = useCallback(async () => {
     const item = undoStack[0];
     if (!item || classifying) return;
     setClassifying(true);
     try {
       if (item.kind === "stain") {
-        if (STATIC_DEPLOY) {
-          removeStain(item.stainId);
-          forgetLocalStain(item.stainId);
-          setData(localAlerts(item.tipo));
-        } else {
-          const res = await fetch(`/api/alerts/stains?id=${encodeURIComponent(item.stainId)}`, {
-            method: "DELETE",
-            credentials: "same-origin",
-          });
-          if (res.status === 401) {
-            toast.error("Entre como operador para desfazer.");
-            return;
-          }
-          if (!res.ok) {
-            toast.error("Não foi possível desfazer a mancha.");
-            return;
-          }
-          forgetLocalStain(item.stainId);
-          setData((prev) =>
-            prev ? { ...prev, stains: (prev.stains ?? []).filter((row) => row.id !== item.stainId) } : prev,
-          );
-        }
+        const ok = await persistDeleteStain(item.stainId, item.tipo);
+        if (!ok) return;
         setUndoStack((stack) => stack.slice(1));
         toast.success("Mancha desfeita.");
+        return;
+      }
+      if (item.kind === "stain-restore") {
+        const ok = await persistStain(item.stain);
+        if (!ok) return;
+        setUndoStack((stack) => stack.slice(1));
+        toast.success("Mancha restaurada.");
+        return;
+      }
+      if (item.kind === "stain-restore-all") {
+        for (const stain of item.stains) {
+          const ok = await persistStain(stain);
+          if (!ok) return;
+        }
+        setUndoStack((stack) => stack.slice(1));
+        toast.success(
+          item.stains.length === 1 ? "Mancha restaurada." : `${item.stains.length} manchas restauradas.`,
+        );
         return;
       }
       const updates: Record<string, string> = {};
@@ -433,7 +519,7 @@ export function AlertsWorkbench() {
     } finally {
       setClassifying(false);
     }
-  }, [undoStack, classifying, persistOverrides]);
+  }, [undoStack, classifying, persistOverrides, persistDeleteStain, persistStain]);
 
   useEffect(() => {
     let cancelled = false;
@@ -576,6 +662,10 @@ export function AlertsWorkbench() {
           setDrawMode(false);
           return;
         }
+        if (eraseMode) {
+          setEraseMode(false);
+          return;
+        }
         if (paintArmed) {
           finishClickSession();
           return;
@@ -599,7 +689,7 @@ export function AlertsWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, paintArmed, drawMode, admin, classifying, undoStack.length, undoLast]);
+  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast]);
 
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
@@ -860,30 +950,8 @@ export function AlertsWorkbench() {
     setDrawMode(false);
     setClassifying(true);
     try {
-      if (STATIC_DEPLOY) {
-        addStain(stain);
-        rememberLocalStain(stain);
-        setData(localAlerts(tipo));
-      } else {
-        const res = await fetch("/api/alerts/stains", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stain }),
-        });
-        if (res.status === 401) {
-          toast.error("Entre como operador para gravar a mancha.");
-          return;
-        }
-        if (!res.ok) {
-          toast.error("Não gravou a mancha.");
-          return;
-        }
-        rememberLocalStain(stain);
-        setData((prev) =>
-          prev ? { ...prev, stains: [...(prev.stains ?? []).filter((row) => row.id !== stain.id), stain] } : prev,
-        );
-      }
+      const ok = await persistStain(stain);
+      if (!ok) return;
       const undoItem: UndoItem = { kind: "stain", tipo, stainId: stain.id };
       setUndoStack((stack) => [undoItem, ...stack].slice(0, 20));
       setClickSessionCount((n) => n + 1);
@@ -898,7 +966,67 @@ export function AlertsWorkbench() {
     }
   }
 
+  async function deleteStain(stain: AlertStain) {
+    if (classifying) return;
+    setClassifying(true);
+    try {
+      const remaining = (data?.stains ?? []).filter((row) => row.id !== stain.id).length;
+      const ok = await persistDeleteStain(stain.id, tipo);
+      if (!ok) return;
+      const undoItem: UndoItem = { kind: "stain-restore", stain };
+      setUndoStack((stack) => [undoItem, ...stack].slice(0, 20));
+      if (remaining === 0) setEraseMode(false);
+      toast.success("Mancha apagada.");
+    } finally {
+      setClassifying(false);
+    }
+  }
+
+  async function deleteAllStains() {
+    const list = data?.stains ?? [];
+    if (!list.length || classifying) return;
+    setClassifying(true);
+    try {
+      const snapshot = await persistDeleteAllStains(tipo);
+      if (!snapshot) return;
+      if (snapshot.length === 0) {
+        setEraseMode(false);
+        return;
+      }
+      const undoItem: UndoItem = { kind: "stain-restore-all", stains: snapshot };
+      setUndoStack((stack) => [undoItem, ...stack].slice(0, 20));
+      setEraseMode(false);
+      toast.success(snapshot.length === 1 ? "Mancha apagada." : `${snapshot.length} manchas apagadas.`);
+    } finally {
+      setClassifying(false);
+    }
+  }
+
+  function startErase() {
+    const list = data?.stains ?? [];
+    if (eraseMode) {
+      setEraseMode(false);
+      return;
+    }
+    if (!list.length) {
+      toast.error("Não há manchas neste mapa.");
+      return;
+    }
+    if (drawMode) {
+      mapApi.current?.cancelDraw();
+      setDrawMode(false);
+    }
+    if (list.length === 1) {
+      void deleteStain(list[0]);
+      return;
+    }
+    setEraseMode(true);
+    setQuery({ municipio: null });
+    toast.message("Clique na mancha para apagar.");
+  }
+
   async function restoreLive() {
+    setEraseMode(false);
     if (STATIC_DEPLOY) {
       clearOverrides(tipo);
       clearStains(tipo);
@@ -1342,7 +1470,7 @@ export function AlertsWorkbench() {
                       hasRainStation: Boolean(row),
                     };
                   })}
-                  selected={paintArmed || drawMode ? null : selected}
+                  selected={paintArmed || drawMode || eraseMode ? null : selected}
                   hovered={hovered}
                   filter={activeFilter}
                   basin={bacia}
@@ -1356,6 +1484,7 @@ export function AlertsWorkbench() {
                   pluvio={pluvio}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
+                  eraseMode={admin && eraseMode}
                   stains={data.stains ?? []}
                   onSelect={(nome, basinName) => {
                     setHovered(null);
@@ -1364,6 +1493,7 @@ export function AlertsWorkbench() {
                   onHover={setHovered}
                   onPaint={paintMunicipio}
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
+                  onStainClick={(stain) => void deleteStain(stain)}
                   onGeoError={setGeoError}
                 />
               ) : null}
@@ -1373,7 +1503,7 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
-              {selectedRow && !paintArmed && !drawMode ? (
+              {selectedRow && !paintArmed && !drawMode && !eraseMode ? (
                   <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),32rem)] sm:top-2">
                   <AlertDetail
                     overlay
@@ -1397,7 +1527,7 @@ export function AlertsWorkbench() {
               ) : null}
               <MapLegendCard
                 title={product.legendTitle}
-                forceHidden={drawMode}
+                forceHidden={drawMode || eraseMode}
               >
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
@@ -1457,6 +1587,7 @@ export function AlertsWorkbench() {
             <AdminToolbar
               enabled={admin}
               drawMode={drawMode}
+              eraseMode={eraseMode}
               paintArmed={paintArmed}
               paintLevel={paintLevel}
               paintTtlMs={paintTtlMs}
@@ -1473,6 +1604,7 @@ export function AlertsWorkbench() {
                 setDrawMode((v) => {
                   const next = !v;
                   if (next) {
+                    setEraseMode(false);
                     setQuery({ municipio: null });
                   } else {
                     mapApi.current?.cancelDraw();
@@ -1480,6 +1612,9 @@ export function AlertsWorkbench() {
                   return next;
                 });
               }}
+              onErase={startErase}
+              onEraseAll={() => void deleteAllStains()}
+              onCancelErase={() => setEraseMode(false)}
               onPaintArmed={(on) => {
                 if (on) {
                   setPaintArmed(true);
