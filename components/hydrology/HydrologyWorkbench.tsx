@@ -15,7 +15,6 @@ import {
   Waves,
 } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
-import { AvisoGraficoButton } from "@/components/alerts/AvisoGrafico";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -476,12 +475,11 @@ export function HydrologyWorkbench() {
             {formatHydroRef(data?.referencia)}
           </p>
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            <AvisoGraficoButton compact={isMobile} />
-          <div
-            className="flex rounded-lg border border-border bg-hover p-0.5"
-            role="group"
-            aria-label="Tipo de risco"
-          >
+            <div
+              className="flex rounded-lg border border-border bg-hover p-0.5"
+              role="group"
+              aria-label="Tipo de risco"
+            >
             <button
               type="button"
               className={cn(
@@ -742,7 +740,6 @@ export function HydrologyWorkbench() {
                     </button>
                   </div>
                 ) : null}
-                {mapFocus ? <AvisoGraficoButton compact /> : null}
                 <MapFocusButton />
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (

@@ -79,7 +79,7 @@ No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Avi
 O **Aviso Meteorológico** tem duas camadas:
 
 - **Plantão 12 h** — turno do meteorologista, **07–19** (diurno) e **19–07** (noturno). O cronômetro vale até o fim daquele plantão. Faltando **1 hora**, faixa amarela; faltando **15 minutos**, vermelho e pulso; vencido, pede validação. Quem está autenticado valida pelo cartão do plantão.
-- **Aviso 6 h** — arte oficial (código, cenário, calhas abrangidas, potencial evolução e validade). Janelas **00–06, 06–12, 12–18 e 18–00**, horário de Manaus. O compositor puxa o infravermelho **realçado** GOES-19 (sistemas convectivos) do acervo **CPTEC/INPE**, recorta no **contorno do Amazonas**, desenha os **limites municipais** e gera o PNG retrato. Sem imagem nova, o aviso ainda pode ser montado e o painel avisa com honestidade.
+- **Aviso 6 h** — arte oficial (código, cenário, calhas abrangidas, potencial evolução e validade). Janelas **00–06, 06–12, 12–18 e 18–00**, horário de Manaus. O compositor puxa o infravermelho **realçado** GOES-19 (sistemas convectivos) do acervo **CPTEC/INPE**, recorta no **contorno do Amazonas**, desenha os **limites municipais** e gera o PNG retrato. Sem imagem nova, o aviso ainda pode ser montado e o painel avisa com honestidade. O ícone **Montar aviso** aparece só no **Painel de Alertas**.
 
 **Operador** só no Desktop. O fluxo agora é separado:
 
