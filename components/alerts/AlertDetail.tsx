@@ -16,6 +16,8 @@ import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 import { WeatherForecastPanel } from "@/components/alerts/WeatherForecastPanel";
+import { IndiceCard } from "@/components/shared/IndiceCard";
+import type { IndiceMunicipio } from "@/lib/indice";
 
 export function AlertDetail({
   municipioId,
@@ -34,6 +36,7 @@ export function AlertDetail({
   productLabel,
   tipo,
   overlay,
+  indice,
   onClose,
 }: {
   municipioId?: string;
@@ -52,6 +55,7 @@ export function AlertDetail({
   productLabel: string;
   tipo?: AlertType;
   overlay?: boolean;
+  indice?: IndiceMunicipio | null;
   onClose: () => void;
 }) {
   const { isMobile } = useOpsMode();
@@ -127,6 +131,10 @@ export function AlertDetail({
           ))}
         </ul>
       ) : null}
+
+      <div className="mt-3">
+        <IndiceCard rec={indice} />
+      </div>
 
       {municipioId ? (
         <WeatherForecastPanel ibge={municipioId} nome={nome} rain={rain} />

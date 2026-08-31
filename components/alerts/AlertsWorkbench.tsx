@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   CloudRain,
   Flame,
+  Gauge,
   Layers,
   MapPinned,
   Maximize2,
@@ -23,7 +24,9 @@ import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
-import { MunicipiosMapButton } from "@/components/shared/MunicipiosMapButton";
+import { AmazonasMapButton } from "@/components/shared/AmazonasMapButton";
+import { IndiceMapButton } from "@/components/shared/IndiceMapButton";
+import { IndiceSheet } from "@/components/shared/IndiceSheet";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +37,8 @@ import {
 } from "@/components/ui/popover";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow } from "@/lib/live-state";
+import { buildIndicePayload } from "@/lib/indice-build";
+import type { IndicePayload } from "@/lib/indice";
 import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides, replaceOverrides } from "@/lib/overrides";
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -220,6 +225,10 @@ function localHydro(): HydrologyPayload {
   return { ...buildHydrologyPayload(), cache: "MISS" };
 }
 
+function localIndice(air?: AirQualityPayload | null): IndicePayload & { cache: "MISS" } {
+  return { ...buildIndicePayload(Date.now(), { air: air ?? null }), cache: "MISS" };
+}
+
 function shortLevelLabel(level: string) {
   if (level === "MODERADO") return "Mod.";
   if (level === "EXTREMO") return "Ext.";
@@ -263,6 +272,8 @@ export function AlertsWorkbench() {
   const editBusy = useRef(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
+  const [showIndice, setShowIndice] = useState(false);
+  const [indice, setIndice] = useState<IndicePayload | null>(null);
   const [showRivers, setShowRivers] = useState(true);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [opacity, setOpacity] = useState(58);
@@ -608,6 +619,7 @@ export function AlertsWorkbench() {
           if (cancelled) return;
           setData(localAlerts(tipo));
           setHydro(localHydro());
+          setIndice(localIndice());
           setError(null);
           return;
         }
@@ -616,16 +628,18 @@ export function AlertsWorkbench() {
           localPushed.current = true;
           await hydrateLocal();
         }
-        const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
+        const [payload, hydroPayload, rainPayload, airPayload, indicePayload] = await Promise.all([
           fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
           fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
+          fetchJson<IndicePayload>("/api/indice").catch(() => null),
         ]);
         if (cancelled) return;
         if (rainPayload) setRain(rainPayload);
         if (airPayload) setAir(airPayload);
         if (hydroPayload) setHydro(hydroPayload);
+        if (indicePayload) setIndice(indicePayload);
         if (!editBusy.current || !gotAlerts) {
           setData(payload);
           gotAlerts = true;
@@ -653,19 +667,22 @@ export function AlertsWorkbench() {
         hydrateClientOverrides();
         setData(localAlerts(tipo));
         setHydro(localHydro());
+        setIndice(localIndice());
         setError(null);
         return;
       }
-      const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
+      const [payload, hydroPayload, rainPayload, airPayload, indicePayload] = await Promise.all([
         fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
         fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
         fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
+        fetchJson<IndicePayload>("/api/indice").catch(() => null),
       ]);
       setData(payload);
       if (hydroPayload) setHydro(hydroPayload);
       if (rainPayload) setRain(rainPayload);
       if (airPayload) setAir(airPayload);
+      if (indicePayload) setIndice(indicePayload);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
@@ -686,10 +703,30 @@ export function AlertsWorkbench() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
+  function resetAmazonasMap() {
+    setQuery({
+      municipio: null,
+      risco: null,
+      bacia: null,
+      calha: null,
+      chuva: null,
+      ar: null,
+    });
+    setOnlyRisk(false);
+    setShowNames(true);
+    setShowIndice(false);
+    setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
+    window.setTimeout(() => mapApi.current?.fitAmazonas(), 80);
+  }
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (editorOpen) return;
+        if (showIndice) {
+          setShowIndice(false);
+          return;
+        }
         if (drawMode) {
           mapApi.current?.cancelDraw();
           setDrawMode(false);
@@ -722,7 +759,7 @@ export function AlertsWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast]);
+  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast, showIndice]);
 
   const catalog = useMemo(() => {
     const rows = data?.municipios ?? [];
@@ -1394,19 +1431,13 @@ export function AlertsWorkbench() {
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (
-                  <MunicipiosMapButton
-                    active={showNames}
-                    onToggle={() => {
-                      setShowNames((v) => {
-                        const next = !v;
-                        if (next) {
-                          setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
-                          window.setTimeout(() => mapApi.current?.fitAmazonas(), 60);
-                        }
-                        return next;
-                      });
-                    }}
-                  />
+                  <>
+                    <AmazonasMapButton onReset={resetAmazonasMap} />
+                    <IndiceMapButton
+                      active={showIndice}
+                      onToggle={() => setShowIndice((v) => !v)}
+                    />
+                  </>
                 ) : (
                   !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
                 )}
@@ -1438,10 +1469,23 @@ export function AlertsWorkbench() {
                       Somente risco
                     </MapToolButton>
                     <MapToolButton
+                      onClick={resetAmazonasMap}
+                      icon={<MapPinned className="size-3.5" />}
+                    >
+                      Amazonas inteiro
+                    </MapToolButton>
+                    <MapToolButton
                       onClick={() => mapApi.current?.fitAmazonas()}
                       icon={<MapPinned className="size-3.5" />}
                     >
                       Ajustar ao Amazonas
+                    </MapToolButton>
+                    <MapToolButton
+                      active={showIndice}
+                      onClick={() => setShowIndice((v) => !v)}
+                      icon={<Gauge className="size-3.5" />}
+                    >
+                      Índice composto
                     </MapToolButton>
                     <MapToolButton
                       active={showNames}
@@ -1561,6 +1605,22 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
+              {showIndice && !selected ? (
+                <IndiceSheet
+                  className={cn(
+                    "pointer-events-auto absolute z-[1200]",
+                    isMobile
+                      ? "inset-x-1.5 bottom-1.5 top-10"
+                      : "left-2 top-12 w-[min(calc(100%-1rem),22rem)] sm:top-2",
+                  )}
+                  rows={indice?.municipios ?? []}
+                  onClose={() => setShowIndice(false)}
+                  onPick={(row) => {
+                    setShowIndice(false);
+                    setQuery(geoForNome(row.nome, row.bacia));
+                  }}
+                />
+              ) : null}
               {selectedRow && !paintArmed && !drawMode && !eraseMode ? (
                   <div
                     className={cn(
@@ -1587,6 +1647,7 @@ export function AlertsWorkbench() {
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
+                    indice={indice?.byId[selectedRow.id] ?? null}
                     onClose={() => setQuery({ municipio: null })}
                   />
                 </div>

@@ -1,10 +1,8 @@
-"use client";
-
-import { MapPinned } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function MunicipiosMapButton({
+export function IndiceMapButton({
   active,
   onToggle,
 }: {
@@ -17,15 +15,15 @@ export function MunicipiosMapButton({
       variant={active ? "default" : "secondary"}
       size="sm"
       className={cn(
-        "min-h-11 font-black tracking-[0.14em] uppercase",
+        "min-h-11 font-black tracking-[0.12em] uppercase",
         active && "shadow-md",
       )}
       aria-pressed={active}
-      title="Mostra os 62 municípios no mapa, sem abrir lista"
+      title="Índice composto 0–100. Não pinta o grau deste produto."
       onClick={onToggle}
     >
-      <MapPinned className="size-3.5" />
-      Municípios
+      <Gauge className="size-3.5" />
+      Índice
     </Button>
   );
 }

@@ -64,6 +64,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h / 72 h / 96 h por município e estação |
 | `/api/air-quality` | MP2,5 PurpleAir via App SELVA (SEMA/DC-AM · UEA EducAIR), 24 h, por município |
 | `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
+| `/api/indice` | Índice composto 0–100 dos 62 municípios (50 estrutural + 50 monitoramento). Não pinta o mapa. |
 | `/api/logs` | Log de erros de mapa/dados no front |
 | `/api/satellite/goes` | Metadados do infravermelho GOES-19 (CPTEC/INPE); `?refresh=1` força nova busca |
 | `/api/satellite/goes/image` | JPEG do último recorte em cache |
@@ -78,11 +79,24 @@ A ficha do alerta junta três blocos de clima (não pintam o mapa):
 - **Temperatura · INMET** — **atual** da estação automática mais próxima (`estacao/proxima/{IBGE}`, campo `TEM_INS`, horário tratado como UTC e convertido para Manaus), **máxima** e **mínima** da previsão do dia (Prevmet), com a observação da estação como reserva.
 - **Previsão · INMET** — horizontes **24 h, 48 h, 72 h e 5 dias** (resumo + T máx) a partir de `apiprevmet3.inmet.gov.br/previsao/{IBGE}`.
 
+A ficha também traz o **índice composto** (0–100). Ele não pinta o mapa nem substitui o grau do produto.
+
+## Índice composto
+
+Dois blocos, cada um até 50 pontos:
+
+- **Base estrutural (50)** — muda pouco. Crianças 0–14 + idosos 60+ (Censo 2022, até 15), áreas de risco mapeadas SGB (até 20; sem mapeamento = 0), capacidade de resposta pelo **IDHM 2010** (até 15). O IDHM entra no lugar do PIB total: Coari pode ser a segunda economia e mesmo assim pontuar vulnerabilidade, porque a renda do Atlas não acompanha o PIB do gás.
+- **Monitoramento (50)** — ao vivo, 10 pontos por evento. Cheia e estiagem vêm do boletim (o operador pode sobrepor; a cota ANA não pinta). Chuva intensa e alagamento entram no **maior** dos dois graus, para não contar duas vezes o mesmo temporal. Movimento de massa usa a classificação do operador. Qualidade do ar usa a mediana de MP2,5 (o operador pode sobrepor).
+
+Cada grau vira o teto da faixa: Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10. Soma 0–20 baixo, 21–40 moderado, 41–60 alto, 61–80 severo, 81–100 extremo.
+
+O índice **não pinta** chuva, alagamento, movimento, incêndio nem o boletim. No mobile, **Índice** lista os 62 ordenados pela soma; a ficha mostra a conta. **Amazonas** devolve o mapa do produto.
+
 O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
 
 ## Desktop, mobile e operador
 
-O cabeçalho troca **Desktop** (completo) e **Mobile**. Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No **telefone** (largura &lt; 768 px) o posto é outro: **CEMOA + status operacional** no topo, **4–5 indicadores** (os graus do produto) e o **mapa ocupando o restante**. O botão **Municípios** acende os nomes dos 62 municípios **no mapa** — não abre a lista da esquerda. Toque no polígono para abrir a ficha. O rodapé, a fila do plantão e o chrome de operador ficam no Desktop. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** (Desktop) deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata). O ícone **Níveis de risco** (só no Desktop) abre o texto do art. 12 da Portaria MIDR nº 2.458/2026 — corpo, ação e rodapé de cada grau — e a classificação própria de qualidade do ar (MP2,5, que não segue o art. 12). No mobile o ícone não aparece: a legenda do mapa já traz o grau. **Ocultar** some com a legenda do mapa em qualquer posto (sala, mobile ou edição); o chip **Legenda** devolve. A escolha fica em `localStorage` (`cemoa_legend_hidden`). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
+O cabeçalho troca **Desktop** (completo) e **Mobile**. Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No **telefone** (largura &lt; 768 px) o posto é outro: **CEMOA + status operacional** no topo, **4–5 indicadores** (os graus do produto) e o **mapa ocupando o restante**. O botão **Amazonas** devolve o estado inteiro: fecha a ficha, limpa filtro de grau/bacia/calha e ajusta o recorte com os 62 municípios pintados no grau **daquele produto**. O botão **Índice** abre a lista ordenada pelo índice composto (0–100) — toque abre a ficha; **não pinta o mapa**. Os nomes dos municípios ficam em **Mapa → Mostrar nomes**. Toque no polígono para abrir a ficha. O rodapé, a fila do plantão e o chrome de operador ficam no Desktop. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** (Desktop) deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata). O ícone **Níveis de risco** (só no Desktop) abre o texto do art. 12 da Portaria MIDR nº 2.458/2026 — corpo, ação e rodapé de cada grau — e a classificação própria de qualidade do ar (MP2,5, que não segue o art. 12). No mobile o ícone não aparece: a legenda do mapa já traz o grau. **Ocultar** some com a legenda do mapa em qualquer posto (sala, mobile ou edição); o chip **Legenda** devolve. A escolha fica em `localStorage` (`cemoa_legend_hidden`). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 

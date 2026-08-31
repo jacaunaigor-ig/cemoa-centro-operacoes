@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  Gauge,
   Layers,
   MapPinned,
   Maximize2,
@@ -27,6 +28,8 @@ import {
 } from "@/lib/map-overlays";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { buildHydrologyPayload } from "@/lib/live-state";
+import { buildIndicePayload } from "@/lib/indice-build";
+import type { IndicePayload } from "@/lib/indice";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { toast } from "sonner";
 import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, removeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
@@ -66,7 +69,9 @@ import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
-import { MunicipiosMapButton } from "@/components/shared/MunicipiosMapButton";
+import { AmazonasMapButton } from "@/components/shared/AmazonasMapButton";
+import { IndiceMapButton } from "@/components/shared/IndiceMapButton";
+import { IndiceSheet } from "@/components/shared/IndiceSheet";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
@@ -136,6 +141,8 @@ export function HydrologyWorkbench() {
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
+  const [showIndice, setShowIndice] = useState(false);
+  const [indice, setIndice] = useState<IndicePayload | null>(null);
   const [showRivers, setShowRivers] = useState(true);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [opacity, setOpacity] = useState(58);
@@ -174,6 +181,7 @@ export function HydrologyWorkbench() {
           }
           if (cancelled) return;
           setData({ ...buildHydrologyPayload(), cache: "MISS" });
+          setIndice(buildIndicePayload());
           setError(null);
           return;
         }
@@ -210,9 +218,13 @@ export function HydrologyWorkbench() {
             /* ignore */
           }
         }
-        const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
+        const [payload, indicePayload] = await Promise.all([
+          fetchJson<HydrologyPayload>("/api/hydrology"),
+          fetchJson<IndicePayload>("/api/indice").catch(() => null),
+        ]);
         if (cancelled) return;
         setData(payload);
+        if (indicePayload) setIndice(indicePayload);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -238,9 +250,27 @@ export function HydrologyWorkbench() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
+  function resetAmazonasMap() {
+    setQuery({
+      municipio: null,
+      status: null,
+      bacia: null,
+      calha: null,
+    });
+    setOnlyRisk(false);
+    setShowNames(true);
+    setShowIndice(false);
+    setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
+    window.setTimeout(() => mapRef.current?.fitAmazonas(), 80);
+  }
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (showIndice) {
+          setShowIndice(false);
+          return;
+        }
         if (selected && !editorOpen) setQuery({ municipio: null });
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
@@ -260,7 +290,7 @@ export function HydrologyWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, admin, classifying, undoStack.length]);
+  }, [selected, editorOpen, admin, classifying, undoStack.length, showIndice]);
 
   const catalog = useMemo(() => data?.stations ?? [], [data]);
   const geoStations = useMemo(
@@ -772,19 +802,13 @@ export function HydrologyWorkbench() {
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (
-                  <MunicipiosMapButton
-                    active={showNames}
-                    onToggle={() => {
-                      setShowNames((v) => {
-                        const next = !v;
-                        if (next) {
-                          setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
-                          window.setTimeout(() => mapRef.current?.fitAmazonas(), 60);
-                        }
-                        return next;
-                      });
-                    }}
-                  />
+                  <>
+                    <AmazonasMapButton onReset={resetAmazonasMap} />
+                    <IndiceMapButton
+                      active={showIndice}
+                      onToggle={() => setShowIndice((v) => !v)}
+                    />
+                  </>
                 ) : (
                   !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
                 )}
@@ -867,10 +891,23 @@ export function HydrologyWorkbench() {
                       Somente risco
                     </MapToolButton>
                     <MapToolButton
+                      onClick={resetAmazonasMap}
+                      icon={<MapPinned className="size-3.5" />}
+                    >
+                      Amazonas inteiro
+                    </MapToolButton>
+                    <MapToolButton
                       onClick={() => mapRef.current?.fitAmazonas()}
                       icon={<MapPinned className="size-3.5" />}
                     >
                       Ajustar ao Amazonas
+                    </MapToolButton>
+                    <MapToolButton
+                      active={showIndice}
+                      onClick={() => setShowIndice((v) => !v)}
+                      icon={<Gauge className="size-3.5" />}
+                    >
+                      Índice composto
                     </MapToolButton>
                     <MapToolButton
                       active={showNames}
@@ -1011,6 +1048,31 @@ export function HydrologyWorkbench() {
                 variant="boletim"
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
               />
+              {showIndice && !selected ? (
+                <IndiceSheet
+                  className={cn(
+                    "pointer-events-auto absolute z-[1200]",
+                    isMobile
+                      ? "inset-x-1.5 bottom-1.5 top-10"
+                      : "left-2 top-12 w-[min(calc(100%-1rem),22rem)] sm:top-2",
+                  )}
+                  rows={indice?.municipios ?? []}
+                  onClose={() => setShowIndice(false)}
+                  onPick={(row) => {
+                    setShowIndice(false);
+                    const station =
+                      catalog.find((s) => s.id === row.id) ??
+                      catalog.find((s) => s.municipio === row.nome);
+                    if (station) {
+                      setQuery({
+                        municipio: station.municipio,
+                        bacia: station.bacia,
+                        calha: station.calha,
+                      });
+                    }
+                  }}
+                />
+              ) : null}
               <MapLegendCard title={modo === "vazante" ? "Estiagem" : "Inundação"}>
                 <ul className="space-y-0.5">
                   <LegendDot
@@ -1065,7 +1127,7 @@ export function HydrologyWorkbench() {
               <div
                 className={cn(
                   isMobile || mapFocus
-                    ? "pointer-events-auto absolute inset-x-1.5 bottom-1.5 z-[1200] flex max-h-[calc(100%-2.75rem)] flex-col overflow-hidden rounded-xl shadow-lg"
+                    ? "pointer-events-auto absolute inset-x-1.5 bottom-1.5 top-10 z-[1200] flex max-h-[calc(100%-2.75rem)] flex-col overflow-hidden rounded-xl shadow-lg"
                     : undefined,
                   mapFocus && !isMobile && "top-auto inset-x-2 bottom-2 max-h-[min(48vh,28rem)]",
                 )}
@@ -1075,6 +1137,7 @@ export function HydrologyWorkbench() {
                 modo={modo}
                 admin={admin}
                 compact={isMobile || mapFocus}
+                indice={indice?.byId[selectedStation.id] ?? null}
                 onClose={() => setQuery({ municipio: null })}
                 onSave={async (patch) => {
                   const ok = await persistHydro({ [selectedStation.id]: patch });
