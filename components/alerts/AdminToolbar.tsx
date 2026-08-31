@@ -17,6 +17,7 @@ export function AdminToolbar({
   colors = LEVEL_COLORS,
   overrideCount,
   sessionCount = 0,
+  stainCount = 0,
   paintHint,
   onDraw,
   onPaintArmed,
@@ -40,6 +41,7 @@ export function AdminToolbar({
   colors?: Record<string, string>;
   overrideCount: number;
   sessionCount?: number;
+  stainCount?: number;
   paintHint?: string;
   onDraw?: () => void;
   onPaintArmed?: (on: boolean) => void;
@@ -88,7 +90,7 @@ export function AdminToolbar({
         {drawMode && onFinishPolygon ? (
           <Button type="button" size="sm" variant="outline" onClick={onFinishPolygon}>
             <Check />
-            Fechar polígono
+            Fechar mancha
           </Button>
         ) : null}
         {paintArmed && onFinishClick ? (
@@ -107,12 +109,13 @@ export function AdminToolbar({
         ) : null}
         <span className="ml-auto text-[11px] text-text-mute">
           {drawMode
-            ? `Clique para vértices · duplo clique classifica como ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}`
+            ? `Clique os vértices · Fechar pinta só a mancha (${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}) — o município não muda por inteiro`
             : paintHint ??
               (paintArmed
                 ? `Clique nos municípios: ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}. Encerrar quando terminar.`
                 : "Defina o grau e clique no mapa.")}
-          {overrideCount ? ` · ${overrideCount} classificado(s)` : ""}
+          {overrideCount ? ` · ${overrideCount} município(s)` : ""}
+          {stainCount ? ` · ${stainCount} mancha(s)` : ""}
         </span>
         <Button type="button" size="sm" variant="ghost" onClick={onRestore} disabled={overrideCount === 0}>
           <RotateCcw />

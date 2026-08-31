@@ -49,6 +49,21 @@ alter table public.alert_overrides add column if not exists issued_by_id text;
 alter table public.alert_overrides add column if not exists previous_level text;
 alter table public.alert_overrides add column if not exists ttl_ms integer;
 
+create table if not exists public.alert_stains (
+  id text primary key,
+  tipo text not null,
+  level text not null,
+  ring jsonb not null,
+  geometry jsonb not null,
+  municipios jsonb not null default '[]'::jsonb,
+  issued_at timestamptz not null default now(),
+  issued_by text,
+  issued_by_id text,
+  ttl_ms integer
+);
+
+alter table public.alert_stains enable row level security;
+
 create table if not exists public.classification_audit (
   id bigserial primary key,
   at timestamptz not null default now(),
@@ -119,6 +134,25 @@ create policy "operators write hydro"
 
 drop policy if exists "alerts readable" on public.alert_overrides;
 create policy "alerts readable" on public.alert_overrides for select using (true);
+
+drop policy if exists "operators write stains" on public.alert_stains;
+create policy "operators write stains"
+  on public.alert_stains for all
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role in ('chefe', 'meteorologista', 'geologo', 'operacional', 'admin', 'operator')
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role in ('chefe', 'meteorologista', 'geologo', 'operacional', 'admin', 'operator')
+    )
+  );
+
+drop policy if exists "stains readable" on public.alert_stains;
+create policy "stains readable" on public.alert_stains for select using (true);
 
 drop policy if exists "hydro readable" on public.hydro_overrides;
 create policy "hydro readable" on public.hydro_overrides for select using (true);

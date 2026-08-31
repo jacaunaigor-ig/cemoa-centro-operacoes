@@ -1,5 +1,6 @@
 import { nodeJsonRequest } from "@/lib/node-json-request";
 import { hydrateOverrideRecord } from "@/lib/overrides";
+import { hydrateStains, type AlertStain } from "@/lib/stains";
 import { parseAlertType } from "@/lib/alert-types";
 import { mergeHydroOverrides, type HydroPatch } from "@/lib/hydro-overrides";
 
@@ -148,6 +149,57 @@ export async function deleteRemoteAlertOverrides(tipo?: string) {
   await rest(`alert_overrides?${filter}`, { method: "DELETE" });
 }
 
+export type RemoteAlertStain = {
+  id: string;
+  tipo: string;
+  level: string;
+  ring: unknown;
+  geometry: unknown;
+  municipios?: unknown;
+  issued_at: string;
+  issued_by?: string | null;
+  issued_by_id?: string | null;
+  ttl_ms?: number | null;
+};
+
+export async function fetchRemoteAlertStains(): Promise<RemoteAlertStain[]> {
+  const rows = await rest<RemoteAlertStain[]>(
+    "alert_stains?select=id,tipo,level,ring,geometry,municipios,issued_at,issued_by,issued_by_id,ttl_ms",
+  );
+  return rows ?? [];
+}
+
+export async function upsertRemoteAlertStain(stain: AlertStain) {
+  if (!supabaseConfigured()) return;
+  await rest("alert_stains", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      id: stain.id,
+      tipo: stain.tipo,
+      level: stain.level,
+      ring: stain.ring,
+      geometry: stain.geometry,
+      municipios: stain.municipios,
+      issued_at: new Date(stain.issuedAt).toISOString(),
+      issued_by: stain.issuedBy ?? null,
+      issued_by_id: stain.issuedById ?? null,
+      ttl_ms: stain.ttlMs ?? null,
+    }),
+  });
+}
+
+export async function deleteRemoteAlertStain(id: string) {
+  if (!supabaseConfigured() || !id) return;
+  await rest(`alert_stains?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export async function deleteRemoteAlertStains(tipo?: string) {
+  if (!supabaseConfigured()) return;
+  const filter = tipo ? `tipo=eq.${encodeURIComponent(tipo)}` : "id=not.is.null";
+  await rest(`alert_stains?${filter}`, { method: "DELETE" });
+}
+
 export async function fetchRemoteHydroOverrides(): Promise<RemoteHydroOverride[]> {
   const rows = await rest<RemoteHydroOverride[]>("hydro_overrides?select=station_id,patch");
   return rows ?? [];
@@ -220,6 +272,26 @@ export async function hydrateAlertOverridesFromRemote() {
     };
   }
   hydrateOverrideRecord(raw);
+}
+
+export async function hydrateAlertStainsFromRemote() {
+  if (!supabaseConfigured()) return;
+  const rows = await fetchRemoteAlertStains();
+  if (!rows.length) return;
+  hydrateStains(
+    rows.map((row) => ({
+      id: row.id,
+      tipo: row.tipo,
+      level: row.level,
+      ring: row.ring,
+      geometry: row.geometry,
+      municipios: row.municipios,
+      issuedAt: Date.parse(row.issued_at) || Date.now(),
+      issuedBy: row.issued_by ?? undefined,
+      issuedById: row.issued_by_id ?? undefined,
+      ttlMs: typeof row.ttl_ms === "number" && row.ttl_ms > 0 ? row.ttl_ms : undefined,
+    })),
+  );
 }
 
 export async function fetchRemoteMeteoAviso(): Promise<Record<string, unknown> | null> {

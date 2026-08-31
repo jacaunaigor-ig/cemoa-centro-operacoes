@@ -1,3 +1,5 @@
+import type { AlertStain } from "@/lib/stains";
+
 export const RISK_LEVELS = [
   "BAIXO",
   "MODERADO",
@@ -78,6 +80,7 @@ export type AlertsPayload = {
     classifiedBy?: string | null;
     classifiedAt?: number | null;
   }>;
+  stains: AlertStain[];
 };
 
 export type HydroMode = "vazante" | "enchente";

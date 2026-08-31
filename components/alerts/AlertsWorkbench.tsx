@@ -63,7 +63,17 @@ import {
   type AlertType,
 } from "@/lib/alert-types";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
-import { latLngsToRing, pointInRing } from "@/lib/geo";
+import { latLngsToRing } from "@/lib/geo";
+import { clipRingToMunicipalMesh, loadMunicipalMesh } from "@/lib/stain-clip";
+import {
+  addStain,
+  clearStains,
+  hydrateStains,
+  newStainId,
+  parseStain,
+  removeStain,
+  type AlertStain,
+} from "@/lib/stains";
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
@@ -88,6 +98,11 @@ import { RainfallStrip } from "@/components/alerts/RainfallStrip";
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
+const STORAGE_STAINS = "cemoa_alert_stains_v1";
+
+type UndoItem =
+  | { kind: "override"; tipo: AlertType; previous: Record<string, string | null>; next: Record<string, string> }
+  | { kind: "stain"; tipo: AlertType; stainId: string };
 
 const PRODUCT_ICONS = {
   CHUVA: CloudRain,
@@ -141,6 +156,35 @@ function rememberLocalOverrides(
   writeLocalOverrides(current);
 }
 
+function readLocalStains(): AlertStain[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_STAINS) || "[]") as unknown[];
+    return raw.map(parseStain).filter((row): row is AlertStain => Boolean(row));
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalStains(list: AlertStain[]) {
+  try {
+    localStorage.setItem(STORAGE_STAINS, JSON.stringify(list));
+  } catch {
+    /* ignore quota */
+  }
+}
+
+function rememberLocalStain(stain: AlertStain) {
+  writeLocalStains([...readLocalStains().filter((row) => row.id !== stain.id), stain]);
+}
+
+function forgetLocalStain(id: string) {
+  writeLocalStains(readLocalStains().filter((row) => row.id !== id));
+}
+
+function clearLocalStains(tipo: AlertType) {
+  writeLocalStains(readLocalStains().filter((row) => row.tipo !== tipo));
+}
+
 function hydrateClientOverrides() {
   try {
     const v2raw = localStorage.getItem(STORAGE_V2);
@@ -149,6 +193,8 @@ function hydrateClientOverrides() {
     else if (v1raw) hydrateOverrideRecord(JSON.parse(v1raw) as Record<string, unknown>, "CHUVA");
     const hydroRaw = localStorage.getItem("cemoa_hydro_overrides_v1");
     if (hydroRaw) mergeHydroOverrides(JSON.parse(hydroRaw) as Record<string, import("@/lib/hydro-overrides").HydroPatch>);
+    const stainsRaw = localStorage.getItem(STORAGE_STAINS);
+    if (stainsRaw) hydrateStains(JSON.parse(stainsRaw) as unknown[]);
   } catch {
     /* ignore */
   }
@@ -188,9 +234,7 @@ export function AlertsWorkbench() {
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [clickSessionCount, setClickSessionCount] = useState(0);
-  const [undoStack, setUndoStack] = useState<
-    Array<{ tipo: AlertType; previous: Record<string, string | null>; next: Record<string, string> }>
-  >([]);
+  const [undoStack, setUndoStack] = useState<UndoItem[]>([]);
   const [classifying, setClassifying] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
@@ -273,7 +317,17 @@ export function AlertsWorkbench() {
         }
         if (tipoAlvo === tipo) setData(localAlerts(tipoAlvo));
         if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
-          setUndoStack((stack) => [{ tipo: tipoAlvo, previous, next: updates }, ...stack].slice(0, 20));
+          setUndoStack((stack) =>
+            [
+              {
+                kind: "override" as const,
+                tipo: tipoAlvo,
+                previous,
+                next: updates,
+              },
+              ...stack,
+            ].slice(0, 20),
+          );
         }
         return true;
       }
@@ -308,7 +362,17 @@ export function AlertsWorkbench() {
         setData(payload);
       }
       if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
-        setUndoStack((stack) => [{ tipo: tipoAlvo, previous, next: updates }, ...stack].slice(0, 20));
+        setUndoStack((stack) =>
+          [
+            {
+              kind: "override" as const,
+              tipo: tipoAlvo,
+              previous,
+              next: updates,
+            },
+            ...stack,
+          ].slice(0, 20),
+        );
       }
       return true;
     },
@@ -320,6 +384,33 @@ export function AlertsWorkbench() {
     if (!item || classifying) return;
     setClassifying(true);
     try {
+      if (item.kind === "stain") {
+        if (STATIC_DEPLOY) {
+          removeStain(item.stainId);
+          forgetLocalStain(item.stainId);
+          setData(localAlerts(item.tipo));
+        } else {
+          const res = await fetch(`/api/alerts/stains?id=${encodeURIComponent(item.stainId)}`, {
+            method: "DELETE",
+            credentials: "same-origin",
+          });
+          if (res.status === 401) {
+            toast.error("Entre como operador para desfazer.");
+            return;
+          }
+          if (!res.ok) {
+            toast.error("Não foi possível desfazer a mancha.");
+            return;
+          }
+          forgetLocalStain(item.stainId);
+          setData((prev) =>
+            prev ? { ...prev, stains: (prev.stains ?? []).filter((row) => row.id !== item.stainId) } : prev,
+          );
+        }
+        setUndoStack((stack) => stack.slice(1));
+        toast.success("Mancha desfeita.");
+        return;
+      }
       const updates: Record<string, string> = {};
       const remove: string[] = [];
       for (const [id, prev] of Object.entries(item.previous)) {
@@ -379,6 +470,15 @@ export function AlertsWorkbench() {
             toast.error("Não foi possível sincronizar as classificações gravadas neste computador.");
             return;
           }
+        }
+        for (const stain of readLocalStains()) {
+          const res = await fetch("/api/alerts/stains", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stain }),
+          });
+          if (res.status === 401) return;
         }
       } catch {
         /* ignore */
@@ -750,65 +850,80 @@ export function AlertsWorkbench() {
     });
   }
 
-  function applyPolygon(points: Array<{ lat: number; lng: number }>) {
-    if (!data || classifying) return;
+  async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
+    if (classifying) return;
     const ring = latLngsToRing(points);
-    const updates: Record<string, string> = {};
-    const names: string[] = [];
-    const now = Date.now();
-    for (const m of data.municipios) {
-      if (!pointInRing(m.lon, m.lat, ring)) continue;
-      updates[m.id] = paintLevel;
-      names.push(m.nome);
-    }
-    if (!names.length) {
-      toast.error("Nenhum município dentro do polígono.");
+    let mesh;
+    try {
+      mesh = await loadMunicipalMesh();
+    } catch {
+      toast.error("Não foi possível recortar a mancha na malha municipal.");
       return;
     }
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        municipios: prev.municipios.map((m) =>
-          updates[m.id]
-            ? {
-                ...m,
-                risco: paintLevel as typeof m.risco,
-                fonte: "admin",
-                issuedAt: now,
-                expiresAt: now + paintTtlMs,
-                classifiedBy: session?.name ?? m.classifiedBy,
-                classifiedAt: now,
-              }
-            : m,
-        ),
-      };
-    });
-    setClickSessionCount((n) => n + names.length);
+    const clipped = clipRingToMunicipalMesh(ring, mesh);
+    if (!clipped) {
+      toast.error("A mancha não cruzou nenhum município. Ajuste os vértices.");
+      return;
+    }
+    const now = Date.now();
+    const stain: AlertStain = {
+      id: newStainId(),
+      tipo,
+      level: paintLevel,
+      ring,
+      geometry: clipped.geometry,
+      municipios: clipped.municipios,
+      issuedAt: now,
+      issuedBy: session?.name,
+      issuedById: session?.id,
+      ttlMs: paintTtlMs,
+    };
     setDrawMode(false);
     setClassifying(true);
-    void persistOverrides(updates, {
-      source: "poligono",
-      ttlMs: paintTtlMs,
-      skipRefresh: true,
-    })
-      .then((ok) => {
-        if (!ok) {
-          toast.error("Não gravou o polígono.");
+    try {
+      if (STATIC_DEPLOY) {
+        addStain(stain);
+        rememberLocalStain(stain);
+        setData(localAlerts(tipo));
+      } else {
+        const res = await fetch("/api/alerts/stains", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stain }),
+        });
+        if (res.status === 401) {
+          toast.error("Entre como operador para gravar a mancha.");
           return;
         }
-        toast.success(
-          names.length === 1
-            ? `${names[0]}: ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`
-            : `${names.length} municípios em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}.`,
+        if (!res.ok) {
+          toast.error("Não gravou a mancha.");
+          return;
+        }
+        rememberLocalStain(stain);
+        setData((prev) =>
+          prev ? { ...prev, stains: [...(prev.stains ?? []).filter((row) => row.id !== stain.id), stain] } : prev,
         );
-      })
-      .finally(() => setClassifying(false));
+      }
+      const undoItem: UndoItem = { kind: "stain", tipo, stainId: stain.id };
+      setUndoStack((stack) => [undoItem, ...stack].slice(0, 20));
+      setClickSessionCount((n) => n + 1);
+      const names = clipped.municipios;
+      toast.success(
+        names.length === 1
+          ? `Mancha ${levelLabel(paintLevel)} em parte de ${names[0]} · ${durationLabel(paintTtlMs)}`
+          : `Mancha ${levelLabel(paintLevel)} em parte de ${names.length} municípios · ${durationLabel(paintTtlMs)}.`,
+      );
+    } finally {
+      setClassifying(false);
+    }
   }
 
   async function restoreLive() {
     if (STATIC_DEPLOY) {
       clearOverrides(tipo);
+      clearStains(tipo);
+      clearLocalStains(tipo);
       try {
         const current = readLocalOverrides();
         for (const key of Object.keys(current)) {
@@ -831,6 +946,11 @@ export function AlertsWorkbench() {
       toast.error("Entre como operador para restaurar o monitoramento.");
       return;
     }
+    await fetch(`/api/alerts/stains?tipo=${tipo}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    clearLocalStains(tipo);
     try {
       const current = readLocalOverrides();
       for (const key of Object.keys(current)) {
@@ -862,6 +982,10 @@ export function AlertsWorkbench() {
         count: counts[item.key] ?? 0,
       })),
       footerSources: `Fontes de monitoramento: ${product.sources}`,
+      stains: (data.stains ?? []).map((stain) => ({
+        geometry: stain.geometry,
+        color: LEVEL_COLORS[stain.level] ?? "#f59e0b",
+      })),
       extraNote:
         tipo === "INCENDIO"
           ? {
@@ -1211,6 +1335,7 @@ export function AlertsWorkbench() {
                   pluvio={pluvio}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
+                  stains={data.stains ?? []}
                   onSelect={(nome, basinName) => {
                     setHovered(null);
                     setQuery(geoForNome(nome, basinName));
@@ -1312,10 +1437,11 @@ export function AlertsWorkbench() {
               levels={product.levels}
               overrideCount={overrideCount}
               sessionCount={clickSessionCount}
+              stainCount={(data?.stains ?? []).length}
               paintHint={
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
-                  : "Defina grau e duração, depois classifique no clique, em lote ou por polígono."
+                  : "Defina grau e duração. Polígono pinta só a mancha, sem classificar o município inteiro."
               }
               onDraw={() => {
                 setDrawMode((v) => {

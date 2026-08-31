@@ -267,7 +267,8 @@ export function AppShell({
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
           {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — grau e duração, clique nos
-          municípios ou cole os nomes em lote. Encerrar a edição ao terminar. Desfazer (Ctrl+Z).
+          municípios, cole nomes em lote ou desenhe uma mancha no polígono. Encerrar a edição ao
+          terminar. Desfazer (Ctrl+Z).
         </div>
       ) : null}
       <MeteoAvisoBanner />

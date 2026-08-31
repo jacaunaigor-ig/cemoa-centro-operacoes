@@ -1,5 +1,6 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { getOverrideEntry } from "@/lib/overrides";
+import { listStains } from "@/lib/stains";
 import { alertExpiresAt, alertTtlMs } from "@/lib/alert-validity";
 import { applyHydroOverride } from "@/lib/hydro-overrides";
 import {
@@ -240,6 +241,7 @@ export function buildAlertsPayload(
     },
     alerts,
     municipios,
+    stains: listStains(tipo, now),
   };
 }
 

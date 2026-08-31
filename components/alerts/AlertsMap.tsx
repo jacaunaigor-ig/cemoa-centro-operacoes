@@ -38,6 +38,8 @@ import {
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { reportClientError } from "@/lib/client";
 import { withBase } from "@/lib/site";
+import type { AlertStain } from "@/lib/stains";
+import { durationLabel } from "@/lib/alert-duration";
 import "leaflet/dist/leaflet.css";
 
 type Muni = {
@@ -77,6 +79,7 @@ export const AlertsMap = forwardRef<
     onlyRisk: boolean;
     hovered?: string | null;
     drawMode?: boolean;
+    stains?: AlertStain[];
     onSelect: (nome: string, bacia: string) => void;
     onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
@@ -100,6 +103,7 @@ export const AlertsMap = forwardRef<
     onlyRisk,
     hovered,
     drawMode = false,
+    stains = [],
     onSelect,
     onHover,
     onPaint,
@@ -118,6 +122,7 @@ export const AlertsMap = forwardRef<
   const namesRef = useRef<LayerGroup | null>(null);
   const rainLayerRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
+  const stainLayerRef = useRef<GeoJSONType | null>(null);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
   const drawLineRef = useRef<Polyline | null>(null);
@@ -141,6 +146,7 @@ export const AlertsMap = forwardRef<
     overlays,
     pluvio,
     drawMode,
+    stains,
   });
 
   useEffect(() => {
@@ -162,6 +168,7 @@ export const AlertsMap = forwardRef<
       overlays,
       pluvio,
       drawMode,
+      stains,
     };
   }, [
     onSelect,
@@ -181,6 +188,7 @@ export const AlertsMap = forwardRef<
     overlays,
     pluvio,
     drawMode,
+    stains,
   ]);
 
   function paintFeature(nome: string) {
@@ -242,6 +250,76 @@ export const AlertsMap = forwardRef<
         dashArray: "6 4",
       }).addTo(map);
     }
+  }
+
+  function syncStains() {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    stainLayerRef.current?.remove();
+    stainLayerRef.current = null;
+    const list = stateRef.current.stains;
+    if (!list.length) return;
+    if (!map.getPane("stainPane")) {
+      const pane = map.createPane("stainPane");
+      pane.style.zIndex = "455";
+      pane.style.pointerEvents = stateRef.current.drawMode ? "none" : "auto";
+    } else {
+      const pane = map.getPane("stainPane");
+      if (pane) pane.style.pointerEvents = stateRef.current.drawMode ? "none" : "auto";
+    }
+    const drawing = stateRef.current.drawMode;
+    const layer = L.geoJSON(
+      {
+        type: "FeatureCollection",
+        features: list.map((stain) => ({
+          type: "Feature" as const,
+          properties: {
+            id: stain.id,
+            level: stain.level,
+            municipios: stain.municipios,
+            issuedBy: stain.issuedBy ?? "",
+            ttlMs: stain.ttlMs ?? 0,
+          },
+          geometry: stain.geometry,
+        })),
+      } as GeoJSON.FeatureCollection,
+      {
+        pane: "stainPane",
+        interactive: !drawing,
+        style: (feature) => {
+          const level = String(feature?.properties?.level ?? "");
+          const color = LEVEL_COLORS[level] ?? "#f59e0b";
+          return {
+            color,
+            fillColor: color,
+            fillOpacity: 0.72,
+            weight: 2.2,
+            opacity: 0.95,
+            className: "alert-stain",
+          };
+        },
+        onEachFeature: (feature, lyr) => {
+          const level = String(feature.properties?.level ?? "");
+          const munis = (feature.properties?.municipios as string[] | undefined) ?? [];
+          const where =
+            munis.length === 1
+              ? `parte de ${munis[0]}`
+              : munis.length
+                ? `parte de ${munis.slice(0, 3).join(", ")}${munis.length > 3 ? ` e mais ${munis.length - 3}` : ""}`
+                : "área recortada";
+          const ttl = Number(feature.properties?.ttlMs ?? 0);
+          const by = String(feature.properties?.issuedBy ?? "");
+          lyr.bindTooltip(
+            `<strong>Mancha ${LEVEL_LABELS[level] ?? level}</strong><br/>${where}${
+              ttl ? ` · ${durationLabel(ttl)}` : ""
+            }${by ? ` · ${by}` : ""}<br/><span>Não classifica o município inteiro</span>`,
+            { sticky: true },
+          );
+        },
+      },
+    ).addTo(map);
+    stainLayerRef.current = layer;
   }
 
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
@@ -437,6 +515,7 @@ export const AlertsMap = forwardRef<
       }
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
+      syncStains();
 
       if (hostRef.current) cancelResize = observeAmazonasResize(hostRef.current, map);
 
@@ -459,6 +538,7 @@ export const AlertsMap = forwardRef<
       namesRef.current = null;
       rainLayerRef.current = null;
       territoryRef.current = null;
+      stainLayerRef.current = null;
       tilesRef.current = null;
     };
     // Map is remounted via key={OSM_BASEMAP_ID}. Paint handlers read stateRef.
@@ -501,6 +581,10 @@ export const AlertsMap = forwardRef<
       clearDraw();
     }
   }, [drawMode]);
+
+  useEffect(() => {
+    syncStains();
+  }, [stains, drawMode]);
 
   // Hover restyles only the two affected polygons directly — avoids re-styling
   // all ~62 features on every mouseover/mouseout (see full setStyle effect above).

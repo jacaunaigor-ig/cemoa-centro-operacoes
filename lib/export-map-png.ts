@@ -33,6 +33,7 @@ export type InstitutionalPngOptions = {
   legendItems: PngLegendItem[];
   footerSources: string;
   extraNote?: { title: string; text: string };
+  stains?: Array<{ geometry: Geom; color: string }>;
 };
 
 function merc(lon: number, lat: number): [number, number] {
@@ -231,6 +232,33 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   for (const f of geo.features) {
     const nome = String(f.properties?.nome ?? "");
     drawGeom(f.geometry, opts.colorFor(nome));
+  }
+
+  if (opts.stains?.length) {
+    for (const stain of opts.stains) {
+      ctx.save();
+      ctx.globalAlpha = 0.72;
+      ctx.fillStyle = stain.color;
+      ctx.strokeStyle = stain.color;
+      ctx.lineWidth = 3;
+      ctx.lineJoin = "round";
+      const drawPoly = (poly: Ring[]) => {
+        ctx.beginPath();
+        poly.forEach((ring) => {
+          ring.forEach((p, idx) => {
+            const q = project(p[0], p[1]);
+            if (idx === 0) ctx.moveTo(q[0], q[1]);
+            else ctx.lineTo(q[0], q[1]);
+          });
+          ctx.closePath();
+        });
+        ctx.fill("evenodd");
+        ctx.stroke();
+      };
+      if (stain.geometry.type === "Polygon") drawPoly(stain.geometry.coordinates);
+      else stain.geometry.coordinates.forEach(drawPoly);
+      ctx.restore();
+    }
   }
 
   const nx = 1680;

@@ -2,7 +2,7 @@
 
 Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
 
-- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
+- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
 Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
@@ -77,10 +77,10 @@ O **Aviso Meteorológico** tem duas camadas:
 2. **Edição** — liga/desliga as ferramentas do mapa sem sair da conta.
 3. **Sair** — encerra a sessão.
 
-Com a edição ligada, o operador classifica no **clique**, em **lote** ou por **polígono**, e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias). O polígono existe só no Painel de Alertas — no boletim a edição continua no clique e no lote.
+Com a edição ligada, o operador classifica no **clique**, em **lote** ou por **mancha** (polígono), e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias). O polígono existe só no Painel de Alertas — no boletim a edição continua no clique e no lote.
 
 - **Clique** — escolha o grau e a duração e toque nos municípios. O mapa pinta na hora; a ficha não abre. **Encerrar edição** (ou Esc) fecha a sessão.
-- **Polígono** — clique para marcar vértices e **Fechar polígono** (ou duplo clique) para classificar na hora quem está dentro, com o grau e a duração atuais. Esc cancela o desenho.
+- **Polígono (mancha)** — clique para marcar vértices e **Fechar mancha** (ou duplo clique). Só a área desenhada recebe a cor do grau; o município não é classificado por inteiro. Em Barcelos, Tapauá, Jutaí e outros de grande extensão, um risco local fica na mancha. **Esc** cancela o desenho.
 - **Lote** — escolha grau e duração, cole os nomes **por extenso** (um por linha ou separados por vírgula) e **Encerrar edição**.
 
 No mobile a edição fica oculta.
@@ -121,7 +121,7 @@ O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-ce
 
 O cadastro em arquivo e as classificações em memória servem para desenvolvimento. Em produção o caminho é **Supabase** (Postgres + Auth + RLS), no **mesmo projeto** já associado ao Vercel:
 
-- os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel
+- os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel; as **manchas** de polígono gravam em `alert_stains`
 - vários operadores veem o mesmo mapa
 - Auth com e-mail/senha da equipe CEMOA
 - políticas RLS: `chefe`, `meteorologista`, `geologo` e `operacional` escrevem; o painel público só lê
