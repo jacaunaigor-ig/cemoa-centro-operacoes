@@ -223,7 +223,7 @@ Cada município no painel mostra o **maior valor** entre os pontos da sede nas j
 
 `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
 
-No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora** (camada de chuva, não é classificação). O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** se a chuva cruzar o limiar — só o operador classifica o grau.
+No mapa, um pulso marca o município no limiar do produto: **≥ 20 mm/h** em chuva e alagamento, **≥ 50 mm/24 h** em movimento de massa (camada de chuva, não é classificação). O ranking à esquerda e a fila do plantão sugerem emitir ou elevar — só o operador classifica o grau.
 
 Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
 
@@ -243,13 +243,15 @@ O CEMADEN **não publica a coordenada do sensor**. Quando o nome da estação ba
 
 A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 
-| Produto | Moderado | Alto | Severo | Extremo |
+| Produto | Recorte | Moderado | Alto | Severo |
 | --- | --- | --- | --- | --- |
-| Chuva intensa | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h | 60 mm/1 h ou 90 mm/6 h |
-| Alagamento | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h | — |
-| Movimento de massa | 15 mm/6 h ou 30 mm/24 h | 30 mm/6 h ou 50 mm/24 h | 50 mm/6 h ou 80 mm/24 h | — |
+| Chuva intensa | Estado | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h (extremo: 60 mm/1 h ou 90 mm/6 h) |
+| Alagamento | Estado (exceto Manaus) | 20–40 mm/h | 40–70 mm/h | >70 mm/h |
+| Alagamento | Manaus | — | — | ≥ 40 mm/h (só se emite o severo) |
+| Movimento de massa | Estado (exceto Manaus) | 50–85 mm/24 h | 85–140 mm/24 h | >140 mm/24 h |
+| Movimento de massa | Manaus | — | — | 50–70 mm/24 h (≥ 50 mm/24 h; só se emite o severo) |
 
-Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e **≥ 20 mm/h** (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`).
+Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e o limiar do produto (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`: ≥ 20 mm/h na chuva/alagamento, ≥ 50 mm/24 h no movimento de massa).
 
 A API horária do INMET Tempo (estações automáticas A101 Manaus, A128 Barcelos etc.) existe, mas neste recorte o endpoint de série diária/horária não devolveu dados para montar acumulado de **7 dias**. A temperatura **atual** na ficha usa `estacao/proxima`; a previsão usa o Prevmet (`/api/weather`).
 

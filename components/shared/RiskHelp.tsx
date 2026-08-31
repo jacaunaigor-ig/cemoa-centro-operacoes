@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AIR_COLORS, AIR_LABELS, AIR_RANGES, RISK_LEGEND_COPY } from "@/lib/alert-types";
+import { AIR_COLORS, AIR_LABELS, AIR_RANGES, RISK_LEGEND_COPY, type AlertType } from "@/lib/alert-types";
+import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { RISK_COLORS } from "@/lib/risk";
 import { HYDRO_STATUS_COLORS, PNG_HYDRO_ITEMS } from "@/lib/hydrology";
 import { useOpsMode } from "@/components/shared/OpsMode";
@@ -21,9 +22,11 @@ const RISK_SUMMARY = [
 export function RiskHelpButton({
   className,
   variant = "alertas",
+  tipo,
 }: {
   className?: string;
   variant?: "alertas" | "boletim";
+  tipo?: AlertType;
 }) {
   const { isMobile } = useOpsMode();
   const [open, setOpen] = useState(false);
@@ -159,6 +162,12 @@ export function RiskHelpButton({
                     </article>
                   ))}
                 </div>
+
+                {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+                  <div className="mx-4 mb-3 rounded-xl border border-border bg-hover p-3.5">
+                    <MonitorThresholdLegend tipo={tipo} />
+                  </div>
+                ) : null}
 
                 <footer className="grid grid-cols-2 gap-1.5 px-4 pb-4">
                   {RISK_SUMMARY.map(([level, name, hint]) => (

@@ -14,6 +14,7 @@ import {
   rainBand,
   rainBandColor,
 } from "@/lib/rainfall-display";
+import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import type { RainfallMunicipio } from "@/lib/types";
 import { formatAmazonDateTime } from "@/lib/utils";
 
@@ -52,7 +53,7 @@ export function CemadenRainPanel({
       </div>
 
       <div className="mt-2">
-        <RainWindowsChart rain={rain} tipo={tipo} />
+        <RainWindowsChart rain={rain} tipo={tipo} where={rain} />
       </div>
 
       {showApoio ? <RainApoioCard tipo={tipo} rain={rain} /> : null}
@@ -148,7 +149,7 @@ function RainApoioCard({
   tipo: "CHUVA" | "ALAGAMENTO" | "MOVIMENTO";
   rain: RainfallMunicipio;
 }) {
-  const apoio = rainApoio(tipo, rain);
+  const apoio = rainApoio(tipo, rain, rain);
   if (!apoio) return null;
   return (
     <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
@@ -161,6 +162,11 @@ function RainApoioCard({
       <p className="mt-1 text-xs leading-snug text-text-dim" title="Sugestão de grau. Só o operador classifica.">
         {apoio.motivo}
       </p>
+      {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+        <div className="mt-2">
+          <MonitorThresholdLegend tipo={tipo} where={rain} compact />
+        </div>
+      ) : null}
     </div>
   );
 }

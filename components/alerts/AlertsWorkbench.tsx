@@ -87,10 +87,9 @@ import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayloa
 import {
   hasRain,
   hasRainReading,
-  INTENSE_MM_PER_H,
-  isIntense1h,
   parseRainFilter,
 } from "@/lib/rainfall-display";
+import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
 import {
   airSensorsForMap,
   applyAirClassification,
@@ -107,6 +106,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
+import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
@@ -836,7 +836,7 @@ export function AlertsWorkbench() {
       } else {
         if (rainFilter === "COM_LEITURA" && !hasRainReading(rain?.byNome[m.nome])) return false;
         if (rainFilter === "COM_CHUVA" && !hasRain(rain?.byNome[m.nome])) return false;
-        if (rainFilter === "INTENSO" && !isIntense1h(rain?.byNome[m.nome]?.mm1h)) return false;
+        if (rainFilter === "INTENSO" && !hitsMapBurst(tipo, rain?.byNome[m.nome] ?? {})) return false;
       }
       if (
         needle &&
@@ -1601,6 +1601,7 @@ export function AlertsWorkbench() {
                   pluvio={pluvio}
                   airSensors={airPoints}
                   pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
+                  tipo={tipo}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
                   eraseMode={admin && eraseMode}
@@ -1621,7 +1622,10 @@ export function AlertsWorkbench() {
                   {geoError} O mapa-base continua visível.
                 </div>
               ) : null}
-              <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
+              <RiskHelpButton
+                className="pointer-events-auto absolute left-16 top-3 z-[1100]"
+                tipo={tipo}
+              />
               {indiceInterno && showIndice && !selected ? (
                 <IndiceSheet
                   className={cn(
@@ -1725,6 +1729,7 @@ export function AlertsWorkbench() {
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
                 ) : (
+                <>
                 <button
                   type="button"
                   className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
@@ -1737,9 +1742,19 @@ export function AlertsWorkbench() {
                   }
                 >
                   <span className="size-2.5 rounded-full bg-risco-severo" />
-                  Chuva ≥ {INTENSE_MM_PER_H} mm/h
-                  <span className="ml-auto font-mono">{rain?.coverage.intenso1h ?? 0}</span>
+                  {mapBurstThreshold(tipo).label}
+                  <span className="ml-auto font-mono">
+                    {tipo === "MOVIMENTO"
+                      ? Object.values(rain?.byNome ?? {}).filter((r) => (r.mm24h ?? 0) >= 50).length
+                      : (rain?.coverage.intenso1h ?? 0)}
+                  </span>
                 </button>
+                {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+                  <div className="mt-2 border-t border-border/70 pt-2">
+                    <MonitorThresholdLegend tipo={tipo} />
+                  </div>
+                ) : null}
+                </>
                 )}
               </MapLegendCard>
             </div>

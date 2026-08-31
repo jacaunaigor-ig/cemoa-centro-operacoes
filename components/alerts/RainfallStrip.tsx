@@ -3,17 +3,18 @@
 import { CemadenIcon } from "@/components/shared/CemadenIcon";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { RainWindowsChart } from "@/components/alerts/RainWindowsChart";
+import type { AlertType } from "@/lib/alert-types";
 import type { RainFilter, RainfallPayload, RainfallWindows } from "@/lib/types";
 import {
   formatMm,
   formatWindowsCompact,
   hasRain,
-  INTENSE_MM_PER_H,
   peakMm,
   rainBand,
   rainBandColor,
   rainBandLabel,
 } from "@/lib/rainfall-display";
+import { mapBurstThreshold } from "@/lib/monitor-thresholds";
 import { cn } from "@/lib/utils";
 
 function picoText(
@@ -29,12 +30,14 @@ export function RainfallStrip({
   loading,
   filter,
   onFilter,
+  tipo,
   className,
 }: {
   rain: RainfallPayload | null;
   loading: boolean;
   filter: RainFilter;
   onFilter: (next: RainFilter) => void;
+  tipo?: AlertType;
   className?: string;
 }) {
   const cov = rain?.coverage;
@@ -43,6 +46,11 @@ export function RainfallStrip({
     picoText("1 h", picos?.mm1h) ??
     picoText("6 h", picos?.mm6h) ??
     picoText("24 h", picos?.mm24h);
+  const burst = mapBurstThreshold(tipo);
+  const burstCount =
+    tipo === "MOVIMENTO"
+      ? Object.values(rain?.byNome ?? {}).filter((r) => (r.mm24h ?? 0) >= burst.mm).length
+      : (cov?.intenso1h ?? 0);
   const { isMobile } = useOpsMode();
   const band = rainBand(peakMm(rain?.maior ?? null));
   const statewide: RainfallWindows = {
@@ -85,7 +93,7 @@ export function RainfallStrip({
       </div>
       {!isMobile ? (
       <div className="hidden w-[9.5rem] shrink-0 sm:block">
-        <RainWindowsChart rain={statewide} compact />
+        <RainWindowsChart rain={statewide} compact tipo={tipo} />
       </div>
       ) : null}
       <div className={cn("flex min-w-0 gap-1", isMobile ? "flex-1 overflow-x-auto" : "ml-auto flex-wrap")}>
@@ -99,7 +107,7 @@ export function RainfallStrip({
           Chuva ({cov?.comChuva ?? 0})
         </RainChip>
         <RainChip active={filter === "INTENSO"} onClick={() => onFilter("INTENSO")}>
-          ≥{INTENSE_MM_PER_H} ({cov?.intenso1h ?? 0})
+          {burst.label.replace("≥ ", "≥")} ({burstCount})
         </RainChip>
       </div>
       {hasRain(rain?.maior ?? null) ? (

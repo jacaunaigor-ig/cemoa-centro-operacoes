@@ -94,7 +94,7 @@ export function buildPlantaoQueue({
     const left = remainingMs(m.expiresAt, now);
     const tone = countdownTone(left);
     const rec = rain?.byNome[m.nome];
-    let apoio = rainApoio(tipo, rec);
+    let apoio = rainApoio(tipo, rec, { nome: m.nome, id: m.id });
     if (tipo === "MOVIMENTO" && apoio && apoio.level !== "BAIXO" && !temAreaMapeada(m.id)) {
       apoio = null;
     }

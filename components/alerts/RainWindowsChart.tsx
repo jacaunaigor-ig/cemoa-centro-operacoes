@@ -2,14 +2,14 @@
 
 import type { AlertType } from "@/lib/alert-types";
 import {
-  chartMarkMm,
+  chartMarks,
   chartScale,
   formatMm,
   formatMmShort,
-  INTENSE_MM_PER_H,
   rainBand,
   rainBandColor,
 } from "@/lib/rainfall-display";
+import { monitorWindowFor } from "@/lib/monitor-thresholds";
 import type { RainfallWindows } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -23,24 +23,28 @@ export function RainWindowsChart({
   rain,
   tipo,
   compact = false,
+  where,
 }: {
   rain: RainfallWindows;
   tipo?: AlertType;
   compact?: boolean;
+  where?: { nome?: string; id?: string } | string | null;
 }) {
   const height = compact ? 52 : 88;
   const axis = compact ? 14 : 18;
+  const focus = monitorWindowFor(tipo);
 
   return (
     <div className={cn("grid grid-cols-3 gap-1.5", compact && "gap-1")}>
       {JANELAS.map(({ key, label, scale }) => {
         const mm = rain[key];
-        const max = chartScale(mm, scale);
-        const mark = chartMarkMm(tipo, scale);
+        const max = chartScale(mm, scale, tipo);
+        const marks = chartMarks(tipo, scale, where);
+        const visibleMarks = compact ? marks.slice(0, 1) : marks;
         const band = rainBand(mm);
         const color = rainBandColor(band);
         const barH = mm == null || mm <= 0 ? 0 : Math.max(3, (mm / max) * (height - axis));
-        const markY = mark != null ? ((max - mark) / max) * (height - axis) : null;
+        const plotH = height - axis;
         return (
           <div key={key} className="min-w-0">
             <svg
@@ -50,18 +54,23 @@ export function RainWindowsChart({
               role="img"
               aria-label={`${label}: ${formatMm(mm)}`}
             >
-              <rect x="18" y="0" width="28" height={height - axis} rx="4" fill="var(--hover)" />
-              {markY != null && markY >= 0 && markY <= height - axis ? (
-                <line
-                  x1="14"
-                  x2="50"
-                  y1={markY}
-                  y2={markY}
-                  stroke="#e21c2b"
-                  strokeWidth="1.2"
-                  strokeDasharray="3 2"
-                />
-              ) : null}
+              <rect x="18" y="0" width="28" height={plotH} rx="4" fill="var(--hover)" />
+              {visibleMarks.map((mark) => {
+                const y = ((max - mark.mm) / max) * plotH;
+                if (y < 0 || y > plotH) return null;
+                return (
+                  <line
+                    key={mark.mm}
+                    x1="14"
+                    x2="50"
+                    y1={y}
+                    y2={y}
+                    stroke={mark.color}
+                    strokeWidth="1.2"
+                    strokeDasharray="3 2"
+                  />
+                );
+              })}
               <rect
                 x="18"
                 y={height - axis - barH}
@@ -96,8 +105,12 @@ export function RainWindowsChart({
       })}
       {!compact ? (
         <p className="col-span-3 text-[10px] text-text-mute">
-          Traço vermelho = {INTENSE_MM_PER_H} mm/h na 1 h
-          {tipo === "MOVIMENTO" ? " · 30 mm/6 h e 50 mm/24 h no movimento de massa" : ""}.
+          {tipo === "ALAGAMENTO"
+            ? "Traços na 1 h: 20 / 40 / 70 mm/h no estado; Manaus só severo (≥ 40 mm/h)."
+            : tipo === "MOVIMENTO"
+              ? "Traços nas 24 h: 50 / 85 / 140 mm/24 h no estado; Manaus só severo (≥ 50 mm/24 h)."
+              : "Traço vermelho = 20 mm/h na 1 h."}
+          {focus ? ` Destaque em ${focus === "1h" ? "1 h" : "24 h"}.` : ""}
         </p>
       ) : null}
     </div>

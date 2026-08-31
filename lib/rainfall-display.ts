@@ -1,5 +1,13 @@
 import type { AlertType } from "@/lib/alert-types";
 import type { RainBand, RainfallWindows, RiskLevel } from "@/lib/types";
+import {
+  classifyMonitorRain,
+  formatBandFloor,
+  formatBandRange,
+  isManaus,
+  monitorChartMarks,
+  type ChartMark,
+} from "@/lib/monitor-thresholds";
 
 export function formatMm(mm: number | null | undefined): string {
   if (mm == null || !Number.isFinite(mm)) return "—";
@@ -87,7 +95,7 @@ export function cemadenGraficoUrl(idEstacao: string, uf = "AM"): string {
 
 export type RainApoio = { level: RiskLevel; motivo: string };
 
-function hit(
+function ifHit(
   cond: boolean,
   level: RiskLevel,
   motivo: string,
@@ -95,38 +103,39 @@ function hit(
   return cond ? { level, motivo } : null;
 }
 
-/** Apoio operacional — não altera o grau. 20 mm/h é o limiar de chuva intensa no mapa. */
+/** Apoio operacional — não altera o grau. */
 export function rainApoio(
   tipo: AlertType | undefined,
   rain: RainfallWindows | null | undefined,
+  where?: { nome?: string; id?: string } | string | null,
 ): RainApoio | null {
   if (!rain || (tipo !== "CHUVA" && tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return null;
   if (!hasRainReading(rain)) return null;
 
   if (tipo === "CHUVA") {
     return (
-      hit(
+      ifHit(
         (rain.mm1h ?? 0) >= 60 || (rain.mm6h ?? 0) >= 90,
         "EXTREMO",
         (rain.mm1h ?? 0) >= 60
           ? `1 h com ${formatMm(rain.mm1h)} — limiar de chuva extrema (≥ 60 mm/1 h).`
           : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva extrema (≥ 90 mm/6 h).`,
       ) ??
-      hit(
+      ifHit(
         (rain.mm1h ?? 0) >= 40 || (rain.mm6h ?? 0) >= 60,
         "SEVERO",
         (rain.mm1h ?? 0) >= 40
           ? `1 h com ${formatMm(rain.mm1h)} — limiar de chuva severa (≥ 40 mm/1 h).`
           : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva severa (≥ 60 mm/6 h).`,
       ) ??
-      hit(
+      ifHit(
         (rain.mm1h ?? 0) >= INTENSE_MM_PER_H || (rain.mm6h ?? 0) >= 40,
         "ALTO",
         (rain.mm1h ?? 0) >= INTENSE_MM_PER_H
           ? `1 h com ${formatMm(rain.mm1h)} — chuva intensa no mapa (≥ ${INTENSE_MM_PER_H} mm/h).`
           : `6 h com ${formatMm(rain.mm6h)} — limiar de chuva alta (≥ 40 mm/6 h).`,
       ) ??
-      hit(
+      ifHit(
         (rain.mm1h ?? 0) >= 10 || (rain.mm6h ?? 0) >= 20,
         "MODERADO",
         (rain.mm1h ?? 0) >= 10
@@ -140,71 +149,59 @@ export function rainApoio(
   }
 
   if (tipo === "ALAGAMENTO") {
-    if ((rain.mm1h ?? 0) >= 40 || (rain.mm6h ?? 0) >= 60) {
+    const mm = rain.mm1h;
+    if (mm == null || !Number.isFinite(mm)) {
       return {
-        level: "SEVERO",
-        motivo:
-          (rain.mm1h ?? 0) >= 40
-            ? `1 h com ${formatMm(rain.mm1h)} — limiar de alagamento severo (≥ 40 mm/1 h).`
-            : `6 h com ${formatMm(rain.mm6h)} — limiar de alagamento severo (≥ 60 mm/6 h).`,
+        level: "BAIXO",
+        motivo: "Sem acumulado de 1 h para o limiar de alagamento (mm/h).",
       };
     }
-    if ((rain.mm1h ?? 0) >= 20 || (rain.mm6h ?? 0) >= 40) {
+    const classified = classifyMonitorRain("ALAGAMENTO", mm, where);
+    if (!classified.band) {
       return {
-        level: "ALTO",
-        motivo:
-          (rain.mm1h ?? 0) >= 20
-            ? `1 h com ${formatMm(rain.mm1h)} — limiar de alagamento alto (≥ 20 mm/1 h).`
-            : `6 h com ${formatMm(rain.mm6h)} — limiar de alagamento alto (≥ 40 mm/6 h).`,
+        level: "BAIXO",
+        motivo: isManaus(where)
+          ? `1 h com ${formatMm(mm)} — Manaus só sugere alerta no severo (≥ 40 mm/h).`
+          : `1 h com ${formatMm(mm)} — abaixo do limiar de alagamento do estado (20 mm/h).`,
       };
     }
-    if ((rain.mm1h ?? 0) >= 10 || (rain.mm6h ?? 0) >= 20) {
-      return {
-        level: "MODERADO",
-        motivo:
-          (rain.mm1h ?? 0) >= 10
-            ? `1 h com ${formatMm(rain.mm1h)} — limiar de alagamento moderado (≥ 10 mm/1 h).`
-            : `6 h com ${formatMm(rain.mm6h)} — limiar de alagamento moderado (≥ 20 mm/6 h).`,
-      };
-    }
+    const recorte = classified.profile.id === "manaus" ? "Manaus · só severo" : "estado";
     return {
-      level: "BAIXO",
-      motivo: "Acumulados 1 h e 6 h abaixo dos limiares de alagamento do plantão.",
+      level: classified.level,
+      motivo: `1 h com ${formatMm(mm)} — ${recorte}, ${LEVEL_MOTIVO[classified.level]} de alagamento (${formatBandRange(classified.band)}).`,
     };
   }
 
-  if ((rain.mm24h ?? 0) >= 80 || (rain.mm6h ?? 0) >= 50) {
+  const mm24 = rain.mm24h;
+  if (mm24 == null || !Number.isFinite(mm24)) {
     return {
-      level: "SEVERO",
-      motivo:
-        (rain.mm24h ?? 0) >= 80
-          ? `24 h com ${formatMm(rain.mm24h)} — limiar de movimento de massa severo (≥ 80 mm/24 h).`
-          : `6 h com ${formatMm(rain.mm6h)} — limiar de movimento de massa severo (≥ 50 mm/6 h).`,
+      level: "BAIXO",
+      motivo: "Sem acumulado de 24 h para o limiar de movimento de massa.",
     };
   }
-  if ((rain.mm24h ?? 0) >= 50 || (rain.mm6h ?? 0) >= 30) {
+  const classified = classifyMonitorRain("MOVIMENTO", mm24, where);
+  if (!classified.band) {
     return {
-      level: "ALTO",
-      motivo:
-        (rain.mm24h ?? 0) >= 50
-          ? `24 h com ${formatMm(rain.mm24h)} — limiar de movimento de massa alto (≥ 50 mm/24 h).`
-          : `6 h com ${formatMm(rain.mm6h)} — limiar de movimento de massa alto (≥ 30 mm/6 h).`,
+      level: "BAIXO",
+      motivo: isManaus(where)
+        ? `24 h com ${formatMm(mm24)} — Manaus só sugere alerta no severo (≥ 50 mm/24 h).`
+        : `24 h com ${formatMm(mm24)} — abaixo do limiar de movimento de massa do estado (50 mm/24 h).`,
     };
   }
-  if ((rain.mm24h ?? 0) >= 30 || (rain.mm6h ?? 0) >= 15) {
-    return {
-      level: "MODERADO",
-      motivo:
-        (rain.mm24h ?? 0) >= 30
-          ? `24 h com ${formatMm(rain.mm24h)} — limiar de movimento de massa moderado (≥ 30 mm/24 h).`
-          : `6 h com ${formatMm(rain.mm6h)} — limiar de movimento de massa moderado (≥ 15 mm/6 h).`,
-    };
-  }
+  const recorte = classified.profile.id === "manaus" ? "Manaus · só severo" : "estado";
   return {
-    level: "BAIXO",
-    motivo: "Acumulados 6 h e 24 h abaixo dos limiares de movimento de massa do plantão.",
+    level: classified.level,
+    motivo: `24 h com ${formatMm(mm24)} — ${recorte}, ${LEVEL_MOTIVO[classified.level]} de movimento de massa (${formatBandFloor(classified.band)}).`,
   };
 }
+
+const LEVEL_MOTIVO: Record<RiskLevel, string> = {
+  BAIXO: "monitoramento",
+  MODERADO: "risco moderado",
+  ALTO: "risco alto",
+  SEVERO: "alerta severo",
+  EXTREMO: "risco extremo",
+};
 
 export type RainRankAction = "manter" | "emitir" | "elevar";
 
@@ -242,15 +239,38 @@ export function rainRankAction(current: string, suggested: RiskLevel | null): Ra
   return "manter";
 }
 
-export function chartScale(mm: number | null | undefined, janela: "1h" | "6h" | "24h"): number {
-  const cap = janela === "1h" ? 50 : janela === "6h" ? 80 : 120;
+export function chartScale(
+  mm: number | null | undefined,
+  janela: "1h" | "6h" | "24h",
+  tipo?: AlertType,
+): number {
+  const cap =
+    janela === "1h"
+      ? tipo === "ALAGAMENTO"
+        ? 90
+        : 50
+      : janela === "6h"
+        ? 80
+        : tipo === "MOVIMENTO"
+          ? 180
+          : 120;
   const value = mm ?? 0;
   return Math.max(cap, value * 1.15);
 }
 
+export function chartMarks(
+  tipo: AlertType | undefined,
+  janela: "1h" | "6h" | "24h",
+  where?: { nome?: string; id?: string } | string | null,
+): ChartMark[] {
+  const product = monitorChartMarks(tipo, janela, where);
+  if (product.length) return product;
+  if (janela === "1h") {
+    return [{ mm: INTENSE_MM_PER_H, color: "#e21c2b", label: `${INTENSE_MM_PER_H}` }];
+  }
+  return [];
+}
+
 export function chartMarkMm(tipo: AlertType | undefined, janela: "1h" | "6h" | "24h"): number | null {
-  if (janela === "1h") return INTENSE_MM_PER_H;
-  if (janela === "6h") return tipo === "MOVIMENTO" ? 30 : 40;
-  if (janela === "24h") return tipo === "MOVIMENTO" ? 50 : null;
-  return null;
+  return chartMarks(tipo, janela)[0]?.mm ?? null;
 }

@@ -46,6 +46,7 @@ export function ProductMonitorStrip({
       loading={loadingRain}
       filter={rainFilter}
       onFilter={onRainFilter}
+      tipo={tipo}
     />
   );
 }

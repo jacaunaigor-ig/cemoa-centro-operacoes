@@ -89,6 +89,15 @@ export function PlantaoQueue({
         </span>
       </div>
 
+      {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+        <p className="mt-1 text-[10px] leading-snug text-text-dim">
+          {tipo === "ALAGAMENTO"
+            ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: só severo ≥ 40 mm/h."
+            : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: só severo ≥ 50 mm/24 h."}{" "}
+          Não classifica o grau.
+        </p>
+      ) : null}
+
       <div className="mt-1.5 flex flex-wrap gap-1" role="toolbar" aria-label="Filtrar a fila do plantão">
         <FilterChip active={activeFilter === "TODOS"} onClick={() => setFilter("TODOS")}>
           Todos ({items.length})

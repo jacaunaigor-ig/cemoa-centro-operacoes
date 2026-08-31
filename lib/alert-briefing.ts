@@ -1,7 +1,7 @@
 import { AIR_LABELS, isAlertActive, levelLabel, riskActionFor, type AlertType } from "@/lib/alert-types";
 import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
-import { formatMm, INTENSE_MM_PER_H, isIntense1h } from "@/lib/rainfall-display";
+import { formatMm, INTENSE_MM_PER_H, isIntense1h, rainApoio } from "@/lib/rainfall-display";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainfallMunicipio } from "@/lib/types";
 
 export type AlertBriefing = {
@@ -48,6 +48,11 @@ export function buildAlertBriefing({
   }
   if (tipo === "INCENDIO" && air?.level && air.level !== "BOA" && air.pm25 != null) {
     risks.push(`Qualidade ${AIR_LABELS[air.level]} · ${formatUg(air.pm25)}`);
+  } else if ((tipo === "ALAGAMENTO" || tipo === "MOVIMENTO") && rain) {
+    const apoio = rainApoio(tipo, rain, nome);
+    if (apoio && apoio.level !== "BAIXO") {
+      risks.push(apoio.motivo);
+    }
   } else if (tipo !== "INCENDIO" && rain && isIntense1h(rain.mm1h)) {
     risks.push(`Chuva intensa na última hora (${formatMm(rain.mm1h)} ≥ ${INTENSE_MM_PER_H} mm)`);
   } else if (tipo !== "INCENDIO" && rain && (rain.mm6h ?? 0) >= 50) {

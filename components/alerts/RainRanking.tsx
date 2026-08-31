@@ -27,7 +27,7 @@ export function buildRainRanking(
   for (const m of catalog) {
     const rec = rain.byNome[m.nome];
     if (!rec || !hasRain(rec)) continue;
-    const apoio = rainApoio(tipo, rec);
+    const apoio = rainApoio(tipo, rec, m.nome);
     const action = rainRankAction(m.risco, apoio?.level ?? null);
     rows.push({
       nome: m.nome,

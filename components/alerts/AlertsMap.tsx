@@ -15,7 +15,9 @@ import type {
 } from "leaflet";
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
-import { formatMm, formatMmShort, formatWindowsCompact, INTENSE_MM_PER_H } from "@/lib/rainfall-display";
+import { formatMm, formatMmShort, formatWindowsCompact } from "@/lib/rainfall-display";
+import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
+import type { AlertType } from "@/lib/alert-types";
 import { formatUg } from "@/lib/air-quality-display";
 import {
   AMAZONAS_CENTER,
@@ -86,6 +88,7 @@ export const AlertsMap = forwardRef<
     pluvio: PluvioStation[];
     airSensors?: AirQualitySensor[];
     pointKind?: "cemaden" | "air";
+    tipo?: AlertType;
     onlyRisk: boolean;
     hovered?: string | null;
     drawMode?: boolean;
@@ -114,6 +117,7 @@ export const AlertsMap = forwardRef<
     pluvio,
     airSensors = [],
     pointKind = "cemaden",
+    tipo = "CHUVA",
     onlyRisk,
     hovered,
     drawMode = false,
@@ -165,6 +169,7 @@ export const AlertsMap = forwardRef<
     pluvio,
     airSensors,
     pointKind,
+    tipo,
     drawMode,
     eraseMode,
     stains,
@@ -191,6 +196,7 @@ export const AlertsMap = forwardRef<
       pluvio,
       airSensors,
       pointKind,
+      tipo,
       drawMode,
       eraseMode,
       stains,
@@ -215,6 +221,7 @@ export const AlertsMap = forwardRef<
     pluvio,
     airSensors,
     pointKind,
+    tipo,
     drawMode,
     eraseMode,
     stains,
@@ -497,8 +504,8 @@ export const AlertsMap = forwardRef<
                         mm72h: null,
                         mm96h: null,
                       })} mm${
-                        (m.mm1h ?? 0) >= INTENSE_MM_PER_H
-                          ? ` · chuva ≥ ${INTENSE_MM_PER_H} mm/h`
+                        hitsMapBurst(stateRef.current.tipo, m)
+                          ? ` · ${mapBurstThreshold(stateRef.current.tipo).label}`
                           : ""
                       }`
                     : "";
@@ -560,7 +567,7 @@ export const AlertsMap = forwardRef<
       const rainLayer = L.layerGroup();
       rainLayer.addTo(map);
       rainLayerRef.current = rainLayer;
-      syncRainBursts(L, rainLayer, stateRef.current.municipios, (nome, bacia) => {
+      syncRainBursts(L, rainLayer, stateRef.current.municipios, stateRef.current.tipo, (nome, bacia) => {
         if (stateRef.current.drawMode || stateRef.current.eraseMode) return;
         if (stateRef.current.adminMode) paintFeature(nome);
         else onSelectRef.current(nome, bacia);
@@ -615,9 +622,9 @@ export const AlertsMap = forwardRef<
 
   const riscoSig = municipios.map((m) => `${m.id}:${m.risco}`).join("|");
   const rainBurstSig = municipios
-    .filter((m) => pointKind !== "air" && (m.mm1h ?? 0) >= INTENSE_MM_PER_H)
-    .map((m) => `${m.id}:${m.mm1h}`)
-    .join("|");
+    .filter((m) => pointKind !== "air" && hitsMapBurst(tipo, m))
+    .map((m) => `${m.id}:${m.mm1h}:${m.mm24h}`)
+    .join("|") + `|${tipo}`;
   const stainSig = stains.map((s) => `${s.id}:${s.level}`).join("|");
   const calhaSig = (calhaNomes ?? []).join("|");
 
@@ -631,7 +638,7 @@ export const AlertsMap = forwardRef<
     const L = leafletRef.current;
     const layer = rainLayerRef.current;
     if (!L || !layer) return;
-    syncRainBursts(L, layer, municipios, (nome, bacia) => {
+    syncRainBursts(L, layer, municipios, tipo, (nome, bacia) => {
       if (stateRef.current.drawMode || stateRef.current.eraseMode) return;
       if (stateRef.current.adminMode) paintFeature(nome);
       else onSelectRef.current(nome, bacia);
@@ -751,20 +758,23 @@ function syncRainBursts(
   L: typeof import("leaflet"),
   layer: LayerGroup,
   municipios: Muni[],
+  tipo: AlertType,
   onSelect: (nome: string, bacia: string) => void,
 ) {
   layer.clearLayers();
+  const burst = mapBurstThreshold(tipo);
   for (const m of municipios) {
-    if ((m.mm1h ?? 0) < INTENSE_MM_PER_H) continue;
+    if (!hitsMapBurst(tipo, m)) continue;
+    const shown = burst.window === "24h" ? m.mm24h : m.mm1h;
     const icon = L.divIcon({
       className: "rain-burst-wrap",
-      html: `<div class="rain-burst" aria-hidden="true"><span class="rain-burst-core">${formatMmShort(m.mm1h)}</span></div>`,
+      html: `<div class="rain-burst" aria-hidden="true"><span class="rain-burst-core">${formatMmShort(shown)}</span></div>`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
     });
     const marker = L.marker([m.lat, m.lon], { icon, keyboard: false, zIndexOffset: 800 });
     marker.bindTooltip(
-      `<strong>${m.nome}</strong><br/>Chuva intensa ${formatMm(m.mm1h)} / 1 h (≥ ${INTENSE_MM_PER_H} mm/h)`,
+      `<strong>${m.nome}</strong><br/>${burst.window === "24h" ? "24 h" : "1 h"} ${formatMm(shown)} (${burst.label})`,
       { direction: "top" },
     );
     marker.on("click", (ev) => {
