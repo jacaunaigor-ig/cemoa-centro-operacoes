@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { airLevelFromPm25 } from "@/lib/alert-types";
+import { pointInRing } from "@/lib/geo";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import type {
   AirNetwork,
@@ -15,6 +18,7 @@ const FRESH_MS = 24 * 60 * 60 * 1000;
 const MAX_KM = 55;
 const ANOMALOUS_UG = 500;
 const AM_BBOX = { west: -73.9, south: -11.2, east: -56.0, north: 2.4 };
+const MESH_PATH = join(process.cwd(), "public/geo/amazonas-municipios.json");
 
 const SOURCE =
   "PurpleAir via App SELVA · monitores SEMA/DC-AM e UEA EducAIR (MP2,5 não regulatório)";
@@ -23,6 +27,7 @@ type Memo = { at: number; data: AirQualityPayload };
 let memo: Memo | null = null;
 let inflight: Promise<AirQualityPayload> | null = null;
 let cookieMemo: { at: number; value: string } | null = null;
+let mesh: Array<{ id: string; nome: string; rings: number[][][] }> | null = null;
 
 type SelvaPacket = {
   fields?: string[];
@@ -136,6 +141,29 @@ async function fetchSelvaPacket(): Promise<SelvaPacket> {
   }
 }
 
+function municipalMesh() {
+  if (mesh) return mesh;
+  const raw = JSON.parse(readFileSync(MESH_PATH, "utf8")) as {
+    features?: Array<{
+      properties?: { id?: string; nome?: string };
+      geometry?: { type: string; coordinates: unknown };
+    }>;
+  };
+  mesh = [];
+  for (const feature of raw.features ?? []) {
+    const id = String(feature.properties?.id ?? "");
+    const nome = String(feature.properties?.nome ?? "");
+    const geom = feature.geometry;
+    if (!id || !nome || !geom) continue;
+    const polys =
+      geom.type === "MultiPolygon"
+        ? (geom.coordinates as number[][][][])
+        : ([geom.coordinates] as number[][][][]);
+    mesh.push({ id, nome, rings: polys.map((poly) => poly[0]).filter(Boolean) });
+  }
+  return mesh;
+}
+
 function nearestMunicipio(lat: number, lon: number) {
   let best: { id: string; nome: string; km: number } | null = null;
   for (const m of MUNICIPALITIES) {
@@ -144,6 +172,18 @@ function nearestMunicipio(lat: number, lon: number) {
   }
   if (!best || best.km > MAX_KM) return null;
   return best;
+}
+
+function municipioOf(lat: number, lon: number) {
+  const sede = new Map(MUNICIPALITIES.map((m) => [m.id, m]));
+  for (const feat of municipalMesh()) {
+    if (feat.rings.some((ring) => pointInRing(lon, lat, ring))) {
+      const seat = sede.get(feat.id);
+      const km = seat ? Math.round(kmBetween(lat, lon, seat.lat, seat.lon) * 10) / 10 : 0;
+      return { id: feat.id, nome: feat.nome, km };
+    }
+  }
+  return nearestMunicipio(lat, lon);
 }
 
 function emptyPayload(error: string | null): AirQualityPayload {
@@ -210,7 +250,7 @@ function buildFromPacket(packet: SelvaPacket, error: string | null): AirQualityP
     }
     const lastSeen = Number.isFinite(lastSeenSec) ? lastSeenSec * 1000 : 0;
     if (lastSeen < freshAfter) continue;
-    const hit = nearestMunicipio(lat, lon);
+    const hit = municipioOf(lat, lon);
     if (!hit) continue;
     const name = String(row[iName] ?? `sensor ${row[iIndex]}`);
     sensors.push({

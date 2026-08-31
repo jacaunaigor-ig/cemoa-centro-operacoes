@@ -18,7 +18,7 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 
 A classificação de qualidade do ar não segue o art. 12 da Portaria MIDR nº 2.458/2026. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito Ruim 75–125, Péssima >125 µg/m³.
 
-No produto **Incêndio florestal** o painel puxa os monitores **PurpleAir** da rede **SEMA/DC-AM** e **UEA EducAIR** pelo **App SELVA** (`/api/air-quality`). Só entram sensores com leitura nas últimas **24 h**, no Amazonas, até **55 km da sede** (para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. A camada **Sensores PurpleAir · SELVA** marca a coordenada real do monitor. MP2,5 **sugere** emitir/elevar na fila do plantão — **não pinta** o município. Leitura de baixo custo, a mesma do App SELVA: não substitui estação regulatória.
+No produto **Incêndio florestal** o painel puxa os monitores **PurpleAir** da rede **SEMA/DC-AM** e **UEA EducAIR** pelo **App SELVA** (`/api/air-quality`). Só entram sensores com leitura nas últimas **24 h** que caem no polígono de um dos 62 municípios (com folga de 55 km da sede se a malha simplificada falhar — para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. A camada **Sensores PurpleAir · SELVA** marca a coordenada real do monitor. MP2,5 **sugere** emitir/elevar na fila do plantão — **não pinta** o município. Leitura de baixo custo, a mesma do App SELVA: não substitui estação regulatória.
 
 Ainda não entram no recorte (dados que o SELVA também publica em `route=files`): estimado CAMS e focos FIRMS. Quando entrar, ficam no mesmo produto de incêndio — sem cartão novo no centro.
 
