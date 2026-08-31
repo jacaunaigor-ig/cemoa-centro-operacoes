@@ -188,12 +188,25 @@ export function HydrologyWorkbench() {
             const raw = localStorage.getItem(HYDRO_STORAGE);
             if (raw) {
               const updates = JSON.parse(raw) as Record<string, HydroPatch>;
-              if (Object.keys(updates).length) {
+              const meaningful: Record<string, HydroPatch> = {};
+              for (const [id, patch] of Object.entries(updates)) {
+                const next: HydroPatch = {};
+                if ("cota" in patch) next.cota = patch.cota ?? null;
+                if (typeof patch.semLeitura === "boolean") next.semLeitura = patch.semLeitura;
+                if (patch.statusVazante && patch.statusVazante !== "NORMAL") {
+                  next.statusVazante = patch.statusVazante;
+                }
+                if (patch.statusEnchente && patch.statusEnchente !== "NORMAL") {
+                  next.statusEnchente = patch.statusEnchente;
+                }
+                if (Object.keys(next).length) meaningful[id] = next;
+              }
+              if (Object.keys(meaningful).length) {
                 await fetch("/api/hydrology/overrides", {
                   method: "POST",
                   credentials: "same-origin",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ updates, replace: true }),
+                  body: JSON.stringify({ updates: meaningful, replace: false }),
                 });
               }
             }

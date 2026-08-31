@@ -97,6 +97,7 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
+import { HydroSituationCard } from "@/components/alerts/HydroSituationCard";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
@@ -1165,6 +1166,10 @@ export function AlertsWorkbench() {
             }
           >
             <MeteoAvisoDutyCard />
+            <HydroSituationCard
+              stations={hydroStations}
+              referencia={hydro?.referencia}
+            />
             {!isMobile && plantaoTotal > 0 ? (
               <a
                 href="#fila-plantao"
