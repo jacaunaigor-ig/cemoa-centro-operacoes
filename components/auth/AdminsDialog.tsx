@@ -26,7 +26,7 @@ type AdminRow = {
 };
 
 export function AdminsDialog() {
-  const { adminsOpen, session, googleEnabled, closeAdmins } = useOpsMode();
+  const { adminsOpen, session, googleEnabled, closeAdmins, seats } = useOpsMode();
   const [admins, setAdmins] = useState<AdminRow[]>([]);
   const [me, setMe] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +171,7 @@ export function AdminsDialog() {
       onClose={closeAdmins}
       wide
       title="Equipe de operadores"
-      description="Quadro do Centro de Monitoramento. Quem entra aqui classifica alertas e atualiza cotas. Associe um Gmail para entrar sem senha."
+      description="Quadro do Centro de Monitoramento. Até 6 operadores podem estar logados ao mesmo tempo. Quem entra aqui classifica alertas e atualiza cotas. Associe um Gmail para entrar sem senha."
     >
       <EquipeRoster admins={admins} me={me} />
 
@@ -192,6 +192,9 @@ export function AdminsDialog() {
                   {row.name}
                   {row.id === me ? (
                     <span className="ml-2 text-[10px] font-semibold text-brand-2">você</span>
+                  ) : null}
+                  {seats.some((seat) => seat.userId === row.id || seat.login === row.login) ? (
+                    <span className="ml-2 text-[10px] font-semibold text-live">no posto</span>
                   ) : null}
                 </p>
                 <p className="text-[11px] text-text-mute">

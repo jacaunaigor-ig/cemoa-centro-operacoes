@@ -17,6 +17,7 @@ import {
   readLocalSession,
 } from "@/lib/local-auth";
 import { withOperatorRole, type EquipeRole } from "@/lib/equipe";
+import { MAX_OPERATOR_SEATS, type OperatorSeat } from "@/lib/operator-seats-shared";
 
 export type LayoutMode = "desktop" | "mobile";
 export type ThemeMode = "light" | "dark";
@@ -46,6 +47,8 @@ type OpsMode = {
   authError: string | null;
   loginOpen: boolean;
   adminsOpen: boolean;
+  seats: OperatorSeat[];
+  maxSeats: number;
   setTheme: (theme: ThemeMode) => void;
   setMapFocus: (on: boolean) => void;
   setAdmin: (on: boolean) => void;
@@ -152,6 +155,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [loginOpen, setLoginOpen] = useState(false);
   const [adminsOpen, setAdminsOpen] = useState(false);
+  const [seats, setSeats] = useState<OperatorSeat[]>([]);
   const authGen = useRef(0);
 
   const applyAuth = useCallback(
@@ -201,8 +205,10 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
         googleEnabled?: boolean;
         allowReset?: boolean;
         supabase?: boolean;
+        seats?: OperatorSeat[];
       };
       applyAuth(data, gen);
+      if (Array.isArray(data.seats)) setSeats(data.seats);
     } catch {
       /* keep the current session if /me fails */
     } finally {
@@ -241,9 +247,11 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
           googleEnabled?: boolean;
           allowReset?: boolean;
           supabase?: boolean;
+          seats?: OperatorSeat[];
         };
         if (cancelled) return;
         applyAuth(data, gen);
+        if (Array.isArray(data.seats)) setSeats(data.seats);
         if (gen !== authGen.current) return;
         if (error) {
           setAuthError(error);
@@ -372,11 +380,50 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       /* still clear locally */
     }
     setSession(null);
+    setSeats([]);
     sessionStorage.removeItem(TOOLS_KEY);
     emit(toolsListeners);
     setAdminsOpen(false);
     await refreshAuth();
   }, [refreshAuth]);
+
+  useEffect(() => {
+    if (STATIC_DEPLOY || !session) return;
+    let cancelled = false;
+    async function beat() {
+      try {
+        const res = await fetch(withBase("/api/auth/presence"), {
+          method: "POST",
+          credentials: "same-origin",
+        });
+        const data = (await res.json()) as {
+          seats?: OperatorSeat[];
+          error?: string;
+          kicked?: boolean;
+        };
+        if (cancelled) return;
+        if (Array.isArray(data.seats)) setSeats(data.seats);
+        if (res.status === 409) {
+          setAuthError(data.error ?? "Não foi possível manter a sessão no posto.");
+          setLoginOpen(true);
+          await logout();
+        }
+      } catch {
+        /* o posto segue com a última lista */
+      }
+    }
+    void beat();
+    const timer = window.setInterval(() => void beat(), 20_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") void beat();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [session, logout]);
 
   const admin = layout === "desktop" && Boolean(session) && toolsOn;
   const isMobile = narrow;
@@ -398,6 +445,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       authError,
       loginOpen,
       adminsOpen,
+      seats,
+      maxSeats: MAX_OPERATOR_SEATS,
       setTheme,
       setMapFocus,
       setAdmin,
@@ -427,6 +476,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       authError,
       loginOpen,
       adminsOpen,
+      seats,
       setTheme,
       setMapFocus,
       setAdmin,
@@ -455,6 +505,8 @@ const FALLBACK: OpsMode = {
   authError: null,
   loginOpen: false,
   adminsOpen: false,
+  seats: [],
+  maxSeats: MAX_OPERATOR_SEATS,
   setTheme: () => {},
   setMapFocus: () => {},
   setAdmin: () => {},

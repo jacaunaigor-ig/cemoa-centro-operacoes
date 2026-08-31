@@ -113,9 +113,9 @@ O **Aviso Meteorológico** tem duas camadas:
 
 **Operador** só no Desktop. O fluxo agora é separado:
 
-1. **Entrar** (ou **Criar operador** na primeira vez) — autentica.
+1. **Entrar** (ou **Criar operador** na primeira vez) — autentica. Até **6 operadores** podem estar logados ao mesmo tempo; o sétimo vê quem já está no posto. A mesma conta em outro computador assume o lugar e encerra a sessão antiga.
 2. **Edição** — liga/desliga as ferramentas do mapa sem sair da conta.
-3. **Sair** — encerra a sessão.
+3. **Sair** — encerra a sessão e libera a vaga no posto.
 
 Com a edição ligada, o operador classifica no **clique**, em **lote** ou por **mancha** (polígono), pode **Apagar polígono** (clique na mancha ou **Apagar todas**) e **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias). O polígono existe só no Painel de Alertas — no boletim a edição continua no clique e no lote.
 
@@ -139,7 +139,7 @@ Papel é identidade. Ninguém fica travado em um produto — geólogo também cl
 
 Logins sugeridos: `karol`, `lenizia`, `luan`, `gustavo`, `adriana`, `thayna`, `igor`, `barroso`. Crie a conta em **Equipe** (ícone de pessoas). Quem ainda não cadastrou aparece como “aguardando cadastro”.
 
-Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax).
+Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). O cabeçalho mostra **Posto n/6** com quem está autenticado no momento.
 
 ### Primeiro operador
 

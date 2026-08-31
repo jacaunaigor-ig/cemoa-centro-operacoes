@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   assertSameOrigin,
-  attachSessionCookie,
+  startOperatorSession,
   checkLoginRateLimit,
   clearLoginFailures,
   clientIp,
@@ -55,5 +55,5 @@ export async function POST(request: Request) {
       name: result.admin.name,
     }),
   });
-  return attachSessionCookie(response, result.admin, request);
+  return startOperatorSession(response, result.admin, request);
 }

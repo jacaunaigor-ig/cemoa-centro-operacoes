@@ -332,3 +332,70 @@ export async function hydrateHydroOverridesFromRemote() {
   }
   mergeHydroOverrides(updates);
 }
+
+type RemoteOperatorSeat = {
+  user_id: string;
+  login: string;
+  name: string;
+  role_label?: string | null;
+  session_id: string;
+  last_seen: string;
+};
+
+export async function fetchRemoteOperatorSeats(): Promise<Array<{
+  userId: string;
+  login: string;
+  name: string;
+  roleLabel: string;
+  sessionId: string;
+  lastSeen: number;
+}> | null> {
+  if (!supabaseConfigured()) return null;
+  const rows = await rest<RemoteOperatorSeat[]>(
+    "operator_seats?select=user_id,login,name,role_label,session_id,last_seen",
+  );
+  if (!rows) return null;
+  return rows
+    .filter((row) => row && typeof row.user_id === "string" && typeof row.session_id === "string")
+    .map((row) => ({
+      userId: row.user_id,
+      login: row.login,
+      name: row.name,
+      roleLabel: row.role_label ?? "",
+      sessionId: row.session_id,
+      lastSeen: Date.parse(row.last_seen) || 0,
+    }));
+}
+
+export async function syncRemoteOperatorSeats(
+  seats: Array<{
+    userId: string;
+    login: string;
+    name: string;
+    roleLabel: string;
+    sessionId: string;
+    lastSeen: number;
+  }>,
+) {
+  if (!supabaseConfigured()) return;
+  if (!seats.length) {
+    await rest("operator_seats?user_id=not.is.null", { method: "DELETE" });
+    return;
+  }
+  await rest("operator_seats", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(
+      seats.map((row) => ({
+        user_id: row.userId,
+        login: row.login,
+        name: row.name,
+        role_label: row.roleLabel,
+        session_id: row.sessionId,
+        last_seen: new Date(row.lastSeen).toISOString(),
+      })),
+    ),
+  });
+  const keep = seats.map((row) => `"${row.userId.replace(/"/g, "")}"`).join(",");
+  await rest(`operator_seats?user_id=not.in.(${keep})`, { method: "DELETE" });
+}

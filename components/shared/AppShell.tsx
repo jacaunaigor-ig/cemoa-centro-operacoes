@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn, formatAmazonTime } from "@/lib/utils";
+import { seatNames } from "@/lib/operator-seats-shared";
 import { useNow, usePauseMotionWhenHidden } from "@/lib/client-hooks";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
@@ -55,6 +56,8 @@ export function AppShell({
     session,
     needsSetup,
     supabaseConfigured,
+    seats,
+    maxSeats,
     setTheme,
     setAdmin,
     openAdmins,
@@ -180,6 +183,15 @@ export function AppShell({
             <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Escuro"}</span>
           </button>
           {!isMobile ? <PlantaoSoundButton labeled /> : null}
+          {!isMobile && session ? (
+            <span
+              className="hidden max-w-[18rem] truncate rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute xl:inline"
+              title={`Até ${maxSeats} operadores no posto ao mesmo tempo`}
+            >
+              Posto {seats.length}/{maxSeats}
+              {seats.length ? ` · ${seatNames(seats)}` : ""}
+            </span>
+          ) : null}
           {!isMobile ? (
             <div className="flex items-center gap-1.5">
               {session ? (

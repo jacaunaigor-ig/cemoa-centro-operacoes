@@ -131,7 +131,7 @@ export function LoginDialog() {
             ? "E-mail e senha da conta em Authentication → Users no Supabase. Depois ligue Edição no mapa."
             : creating
               ? "Cadastre usuário e senha do admin. Mínimo 10 caracteres, com letras e números."
-              : "Usuário e senha do admin. A edição do mapa só liga depois do login."
+      : "Usuário e senha do admin. Até 6 operadores podem estar logados ao mesmo tempo. A edição do mapa só liga depois do login."
       }
     >
       <form

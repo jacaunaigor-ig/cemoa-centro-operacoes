@@ -1,8 +1,12 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { findAdminById, type PublicAdmin } from "@/lib/admins";
-import { withOperatorRole, type EquipeRole } from "@/lib/equipe";
+import { roleLabelForOperator, withOperatorRole, type EquipeRole } from "@/lib/equipe";
+import {
+  claimOperatorSeat,
+  MAX_OPERATOR_SEATS,
+} from "@/lib/operator-seats";
 import { sessionSecret } from "@/lib/session-secret";
 
 export { SessionConfigError, sessionSecret } from "@/lib/session-secret";
@@ -11,11 +15,12 @@ export const SESSION_COOKIE = "cemoa_sess";
 export const SESSION_TTL_SEC = 60 * 60 * 8;
 
 type SessionPayload = {
-  v: 1 | 2;
+  v: 1 | 2 | 3;
   sub: string;
   login: string;
   name?: string;
   email?: string | null;
+  sid?: string;
   iat: number;
   exp: number;
 };
@@ -27,6 +32,7 @@ export type SessionUser = {
   email: string | null;
   role: EquipeRole;
   roleLabel: string;
+  sessionId: string;
 };
 
 export function cookieSecure(request?: Request): boolean {
@@ -50,9 +56,41 @@ export function attachSessionCookie(
   response: NextResponse,
   admin: PublicAdmin,
   request?: Request,
+  sessionId: string = randomUUID(),
 ) {
-  response.cookies.set(SESSION_COOKIE, createSessionToken(admin), sessionCookieOptions(request));
+  response.cookies.set(SESSION_COOKIE, createSessionToken(admin, sessionId), sessionCookieOptions(request));
   return response;
+}
+
+export async function startOperatorSession(
+  response: NextResponse,
+  admin: PublicAdmin,
+  request?: Request,
+): Promise<NextResponse> {
+  const sessionId = randomUUID();
+  const claimed = await claimOperatorSeat({
+    userId: admin.id,
+    login: admin.login,
+    name: admin.name,
+    roleLabel: roleLabelForOperator(admin.name, admin.login),
+    sessionId,
+  });
+  if (!claimed.ok) {
+    if (response.status >= 300 && response.status < 400 && request) {
+      const url = new URL("/", request.url);
+      url.searchParams.set("authError", claimed.error);
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.json(
+      {
+        error: claimed.error,
+        seats: claimed.snapshot.seats,
+        max: MAX_OPERATOR_SEATS,
+      },
+      { status: 409 },
+    );
+  }
+  return attachSessionCookie(response, admin, request, sessionId);
 }
 
 export function attachClearSessionCookie(response: NextResponse, request?: Request) {
@@ -86,7 +124,7 @@ function readPayload(token: string): SessionPayload | null {
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
   try {
     const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as SessionPayload;
-    if ((parsed.v !== 1 && parsed.v !== 2) || typeof parsed.sub !== "string") return null;
+    if ((parsed.v !== 1 && parsed.v !== 2 && parsed.v !== 3) || typeof parsed.sub !== "string") return null;
     if (parsed.exp * 1000 < Date.now()) return null;
     return parsed;
   } catch {
@@ -94,14 +132,15 @@ function readPayload(token: string): SessionPayload | null {
   }
 }
 
-export function createSessionToken(admin: PublicAdmin): string {
+export function createSessionToken(admin: PublicAdmin, sessionId: string = randomUUID()): string {
   const now = Math.floor(Date.now() / 1000);
   return signPayload({
-    v: 2,
+    v: 3,
     sub: admin.id,
     login: admin.login,
     name: admin.name,
     email: admin.email,
+    sid: sessionId,
     iat: now,
     exp: now + SESSION_TTL_SEC,
   });
@@ -132,12 +171,14 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
   const payload = readPayload(token);
   if (!payload) return null;
-  if (payload.v === 2 && payload.name) {
+  const sessionId = payload.sid || payload.sub;
+  if ((payload.v === 2 || payload.v === 3) && payload.name) {
     return withOperatorRole({
       id: payload.sub,
       login: payload.login,
       name: payload.name,
       email: payload.email ?? null,
+      sessionId,
     });
   }
   const admin = findAdminById(payload.sub);
@@ -147,6 +188,7 @@ export async function getSession(): Promise<SessionUser | null> {
     login: admin.login,
     name: admin.name,
     email: admin.email,
+    sessionId,
   });
 }
 

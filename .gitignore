@@ -48,5 +48,6 @@ next-env.d.ts
 
 # admin credentials (never commit)
 /data/admins.json
+/data/operator-seats.json
 /data/.session-secret
 

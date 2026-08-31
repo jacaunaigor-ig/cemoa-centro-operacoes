@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   assertSameOrigin,
-  attachSessionCookie,
+  startOperatorSession,
   checkLoginRateLimit,
   clearLoginFailures,
   clientIp,
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
           email: sb.admin.email,
         }),
       });
-      return attachSessionCookie(response, sb.admin, request);
+      return startOperatorSession(response, sb.admin, request);
     }
 
     const result = enterWithCredentials({
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         email: result.admin.email,
       }),
     });
-    return attachSessionCookie(response, result.admin, request);
+    return startOperatorSession(response, result.admin, request);
   } catch (err) {
     console.error("[auth/enter]", err);
     if (err instanceof SessionConfigError) {

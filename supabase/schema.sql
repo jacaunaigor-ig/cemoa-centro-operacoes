@@ -188,6 +188,18 @@ create policy "operators write avisos"
     )
   );
 
+-- Posto: até 6 operadores logados ao mesmo tempo (serviço do centro, não o browser)
+create table if not exists public.operator_seats (
+  user_id text primary key,
+  login text not null,
+  name text not null,
+  role_label text,
+  session_id text not null,
+  last_seen timestamptz not null default now()
+);
+
+alter table public.operator_seats enable row level security;
+
 -- Perfil automático quando a conta nasce no Auth
 create or replace function public.handle_new_user()
 returns trigger
@@ -215,6 +227,6 @@ create trigger on_auth_user_created
 
 grant usage on schema public to anon, authenticated, service_role;
 grant select on table public.equipe, public.alert_overrides, public.hydro_overrides, public.meteo_avisos to anon, authenticated, service_role;
-grant select, insert, update, delete on table public.profiles, public.alert_overrides, public.hydro_overrides, public.classification_audit, public.meteo_avisos to authenticated, service_role;
+grant select, insert, update, delete on table public.profiles, public.alert_overrides, public.hydro_overrides, public.classification_audit, public.meteo_avisos, public.operator_seats to authenticated, service_role;
 grant usage, select on sequence public.classification_audit_id_seq to authenticated, service_role;
 
