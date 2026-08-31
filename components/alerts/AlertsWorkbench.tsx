@@ -1430,7 +1430,7 @@ export function AlertsWorkbench() {
                 ) : null}
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
-                {isMobile && !mapFocus ? (
+                {isMobile ? (
                   <>
                     <AmazonasMapButton onReset={resetAmazonasMap} />
                     <IndiceMapButton
@@ -1439,7 +1439,7 @@ export function AlertsWorkbench() {
                     />
                   </>
                 ) : (
-                  !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
+                  !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
                 )}
                 <Popover>
                   <PopoverTrigger asChild>

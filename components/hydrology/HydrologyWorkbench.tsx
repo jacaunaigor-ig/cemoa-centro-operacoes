@@ -801,7 +801,7 @@ export function HydrologyWorkbench() {
                 ) : null}
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
-                {isMobile && !mapFocus ? (
+                {isMobile ? (
                   <>
                     <AmazonasMapButton onReset={resetAmazonasMap} />
                     <IndiceMapButton
@@ -810,7 +810,7 @@ export function HydrologyWorkbench() {
                     />
                   </>
                 ) : (
-                  !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
+                  !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
                 )}
                 {mapFocus || isMobile ? null : (
                 <Popover>
@@ -1073,6 +1073,29 @@ export function HydrologyWorkbench() {
                   }}
                 />
               ) : null}
+              {selectedStation && (isMobile || mapFocus) ? (
+                <div
+                  className={cn(
+                    "pointer-events-auto absolute z-[1200] flex flex-col overflow-hidden rounded-xl shadow-lg",
+                    isMobile
+                      ? "inset-x-1.5 bottom-1.5 top-10 max-h-[calc(100%-2.75rem)]"
+                      : "inset-x-2 bottom-2 top-auto max-h-[min(48vh,28rem)]",
+                  )}
+                >
+                  <HydroDetail
+                    station={selectedStation}
+                    modo={modo}
+                    admin={admin}
+                    compact
+                    indice={indice?.byId[selectedStation.id] ?? null}
+                    onClose={() => setQuery({ municipio: null })}
+                    onSave={async (patch) => {
+                      const ok = await persistHydro({ [selectedStation.id]: patch });
+                      if (ok) toast.success("Cota e status atualizados.");
+                    }}
+                  />
+                </div>
+              ) : null}
               <MapLegendCard title={modo === "vazante" ? "Estiagem" : "Inundação"}>
                 <ul className="space-y-0.5">
                   <LegendDot
@@ -1123,20 +1146,11 @@ export function HydrologyWorkbench() {
             />
             </div>
 
-            {selectedStation ? (
-              <div
-                className={cn(
-                  isMobile || mapFocus
-                    ? "pointer-events-auto absolute inset-x-1.5 bottom-1.5 top-10 z-[1200] flex max-h-[calc(100%-2.75rem)] flex-col overflow-hidden rounded-xl shadow-lg"
-                    : undefined,
-                  mapFocus && !isMobile && "top-auto inset-x-2 bottom-2 max-h-[min(48vh,28rem)]",
-                )}
-              >
+            {selectedStation && !isMobile && !mapFocus ? (
               <HydroDetail
                 station={selectedStation}
                 modo={modo}
                 admin={admin}
-                compact={isMobile || mapFocus}
                 indice={indice?.byId[selectedStation.id] ?? null}
                 onClose={() => setQuery({ municipio: null })}
                 onSave={async (patch) => {
@@ -1144,7 +1158,6 @@ export function HydrologyWorkbench() {
                   if (ok) toast.success("Cota e status atualizados.");
                 }}
               />
-              </div>
             ) : null}
           </Card>
         </div>
