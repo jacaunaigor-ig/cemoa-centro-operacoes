@@ -74,8 +74,8 @@ export function PlantaoQueue({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         tipo === "INCENDIO"
-          ? "A mediana de MP2,5 pinta o município na legenda. A fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer."
-          : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não pintam o mapa."
+          ? "A mediana de MP2,5 classifica o município na legenda. A fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer."
+          : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não alteram o grau."
       }
     >
       <div className="flex items-center justify-between gap-2">

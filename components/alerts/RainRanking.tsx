@@ -84,7 +84,7 @@ export function RainRanking({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         canSuggest
-          ? "Sugestão de grau a partir da chuva. Só o operador classifica — não pinta o mapa."
+          ? "Sugestão de grau a partir da chuva. Só o operador classifica — não altera o grau."
           : undefined
       }
     >

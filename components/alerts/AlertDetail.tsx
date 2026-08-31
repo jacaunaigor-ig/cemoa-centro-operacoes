@@ -132,9 +132,11 @@ export function AlertDetail({
         </ul>
       ) : null}
 
-      <div className="mt-3">
-        <IndiceCard rec={indice} />
-      </div>
+      {indice !== undefined ? (
+        <div className="mt-3">
+          <IndiceCard rec={indice} />
+        </div>
+      ) : null}
 
       {municipioId ? (
         <WeatherForecastPanel ibge={municipioId} nome={nome} rain={rain} />

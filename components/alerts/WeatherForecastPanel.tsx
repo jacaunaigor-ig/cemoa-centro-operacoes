@@ -178,7 +178,7 @@ export function WeatherForecastPanel({
       ) : null}
 
       <p className="mt-2 text-center text-[10px] leading-snug text-text-mute">
-        Observação e previsão — não pintam o mapa.
+        Observação e previsão — não alteram o grau.
       </p>
       <a
         href={INMET_PORTAL_URL}

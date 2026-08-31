@@ -242,6 +242,7 @@ export function AlertsWorkbench() {
   const pathname = usePathname();
   const params = useSearchParams();
   const { admin, isMobile, session, mapFocus, setMapFocus } = useOpsMode();
+  const indiceInterno = admin && !isMobile;
   const selected = params.get("municipio");
   const bacia = parseSharedBacia(params.get("bacia"));
   const calha = parseSharedCalha(params.get("calha"));
@@ -289,6 +290,12 @@ export function AlertsWorkbench() {
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
   const wasAdmin = useRef(false);
   editBusy.current = paintArmed || drawMode || eraseMode || classifying;
+
+  useEffect(() => {
+    if (indiceInterno) return;
+    setShowIndice(false);
+    setIndice(null);
+  }, [indiceInterno]);
 
   useEffect(() => {
     if (paintArmed || drawMode || eraseMode) toast.dismiss();
@@ -619,7 +626,7 @@ export function AlertsWorkbench() {
           if (cancelled) return;
           setData(localAlerts(tipo));
           setHydro(localHydro());
-          setIndice(localIndice());
+          setIndice(indiceInterno ? localIndice() : null);
           setError(null);
           return;
         }
@@ -633,13 +640,16 @@ export function AlertsWorkbench() {
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
           fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
-          fetchJson<IndicePayload>("/api/indice").catch(() => null),
+          indiceInterno
+            ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
+            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         if (rainPayload) setRain(rainPayload);
         if (airPayload) setAir(airPayload);
         if (hydroPayload) setHydro(hydroPayload);
-        if (indicePayload) setIndice(indicePayload);
+        if (indiceInterno && indicePayload) setIndice(indicePayload);
+        else if (!indiceInterno) setIndice(null);
         if (!editBusy.current || !gotAlerts) {
           setData(payload);
           gotAlerts = true;
@@ -658,7 +668,7 @@ export function AlertsWorkbench() {
       cancelled = true;
       stop();
     };
-  }, [tipo, session]);
+  }, [tipo, session, indiceInterno]);
 
   async function refreshNow() {
     setRefreshing(true);
@@ -667,7 +677,7 @@ export function AlertsWorkbench() {
         hydrateClientOverrides();
         setData(localAlerts(tipo));
         setHydro(localHydro());
-        setIndice(localIndice());
+        setIndice(indiceInterno ? localIndice() : null);
         setError(null);
         return;
       }
@@ -676,13 +686,16 @@ export function AlertsWorkbench() {
         fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
         fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
-        fetchJson<IndicePayload>("/api/indice").catch(() => null),
+        indiceInterno
+          ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
+          : Promise.resolve(null),
       ]);
       setData(payload);
       if (hydroPayload) setHydro(hydroPayload);
       if (rainPayload) setRain(rainPayload);
       if (airPayload) setAir(airPayload);
-      if (indicePayload) setIndice(indicePayload);
+      if (indiceInterno && indicePayload) setIndice(indicePayload);
+      else if (!indiceInterno) setIndice(null);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
@@ -1184,7 +1197,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Monitores PurpleAir da rede SEMA/DC-AM e UEA EducAIR via App SELVA — leitura de baixo custo, não regulatória. A mediana municipal pinta o município na escala da legenda; o operador pode sobrepor.",
+              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Monitores PurpleAir da rede SEMA/DC-AM e UEA EducAIR via App SELVA — leitura de baixo custo, não regulatória. A mediana municipal classifica o município na escala da legenda; o operador pode sobrepor.",
             }
           : undefined,
     });
@@ -1431,15 +1444,17 @@ export function AlertsWorkbench() {
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile ? (
-                  <>
-                    <AmazonasMapButton onReset={resetAmazonasMap} />
-                    <IndiceMapButton
-                      active={showIndice}
-                      onToggle={() => setShowIndice((v) => !v)}
-                    />
-                  </>
+                  <AmazonasMapButton onReset={resetAmazonasMap} />
                 ) : (
-                  !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
+                  <>
+                    {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null}
+                    {indiceInterno && !mapFocus ? (
+                      <IndiceMapButton
+                        active={showIndice}
+                        onToggle={() => setShowIndice((v) => !v)}
+                      />
+                    ) : null}
+                  </>
                 )}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -1480,13 +1495,15 @@ export function AlertsWorkbench() {
                     >
                       Ajustar ao Amazonas
                     </MapToolButton>
-                    <MapToolButton
-                      active={showIndice}
-                      onClick={() => setShowIndice((v) => !v)}
-                      icon={<Gauge className="size-3.5" />}
-                    >
-                      Índice composto
-                    </MapToolButton>
+                    {indiceInterno ? (
+                      <MapToolButton
+                        active={showIndice}
+                        onClick={() => setShowIndice((v) => !v)}
+                        icon={<Gauge className="size-3.5" />}
+                      >
+                        Índice de Vulnerabilidade
+                      </MapToolButton>
+                    ) : null}
                     <MapToolButton
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
@@ -1605,7 +1622,7 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
-              {showIndice && !selected ? (
+              {indiceInterno && showIndice && !selected ? (
                 <IndiceSheet
                   className={cn(
                     "pointer-events-auto absolute z-[1200]",
@@ -1647,7 +1664,7 @@ export function AlertsWorkbench() {
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
-                    indice={indice?.byId[selectedRow.id] ?? null}
+                    indice={indiceInterno ? (indice?.byId[selectedRow.id] ?? null) : undefined}
                     onClose={() => setQuery({ municipio: null })}
                   />
                 </div>
@@ -1747,8 +1764,8 @@ export function AlertsWorkbench() {
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
                   : tipo === "INCENDIO"
-                    ? "A mediana de MP2,5 pinta o município na legenda. Clique, lote ou polígono sobrepõe o grau."
-                    : "Só o operador classifica o grau. Polígono pinta a mancha; chuva e cota só sugerem."
+                    ? "A mediana de MP2,5 classifica o município na legenda. Clique, lote ou polígono sobrepõe o grau."
+                    : "Só o operador classifica o grau. Polígono aplica o grau na mancha; chuva e cota só sugerem."
               }
               onDraw={() => {
                 setDrawMode((v) => {

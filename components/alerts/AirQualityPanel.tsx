@@ -72,7 +72,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        A mediana municipal pinta o município na escala da legenda (Boa → Péssima).
+        A mediana municipal classifica o município na escala da legenda (Boa → Péssima).
         Leitura de baixo custo, a mesma rede do App SELVA — não substitui estação
         regulatória. O operador pode sobrepor o grau.
       </p>

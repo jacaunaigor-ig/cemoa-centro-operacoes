@@ -72,9 +72,11 @@ export function HydroDetail({
       </div>
 
       <p className="mt-2 text-sm font-semibold">{tendenciaTexto(station.tendencia)}</p>
-      <div className="mt-3">
-        <IndiceCard rec={indice} />
-      </div>
+      {indice !== undefined ? (
+        <div className="mt-3">
+          <IndiceCard rec={indice} />
+        </div>
+      ) : null}
       <FichaTerritorio municipioId={station.id} />
 
       {admin && onSave ? (
@@ -310,7 +312,7 @@ function HydroAdminForm({
           checked={semCota}
           onChange={(e) => setSemCota(e.target.checked)}
         />
-        Sem cota do dia (o status permanece pintado no mapa)
+        Sem cota do dia (o grau permanece no mapa)
       </label>
       <Button type="submit" size="sm" className="mt-2">
         Salvar cota e status

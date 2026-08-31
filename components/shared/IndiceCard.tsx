@@ -1,10 +1,5 @@
 import { formatHab } from "@/lib/demografia";
-import {
-  IDHM_FONTE,
-  INDICE_FAIXA_COLORS,
-  INDICE_FAIXAS,
-  type IndiceMunicipio,
-} from "@/lib/indice";
+import { INDICE_FAIXA_COLORS, type IndiceMunicipio } from "@/lib/indice";
 import { cn } from "@/lib/utils";
 
 function Bar({ value, max, color }: { value: number; max: number; color: string }) {
@@ -24,16 +19,13 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
     return (
       <div className="rounded-lg border border-border bg-bg/40 p-2.5">
         <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Índice composto
+          Índice de Vulnerabilidade
         </small>
-        <p className="mt-1 text-[12px] text-text-mute">
-          Aguardando o cálculo do índice deste município. Não altera o grau deste produto.
-        </p>
+        <p className="mt-1 text-[12px] text-text-mute">Calculando…</p>
       </div>
     );
   }
 
-  const faixa = INDICE_FAIXAS.find((item) => item.id === rec.faixa) ?? INDICE_FAIXAS[0];
   const pessoas =
     typeof rec.estrutural.pessoasRisco === "number" ? formatHab(rec.estrutural.pessoasRisco) : null;
 
@@ -42,9 +34,8 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            Índice composto · 0–100
+            Índice de Vulnerabilidade
           </small>
-          <p className="mt-0.5 text-[13px] font-semibold text-text">{faixa.label}</p>
         </div>
         <span
           className="rounded-md px-2 py-1 font-mono text-lg font-black tabular-nums leading-none text-white"
@@ -53,7 +44,6 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
           {rec.total}
         </span>
       </div>
-      <p className="mt-1 text-[12px] leading-snug text-text-dim">{rec.acao}</p>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div>
@@ -118,11 +108,6 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
           </li>
         ))}
       </ul>
-
-      <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        Não substitui a classificação do operador neste produto. Chuva e alagamento entram no maior
-        dos dois (não somam). {IDHM_FONTE}.
-      </p>
     </div>
   );
 }

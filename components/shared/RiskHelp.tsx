@@ -104,7 +104,7 @@ export function RiskHelpButton({
                 </h2>
                 <p className="text-xs text-text-mute">
                   {variant === "boletim"
-                    ? "Baixo, Moderado, Alto e Severo pintam o município mesmo sem cota do dia. Cinza só no filtro Sem leitura."
+                    ? "Baixo, Moderado, Alto e Severo aparecem no município mesmo sem cota do dia. Cinza só no filtro Sem leitura."
                     : "Referência: art. 12 da Portaria MIDR nº 2.458/2026."}
                 </p>
               </div>
@@ -184,7 +184,7 @@ export function RiskHelpButton({
                   </p>
                   <p className="mt-1 text-xs text-text-dim">
                     Não segue o art. 12 da Portaria MIDR nº 2.458/2026. No produto Incêndio
-                    florestal, a mediana de MP2,5 pinta o município nesta mesma escala.
+                    florestal, a mediana de MP2,5 classifica o município nesta mesma escala.
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {AIR_CHIPS.map(([key, label, color]) => (

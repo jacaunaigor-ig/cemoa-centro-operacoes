@@ -14,16 +14,13 @@ export function IndiceMapButton({
       type="button"
       variant={active ? "default" : "secondary"}
       size="sm"
-      className={cn(
-        "min-h-11 font-black tracking-[0.12em] uppercase",
-        active && "shadow-md",
-      )}
+      className={cn("font-semibold", active && "shadow-md")}
       aria-pressed={active}
-      title="Índice composto 0–100. Não pinta o grau deste produto."
+      title="Índice de Vulnerabilidade"
       onClick={onToggle}
     >
       <Gauge className="size-3.5" />
-      Índice
+      Índice de Vulnerabilidade
     </Button>
   );
 }

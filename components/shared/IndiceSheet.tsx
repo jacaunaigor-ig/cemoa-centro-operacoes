@@ -23,17 +23,12 @@ export function IndiceSheet({
         "flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-panel/96 shadow-lg backdrop-blur-md",
         className,
       )}
-      aria-label="Índice composto dos 62 municípios"
+      aria-label="Índice de Vulnerabilidade dos 62 municípios"
     >
       <header className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
-            Índice composto
-          </p>
-          <p className="text-[12px] leading-snug text-text-dim">
-            50 estrutural + 50 monitoramento. Não pinta o mapa deste produto.
-          </p>
-        </div>
+        <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
+          Índice de Vulnerabilidade
+        </p>
         <button
           type="button"
           onClick={onClose}

@@ -6,7 +6,7 @@ import { MUNICIPALITIES } from "@/lib/municipalities";
 import type { AlertLevel, HydroStatus } from "@/lib/types";
 import rawIdhm from "@/data/idhm.json";
 
-/** Pontuação 0–100: 50 estrutural (lento) + 50 monitoramento (ao vivo). Não pinta o grau do produto. */
+/** Pontuação 0–100: 50 estrutural (lento) + 50 monitoramento (ao vivo). Não altera o grau do produto. */
 
 export const INDICE_ESTRUTURAL_MAX = 50;
 export const INDICE_MONITOR_MAX = 50;

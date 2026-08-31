@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cached } from "@/lib/cache";
 import { getAirQualityPayload } from "@/lib/air-quality";
+import { getSession } from "@/lib/auth";
 import { buildIndicePayload } from "@/lib/indice-build";
 import { buildHydrologyPayload } from "@/lib/live-state";
 import {
@@ -11,6 +12,10 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const user = await getSession();
+  if (!user) {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
   await Promise.all([
     hydrateAlertOverridesFromRemote(),
     hydrateHydroOverridesFromRemote(),
@@ -26,7 +31,7 @@ export async function GET() {
     { ...data, cache },
     {
       headers: {
-        "Cache-Control": "public, max-age=0, s-maxage=4, stale-while-revalidate=15",
+        "Cache-Control": "private, no-store",
         "X-Cache": cache,
       },
     },

@@ -144,7 +144,7 @@ export function AdminToolbar({
           {eraseMode
             ? "Clique na mancha para apagar · Esc cancela"
             : drawMode
-            ? `Clique os vértices · Fechar pinta só a mancha (${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}) — o município não muda por inteiro`
+            ? `Clique os vértices · Fechar aplica o grau só na mancha (${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}) — o município não muda por inteiro`
             : paintHint ??
               (paintArmed
                 ? `Clique nos municípios: ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}. Encerrar quando terminar.`

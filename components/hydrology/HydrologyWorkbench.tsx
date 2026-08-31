@@ -128,6 +128,7 @@ export function HydrologyWorkbench() {
   const pathname = usePathname();
   const params = useSearchParams();
   const { admin, isMobile, session, mapFocus, setMapFocus } = useOpsMode();
+  const indiceInterno = admin && !isMobile;
   const selected = params.get("municipio");
   const modo = parseModo(params.get("modo"));
   const status = parseStatus(params.get("status"));
@@ -161,6 +162,12 @@ export function HydrologyWorkbench() {
   const localPushed = useRef(false);
 
   useEffect(() => {
+    if (indiceInterno) return;
+    setShowIndice(false);
+    setIndice(null);
+  }, [indiceInterno]);
+
+  useEffect(() => {
     const t = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
     return () => window.clearTimeout(t);
   }, [mapFocus]);
@@ -181,7 +188,7 @@ export function HydrologyWorkbench() {
           }
           if (cancelled) return;
           setData({ ...buildHydrologyPayload(), cache: "MISS" });
-          setIndice(buildIndicePayload());
+          setIndice(indiceInterno ? buildIndicePayload() : null);
           setError(null);
           return;
         }
@@ -220,11 +227,14 @@ export function HydrologyWorkbench() {
         }
         const [payload, indicePayload] = await Promise.all([
           fetchJson<HydrologyPayload>("/api/hydrology"),
-          fetchJson<IndicePayload>("/api/indice").catch(() => null),
+          indiceInterno
+            ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
+            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         setData(payload);
-        if (indicePayload) setIndice(indicePayload);
+        if (indiceInterno && indicePayload) setIndice(indicePayload);
+        else if (!indiceInterno) setIndice(null);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -238,7 +248,7 @@ export function HydrologyWorkbench() {
       cancelled = true;
       stop();
     };
-  }, [session]);
+  }, [session, indiceInterno]);
 
   function setQuery(next: Record<string, string | null>) {
     const usp = new URLSearchParams(params.toString());
@@ -491,7 +501,7 @@ export function HydrologyWorkbench() {
       footerSources: "Fontes de monitoramento: CEMOA · ANA · SGB · SEMA",
       extraNote: {
         title: "Sem cota do dia",
-        text: `${counts.SL} município(s) sem leitura no recorte. O status operacional (Baixo, Moderado, Alto ou Severo) permanece pintado no mapa.`,
+        text: `${counts.SL} município(s) sem leitura no recorte. O status operacional (Baixo, Moderado, Alto ou Severo) permanece no mapa.`,
       },
     });
   }
@@ -802,15 +812,17 @@ export function HydrologyWorkbench() {
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile ? (
-                  <>
-                    <AmazonasMapButton onReset={resetAmazonasMap} />
-                    <IndiceMapButton
-                      active={showIndice}
-                      onToggle={() => setShowIndice((v) => !v)}
-                    />
-                  </>
+                  <AmazonasMapButton onReset={resetAmazonasMap} />
                 ) : (
-                  !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
+                  <>
+                    {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null}
+                    {indiceInterno && !mapFocus ? (
+                      <IndiceMapButton
+                        active={showIndice}
+                        onToggle={() => setShowIndice((v) => !v)}
+                      />
+                    ) : null}
+                  </>
                 )}
                 {mapFocus || isMobile ? null : (
                 <Popover>
@@ -902,13 +914,15 @@ export function HydrologyWorkbench() {
                     >
                       Ajustar ao Amazonas
                     </MapToolButton>
-                    <MapToolButton
-                      active={showIndice}
-                      onClick={() => setShowIndice((v) => !v)}
-                      icon={<Gauge className="size-3.5" />}
-                    >
-                      Índice composto
-                    </MapToolButton>
+                    {indiceInterno ? (
+                      <MapToolButton
+                        active={showIndice}
+                        onClick={() => setShowIndice((v) => !v)}
+                        icon={<Gauge className="size-3.5" />}
+                      >
+                        Índice de Vulnerabilidade
+                      </MapToolButton>
+                    ) : null}
                     <MapToolButton
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
@@ -1048,7 +1062,7 @@ export function HydrologyWorkbench() {
                 variant="boletim"
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
               />
-              {showIndice && !selected ? (
+              {indiceInterno && showIndice && !selected ? (
                 <IndiceSheet
                   className={cn(
                     "pointer-events-auto absolute z-[1200]",
@@ -1087,7 +1101,7 @@ export function HydrologyWorkbench() {
                     modo={modo}
                     admin={admin}
                     compact
-                    indice={indice?.byId[selectedStation.id] ?? null}
+                    indice={indiceInterno ? (indice?.byId[selectedStation.id] ?? null) : undefined}
                     onClose={() => setQuery({ municipio: null })}
                     onSave={async (patch) => {
                       const ok = await persistHydro({ [selectedStation.id]: patch });
@@ -1136,7 +1150,7 @@ export function HydrologyWorkbench() {
               labels={HYDRO_STATUS_LABELS}
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}
-              paintHint="O mapa segue o boletim CEMOA. Clique ou lote ajusta o grau; a cota ANA não pinta."
+              paintHint="O mapa segue o boletim CEMOA. Clique ou lote ajusta o grau; a cota ANA não altera o grau."
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}
               onOpenBatch={() => setEditorOpen(true)}
@@ -1151,7 +1165,7 @@ export function HydrologyWorkbench() {
                 station={selectedStation}
                 modo={modo}
                 admin={admin}
-                indice={indice?.byId[selectedStation.id] ?? null}
+                indice={indiceInterno ? (indice?.byId[selectedStation.id] ?? null) : undefined}
                 onClose={() => setQuery({ municipio: null })}
                 onSave={async (patch) => {
                   const ok = await persistHydro({ [selectedStation.id]: patch });

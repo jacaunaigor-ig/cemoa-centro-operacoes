@@ -318,7 +318,7 @@ export function AppShell({
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
           {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva e cota são
-          sugestão; qualidade do ar pinta o município pela mediana de MP2,5. Clique, lote
+          sugestão; qualidade do ar classifica o município pela mediana de MP2,5. Clique, lote
           {pathname.startsWith("/boletim") ? "" : " ou mancha no polígono"}. Encerrar ao
           terminar. Desfazer (Ctrl+Z).
         </div>

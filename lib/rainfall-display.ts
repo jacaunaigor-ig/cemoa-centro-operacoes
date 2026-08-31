@@ -95,7 +95,7 @@ function hit(
   return cond ? { level, motivo } : null;
 }
 
-/** Apoio operacional — não pinta o mapa. 20 mm/h é o limiar de chuva intensa no mapa. */
+/** Apoio operacional — não altera o grau. 20 mm/h é o limiar de chuva intensa no mapa. */
 export function rainApoio(
   tipo: AlertType | undefined,
   rain: RainfallWindows | null | undefined,
