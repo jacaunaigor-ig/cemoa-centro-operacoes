@@ -33,6 +33,7 @@ import {
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { formatCountdown, remainingMs } from "@/lib/alert-validity";
+import { playVencimentoChime } from "@/lib/plantao-chime";
 
 function emitSuccessMessage(issuedAt: number) {
   const shift = meteoShiftAt(issuedAt);
@@ -97,6 +98,7 @@ function notifyAvisoStage(aviso: MeteoAviso, stage: string, notified: { current:
   }
   notified.current = key;
   if (stage === "expired") {
+    playVencimentoChime();
     toast.error("Aviso Meteorológico vencido. O plantão precisa emitir o próximo agora.");
   } else if (stage === "urgent") {
     toast.warning("Faltam menos de 15 min para o Aviso Meteorológico vencer.");

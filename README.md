@@ -66,6 +66,8 @@ Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, A
 
 A **fila do plantão** (lista da esquerda) junta o que pede ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Não pinta o mapa — o operador classifica em Edição. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila.
 
+No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). O mapa não muda de cor sozinho. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
+
 O **Aviso Meteorológico** tem duas camadas:
 
 - **Plantão 12 h** — turno do meteorologista, **07–19** (diurno) e **19–07** (noturno). O cronômetro vale até o fim daquele plantão. Faltando **1 hora**, faixa amarela; faltando **15 minutos**, vermelho e pulso; vencido, pede validação. Quem está autenticado valida pelo cartão do plantão.

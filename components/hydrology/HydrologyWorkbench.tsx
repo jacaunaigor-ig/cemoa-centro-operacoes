@@ -67,6 +67,7 @@ import { MapToolButton } from "@/components/shared/MapToolButton";
 import { RiskHelpButton } from "@/components/shared/RiskHelp";
 import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { MapFocusButton } from "@/components/shared/MapFocusButton";
+import { PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
 import { useOpsMode } from "@/components/shared/OpsMode";
@@ -771,6 +772,7 @@ export function HydrologyWorkbench() {
                 ) : null}
                 {mapFocus ? <AvisoGraficoButton compact /> : null}
                 <MapFocusButton />
+                {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (
                   <Button
                     type="button"

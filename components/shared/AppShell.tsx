@@ -25,6 +25,7 @@ import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { MeteoAvisoBanner, MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
+import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
 import { OpsFooter } from "@/components/shared/OpsFooter";
 
 export function AppShell({
@@ -73,6 +74,7 @@ export function AppShell({
   return (
     <MeteoAvisoProvider>
       <AvisoGraficoProvider>
+      <PlantaoSoundUnlock />
       <div
         className={cn(
           "flex flex-col transition-[min-height] duration-300",
@@ -162,6 +164,7 @@ export function AppShell({
             {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Escuro"}</span>
           </button>
+          {!isMobile ? <PlantaoSoundButton labeled /> : null}
           {layout === "desktop" ? (
             <div className="flex items-center gap-1.5">
               {session ? (

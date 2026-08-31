@@ -98,6 +98,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
+import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -772,6 +773,7 @@ export function AlertsWorkbench() {
   );
   const plantaoTotal =
     plantaoCounts.vencido + plantaoCounts.renovar + plantaoCounts.emitir;
+  usePlantaoExpiryChime(tipo, catalog, !isMobile);
   const ProductIcon = PRODUCT_ICONS[tipo];
   const listNode = (
     <AlertList
@@ -1224,6 +1226,7 @@ export function AlertsWorkbench() {
                   </label>
                 ) : null}
                 <MapFocusButton />
+                {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (
                   <Button
                     type="button"

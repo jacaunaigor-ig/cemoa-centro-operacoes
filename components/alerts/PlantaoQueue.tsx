@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ClipboardList, Megaphone, RefreshCw, TimerOff } from "lucide-react";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
+import { PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { ALERT_PRODUCTS, type AlertType } from "@/lib/alert-types";
 import {
   buildPlantaoQueue,
@@ -76,7 +77,10 @@ export function PlantaoQueue({
           <ClipboardList className="size-3" />
           Plantão
         </p>
-        <p className="truncate text-[10px] text-text-mute">{product}</p>
+        <span className="flex min-w-0 items-center gap-1">
+          <p className="truncate text-[10px] text-text-mute">{product}</p>
+          {!compact ? <PlantaoSoundButton className="px-1.5 py-1" /> : null}
+        </span>
       </div>
 
       <div className="mt-1.5 flex flex-wrap gap-1" role="toolbar" aria-label="Filtrar a fila do plantão">
