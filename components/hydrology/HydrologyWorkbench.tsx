@@ -1057,7 +1057,7 @@ export function HydrologyWorkbench() {
               labels={HYDRO_STATUS_LABELS}
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}
-              paintHint="Clique no município para classificar"
+              paintHint="A cota é leitura. Só o operador substitui o status no mapa."
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}
               onOpenBatch={() => setEditorOpen(true)}

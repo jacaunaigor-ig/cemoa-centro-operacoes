@@ -5,7 +5,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). Alertas são simulados de forma determinística na API local. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). **Só o operador classifica o grau no mapa.** Chuva CEMADEN, cota e a fila do plantão sugerem emitir, elevar ou renovar — não pintam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -64,7 +64,7 @@ O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e list
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
-A **fila do plantão** (lista da esquerda) junta o que pede ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Não pinta o mapa — o operador classifica em Edição. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila.
+A **fila do plantão** (lista da esquerda) junta o que **sugere** ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Não pinta o mapa — a ação do operador é soberana. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila.
 
 No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). O mapa não muda de cor sozinho. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
 
@@ -181,7 +181,7 @@ Cada município no painel mostra o **maior valor** entre os pontos da sede nas j
 
 `https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
 
-No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora**. O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** o alerta do produto ativo se a chuva cruzar o limiar — o operador ainda classifica em Edição.
+No mapa, um pulso vermelho marca o município com **≥ 20 mm na última hora** (camada de chuva, não é classificação). O ranking à esquerda ordena quem está chovendo e **sugere emitir ou elevar** se a chuva cruzar o limiar — só o operador pinta o grau.
 
 Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
 

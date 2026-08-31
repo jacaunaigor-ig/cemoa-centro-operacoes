@@ -147,11 +147,11 @@ function RainApoioCard({
     <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Apoio
+          Apoio · sugestão
         </span>
         <RiskBadge level={apoio.level} />
       </div>
-      <p className="mt-1 text-xs leading-snug text-text-dim" title="Sugestão de plantão — não pinta o mapa">
+      <p className="mt-1 text-xs leading-snug text-text-dim" title="Sugestão de grau. Só o operador classifica.">
         {apoio.motivo}
       </p>
     </div>

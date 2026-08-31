@@ -84,13 +84,13 @@ export function RainRanking({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         canSuggest
-          ? "Sugestão de plantão — não pinta o mapa. Em Edição, classifique e envie o alerta."
+          ? "Sugestão de grau a partir da chuva. Só o operador classifica — não pinta o mapa."
           : undefined
       }
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Chuva
+          Sugestão · chuva
         </p>
         <p className="text-[11px] text-text-mute">
           {rows.length === 0

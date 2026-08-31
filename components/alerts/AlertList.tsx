@@ -17,6 +17,7 @@ import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { HydroStatusBadge } from "@/components/hydrology/HydroStatusBadge";
 import { BACIAS } from "@/lib/risk";
 import {
+  classificationByline,
   isAlertActive,
   LEVEL_COLORS,
   LEVEL_LABELS,
@@ -358,12 +359,12 @@ export function AlertList({
                               ? m.classifiedBy
                                 ? `Classificado por ${m.classifiedBy} · `
                                 : "Operador · "
-                              : ""}
+                              : "Sem classificação · "}
                             {alert
                               ? `${alert.novo ? "Novo" : alert.agravado ? "Agravou" : "Alerta"} · ${formatRelative(alert.updatedAt)}`
                               : isAlertActive(tipo, m.risco)
                                 ? LEVEL_LABELS[m.risco] ?? m.risco
-                                : "Monitor"}
+                                : "Aguardando operador"}
                           </span>
                           <div className="flex shrink-0 items-center gap-1">
                             {rain ? (
@@ -445,11 +446,7 @@ function CotaPeek({
           <div className="flex justify-between gap-2">
             <dt className="text-text-mute">Classificação</dt>
             <dd className="font-bold text-text">
-              {fonte === "admin"
-                ? classifiedBy
-                  ? `Classificado por ${classifiedBy}`
-                  : "Operador"
-                : "Monitoramento automático"}
+              {classificationByline(fonte, classifiedBy)}
             </dd>
           </div>
           <div className="flex justify-between gap-2">

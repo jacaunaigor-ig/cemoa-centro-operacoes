@@ -963,7 +963,7 @@ export function AlertsWorkbench() {
       }
       setData(localAlerts(tipo));
       setUndoStack([]);
-      toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
+      toast.success("Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.");
       return;
     }
     const res = await fetch(`/api/alerts/overrides?tipo=${tipo}`, {
@@ -991,7 +991,7 @@ export function AlertsWorkbench() {
     const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
     setData(payload);
     setUndoStack([]);
-    toast.success("Classificação do operador removida. Monitoramento automático restaurado.");
+    toast.success("Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.");
   }
 
   async function exportMapPng() {
@@ -1518,7 +1518,7 @@ export function AlertsWorkbench() {
               paintHint={
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
-                  : "Defina grau e duração. Polígono pinta só a mancha, sem classificar o município inteiro."
+                  : "Só o operador classifica o grau. Polígono pinta a mancha; chuva e cota só sugerem."
               }
               onDraw={() => {
                 setDrawMode((v) => {

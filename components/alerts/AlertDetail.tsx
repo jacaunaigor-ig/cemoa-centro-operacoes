@@ -5,7 +5,7 @@ import { Droplets, X } from "lucide-react";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
-import { type AlertType } from "@/lib/alert-types";
+import { classificationByline, type AlertType } from "@/lib/alert-types";
 import { buildAlertBriefing } from "@/lib/alert-briefing";
 import { formatMm } from "@/lib/rainfall-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
@@ -84,11 +84,7 @@ export function AlertDetail({
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <RiskBadge level={risco} showAction strong />
         <span className="text-[11px] text-text-mute">
-          {fonte === "admin"
-            ? classifiedBy
-              ? `Classificado por ${classifiedBy}`
-              : "Operador"
-            : "Monitor"}
+          {classificationByline(fonte, classifiedBy)}
           {alert
             ? ` · ${formatRelative(alert.updatedAt)}`
             : classifiedAt

@@ -148,6 +148,16 @@ export function isAlertActive(tipo: AlertType, level: string) {
   return level !== product.low;
 }
 
+export function classificationByline(
+  fonte: "admin" | "monitor",
+  classifiedBy?: string | null,
+) {
+  if (fonte === "admin") {
+    return classifiedBy ? `Classificado por ${classifiedBy}` : "Classificado pelo operador";
+  }
+  return "Sem classificação do operador";
+}
+
 export function riskActionFor(level: string) {
   if ((RISK_LEVELS as readonly string[]).includes(level)) {
     return RISK_ACTIONS[level as RiskLevel];

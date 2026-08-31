@@ -1,13 +1,12 @@
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { getOverrideEntry } from "@/lib/overrides";
 import { listStains } from "@/lib/stains";
-import { alertExpiresAt, alertTtlMs } from "@/lib/alert-validity";
+import { alertExpiresAt } from "@/lib/alert-validity";
 import { applyHydroOverride } from "@/lib/hydro-overrides";
 import {
   ALERT_PRODUCTS,
   isAlertActive,
   type AlertType,
-  type AirLevel,
 } from "@/lib/alert-types";
 import {
   CALHAS,
@@ -18,110 +17,18 @@ import {
   catalogStations,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
-import { riskRank } from "@/lib/risk";
 import type {
   AlertLevel,
   AlertsPayload,
   HydrologyPayload,
   RainAlert,
-  RiskLevel,
 } from "@/lib/types";
 
-const POLL_MS = 8_000;
 const HOUR = 3_600_000;
 const SOURCE = "CEMOA / INMET / CENSIPAM / CPTEC-INPE / ANA / SGB";
 
-function hash32(input: string) {
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
 function levelRank(tipo: AlertType, level: string) {
   return Math.max(0, ALERT_PRODUCTS[tipo].levels.indexOf(level));
-}
-
-function pickHigher(tipo: AlertType, a: string, b: string) {
-  return levelRank(tipo, b) > levelRank(tipo, a) ? b : a;
-}
-
-const RAIN_SCRIPTS: Array<{
-  id: string;
-  risco: RiskLevel;
-  everyTicks: number;
-  offset: number;
-  holdTicks: number;
-}> = [
-  { id: "1304062", risco: "ALTO", everyTicks: 18, offset: 2, holdTicks: 6 },
-  { id: "1301803", risco: "SEVERO", everyTicks: 22, offset: 5, holdTicks: 5 },
-  { id: "1301407", risco: "SEVERO", everyTicks: 16, offset: 1, holdTicks: 4 },
-  { id: "1301654", risco: "EXTREMO", everyTicks: 40, offset: 8, holdTicks: 4 },
-  { id: "1302603", risco: "MODERADO", everyTicks: 14, offset: 3, holdTicks: 5 },
-  { id: "1301704", risco: "ALTO", everyTicks: 20, offset: 7, holdTicks: 5 },
-  { id: "1300607", risco: "SEVERO", everyTicks: 28, offset: 4, holdTicks: 4 },
-];
-
-function rainRiskAt(muniId: string, base: RiskLevel, at: number): RiskLevel {
-  const tick = Math.floor(at / POLL_MS);
-  let risk = base;
-  for (const event of RAIN_SCRIPTS) {
-    if (event.id !== muniId) continue;
-    const pos = (tick - event.offset + event.everyTicks * 1000) % event.everyTicks;
-    if (pos < event.holdTicks && riskRank(event.risco) > riskRank(risk)) risk = event.risco;
-  }
-  return risk;
-}
-
-function floodFromRain(rain: RiskLevel, muniId: string): RiskLevel {
-  if (rain === "EXTREMO") return "SEVERO";
-  if (rain === "SEVERO") return "ALTO";
-  if (rain === "ALTO") return hash32(`alag:${muniId}`) % 3 === 0 ? "ALTO" : "MODERADO";
-  if (rain === "MODERADO") return hash32(`alag2:${muniId}`) % 4 === 0 ? "MODERADO" : "BAIXO";
-  return "BAIXO";
-}
-
-function massFromRain(rain: RiskLevel, muniId: string, _bacia: string): RiskLevel {
-  const mapped = massRiskDo(muniId);
-  if (mapped.setores === 0) {
-    return rain === "EXTREMO" ? "MODERADO" : "BAIXO";
-  }
-  const alta = mapped.susceptibilidade === "alta";
-  if (rain === "EXTREMO") return alta ? "EXTREMO" : "SEVERO";
-  if (rain === "SEVERO") return alta ? "SEVERO" : "ALTO";
-  if (rain === "ALTO") return alta ? "ALTO" : "MODERADO";
-  if (rain === "MODERADO") return alta ? "MODERADO" : "BAIXO";
-  return "BAIXO";
-}
-
-function fireAt(muniId: string, bacia: string, at: number): AirLevel {
-  const tick = Math.floor(at / POLL_MS);
-  const h = hash32(`ar:${muniId}:${Math.floor(tick / 12)}`);
-  const dry = bacia === "Purus" || bacia === "Madeira" || bacia === "Juruá";
-  let level: AirLevel = "BOA";
-  if (dry && h % 7 === 0) level = "MODERADO";
-  if (dry && h % 19 === 0) level = "RUIM";
-  if (muniId === "1301407" && tick % 30 < 6) level = pickHigher("INCENDIO", level, "RUIM") as AirLevel;
-  if (muniId === "1300706" && tick % 36 < 5) level = pickHigher("INCENDIO", level, "MODERADO") as AirLevel;
-  if (muniId === "1303502" && tick % 42 < 4) level = pickHigher("INCENDIO", level, "MUITO_RUIM") as AirLevel;
-  return level;
-}
-
-function liveLevel(tipo: AlertType, muniId: string, baseRain: RiskLevel, bacia: string, at: number): AlertLevel {
-  const rain = rainRiskAt(muniId, baseRain, at);
-  if (tipo === "CHUVA") return rain;
-  if (tipo === "ALAGAMENTO") return floodFromRain(rain, muniId);
-  if (tipo === "MOVIMENTO") return massFromRain(rain, muniId, bacia);
-  return fireAt(muniId, bacia, at);
-}
-
-function issuedAtFor(muniId: string, tipo: AlertType, risco: string, now: number) {
-  const ttl = alertTtlMs(risco);
-  if (!ttl) return now;
-  const elapsed = hash32(`${muniId}:${tipo}:${risco}`) % ttl;
-  return now - elapsed;
 }
 
 function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, muniId: string) {
@@ -146,7 +53,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
       SEVERO: `Risco severo de deslizamento ou erosão de margem em ${nome}. Ação iminente nas áreas mapeadas.`,
       EXTREMO: `Movimento de massa extremo em ${nome}. Evacuação imediata dos setores mapeados.`,
       BAIXO: mapped.setores
-        ? `Setores mapeados em ${nome} sem chuva suficiente para elevar o risco.`
+        ? `Setores mapeados em ${nome} sem classificação de risco do operador.`
         : `Sem área mapeada de movimento de massa em ${nome}.`,
     };
     return copy[risco] ?? copy.BAIXO;
@@ -162,7 +69,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
     return copy[risco] ?? copy.BOA;
   }
   const rain: Record<string, string> = {
-    MODERADO: `Chuva moderada a forte prevista sobre ${nome}. Acompanhar acumulados na bacia ${bacia}.`,
+    MODERADO: `Chuva moderada a forte sobre ${nome}. Acompanhar acumulados na bacia ${bacia}.`,
     ALTO: `Chuva intensa em ${nome}, com risco de alagamentos pontuais e transbordo de igarapés.`,
     SEVERO: `Temporal severo em ${nome}. Risco elevado de alagamento, queda de árvores e isolamento de comunidades.`,
     EXTREMO: `Chuva extrema em ${nome}. Ação imediata de proteção da população ribeirinha na bacia ${bacia}.`,
@@ -171,22 +78,20 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
+/** O grau no mapa é só do operador. Sem classificação, o município fica no nível baixo do produto. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",
 ): Omit<AlertsPayload, "cache"> {
-  const lookback = 2 * POLL_MS;
+  const idle = ALERT_PRODUCTS[tipo].low as AlertLevel;
   const alerts: RainAlert[] = [];
   const municipios = MUNICIPALITIES.map((m) => {
-    const live = liveLevel(tipo, m.id, m.riscoChuvaBase, m.bacia, now);
     const admin = getOverrideEntry(m.id, tipo);
-    const risco = (admin?.level ?? live) as AlertLevel;
-    const previous = (admin?.level ?? liveLevel(tipo, m.id, m.riscoChuvaBase, m.bacia, now - lookback)) as AlertLevel;
-    const issuedAt = isAlertActive(tipo, risco)
-      ? admin?.issuedAt ?? issuedAtFor(m.id, tipo, risco, now)
-      : null;
+    const risco = (admin?.level ?? idle) as AlertLevel;
+    const previous = (admin?.previousLevel ?? idle) as AlertLevel;
+    const issuedAt = admin && isAlertActive(tipo, risco) ? admin.issuedAt : null;
     const expiresAt = issuedAt ? alertExpiresAt(issuedAt, risco, admin?.ttlMs) : null;
-    if (isAlertActive(tipo, risco) && issuedAt) {
+    if (admin && isAlertActive(tipo, risco) && issuedAt) {
       alerts.push({
         id: `${tipo.toLowerCase()}-${m.id}`,
         municipioId: m.id,
@@ -195,7 +100,7 @@ export function buildAlertsPayload(
         risco,
         issuedAt,
         expiresAt,
-        updatedAt: previous !== risco ? now - POLL_MS / 2 : issuedAt,
+        updatedAt: admin.issuedAt,
         previousRisco: previous,
         agravado: levelRank(tipo, risco) > levelRank(tipo, previous),
         novo: !isAlertActive(tipo, previous) && isAlertActive(tipo, risco),
@@ -225,7 +130,7 @@ export function buildAlertsPayload(
   const ranked = alerts.map((a) => a.risco);
   const maior = ranked.reduce<AlertLevel>(
     (acc, level) => (levelRank(tipo, level) > levelRank(tipo, acc) ? level : acc),
-    ALERT_PRODUCTS[tipo].low as AlertLevel,
+    idle,
   );
 
   return {

@@ -70,12 +70,12 @@ export function PlantaoQueue({
     <div
       id="fila-plantao"
       className="rounded-lg border border-border bg-bg/35 p-2"
-      title="Sugestão de plantão — não pinta o mapa. Em Edição, classifique e envie o alerta."
+      title="Sugestão de plantão. Só o operador classifica o grau — chuva e cota não pintam o mapa."
     >
       <div className="flex items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
           <ClipboardList className="size-3" />
-          Plantão
+          Sugestão · plantão
         </p>
         <span className="flex min-w-0 items-center gap-1">
           <p className="truncate text-[10px] text-text-mute">{product}</p>
@@ -102,7 +102,7 @@ export function PlantaoQueue({
 
       {shown.length === 0 ? (
         <p className="px-1 py-2 text-[11px] text-text-mute">
-          Nada na fila deste produto. Sem vencido, renovação próxima ou limiar cruzado.
+          Nada na fila deste produto. Sem vencido, renovação próxima ou limiar sugerido.
         </p>
       ) : (
         <ol className={cn("mt-1.5 space-y-0.5 overflow-auto", compact ? "max-h-40" : "max-h-56")}>

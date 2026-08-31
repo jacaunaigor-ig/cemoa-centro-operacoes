@@ -269,12 +269,10 @@ export function AppShell({
       {admin && !mapFocus ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
-          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — grau e duração, clique nos
-          municípios ou cole os nomes em lote
-          {pathname.startsWith("/boletim")
-            ? "."
-            : " ou desenhe uma mancha no polígono."}{" "}
-          Encerrar a edição ao terminar. Desfazer (Ctrl+Z).
+          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — só o operador classifica o
+          grau. Chuva, cota e a fila são sugestão. Clique, lote
+          {pathname.startsWith("/boletim") ? "" : " ou mancha no polígono"}. Encerrar ao
+          terminar. Desfazer (Ctrl+Z).
         </div>
       ) : null}
       <MeteoAvisoBanner />
