@@ -63,6 +63,7 @@ import {
   type AlertType,
 } from "@/lib/alert-types";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
+import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
@@ -183,6 +184,7 @@ export function AlertsWorkbench() {
   const [busca, setBusca] = useState("");
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(false);
+  const [drawMode, setDrawMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [clickSessionCount, setClickSessionCount] = useState(0);
@@ -216,7 +218,10 @@ export function AlertsWorkbench() {
       setClickSessionCount(0);
       setQuery({ municipio: null });
     }
-    if (!admin) setPaintArmed(false);
+    if (!admin) {
+      setPaintArmed(false);
+      setDrawMode(false);
+    }
     wasAdmin.current = admin;
     // setQuery is stable enough for arming edição
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,7 +240,7 @@ export function AlertsWorkbench() {
         replace?: boolean;
         remove?: string[];
         skipHistory?: boolean;
-        source?: "clique" | "lote" | "desfazer";
+        source?: "clique" | "lote" | "poligono" | "desfazer";
         tipo?: AlertType;
         ttlMs?: number;
         skipRefresh?: boolean;
@@ -508,6 +513,11 @@ export function AlertsWorkbench() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (editorOpen) return;
+        if (drawMode) {
+          mapApi.current?.cancelDraw();
+          setDrawMode(false);
+          return;
+        }
         if (paintArmed) {
           finishClickSession();
           return;
@@ -531,7 +541,7 @@ export function AlertsWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, paintArmed, admin, classifying, undoStack.length, undoLast]);
+  }, [selected, editorOpen, paintArmed, drawMode, admin, classifying, undoStack.length, undoLast]);
 
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
@@ -738,6 +748,62 @@ export function AlertsWorkbench() {
     ).then((ok) => {
       if (!ok) toast.error(`Não gravou ${nome}.`);
     });
+  }
+
+  function applyPolygon(points: Array<{ lat: number; lng: number }>) {
+    if (!data || classifying) return;
+    const ring = latLngsToRing(points);
+    const updates: Record<string, string> = {};
+    const names: string[] = [];
+    const now = Date.now();
+    for (const m of data.municipios) {
+      if (!pointInRing(m.lon, m.lat, ring)) continue;
+      updates[m.id] = paintLevel;
+      names.push(m.nome);
+    }
+    if (!names.length) {
+      toast.error("Nenhum município dentro do polígono.");
+      return;
+    }
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        municipios: prev.municipios.map((m) =>
+          updates[m.id]
+            ? {
+                ...m,
+                risco: paintLevel as typeof m.risco,
+                fonte: "admin",
+                issuedAt: now,
+                expiresAt: now + paintTtlMs,
+                classifiedBy: session?.name ?? m.classifiedBy,
+                classifiedAt: now,
+              }
+            : m,
+        ),
+      };
+    });
+    setClickSessionCount((n) => n + names.length);
+    setDrawMode(false);
+    setClassifying(true);
+    void persistOverrides(updates, {
+      source: "poligono",
+      ttlMs: paintTtlMs,
+      skipRefresh: true,
+    })
+      .then((ok) => {
+        if (!ok) {
+          toast.error("Não gravou o polígono.");
+          return;
+        }
+        toast.success(
+          names.length === 1
+            ? `${names[0]}: ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`
+            : `${names.length} municípios em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}.`,
+        );
+      })
+      .finally(() => setClassifying(false));
   }
 
   async function restoreLive() {
@@ -1131,7 +1197,7 @@ export function AlertsWorkbench() {
                       hasRainStation: Boolean(row),
                     };
                   })}
-                  selected={paintArmed ? null : selected}
+                  selected={paintArmed || drawMode ? null : selected}
                   hovered={hovered}
                   filter={activeFilter}
                   basin={bacia}
@@ -1144,12 +1210,14 @@ export function AlertsWorkbench() {
                   overlays={overlayVis}
                   pluvio={pluvio}
                   onlyRisk={onlyRisk}
+                  drawMode={admin && drawMode}
                   onSelect={(nome, basinName) => {
                     setHovered(null);
                     setQuery(geoForNome(nome, basinName));
                   }}
                   onHover={setHovered}
                   onPaint={paintMunicipio}
+                  onPolygonComplete={(pts) => void applyPolygon(pts)}
                   onGeoError={setGeoError}
                 />
               ) : null}
@@ -1159,7 +1227,7 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <RiskHelpButton className="pointer-events-auto absolute left-16 top-3 z-[1100]" />
-              {selectedRow && !paintArmed ? (
+              {selectedRow && !paintArmed && !drawMode ? (
                   <div className="pointer-events-auto absolute right-2 top-12 z-[1200] w-[min(calc(100%-1rem),32rem)] sm:top-2">
                   <AlertDetail
                     overlay
@@ -1237,6 +1305,7 @@ export function AlertsWorkbench() {
             <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar
               enabled={admin}
+              drawMode={drawMode}
               paintArmed={paintArmed}
               paintLevel={paintLevel}
               paintTtlMs={paintTtlMs}
@@ -1246,8 +1315,16 @@ export function AlertsWorkbench() {
               paintHint={
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
-                  : "Defina grau e duração, depois Classificar no clique ou em lote."
+                  : "Defina grau e duração, depois classifique no clique, em lote ou por polígono."
               }
+              onDraw={() => {
+                setDrawMode((v) => {
+                  const next = !v;
+                  if (next) setQuery({ municipio: null });
+                  else mapApi.current?.cancelDraw();
+                  return next;
+                });
+              }}
               onPaintArmed={(on) => {
                 if (on) {
                   setPaintArmed(true);
@@ -1262,6 +1339,10 @@ export function AlertsWorkbench() {
               onFinishClick={finishClickSession}
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreLive()}
+              onFinishPolygon={() => {
+                const ok = mapApi.current?.finishPolygon();
+                if (ok === false) toast.error("Marque ao menos 3 vértices.");
+              }}
               onUndo={() => void undoLast()}
               canUndo={undoStack.length > 0 && !classifying}
             />

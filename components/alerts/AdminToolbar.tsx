@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MousePointerClick, RotateCcw, Undo2 } from "lucide-react";
+import { Check, MousePointerClick, Pentagon, RotateCcw, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ALERT_DURATION_PRESETS, durationLabel } from "@/lib/alert-duration";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
@@ -81,6 +81,7 @@ export function AdminToolbar({
             onClick={onDraw}
             aria-pressed={drawMode}
           >
+            <Pentagon />
             Polígono
           </Button>
         ) : null}
@@ -106,7 +107,7 @@ export function AdminToolbar({
         ) : null}
         <span className="ml-auto text-[11px] text-text-mute">
           {drawMode
-            ? `Clique para vértices · duplo clique classifica como ${labels[paintLevel] ?? paintLevel}`
+            ? `Clique para vértices · duplo clique classifica como ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}`
             : paintHint ??
               (paintArmed
                 ? `Clique nos municípios: ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}. Encerrar quando terminar.`

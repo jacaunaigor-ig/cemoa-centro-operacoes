@@ -72,7 +72,6 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
 import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
-import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
 
@@ -144,13 +143,12 @@ export function HydrologyWorkbench() {
   const overlayVis = useMemo(() => effectiveOverlays(overlays, "BOLETIM"), [overlays]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [paintArmed, setPaintArmed] = useState(true);
-  const [drawMode, setDrawMode] = useState(false);
   const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
   const [editorOpen, setEditorOpen] = useState(false);
   const [pendingClassify, setPendingClassify] = useState<{
     updates: Record<string, HydroPatch>;
     names: string[];
-    source: "clique" | "lote" | "poligono";
+    source: "clique" | "lote";
     level: HydroStatus;
   } | null>(null);
   const [undoStack, setUndoStack] = useState<
@@ -403,28 +401,6 @@ export function HydrologyWorkbench() {
     });
   }
 
-  function applyPolygon(points: Array<{ lat: number; lng: number }>) {
-    if (!data) return;
-    const ring = latLngsToRing(points);
-    const updates: Record<string, HydroPatch> = {};
-    const names: string[] = [];
-    for (const s of data.stations) {
-      if (!pointInRing(s.lon, s.lat, ring)) continue;
-      updates[s.id] = { [statusKey]: paintLevel };
-      names.push(s.municipio);
-    }
-    if (!names.length) {
-      toast.error("Nenhum município dentro do polígono.");
-      return;
-    }
-    setPendingClassify({
-      updates,
-      names,
-      source: "poligono",
-      level: paintLevel,
-    });
-  }
-
   async function confirmClassify() {
     if (!pendingClassify) return;
     setClassifying(true);
@@ -437,7 +413,6 @@ export function HydrologyWorkbench() {
           ? `${pendingClassify.names[0]}: ${HYDRO_STATUS_LABELS[pendingClassify.level]}`
           : `${n} municípios com status ${HYDRO_STATUS_LABELS[pendingClassify.level]}.`,
       );
-      if (pendingClassify.source === "poligono") setDrawMode(false);
       setPendingClassify(null);
     } finally {
       setClassifying(false);
@@ -950,14 +925,12 @@ export function HydrologyWorkbench() {
                   pluvio={[]}
                   onlyRisk={onlyRisk}
                   adminMode={admin && paintArmed}
-                  drawMode={admin && drawMode}
                   onSelect={(s) => {
                     setHovered(null);
                     setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha });
                   }}
                   onHover={setHovered}
                   onPaint={(s) => void paintStation(s)}
-                  onPolygonComplete={(pts) => void applyPolygon(pts)}
                   onGeoError={setGeoError}
                 />
               ) : null}
@@ -991,7 +964,6 @@ export function HydrologyWorkbench() {
             <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar
               enabled={admin}
-              drawMode={drawMode}
               paintArmed={paintArmed}
               paintLevel={paintLevel}
               levels={HYDRO_LEVELS}
@@ -999,12 +971,10 @@ export function HydrologyWorkbench() {
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}
               paintHint="Clique no município para classificar"
-              onDraw={() => setDrawMode((v) => !v)}
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreHydro()}
-              onFinishPolygon={() => mapRef.current?.finishPolygon()}
               onUndo={() => void undoLast()}
               canUndo={undoStack.length > 0 && !classifying}
             />

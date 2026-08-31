@@ -7,13 +7,11 @@ import {
   useRef,
 } from "react";
 import type {
-  CircleMarker,
   GeoJSON as GeoJSONType,
   LayerGroup,
   Map as LeafletMap,
   Path,
   PathOptions,
-  Polyline,
   TileLayer,
 } from "leaflet";
 import type { HydroMode, HydroStation, HydroStatusFilter } from "@/lib/types";
@@ -51,8 +49,6 @@ import "leaflet/dist/leaflet.css";
 
 export type StationsMapHandle = {
   fitAmazonas: () => void;
-  finishPolygon: () => void;
-  cancelDraw: () => void;
 };
 
 export const StationsMap = forwardRef<
@@ -71,12 +67,10 @@ export const StationsMap = forwardRef<
     pluvio: PluvioStation[];
     onlyRisk: boolean;
     adminMode?: boolean;
-    drawMode?: boolean;
     hovered?: string | null;
     onSelect: (station: HydroStation) => void;
     onHover?: (nome: string | null) => void;
     onPaint?: (station: HydroStation) => void;
-    onPolygonComplete?: (points: Array<{ lat: number; lng: number }>) => void;
     onGeoError?: (message: string | null) => void;
   }
 >(function StationsMap(
@@ -94,12 +88,10 @@ export const StationsMap = forwardRef<
     pluvio,
     onlyRisk,
     adminMode = false,
-    drawMode = false,
     hovered,
     onSelect,
     onHover,
     onPaint,
-    onPolygonComplete,
     onGeoError,
   },
   ref,
@@ -113,15 +105,11 @@ export const StationsMap = forwardRef<
   const riversRef = useRef<LayerGroup | null>(null);
   const namesRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
-  const drawLineRef = useRef<Polyline | null>(null);
-  const drawDotsRef = useRef<CircleMarker[]>([]);
-  const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
   const onSelectRef = useRef(onSelect);
   const onHoverRef = useRef(onHover);
   const onPaintRef = useRef(onPaint);
-  const onPolygonRef = useRef(onPolygonComplete);
   const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     stations,
@@ -133,7 +121,6 @@ export const StationsMap = forwardRef<
     modo,
     opacity,
     adminMode,
-    drawMode,
     overlays,
     pluvio,
   });
@@ -142,7 +129,6 @@ export const StationsMap = forwardRef<
     onSelectRef.current = onSelect;
     onHoverRef.current = onHover;
     onPaintRef.current = onPaint;
-    onPolygonRef.current = onPolygonComplete;
     onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       stations,
@@ -154,7 +140,6 @@ export const StationsMap = forwardRef<
       modo,
       opacity,
       adminMode,
-      drawMode,
       overlays,
       pluvio,
     };
@@ -168,13 +153,11 @@ export const StationsMap = forwardRef<
     modo,
     opacity,
     adminMode,
-    drawMode,
     overlays,
     pluvio,
     onSelect,
     onHover,
     onPaint,
-    onPolygonComplete,
     onGeoError,
   ]);
 
@@ -217,53 +200,11 @@ export const StationsMap = forwardRef<
     };
   }
 
-  function clearDraw() {
-    verticesRef.current = [];
-    drawLineRef.current?.remove();
-    drawLineRef.current = null;
-    drawDotsRef.current.forEach((d) => d.remove());
-    drawDotsRef.current = [];
-  }
-
-  function finishPolygon() {
-    const pts = verticesRef.current;
-    if (pts.length >= 3) onPolygonRef.current?.(pts);
-    clearDraw();
-  }
-
-  function addVertex(lat: number, lng: number) {
-    const L = leafletRef.current;
-    const map = mapRef.current;
-    if (!L || !map) return;
-    verticesRef.current = [...verticesRef.current, { lat, lng }];
-    const last = verticesRef.current.at(-1);
-    if (!last) return;
-    const dot = L.circleMarker([last.lat, last.lng], {
-      radius: 5,
-      color: "#ff6a1f",
-      fillColor: "#ffb020",
-      fillOpacity: 1,
-      weight: 2,
-    }).addTo(map);
-    drawDotsRef.current.push(dot);
-    const latlngs = verticesRef.current.map((p) => [p.lat, p.lng] as [number, number]);
-    if (drawLineRef.current) drawLineRef.current.setLatLngs(latlngs);
-    else {
-      drawLineRef.current = L.polyline(latlngs, {
-        color: "#ff6a1f",
-        weight: 2.5,
-        dashArray: "6 4",
-      }).addTo(map);
-    }
-  }
-
   useImperativeHandle(ref, () => ({
     fitAmazonas: () => {
       const map = mapRef.current;
       if (map) fitMapToAmazonas(map, true);
     },
-    finishPolygon,
-    cancelDraw: clearDraw,
   }));
 
   useEffect(() => {
@@ -317,13 +258,9 @@ export const StationsMap = forwardRef<
             const nome = String(feature.properties?.nome ?? "");
             layersByNameRef.current.set(nome, lyr as Path);
             lyr.bindTooltip("", { sticky: true });
-            lyr.on("click", (ev) => {
-              const { adminMode: admin, drawMode: drawing } = stateRef.current;
+            lyr.on("click", () => {
+              const { adminMode: admin } = stateRef.current;
               const s = stateRef.current.stations.find((item) => item.municipio === nome);
-              if (drawing) {
-                addVertex(ev.latlng.lat, ev.latlng.lng);
-                return;
-              }
               if (admin && s) {
                 onPaintRef.current?.(s);
                 return;
@@ -391,12 +328,6 @@ export const StationsMap = forwardRef<
       if (onlyRisk) map.removeLayer(tiles);
 
       if (hostRef.current) cancelResize = observeAmazonasResize(hostRef.current, map);
-
-      map.on("dblclick", (ev) => {
-        if (!stateRef.current.drawMode) return;
-        ev.originalEvent.preventDefault();
-        finishPolygon();
-      });
     }
 
     void boot();
@@ -454,16 +385,6 @@ export const StationsMap = forwardRef<
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    if (drawMode) map.doubleClickZoom.disable();
-    else {
-      map.doubleClickZoom.enable();
-      clearDraw();
-    }
-  }, [drawMode]);
-
-  useEffect(() => {
-    const map = mapRef.current;
     const tiles = tilesRef.current;
     if (!map || !tiles) return;
     if (onlyRisk) {
@@ -506,7 +427,7 @@ export const StationsMap = forwardRef<
     <div
       ref={hostRef}
       className={
-        adminMode || drawMode
+        adminMode
           ? "hydro-map absolute inset-0 cursor-crosshair"
           : "hydro-map absolute inset-0"
       }

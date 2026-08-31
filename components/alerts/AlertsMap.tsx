@@ -2,11 +2,13 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type {
+  CircleMarker,
   GeoJSON as GeoJSONType,
   LayerGroup,
   Map as LeafletMap,
   Path,
   PathOptions,
+  Polyline,
   TileLayer,
 } from "leaflet";
 import type { AlertLevel } from "@/lib/types";
@@ -53,6 +55,8 @@ type Muni = {
 
 export type AlertsMapHandle = {
   fitAmazonas: () => void;
+  finishPolygon: () => boolean;
+  cancelDraw: () => void;
 };
 
 export const AlertsMap = forwardRef<
@@ -72,9 +76,11 @@ export const AlertsMap = forwardRef<
     pluvio: PluvioStation[];
     onlyRisk: boolean;
     hovered?: string | null;
+    drawMode?: boolean;
     onSelect: (nome: string, bacia: string) => void;
     onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
+    onPolygonComplete?: (points: Array<{ lat: number; lng: number }>) => void;
     onGeoError?: (message: string | null) => void;
   }
 >(function AlertsMap(
@@ -93,9 +99,11 @@ export const AlertsMap = forwardRef<
     pluvio,
     onlyRisk,
     hovered,
+    drawMode = false,
     onSelect,
     onHover,
     onPaint,
+    onPolygonComplete,
     onGeoError,
   },
   ref,
@@ -112,9 +120,13 @@ export const AlertsMap = forwardRef<
   const territoryRef = useRef<TerritoryLayers | null>(null);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
+  const drawLineRef = useRef<Polyline | null>(null);
+  const drawDotsRef = useRef<CircleMarker[]>([]);
+  const verticesRef = useRef<Array<{ lat: number; lng: number }>>([]);
   const onSelectRef = useRef(onSelect);
   const onHoverRef = useRef(onHover);
   const onPaintRef = useRef(onPaint);
+  const onPolygonRef = useRef(onPolygonComplete);
   const onGeoErrorRef = useRef(onGeoError);
   const stateRef = useRef({
     municipios,
@@ -128,12 +140,14 @@ export const AlertsMap = forwardRef<
     opacity,
     overlays,
     pluvio,
+    drawMode,
   });
 
   useEffect(() => {
     onSelectRef.current = onSelect;
     onHoverRef.current = onHover;
     onPaintRef.current = onPaint;
+    onPolygonRef.current = onPolygonComplete;
     onGeoErrorRef.current = onGeoError;
     stateRef.current = {
       municipios,
@@ -147,11 +161,13 @@ export const AlertsMap = forwardRef<
       opacity,
       overlays,
       pluvio,
+      drawMode,
     };
   }, [
     onSelect,
     onHover,
     onPaint,
+    onPolygonComplete,
     onGeoError,
     municipios,
     selected,
@@ -164,6 +180,7 @@ export const AlertsMap = forwardRef<
     opacity,
     overlays,
     pluvio,
+    drawMode,
   ]);
 
   function paintFeature(nome: string) {
@@ -183,6 +200,48 @@ export const AlertsMap = forwardRef<
       });
     }
     onPaintRef.current(m.id, m.nome, m.bacia);
+  }
+
+  function clearDraw() {
+    verticesRef.current = [];
+    drawLineRef.current?.remove();
+    drawLineRef.current = null;
+    drawDotsRef.current.forEach((d) => d.remove());
+    drawDotsRef.current = [];
+  }
+
+  function finishPolygon() {
+    const pts = verticesRef.current;
+    if (pts.length < 3) return false;
+    onPolygonRef.current?.(pts);
+    clearDraw();
+    return true;
+  }
+
+  function addVertex(lat: number, lng: number) {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    verticesRef.current = [...verticesRef.current, { lat, lng }];
+    const last = verticesRef.current.at(-1);
+    if (!last) return;
+    const dot = L.circleMarker([last.lat, last.lng], {
+      radius: 5,
+      color: "#ff6a1f",
+      fillColor: "#ffb020",
+      fillOpacity: 1,
+      weight: 2,
+    }).addTo(map);
+    drawDotsRef.current.push(dot);
+    const latlngs = verticesRef.current.map((p) => [p.lat, p.lng] as [number, number]);
+    if (drawLineRef.current) drawLineRef.current.setLatLngs(latlngs);
+    else {
+      drawLineRef.current = L.polyline(latlngs, {
+        color: "#ff6a1f",
+        weight: 2.5,
+        dashArray: "6 4",
+      }).addTo(map);
+    }
   }
 
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
@@ -229,6 +288,8 @@ export const AlertsMap = forwardRef<
       const map = mapRef.current;
       if (map) fitMapToAmazonas(map, true);
     },
+    finishPolygon,
+    cancelDraw: clearDraw,
   }));
 
   useEffect(() => {
@@ -282,7 +343,11 @@ export const AlertsMap = forwardRef<
             const nome = String(feature.properties?.nome ?? "");
             layersByNameRef.current.set(nome, lyr as Path);
             lyr.bindTooltip("", { sticky: true });
-            lyr.on("click", () => {
+            lyr.on("click", (ev) => {
+              if (stateRef.current.drawMode) {
+                addVertex(ev.latlng.lat, ev.latlng.lng);
+                return;
+              }
               if (stateRef.current.adminMode) {
                 paintFeature(nome);
                 return;
@@ -292,7 +357,11 @@ export const AlertsMap = forwardRef<
             });
             lyr.on("mouseover", () => {
               const m = stateRef.current.municipios.find((item) => item.nome === nome);
-              const prefix = stateRef.current.adminMode ? "Classificar · " : "";
+              const prefix = stateRef.current.drawMode
+                ? "Vértice · "
+                : stateRef.current.adminMode
+                  ? "Classificar · "
+                  : "";
               lyr.setTooltipContent(
                 `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${
                   m?.hasRainStation
@@ -356,6 +425,7 @@ export const AlertsMap = forwardRef<
       rainLayer.addTo(map);
       rainLayerRef.current = rainLayer;
       syncRainBursts(L, rainLayer, stateRef.current.municipios, (nome, bacia) => {
+        if (stateRef.current.drawMode) return;
         if (stateRef.current.adminMode) paintFeature(nome);
         else onSelectRef.current(nome, bacia);
       });
@@ -369,6 +439,12 @@ export const AlertsMap = forwardRef<
       if (onlyRisk) map.removeLayer(tiles);
 
       if (hostRef.current) cancelResize = observeAmazonasResize(hostRef.current, map);
+
+      map.on("dblclick", (ev) => {
+        if (!stateRef.current.drawMode) return;
+        ev.originalEvent.preventDefault();
+        finishPolygon();
+      });
     }
 
     void boot();
@@ -400,6 +476,7 @@ export const AlertsMap = forwardRef<
     const layer = rainLayerRef.current;
     if (!L || !layer) return;
     syncRainBursts(L, layer, municipios, (nome, bacia) => {
+      if (stateRef.current.drawMode) return;
       if (stateRef.current.adminMode) paintFeature(nome);
       else onSelectRef.current(nome, bacia);
     });
@@ -414,6 +491,16 @@ export const AlertsMap = forwardRef<
     const m = stateRef.current.municipios.find((item) => item.nome === selected);
     if (m) panToIfNeeded(map, m.lat, m.lon);
   }, [selected, adminMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (drawMode) map.doubleClickZoom.disable();
+    else {
+      map.doubleClickZoom.enable();
+      clearDraw();
+    }
+  }, [drawMode]);
 
   // Hover restyles only the two affected polygons directly — avoids re-styling
   // all ~62 features on every mouseover/mouseout (see full setStyle effect above).
@@ -479,7 +566,7 @@ export const AlertsMap = forwardRef<
     <div
       ref={hostRef}
       className={
-        adminMode
+        adminMode || drawMode
           ? "hydro-map absolute inset-0 cursor-crosshair"
           : "hydro-map absolute inset-0"
       }
