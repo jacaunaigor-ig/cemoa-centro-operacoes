@@ -12,6 +12,7 @@ import {
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
 import { withOperatorRole } from "@/lib/equipe";
+import { parseAlertTtlMs } from "@/lib/alert-duration";
 import {
   appendClassificationAudit,
   deleteRemoteAlertOverrideIds,
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       remove?: unknown;
       replace?: boolean;
       source?: string;
+      ttlMs?: unknown;
     };
     const tipo = parseTipo(body.tipo);
     const product = productOf(tipo);
@@ -53,7 +55,8 @@ export async function POST(request: Request) {
       ? body.remove.filter((id): id is string => typeof id === "string")
       : [];
     const who = withOperatorRole(gate.user);
-    const meta = { issuedBy: who.name, issuedById: who.id };
+    const ttlMs = parseAlertTtlMs(body.ttlMs);
+    const meta = { issuedBy: who.name, issuedById: who.id, ttlMs };
     const previousById: Record<string, string | undefined> = {};
     for (const id of Object.keys(updates)) previousById[id] = getOverride(id, tipo);
     if (body.replace) replaceOverrides(tipo, updates, Date.now(), meta);

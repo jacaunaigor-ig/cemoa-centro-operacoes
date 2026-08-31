@@ -76,6 +76,7 @@ export type RemoteAlertOverride = {
   municipio_id: string;
   level: string;
   issued_at: string;
+  ttl_ms?: number | null;
 };
 
 export type RemoteHydroOverride = {
@@ -85,7 +86,7 @@ export type RemoteHydroOverride = {
 
 export async function fetchRemoteAlertOverrides(): Promise<RemoteAlertOverride[]> {
   const rows = await rest<RemoteAlertOverride[]>(
-    "alert_overrides?select=tipo,municipio_id,level,issued_at,issued_by",
+    "alert_overrides?select=tipo,municipio_id,level,issued_at,issued_by,ttl_ms",
   );
   return rows ?? [];
 }
@@ -94,7 +95,7 @@ export async function upsertRemoteAlertOverrides(
   tipo: string,
   updates: Record<string, string>,
   issuedAt = Date.now(),
-  meta?: { issuedBy?: string; issuedById?: string },
+  meta?: { issuedBy?: string; issuedById?: string; ttlMs?: number },
 ) {
   if (!supabaseConfigured() || !Object.keys(updates).length) return;
   const rows = Object.entries(updates).map(([municipio_id, level]) => ({
@@ -105,6 +106,7 @@ export async function upsertRemoteAlertOverrides(
     updated_at: new Date().toISOString(),
     issued_by: meta?.issuedBy ?? null,
     issued_by_id: meta?.issuedById ?? null,
+    ttl_ms: meta?.ttlMs ?? null,
   }));
   await rest("alert_overrides", {
     method: "POST",
@@ -214,6 +216,7 @@ export async function hydrateAlertOverridesFromRemote() {
       level: row.level,
       issuedAt: Date.parse(row.issued_at) || Date.now(),
       issuedBy: (row as { issued_by?: string }).issued_by,
+      ttlMs: typeof row.ttl_ms === "number" && row.ttl_ms > 0 ? row.ttl_ms : undefined,
     };
   }
   hydrateOverrideRecord(raw);

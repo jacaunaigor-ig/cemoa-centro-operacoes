@@ -17,9 +17,13 @@ export function alertTtlMs(level: string): number | null {
   return ALERT_TTL_MS[level] ?? null;
 }
 
-export function alertExpiresAt(issuedAt: number | null | undefined, level: string): number | null {
+export function alertExpiresAt(
+  issuedAt: number | null | undefined,
+  level: string,
+  ttlMs?: number | null,
+): number | null {
   if (!issuedAt) return null;
-  const ttl = alertTtlMs(level);
+  const ttl = ttlMs && ttlMs > 0 ? ttlMs : alertTtlMs(level);
   return ttl ? issuedAt + ttl : null;
 }
 

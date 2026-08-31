@@ -39,6 +39,7 @@ import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow } from 
 import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides, replaceOverrides } from "@/lib/overrides";
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
+import { DEFAULT_ALERT_DURATION_MS, durationLabel } from "@/lib/alert-duration";
 import { latLngsToRing, pointInRing } from "@/lib/geo";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
@@ -120,7 +121,7 @@ function rememberLocalOverrides(
   updates: Record<string, string>,
   replace: boolean,
   remove: string[] = [],
-  meta?: { issuedBy?: string; issuedById?: string },
+  meta?: { issuedBy?: string; issuedById?: string; ttlMs?: number },
 ) {
   const current = readLocalOverrides();
   if (replace) {
@@ -135,6 +136,7 @@ function rememberLocalOverrides(
       issuedAt,
       issuedBy: meta?.issuedBy,
       issuedById: meta?.issuedById,
+      ttlMs: meta?.ttlMs,
     };
   }
   for (const id of remove) delete current[`${tipo}:${id}`];
@@ -183,9 +185,11 @@ export function AlertsWorkbench() {
   const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
   const [busca, setBusca] = useState("");
   const buscaFiltro = useDebouncedValue(busca, 180);
-  const [paintArmed, setPaintArmed] = useState(true);
+  const [paintArmed, setPaintArmed] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
+  const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
+  const [clickSessionCount, setClickSessionCount] = useState(0);
   const [pendingClassify, setPendingClassify] = useState<{
     updates: Record<string, string>;
     names: string[];
@@ -230,6 +234,7 @@ export function AlertsWorkbench() {
         skipHistory?: boolean;
         source?: "clique" | "lote" | "poligono" | "desfazer";
         tipo?: AlertType;
+        ttlMs?: number;
       },
     ) => {
       const tipoAlvo = opts?.tipo ?? tipo;
@@ -243,7 +248,11 @@ export function AlertsWorkbench() {
           previous[id] = row?.fonte === "admin" ? row.risco : null;
         }
       }
-      const meta = session ? { issuedBy: session.name, issuedById: session.id } : undefined;
+      const meta = {
+        issuedBy: session?.name,
+        issuedById: session?.id,
+        ttlMs: opts?.ttlMs,
+      };
       if (STATIC_DEPLOY) {
         if (replace) replaceOverrides(tipoAlvo, updates, Date.now(), meta);
         else if (Object.keys(updates).length) mergeOverrides(tipoAlvo, updates, Date.now(), meta);
@@ -269,6 +278,7 @@ export function AlertsWorkbench() {
           replace,
           remove,
           source: opts?.source ?? "clique",
+          ttlMs: opts?.ttlMs,
         }),
       });
       if (res.status === 401) {
@@ -495,7 +505,12 @@ export function AlertsWorkbench() {
           setPendingClassify(null);
           return;
         }
-        if (selected && !editorOpen) setQuery({ municipio: null });
+        if (editorOpen) return;
+        if (paintArmed) {
+          finishClickSession();
+          return;
+        }
+        if (selected) setQuery({ municipio: null });
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         const target = event.target as HTMLElement | null;
@@ -514,7 +529,7 @@ export function AlertsWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, pendingClassify, admin, classifying, undoStack.length, undoLast]);
+  }, [selected, editorOpen, pendingClassify, paintArmed, admin, classifying, undoStack.length, undoLast]);
 
   const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
@@ -675,13 +690,47 @@ export function AlertsWorkbench() {
     };
   }
 
+  function finishClickSession() {
+    const n = clickSessionCount;
+    setPaintArmed(false);
+    setClickSessionCount(0);
+    if (n) {
+      toast.success(
+        n === 1
+          ? `Edição encerrada · 1 município em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`
+          : `Edição encerrada · ${n} municípios em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`,
+      );
+    }
+  }
+
   function paintMunicipio(id: string, nome: string, baciaName: string) {
     setQuery(geoForNome(nome, baciaName));
-    setPendingClassify({
-      updates: { [id]: paintLevel },
-      names: [nome],
-      source: "clique",
-      level: paintLevel,
+    const now = Date.now();
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        municipios: prev.municipios.map((m) =>
+          m.id === id
+            ? {
+                ...m,
+                risco: paintLevel as typeof m.risco,
+                fonte: "admin",
+                issuedAt: now,
+                expiresAt: now + paintTtlMs,
+                classifiedBy: session?.name ?? m.classifiedBy,
+                classifiedAt: now,
+              }
+            : m,
+        ),
+      };
+    });
+    setClickSessionCount((n) => n + 1);
+    void persistOverrides(
+      { [id]: paintLevel },
+      { source: "clique", ttlMs: paintTtlMs },
+    ).then((ok) => {
+      if (!ok) toast.error(`Não gravou ${nome}.`);
     });
   }
 
@@ -711,7 +760,10 @@ export function AlertsWorkbench() {
     if (!pendingClassify) return;
     setClassifying(true);
     try {
-      const ok = await persistOverrides(pendingClassify.updates, { source: pendingClassify.source });
+      const ok = await persistOverrides(pendingClassify.updates, {
+        source: pendingClassify.source,
+        ttlMs: paintTtlMs,
+      });
       if (!ok) return;
       const n = pendingClassify.names.length;
       toast.success(
@@ -1229,14 +1281,26 @@ export function AlertsWorkbench() {
               drawMode={drawMode}
               paintArmed={paintArmed}
               paintLevel={paintLevel}
+              paintTtlMs={paintTtlMs}
               levels={product.levels}
               overrideCount={overrideCount}
-              paintHint="Clique no município para classificar"
+              sessionCount={clickSessionCount}
+              paintHint={
+                paintArmed
+                  ? `Clique nos municípios. Encerrar quando terminar.`
+                  : "Defina grau e duração, depois Classificar no clique ou em lote."
+              }
               onDraw={() => setDrawMode((v) => !v)}
-              onPaintArmed={setPaintArmed}
+              onPaintArmed={(on) => {
+                setPaintArmed(on);
+                if (!on) finishClickSession();
+                else setClickSessionCount(0);
+              }}
               onPaintLevel={(level) =>
                 setPaintByTipo((prev) => ({ ...prev, [tipo]: level }))
               }
+              onPaintTtl={setPaintTtlMs}
+              onFinishClick={finishClickSession}
               onOpenBatch={() => setEditorOpen(true)}
               onRestore={() => void restoreLive()}
               onFinishPolygon={() => mapApi.current?.finishPolygon()}
@@ -1254,16 +1318,20 @@ export function AlertsWorkbench() {
         levels={product.levels}
         productLabel={product.label}
         onClose={() => setEditorOpen(false)}
-        onApply={async (updates) => {
-          const ok = await persistOverrides(updates, { source: "lote" });
-          if (ok) toast.success(`${Object.keys(updates).length} município(s) classificados.`);
+        onApply={async (updates, ttlMs) => {
+          const ok = await persistOverrides(updates, { source: "lote", ttlMs });
+          if (ok) {
+            toast.success(
+              `${Object.keys(updates).length} município(s) em ${levelLabel(Object.values(updates)[0] ?? paintLevel)} · ${durationLabel(ttlMs)}.`,
+            );
+          }
         }}
       />
       <ClassifyConfirm
         open={Boolean(pendingClassify)}
         title="Confirmar classificação"
-        description="A classificação entra no mapa deste produto. Use Desfazer se precisar voltar."
-        level={pendingClassify ? levelLabel(pendingClassify.level) : ""}
+        description={`A classificação entra no mapa deste produto por ${durationLabel(paintTtlMs)}. Use Desfazer se precisar voltar.`}
+        level={pendingClassify ? `${levelLabel(pendingClassify.level)} · ${durationLabel(paintTtlMs)}` : ""}
         names={pendingClassify?.names ?? []}
         by={session?.name}
         busy={classifying}

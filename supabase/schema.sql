@@ -39,6 +39,7 @@ create table if not exists public.alert_overrides (
   issued_by text,
   issued_by_id text,
   previous_level text,
+  ttl_ms integer,
   updated_by uuid references public.profiles (id),
   primary key (tipo, municipio_id)
 );
@@ -46,6 +47,7 @@ create table if not exists public.alert_overrides (
 alter table public.alert_overrides add column if not exists issued_by text;
 alter table public.alert_overrides add column if not exists issued_by_id text;
 alter table public.alert_overrides add column if not exists previous_level text;
+alter table public.alert_overrides add column if not exists ttl_ms integer;
 
 create table if not exists public.classification_audit (
   id bigserial primary key,

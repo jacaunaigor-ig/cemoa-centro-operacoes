@@ -77,7 +77,12 @@ O **Aviso Meteorológico** tem duas camadas:
 2. **Edição** — liga/desliga as ferramentas do mapa sem sair da conta.
 3. **Sair** — encerra a sessão.
 
-Com a edição ligada, o operador classifica no **clique** (com confirmação), em **lote** ou por **polígono**, e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem e quando. No mobile a edição fica oculta.
+Com a edição ligada, o operador classifica no **clique** ou em **lote** (e ainda por **polígono**), e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias).
+
+- **Clique** — escolha o grau e a duração, ligue **Classificar no clique** e toque nos municípios: o mapa muda na hora. **Encerrar edição** (ou Esc) fecha a sessão.
+- **Lote** — escolha grau e duração, cole os nomes **por extenso** (um por linha ou separados por vírgula) e **Encerrar edição**.
+
+No mobile a edição fica oculta.
 
 ### Quadro do Centro de Monitoramento
 

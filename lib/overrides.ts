@@ -8,6 +8,7 @@ export type OverrideEntry = {
   issuedBy?: string;
   issuedById?: string;
   previousLevel?: string;
+  ttlMs?: number;
 };
 
 const overrides = new Map<string, OverrideEntry>();
@@ -31,6 +32,7 @@ function parseEntry(value: unknown): OverrideEntry | null {
       issuedBy?: unknown;
       issuedById?: unknown;
       previousLevel?: unknown;
+      ttlMs?: unknown;
     };
     if (typeof row.level !== "string") return null;
     const issuedAt = typeof row.issuedAt === "number" ? row.issuedAt : Date.now();
@@ -40,6 +42,7 @@ function parseEntry(value: unknown): OverrideEntry | null {
       issuedBy: typeof row.issuedBy === "string" ? row.issuedBy : undefined,
       issuedById: typeof row.issuedById === "string" ? row.issuedById : undefined,
       previousLevel: typeof row.previousLevel === "string" ? row.previousLevel : undefined,
+      ttlMs: typeof row.ttlMs === "number" && row.ttlMs > 0 ? row.ttlMs : undefined,
     };
   }
   return null;
@@ -78,6 +81,7 @@ export function getOverrideEntry(id: string, tipo: AlertType = "CHUVA"): Overrid
 export type OverrideMeta = {
   issuedBy?: string;
   issuedById?: string;
+  ttlMs?: number;
 };
 
 export function mergeOverrides(
@@ -95,6 +99,7 @@ export function mergeOverrides(
       issuedBy: meta?.issuedBy ?? prev?.issuedBy,
       issuedById: meta?.issuedById ?? prev?.issuedById,
       previousLevel: prev?.level ?? prev?.previousLevel,
+      ttlMs: meta?.ttlMs ?? prev?.ttlMs,
     });
   }
 }

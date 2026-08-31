@@ -184,7 +184,7 @@ export function buildAlertsPayload(
     const issuedAt = isAlertActive(tipo, risco)
       ? admin?.issuedAt ?? issuedAtFor(m.id, tipo, risco, now)
       : null;
-    const expiresAt = issuedAt ? alertExpiresAt(issuedAt, risco) : null;
+    const expiresAt = issuedAt ? alertExpiresAt(issuedAt, risco, admin?.ttlMs) : null;
     if (isAlertActive(tipo, risco) && issuedAt) {
       alerts.push({
         id: `${tipo.toLowerCase()}-${m.id}`,
