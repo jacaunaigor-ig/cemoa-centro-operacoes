@@ -176,7 +176,7 @@ export function HydroDetail({
         </span>
       </div>
 
-      <div className="mt-2">
+      <div className="mt-2 max-w-[22rem]">
         <CotaChart
           station={station}
           status={statusAtivo(station, modo)}

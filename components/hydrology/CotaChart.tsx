@@ -20,11 +20,11 @@ export const CotaChart = memo(function CotaChart({
   compact?: boolean;
   limites?: Limite[];
 }) {
-  const width = compact ? 320 : 420;
-  const height = compact ? 128 : 168;
+  const width = 360;
+  const height = compact ? 108 : 118;
   const pad = compact
-    ? { l: 32, r: 8, t: 16, b: 24 }
-    : { l: 38, r: 10, t: 20, b: 28 };
+    ? { l: 30, r: 8, t: 12, b: 20 }
+    : { l: 34, r: 8, t: 14, b: 22 };
   const innerW = width - pad.l - pad.r;
   const innerH = height - pad.t - pad.b;
   const color = HYDRO_STATUS_COLORS[status];
@@ -93,10 +93,11 @@ export const CotaChart = memo(function CotaChart({
   const yTicks = [yMin + ySpan * 0.15, (yMin + yMax) / 2, yMax - ySpan * 0.15];
 
   return (
-    <div className="grid gap-2">
+    <div className={cn("mx-auto grid w-full max-w-[22rem] gap-1.5")}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full"
+        className={cn("w-full", compact ? "h-[6.25rem]" : "h-[7rem]")}
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`Cota observada e projeção linear de 3, 5 e 7 dias em ${station.municipio}`}
       >
@@ -220,16 +221,16 @@ export const CotaChart = memo(function CotaChart({
       </svg>
 
       {proj ? (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-1">
           {proj.pontos.map((p) => (
             <div
               key={p.label}
-              className="rounded-lg border border-brand-2/25 bg-brand-2/8 px-2 py-1.5 text-center"
+              className="rounded-md border border-brand-2/25 bg-brand-2/8 px-1.5 py-1 text-center"
             >
-              <small className="block text-[9px] font-bold tracking-[0.1em] text-brand-2 uppercase">
+              <small className="block text-[8px] font-bold tracking-[0.1em] text-brand-2 uppercase">
                 {p.label} dias
               </small>
-              <strong className="font-mono text-sm tabular-nums">
+              <strong className="font-mono text-xs tabular-nums">
                 {p.y == null ? "—" : `${p.y.toFixed(2)} m`}
               </strong>
             </div>
