@@ -38,6 +38,7 @@ import {
   HYDRO_LEVELS,
   HYDRO_STATUS_COLORS,
   HYDRO_STATUS_LABELS,
+  HYDRO_ACTIONS,
   PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
@@ -73,6 +74,7 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
 import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
+import { SituationStrip } from "@/components/shared/SituationStrip";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/client-hooks";
 
@@ -549,7 +551,7 @@ export function HydrologyWorkbench() {
               compact
               label="Baixo"
               value={loading ? "—" : String(kpis.baixo)}
-              sub={pct(kpis.baixo)}
+              sub={`${HYDRO_ACTIONS.NORMAL} · ${pct(kpis.baixo)}`}
               accent="#10b981"
               active={status === "NORMAL"}
               onClick={() => setQuery({ status: "NORMAL", municipio: null })}
@@ -559,7 +561,7 @@ export function HydrologyWorkbench() {
               compact
               label="Moderado"
               value={loading ? "—" : String(kpis.moderado)}
-              sub={pct(kpis.moderado)}
+              sub={`${HYDRO_ACTIONS.MODERADO} · ${pct(kpis.moderado)}`}
               accent="#f59e0b"
               active={status === "MODERADO"}
               onClick={() => setQuery({ status: "MODERADO", municipio: null })}
@@ -569,7 +571,7 @@ export function HydrologyWorkbench() {
               compact
               label="Alto"
               value={loading ? "—" : String(kpis.alto)}
-              sub={pct(kpis.alto)}
+              sub={`${HYDRO_ACTIONS.ALTO} · ${pct(kpis.alto)}`}
               accent="#f97316"
               active={status === "ALTO"}
               onClick={() => setQuery({ status: "ALTO", municipio: null })}
@@ -579,7 +581,7 @@ export function HydrologyWorkbench() {
               compact
               label="Severo"
               value={loading ? "—" : String(kpis.severo)}
-              sub={pct(kpis.severo)}
+              sub={`${HYDRO_ACTIONS.SEVERO} · ${pct(kpis.severo)}`}
               accent="#ef4444"
               active={status === "SEVERO"}
               onClick={() => setQuery({ status: "SEVERO", municipio: null })}
@@ -854,7 +856,7 @@ export function HydrologyWorkbench() {
                       onClick={() => setMapFocus(!mapFocus)}
                       icon={mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
                     >
-                      {mapFocus ? "Mostrar tudo" : "Somente mapa"}
+                      {mapFocus ? "Operação" : "Sala de situação"}
                     </MapToolButton>
                     <MapToolButton
                       active={onlyRisk}
@@ -898,6 +900,65 @@ export function HydrologyWorkbench() {
                   </PopoverContent>
                 </Popover>
             </MapChromeBar>
+            {mapFocus && !isMobile ? (
+              <SituationStrip
+                ariaLabel="Resumo hidrológico da sala de situação"
+                items={[
+                  {
+                    id: "NORMAL",
+                    label: "Baixo",
+                    action: HYDRO_ACTIONS.NORMAL,
+                    count: kpis.baixo,
+                    color: HYDRO_STATUS_COLORS.NORMAL,
+                    active: status === "NORMAL",
+                    onClick: () =>
+                      setQuery({
+                        status: status === "NORMAL" ? null : "NORMAL",
+                        municipio: null,
+                      }),
+                  },
+                  {
+                    id: "MODERADO",
+                    label: "Moderado",
+                    action: HYDRO_ACTIONS.MODERADO,
+                    count: kpis.moderado,
+                    color: HYDRO_STATUS_COLORS.MODERADO,
+                    active: status === "MODERADO",
+                    onClick: () =>
+                      setQuery({
+                        status: status === "MODERADO" ? null : "MODERADO",
+                        municipio: null,
+                      }),
+                  },
+                  {
+                    id: "ALTO",
+                    label: "Alto",
+                    action: HYDRO_ACTIONS.ALTO,
+                    count: kpis.alto,
+                    color: HYDRO_STATUS_COLORS.ALTO,
+                    active: status === "ALTO",
+                    onClick: () =>
+                      setQuery({
+                        status: status === "ALTO" ? null : "ALTO",
+                        municipio: null,
+                      }),
+                  },
+                  {
+                    id: "SEVERO",
+                    label: "Severo",
+                    action: HYDRO_ACTIONS.SEVERO,
+                    count: kpis.severo,
+                    color: HYDRO_STATUS_COLORS.SEVERO,
+                    active: status === "SEVERO",
+                    onClick: () =>
+                      setQuery({
+                        status: status === "SEVERO" ? null : "SEVERO",
+                        municipio: null,
+                      }),
+                  },
+                ]}
+              />
+            ) : null}
 
             <div className={cn(
               "relative flex-1 overflow-hidden lg:min-h-0",
@@ -956,10 +1017,26 @@ export function HydrologyWorkbench() {
                 onHiddenChange={setLegendHidden}
               >
                 <ul className="space-y-0.5">
-                  <LegendDot color={HYDRO_STATUS_COLORS.NORMAL} label="Baixo" />
-                  <LegendDot color={HYDRO_STATUS_COLORS.MODERADO} label="Moderado" />
-                  <LegendDot color={HYDRO_STATUS_COLORS.ALTO} label="Alto" />
-                  <LegendDot color={HYDRO_STATUS_COLORS.SEVERO} label="Severo" />
+                  <LegendDot
+                    color={HYDRO_STATUS_COLORS.NORMAL}
+                    label="Baixo"
+                    action={!isMobile ? HYDRO_ACTIONS.NORMAL : undefined}
+                  />
+                  <LegendDot
+                    color={HYDRO_STATUS_COLORS.MODERADO}
+                    label="Moderado"
+                    action={!isMobile ? HYDRO_ACTIONS.MODERADO : undefined}
+                  />
+                  <LegendDot
+                    color={HYDRO_STATUS_COLORS.ALTO}
+                    label="Alto"
+                    action={!isMobile ? HYDRO_ACTIONS.ALTO : undefined}
+                  />
+                  <LegendDot
+                    color={HYDRO_STATUS_COLORS.SEVERO}
+                    label="Severo"
+                    action={!isMobile ? HYDRO_ACTIONS.SEVERO : undefined}
+                  />
                   {status === "SL" ? (
                     <LegendDot color="#7c8fab" label="Sem leitura" />
                   ) : null}
@@ -967,7 +1044,7 @@ export function HydrologyWorkbench() {
               </MapLegendCard>
             </div>
 
-            {isMobile || mapFocus ? null : <HydroTicker stations={visible} modo={modo} />}
+            {isMobile ? null : <HydroTicker stations={visible} modo={modo} />}
 
             <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar
@@ -1031,11 +1108,24 @@ export function HydrologyWorkbench() {
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({
+  color,
+  label,
+  action,
+}: {
+  color: string;
+  label: string;
+  action?: string;
+}) {
   return (
     <li className="flex items-center gap-1.5 text-text">
       <span className="size-2.5 rounded-sm" style={{ background: color }} />
       {label}
+      {action ? (
+        <span className="ml-auto truncate text-[9px] font-semibold tracking-wide text-text-mute uppercase">
+          {action}
+        </span>
+      ) : null}
     </li>
   );
 }

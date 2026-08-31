@@ -340,7 +340,11 @@ export function AlertList({
                           <span className="truncate font-bold">{m.nome}</span>
                           <span className="flex shrink-0 items-center gap-1.5">
                             <AlertCountdown expiresAt={m.expiresAt ?? alert?.expiresAt} variant="row" />
-                            <RiskBadge level={m.risco} strong={isAlertActive(tipo, m.risco)} />
+                            <RiskBadge
+                              level={m.risco}
+                              showAction={!isMobile && isAlertActive(tipo, m.risco)}
+                              strong={isAlertActive(tipo, m.risco)}
+                            />
                           </span>
                         </button>
                         {!isMobile ? (

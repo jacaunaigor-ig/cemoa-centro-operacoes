@@ -106,7 +106,7 @@ export function RiskHelpButton({
                   id="risk-help-title"
                   className={cn("font-bold tracking-tight", isMobile ? "text-base" : "mt-1 text-xl")}
                 >
-                  {variant === "boletim" ? "Estiagem e inundação" : "Níveis de risco"}
+                  {variant === "boletim" ? "Estiagem e inundação" : "Entenda os níveis de risco"}
                 </h2>
                 {!isMobile ? (
                   <p className="text-xs text-text-mute">
@@ -179,9 +179,10 @@ export function RiskHelpButton({
                 </div>
 
                 {!isMobile ? (
-                  <footer className="grid grid-cols-2 gap-1.5 px-4 pb-3 sm:grid-cols-4">
+                  <footer className="grid grid-cols-2 gap-1.5 px-4 pb-3 sm:grid-cols-5">
                     {(
                       [
+                        ["BAIXO", "Baixo", "Monitoramento"],
                         ["MODERADO", "Moderado", "Atenção e prevenção"],
                         ["ALTO", "Alto", "Preparação antecipada"],
                         ["SEVERO", "Severo", "Ação iminente"],

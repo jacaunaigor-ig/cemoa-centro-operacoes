@@ -67,6 +67,7 @@ export function PlantaoQueue({
 
   return (
     <div
+      id="fila-plantao"
       className="rounded-lg border border-border bg-bg/35 p-2"
       title="Sugestão de plantão — não pinta o mapa. Em Edição, classifique e envie o alerta."
     >

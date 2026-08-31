@@ -168,6 +168,13 @@ export const RISK_LEGEND_COPY: Array<{
   footer: string;
 }> = [
   {
+    level: "BAIXO",
+    title: "Risco Baixo",
+    action: "MONITORAMENTO",
+    body: "Situação dentro da normalidade, sem expectativa de impactos significativos à população.",
+    footer: "Manter observação e acompanhar eventuais atualizações oficiais.",
+  },
+  {
     level: "MODERADO",
     title: "Risco Moderado",
     action: "ATENÇÃO",

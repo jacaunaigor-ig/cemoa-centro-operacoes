@@ -76,6 +76,13 @@ export const HYDRO_STATUS_LABELS: Record<HydroStatus | "SL", string> = {
   SL: "Sem leitura",
 };
 
+export const HYDRO_ACTIONS: Record<HydroStatus, string> = {
+  NORMAL: "Monitoramento",
+  MODERADO: "Atenção",
+  ALTO: "Preparação",
+  SEVERO: "Ação iminente",
+};
+
 export const PNG_HYDRO_ITEMS: Array<{
   key: HydroStatus | "SL";
   title: string;

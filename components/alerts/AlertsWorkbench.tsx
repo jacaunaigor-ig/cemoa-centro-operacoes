@@ -60,6 +60,7 @@ import {
   levelRank,
   parseAlertType,
   productOf,
+  riskActionFor,
   type AlertType,
 } from "@/lib/alert-types";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
@@ -77,6 +78,7 @@ import {
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
 import { cn } from "@/lib/utils";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
+import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue } from "@/lib/client-hooks";
 import type { AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
 import {
@@ -96,6 +98,7 @@ import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { RainfallStrip } from "@/components/alerts/RainfallStrip";
+import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 const POLL_MS = 8000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
@@ -749,6 +752,26 @@ export function AlertsWorkbench() {
     const top = list[0];
     return { municipio: top.municipio, risco: top.risco, expiresAt: top.expiresAt };
   }, [data, windowFilter, geo, tipo]);
+  const plantaoCounts = useMemo(
+    () =>
+      countPlantao(
+        buildPlantaoQueue({
+          tipo,
+          municipios: catalog.map((m) => ({
+            id: m.id,
+            nome: m.nome,
+            bacia: m.bacia,
+            risco: m.risco,
+            expiresAt: m.expiresAt ?? null,
+          })),
+          rain,
+          hydro: hydroStations,
+        }),
+      ),
+    [tipo, catalog, rain, hydroStations],
+  );
+  const plantaoTotal =
+    plantaoCounts.vencido + plantaoCounts.renovar + plantaoCounts.emitir;
   const ProductIcon = PRODUCT_ICONS[tipo];
   const listNode = (
     <AlertList
@@ -1051,6 +1074,30 @@ export function AlertsWorkbench() {
             }
           >
             <MeteoAvisoDutyCard />
+            {!isMobile && plantaoTotal > 0 ? (
+              <a
+                href="#fila-plantao"
+                className="inline-flex min-w-0 flex-wrap items-center gap-1.5 rounded-lg border border-border bg-panel-2 px-2 py-1 text-[10px] font-bold tracking-wide uppercase hover:border-border-strong"
+                title="Fila do plantão na lista à esquerda"
+              >
+                <span className="text-text-mute">Plantão</span>
+                {plantaoCounts.vencido > 0 ? (
+                  <span className="text-risco-severo">
+                    {plantaoCounts.vencido} {plantaoLabel("vencido")}
+                  </span>
+                ) : null}
+                {plantaoCounts.renovar > 0 ? (
+                  <span className="text-risco-alto">
+                    {plantaoCounts.renovar} {plantaoLabel("renovar")}
+                  </span>
+                ) : null}
+                {plantaoCounts.emitir > 0 ? (
+                  <span className="text-focus">
+                    {plantaoCounts.emitir} {plantaoLabel("emitir")}
+                  </span>
+                ) : null}
+              </a>
+            ) : null}
           </SituationBar>
           </DashboardRow>
 
@@ -1105,7 +1152,7 @@ export function AlertsWorkbench() {
                 key={level}
                 label={LEVEL_LABELS[level] ?? level}
                 value={loading ? "—" : String(counts[level] ?? 0)}
-                sub={pct(counts[level] ?? 0)}
+                sub={`${riskActionFor(level)} · ${pct(counts[level] ?? 0)}`}
                 accent={LEVEL_COLORS[level]}
                 active={activeFilter === level}
                 onClick={() => setQuery({ risco: level, municipio: null })}
@@ -1251,7 +1298,7 @@ export function AlertsWorkbench() {
                       onClick={() => setMapFocus(!mapFocus)}
                       icon={mapFocus ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
                     >
-                      {mapFocus ? "Mostrar tudo" : "Somente mapa"}
+                      {mapFocus ? "Operação" : "Sala de situação"}
                     </MapToolButton>
                     <MapToolButton
                       active={onlyRisk}
@@ -1295,6 +1342,23 @@ export function AlertsWorkbench() {
                   </PopoverContent>
                 </Popover>
             </MapChromeBar>
+            {mapFocus && !isMobile ? (
+              <SituationStrip
+                items={product.levels.map((level) => ({
+                  id: level,
+                  label: LEVEL_LABELS[level] ?? level,
+                  action: riskActionFor(level),
+                  count: counts[level] ?? 0,
+                  color: LEVEL_COLORS[level],
+                  active: activeFilter === level,
+                  onClick: () =>
+                    setQuery({
+                      risco: activeFilter === level ? null : level,
+                      municipio: null,
+                    }),
+                }))}
+              />
+            ) : null}
 
             <div className={cn(
               "relative flex-1 overflow-hidden lg:min-h-0",
@@ -1405,6 +1469,11 @@ export function AlertsWorkbench() {
                           style={{ background: LEVEL_COLORS[level] }}
                         />
                         {LEVEL_LABELS[level] ?? level}
+                        {!isMobile ? (
+                          <span className="truncate text-[9px] font-semibold tracking-wide text-text-mute uppercase">
+                            {riskActionFor(level)}
+                          </span>
+                        ) : null}
                         <span className="ml-auto font-mono text-text-mute">
                           {counts[level] ?? 0}
                         </span>
@@ -1430,7 +1499,7 @@ export function AlertsWorkbench() {
               </MapLegendCard>
             </div>
 
-            {isMobile || mapFocus ? null : <AlertTicker alerts={filteredAlerts} />}
+            {isMobile ? null : <AlertTicker alerts={filteredAlerts} />}
 
             <div className={cn(mapFocus && "absolute inset-x-0 bottom-0 z-[1100]")}>
             <AdminToolbar

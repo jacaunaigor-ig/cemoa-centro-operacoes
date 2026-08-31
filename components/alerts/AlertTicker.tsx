@@ -1,6 +1,6 @@
 "use client";
 
-import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
+import { LEVEL_COLORS, LEVEL_LABELS, riskActionFor } from "@/lib/alert-types";
 import type { RainAlert } from "@/lib/types";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 
@@ -19,6 +19,7 @@ export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
             style={{ borderColor: `${color}88`, color }}
           >
             {LEVEL_LABELS[e.risco] ?? e.risco}
+            {` · ${riskActionFor(e.risco)}`}
           </span>
           <AlertCountdown expiresAt={e.expiresAt} variant="row" />
           {e.agravado ? (
