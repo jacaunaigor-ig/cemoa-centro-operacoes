@@ -110,7 +110,7 @@ export function PlantaoSoundButton({
       aria-label={on ? "Silenciar som de vencimento" : "Ligar som de vencimento"}
       title={
         on
-          ? "Som de vencimento ligado. O mapa não pinta sozinho."
+          ? "Som de vencimento ligado"
           : "Som de vencimento mudo"
       }
       onClick={() => {

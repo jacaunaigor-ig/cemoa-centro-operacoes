@@ -72,7 +72,11 @@ export function PlantaoQueue({
     <div
       id="fila-plantao"
       className="rounded-lg border border-border bg-bg/35 p-2"
-      title="Sugestão de plantão. Só o operador classifica o grau — chuva, cota e MP2,5 não pintam o mapa."
+      title={
+        tipo === "INCENDIO"
+          ? "A mediana de MP2,5 pinta o município na legenda. A fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer."
+          : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não pintam o mapa."
+      }
     >
       <div className="flex items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">

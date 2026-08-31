@@ -88,7 +88,12 @@ import {
   isIntense1h,
   parseRainFilter,
 } from "@/lib/rainfall-display";
-import { airSensorsForMap, matchesAirFilter, parseAirFilter } from "@/lib/air-quality-display";
+import {
+  airSensorsForMap,
+  applyAirClassification,
+  matchesAirFilter,
+  parseAirFilter,
+} from "@/lib/air-quality-display";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
@@ -715,7 +720,11 @@ export function AlertsWorkbench() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast]);
 
-  const catalog = useMemo(() => data?.municipios ?? [], [data]);
+  const catalog = useMemo(() => {
+    const rows = data?.municipios ?? [];
+    if (tipo !== "INCENDIO") return rows;
+    return applyAirClassification(rows, air);
+  }, [data, tipo, air]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -1072,7 +1081,11 @@ export function AlertsWorkbench() {
       }
       setData(localAlerts(tipo));
       setUndoStack([]);
-      toast.success("Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.");
+      toast.success(
+        tipo === "INCENDIO"
+          ? "Classificações do operador removidas. O mapa volta à qualidade do ar medida (MP2,5)."
+          : "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.",
+      );
       return;
     }
     const res = await fetch(`/api/alerts/overrides?tipo=${tipo}`, {
@@ -1100,12 +1113,16 @@ export function AlertsWorkbench() {
     const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
     setData(payload);
     setUndoStack([]);
-    toast.success("Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.");
+    toast.success(
+      tipo === "INCENDIO"
+        ? "Classificações do operador removidas. O mapa volta à qualidade do ar medida (MP2,5)."
+        : "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.",
+    );
   }
 
   async function exportMapPng() {
     if (!data) throw new Error("Mapa ainda não carregou");
-    const colorByNome = new Map(data.municipios.map((m) => [m.nome, LEVEL_COLORS[m.risco] ?? "#7c8fab"]));
+    const colorByNome = new Map(catalog.map((m) => [m.nome, LEVEL_COLORS[m.risco] ?? "#7c8fab"]));
     const itemsSource = product.scale === "ar" ? PNG_AIR_ITEMS : PNG_RISK_ITEMS;
     await exportInstitutionalPng({
       title: "Painel de Alertas",
@@ -1127,7 +1144,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Monitores PurpleAir da rede SEMA/DC-AM e UEA EducAIR via App SELVA — leitura de baixo custo, não regulatória. Só o operador classifica o município.",
+              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Monitores PurpleAir da rede SEMA/DC-AM e UEA EducAIR via App SELVA — leitura de baixo custo, não regulatória. A mediana municipal pinta o município na escala da legenda; o operador pode sobrepor.",
             }
           : undefined,
     });
@@ -1467,7 +1484,7 @@ export function AlertsWorkbench() {
                 <AlertsMap
                   key={`${OSM_BASEMAP_ID}-${tipo}`}
                   ref={mapApi}
-                  municipios={data.municipios.map((m) => {
+                  municipios={catalog.map((m) => {
                     if (tipo === "INCENDIO") {
                       const rec = air?.byId[m.id];
                       return {
@@ -1637,7 +1654,9 @@ export function AlertsWorkbench() {
               paintHint={
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
-                  : "Só o operador classifica o grau. Polígono pinta a mancha; chuva, cota e MP2,5 só sugerem."
+                  : tipo === "INCENDIO"
+                    ? "A mediana de MP2,5 pinta o município na legenda. Clique, lote ou polígono sobrepõe o grau."
+                    : "Só o operador classifica o grau. Polígono pinta a mancha; chuva e cota só sugerem."
               }
               onDraw={() => {
                 setDrawMode((v) => {

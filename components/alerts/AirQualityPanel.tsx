@@ -63,7 +63,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-              Apoio · sugestão
+              Classificação no mapa
             </span>
             <RiskBadge level={apoio.level} />
           </div>
@@ -72,8 +72,9 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        Leitura de baixo custo, a mesma rede do App SELVA. Não substitui estação regulatória
-        nem classifica o município — só o operador pinta o mapa.
+        A mediana municipal pinta o município na escala da legenda (Boa → Péssima).
+        Leitura de baixo custo, a mesma rede do App SELVA — não substitui estação
+        regulatória. O operador pode sobrepor o grau.
       </p>
 
       <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs">

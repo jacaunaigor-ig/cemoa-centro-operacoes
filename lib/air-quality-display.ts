@@ -5,6 +5,7 @@ import type {
   AirQualityMunicipio,
   AirQualityPayload,
   AirQualitySensor,
+  AlertLevel,
 } from "@/lib/types";
 
 export const SELVA_URL = "https://www.appselva.com.br/";
@@ -58,8 +59,37 @@ export function airApoio(rec: AirQualityMunicipio | null | undefined): AirApoio 
   if (!rec || rec.pm25 == null || !rec.level || rec.level === "BOA") return null;
   return {
     level: rec.level,
-    motivo: `MP2,5 ${formatUg(rec.pm25)} (mediana PurpleAir via SELVA) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}. Não pinta o mapa.`,
+    motivo: `MP2,5 ${formatUg(rec.pm25)} (mediana PurpleAir via SELVA) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}.`,
   };
+}
+
+const AIR_MONITOR_FONTE = "PurpleAir · SELVA";
+
+/** Pinta o município na escala da legenda a partir da mediana de MP2,5. O operador ainda pode sobrepor. */
+export function applyAirClassification<
+  T extends {
+    id: string;
+    nome: string;
+    risco: AlertLevel;
+    fonte: "admin" | "monitor";
+    classifiedBy?: string | null;
+    classifiedAt?: number | null;
+  },
+>(rows: T[], air: AirQualityPayload | null | undefined): T[] {
+  if (!air) return rows;
+  return rows.map((m) => {
+    if (m.fonte === "admin") return m;
+    const rec = air.byId[m.id] ?? air.byNome[m.nome];
+    if (!rec || rec.pm25 == null) return m;
+    const level = rec.level ?? airLevelFromPm25(rec.pm25);
+    return {
+      ...m,
+      risco: level,
+      fonte: "monitor" as const,
+      classifiedBy: AIR_MONITOR_FONTE,
+      classifiedAt: rec.observedAt ?? m.classifiedAt ?? null,
+    };
+  });
 }
 
 export function airRankAction(

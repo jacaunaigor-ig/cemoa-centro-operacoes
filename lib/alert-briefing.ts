@@ -27,16 +27,16 @@ export function buildAlertBriefing({
   air?: AirQualityMunicipio | null;
 }): AlertBriefing {
   const nivel = levelLabel(risco);
-  const tendencia = isAlertActive(tipo, risco) ? "" : " em monitoramento";
-  const parts: string[] = [`${nome}: alerta ${nivel}${tendencia}.`];
+  const parts: string[] =
+    tipo === "INCENDIO"
+      ? [
+          air && air.pm25 != null
+            ? `${nome}: qualidade do ar ${nivel} (MP2,5 ${formatUg(air.pm25)} na mediana PurpleAir via App SELVA).`
+            : `${nome}: qualidade do ar ${nivel}${air === null ? " — sem monitor PurpleAir neste município" : ""}.`,
+        ]
+      : [`${nome}: alerta ${nivel}${isAlertActive(tipo, risco) ? "" : " em monitoramento"}.`];
 
-  if (tipo === "INCENDIO") {
-    if (air && air.pm25 != null) {
-      parts.push(`MP2,5 ${formatUg(air.pm25)} nos monitores PurpleAir via App SELVA`);
-    } else if (air === null) {
-      parts.push("Sem monitor PurpleAir neste município");
-    }
-  } else if (rain) {
+  if (tipo !== "INCENDIO" && rain) {
     if (rain.mm6h != null) parts.push(`Acumulado de ${formatMm(rain.mm6h)} nas últimas 6 h`);
     else if (rain.mm1h != null) parts.push(`${formatMm(rain.mm1h)} na última hora`);
     else if (rain.mm24h != null) parts.push(`${formatMm(rain.mm24h)} nas últimas 24 h`);

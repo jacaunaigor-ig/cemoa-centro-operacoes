@@ -271,8 +271,8 @@ export function AppShell({
       {admin && !mapFocus ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
-          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — só o operador classifica o
-          grau. Chuva, cota e a fila são sugestão. Clique, lote
+          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva e cota são
+          sugestão; qualidade do ar pinta o município pela mediana de MP2,5. Clique, lote
           {pathname.startsWith("/boletim") ? "" : " ou mancha no polígono"}. Encerrar ao
           terminar. Desfazer (Ctrl+Z).
         </div>

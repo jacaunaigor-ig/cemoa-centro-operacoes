@@ -164,6 +164,7 @@ export function classificationByline(
   if (fonte === "admin") {
     return classifiedBy ? `Classificado por ${classifiedBy}` : "Classificado pelo operador";
   }
+  if (classifiedBy) return `Classificado automaticamente · ${classifiedBy}`;
   return "Sem classificação do operador";
 }
 
