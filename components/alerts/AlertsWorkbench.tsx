@@ -4,12 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  ChevronDown,
-  ChevronUp,
   CloudRain,
   Flame,
   Layers,
-  List,
   MapPinned,
   Maximize2,
   Minimize2,
@@ -26,6 +23,7 @@ import { ExportPngButton } from "@/components/shared/ExportPngButton";
 import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
+import { MunicipiosMapButton } from "@/components/shared/MunicipiosMapButton";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -222,6 +220,14 @@ function localHydro(): HydrologyPayload {
   return { ...buildHydrologyPayload(), cache: "MISS" };
 }
 
+function shortLevelLabel(level: string) {
+  if (level === "MODERADO") return "Mod.";
+  if (level === "EXTREMO") return "Ext.";
+  if (level === "MUITO_RUIM") return "M. ruim";
+  if (level === "PESSIMA") return "Péss.";
+  return LEVEL_LABELS[level] ?? level;
+}
+
 export function AlertsWorkbench() {
   const router = useRouter();
   const pathname = usePathname();
@@ -265,7 +271,6 @@ export function AlertsWorkbench() {
   const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
   const airPoints = useMemo(() => airSensorsForMap(air), [air]);
   const [hovered, setHovered] = useState<string | null>(null);
-  const [mobileListOpen, setMobileListOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const mapApi = useRef<AlertsMapHandle>(null);
   const hydrated = useRef(false);
@@ -305,7 +310,6 @@ export function AlertsWorkbench() {
   }, [tipo]);
 
   useEffect(() => {
-    if (mapFocus) setMobileListOpen(false);
     const t = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
     return () => window.clearTimeout(t);
   }, [mapFocus]);
@@ -879,7 +883,6 @@ export function AlertsWorkbench() {
         }
         setHovered(null);
         setQuery(geoForNome(nome, basinName));
-        if (isMobile) setMobileListOpen(false);
       }}
       onHover={setHovered}
       onBacia={(next) =>
@@ -1160,11 +1163,60 @@ export function AlertsWorkbench() {
       hydroAt={hydro?.generatedAt ?? null}
     >
       <div className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        mapFocus ? "gap-0 p-0" : isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        "flex min-h-0 flex-1 flex-col",
+        mapFocus ? "gap-0 overflow-hidden p-0" : isMobile ? "gap-1.5 overflow-hidden p-1.5" : "gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
         {mapFocus ? null : (
         <DashboardPanel>
+          {isMobile ? (
+            <>
+              <DashboardRow className="gap-1.5 px-2 py-1.5">
+                <label className="inline-flex min-w-0 flex-1 items-center gap-2">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/15 text-focus">
+                    <ProductIcon className="size-4" />
+                  </span>
+                  <select
+                    className="hydro-select min-w-0 flex-1 font-bold"
+                    value={tipo}
+                    onChange={(e) => {
+                      const next = parseAlertType(e.target.value);
+                      setEditorOpen(false);
+                      setQuery({
+                        tipo: next === "CHUVA" ? null : next,
+                        risco: null,
+                      });
+                    }}
+                    aria-label="Tipo de alerta"
+                  >
+                    {ALERT_TYPES.map((id) => (
+                      <option key={id} value={id}>
+                        {ALERT_PRODUCTS[id].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </DashboardRow>
+              <DashboardBody className="p-1.5" aria-label="Indicadores">
+                <div className="grid grid-cols-5 gap-1">
+                  {product.levels.map((level) => (
+                    <KpiCard
+                      dense
+                      compact
+                      key={level}
+                      label={shortLevelLabel(level)}
+                      value={loading ? "—" : String(counts[level] ?? 0)}
+                      sub={riskActionFor(level)}
+                      accent={LEVEL_COLORS[level]}
+                      active={activeFilter === level}
+                      onClick={() => setQuery({ risco: level, municipio: null })}
+                      loading={loading}
+                    />
+                  ))}
+                </div>
+              </DashboardBody>
+            </>
+          ) : (
+            <>
           <DashboardRow>
           <SituationBar
             generatedAt={data?.generatedAt ?? null}
@@ -1179,7 +1231,7 @@ export function AlertsWorkbench() {
                     <ProductIcon className="size-4" />
                   </span>
                   <select
-                    className={cn("hydro-select font-bold", isMobile ? "min-w-0 flex-1" : "w-[16.5rem]")}
+                    className="hydro-select w-[16.5rem] font-bold"
                     value={tipo}
                     onChange={(e) => {
                       const next = parseAlertType(e.target.value);
@@ -1203,7 +1255,7 @@ export function AlertsWorkbench() {
             }
           >
             <MeteoAvisoDutyCard />
-            {!isMobile && plantaoTotal > 0 ? (
+            {plantaoTotal > 0 ? (
               <a
                 href="#fila-plantao"
                 className="inline-flex min-w-0 flex-wrap items-center gap-1.5 rounded-lg border border-border bg-panel-2 px-2 py-1 text-[10px] font-bold tracking-wide uppercase hover:border-border-strong"
@@ -1230,37 +1282,9 @@ export function AlertsWorkbench() {
           </SituationBar>
           </DashboardRow>
 
-          {isMobile ? (
-            <div className="border-b border-border px-2 py-1.5">
-            <ProductMonitorStrip
-              tipo={tipo}
-              air={air}
-              rain={rain}
-              airFilter={airFilter}
-              rainFilter={rainFilter}
-              loadingAir={!air && !STATIC_DEPLOY}
-              loadingRain={!rain && !STATIC_DEPLOY}
-              onAirFilter={(next) =>
-                setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
-              }
-              onRainFilter={(next) =>
-                setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
-              }
-            />
-            </div>
-          ) : null}
-
           <DashboardBody>
-          <div
-            className={cn(
-              "grid",
-              isMobile
-                ? "grid-cols-3 gap-1.5"
-                : "grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-[minmax(20rem,1.35fr)_repeat(6,minmax(0,1fr))]",
-            )}
-          >
-            {!isMobile ? (
-              <div className="col-span-2 sm:col-span-3 xl:col-span-1">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-[minmax(20rem,1.35fr)_repeat(6,minmax(0,1fr))]">
+            <div className="col-span-2 sm:col-span-3 xl:col-span-1">
                 <ProductMonitorStrip
                   className="h-full"
                   tipo={tipo}
@@ -1277,8 +1301,7 @@ export function AlertsWorkbench() {
                     setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
                   }
                 />
-              </div>
-            ) : null}
+            </div>
             <KpiCard
               compact
               label="Municípios"
@@ -1306,6 +1329,8 @@ export function AlertsWorkbench() {
             ))}
           </div>
           </DashboardBody>
+            </>
+          )}
         </DashboardPanel>
         )}
 
@@ -1320,29 +1345,27 @@ export function AlertsWorkbench() {
         ) : null}
 
         <div className={cn(
-          "grid min-h-0 flex-1 gap-4 sm:gap-6",
+          "grid min-h-0 flex-1",
           isMobile || mapFocus
             ? "grid-cols-1"
-            : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+            : "gap-4 sm:gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {mapFocus ? null : isMobile ? (
-            mobileListOpen ? <div className="max-h-[min(52vh,520px)]">{listNode}</div> : null
-          ) : (
-            listNode
-          )}
+          {mapFocus || isMobile ? null : listNode}
 
           <Card className={cn(
-            "relative flex h-full flex-col overflow-hidden",
-            mapFocus ? "min-h-0 rounded-none border-0 shadow-none lg:min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+            "relative flex h-full min-h-0 flex-col overflow-hidden",
+            mapFocus ? "rounded-none border-0 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
               status={
+                isMobile ? undefined : (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="live-dot" />
                   {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
                   {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
                 </span>
+                )
               }
             >
                 {mapFocus ? (
@@ -1368,21 +1391,22 @@ export function AlertsWorkbench() {
                     </select>
                   </label>
                 ) : null}
-                <MapFocusButton />
+                {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="min-h-11"
-                    aria-expanded={mobileListOpen}
-                    onClick={() => setMobileListOpen((v) => !v)}
-                  >
-                    <List className="size-3.5" />
-                    Lista
-                    {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                  </Button>
+                  <MunicipiosMapButton
+                    active={showNames}
+                    onToggle={() => {
+                      setShowNames((v) => {
+                        const next = !v;
+                        if (next) {
+                          setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
+                          window.setTimeout(() => mapApi.current?.fitAmazonas(), 60);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
                 ) : (
                   !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null
                 )}
@@ -1467,8 +1491,8 @@ export function AlertsWorkbench() {
             ) : null}
 
             <div className={cn(
-              "relative flex-1 overflow-hidden lg:min-h-0",
-              mapFocus ? "min-h-0" : "min-h-[min(48dvh,560px)]",
+              "relative min-h-0 flex-1 overflow-hidden",
+              mapFocus || isMobile ? "min-h-0" : "min-h-[min(48dvh,560px)] lg:min-h-0",
             )}>
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">

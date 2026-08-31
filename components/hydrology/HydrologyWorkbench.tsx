@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  ChevronDown,
-  ChevronUp,
   Layers,
-  List,
   MapPinned,
   Maximize2,
   Minimize2,
@@ -69,6 +66,7 @@ import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
+import { MunicipiosMapButton } from "@/components/shared/MunicipiosMapButton";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
@@ -135,7 +133,6 @@ export function HydrologyWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
-  const [mobileListOpen, setMobileListOpen] = useState(false);
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
@@ -157,7 +154,6 @@ export function HydrologyWorkbench() {
   const localPushed = useRef(false);
 
   useEffect(() => {
-    if (mapFocus) setMobileListOpen(false);
     const t = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
     return () => window.clearTimeout(t);
   }, [mapFocus]);
@@ -478,16 +474,18 @@ export function HydrologyWorkbench() {
       hydroAt={data?.generatedAt ?? null}
     >
       <div className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden max-lg:overflow-visible",
-        mapFocus ? "gap-0 p-0" : isMobile ? "gap-2 p-2" : "gap-4 p-4 sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        "flex min-h-0 flex-1 flex-col",
+        mapFocus ? "gap-0 overflow-hidden p-0" : isMobile ? "gap-1.5 overflow-hidden p-1.5" : "gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
       )}>
         {mapFocus ? null : (
         <DashboardPanel>
-        <DashboardRow>
+        <DashboardRow className={isMobile ? "gap-1.5 px-2 py-1.5" : undefined}>
+          {isMobile ? null : (
           <p className="shrink-0 font-mono text-xs tabular-nums text-text-mute">
             {formatHydroRef(data?.referencia)}
           </p>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          )}
+          <div className={cn("flex flex-wrap items-center gap-2", isMobile ? "w-full" : "ml-auto")}>
             <div
               className="flex rounded-lg border border-border bg-hover p-0.5"
               role="group"
@@ -517,8 +515,68 @@ export function HydrologyWorkbench() {
           </div>
         </DashboardRow>
 
-        <DashboardBody aria-label="Resumo do boletim">
-          <div className={cn("grid", isMobile ? "grid-cols-2 gap-2" : "grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-7")}>
+        <DashboardBody aria-label="Resumo do boletim" className={isMobile ? "p-1.5" : undefined}>
+          {isMobile ? (
+            <div className="grid grid-cols-5 gap-1">
+              <KpiCard
+                dense
+                compact
+                label="Baixo"
+                value={loading ? "—" : String(kpis.baixo)}
+                sub={HYDRO_ACTIONS.NORMAL}
+                accent="#10b981"
+                active={status === "NORMAL"}
+                onClick={() => setQuery({ status: "NORMAL", municipio: null })}
+                loading={loading}
+              />
+              <KpiCard
+                dense
+                compact
+                label="Mod."
+                value={loading ? "—" : String(kpis.moderado)}
+                sub={HYDRO_ACTIONS.MODERADO}
+                accent="#f59e0b"
+                active={status === "MODERADO"}
+                onClick={() => setQuery({ status: "MODERADO", municipio: null })}
+                loading={loading}
+              />
+              <KpiCard
+                dense
+                compact
+                label="Alto"
+                value={loading ? "—" : String(kpis.alto)}
+                sub={HYDRO_ACTIONS.ALTO}
+                accent="#f97316"
+                active={status === "ALTO"}
+                onClick={() => setQuery({ status: "ALTO", municipio: null })}
+                loading={loading}
+              />
+              <KpiCard
+                dense
+                compact
+                label="Severo"
+                value={loading ? "—" : String(kpis.severo)}
+                sub={HYDRO_ACTIONS.SEVERO}
+                accent="#ef4444"
+                active={status === "SEVERO"}
+                onClick={() => setQuery({ status: "SEVERO", municipio: null })}
+                loading={loading}
+              />
+              <KpiCard
+                dense
+                compact
+                label="s/ leit."
+                value={loading ? "—" : String(kpis.semLeitura)}
+                sub="Sem leitura"
+                accent="#6b7280"
+                icon={<RadioTower className="size-3.5" />}
+                active={status === "SL"}
+                onClick={() => setQuery({ status: "SL", municipio: null })}
+                loading={loading}
+              />
+            </div>
+          ) : (
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:grid-cols-7">
             <KpiCard
               compact
               label="Municípios"
@@ -594,6 +652,7 @@ export function HydrologyWorkbench() {
               loading={loading}
             />
           </div>
+          )}
         </DashboardBody>
         </DashboardPanel>
         )}
@@ -609,57 +668,12 @@ export function HydrologyWorkbench() {
 
         <div
           className={cn(
-            "grid min-h-0 flex-1 gap-4 sm:gap-6",
+            "grid min-h-0 flex-1",
             isMobile || mapFocus
               ? "grid-cols-1"
-              : "lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+              : "gap-4 sm:gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
           )}
         >
-          {mapFocus ? null : isMobile && mobileListOpen ? (
-            <div className="max-h-[min(48vh,480px)]">
-              <StationsList
-                stations={visible}
-                catalog={catalog}
-                selected={selected}
-                calha={calha}
-                status={status}
-                busca={busca}
-                modo={modo}
-                loading={loading}
-                hovered={hovered}
-                onHover={setHovered}
-                onSelect={(s) => {
-                  setHovered(null);
-                  setMobileListOpen(false);
-                  setQuery({ municipio: s.municipio, bacia: s.bacia, calha: s.calha });
-                }}
-                onCalha={(next) => setQuery({ calha: next, bacia: null, municipio: null })}
-                onStatus={(next) => setQuery({ status: next === "Todos" ? null : next })}
-                onBusca={setBusca}
-                onMunicipio={(nome) => {
-                  if (!nome) {
-                    setQuery({ municipio: null });
-                    return;
-                  }
-                  const s = catalog.find((item) => item.municipio === nome);
-                  setQuery({
-                    municipio: nome,
-                    bacia: s?.bacia ?? null,
-                    calha: s?.calha ?? calha,
-                  });
-                }}
-                onLimpar={() => {
-                  setBusca("");
-                  setQuery({
-                    status: null,
-                    calha: null,
-                    municipio: null,
-                    bacia: null,
-                  });
-                }}
-              />
-            </div>
-          ) : null}
           {mapFocus || isMobile ? null : (
           <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
             {status === "SL" ? (
@@ -712,17 +726,19 @@ export function HydrologyWorkbench() {
           )}
 
           <Card className={cn(
-            "relative flex h-full flex-col overflow-hidden",
-            mapFocus ? "min-h-0 rounded-none border-0 shadow-none lg:min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+            "relative flex h-full min-h-0 flex-col overflow-hidden",
+            mapFocus ? "rounded-none border-0 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
               status={
+                isMobile ? undefined : (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="live-dot" />
                   {kpis.total} município{kpis.total === 1 ? "" : "s"}
                   {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
                 </span>
+                )
               }
             >
                 {mapFocus ? (
@@ -753,25 +769,26 @@ export function HydrologyWorkbench() {
                     </button>
                   </div>
                 ) : null}
-                <MapFocusButton />
+                {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile && !mapFocus ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="min-h-11"
-                    aria-expanded={mobileListOpen}
-                    onClick={() => setMobileListOpen((v) => !v)}
-                  >
-                    <List className="size-3.5" />
-                    Lista
-                    {mobileListOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                  </Button>
+                  <MunicipiosMapButton
+                    active={showNames}
+                    onToggle={() => {
+                      setShowNames((v) => {
+                        const next = !v;
+                        if (next) {
+                          setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
+                          window.setTimeout(() => mapRef.current?.fitAmazonas(), 60);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
                 ) : (
                   !isMobile && !mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null
                 )}
-                {mapFocus ? null : (
+                {mapFocus || isMobile ? null : (
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -945,8 +962,8 @@ export function HydrologyWorkbench() {
             ) : null}
 
             <div className={cn(
-              "relative flex-1 overflow-hidden lg:min-h-0",
-              mapFocus ? "min-h-0" : "min-h-[min(48dvh,560px)]",
+              "relative min-h-0 flex-1 overflow-hidden",
+              mapFocus || isMobile ? "min-h-0" : "min-h-[min(48dvh,560px)] lg:min-h-0",
             )}>
               {loading ? (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-panel text-sm text-text-mute">

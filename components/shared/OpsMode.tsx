@@ -35,6 +35,7 @@ type OpsMode = {
   theme: ThemeMode;
   admin: boolean;
   isMobile: boolean;
+  narrow: boolean;
   mapFocus: boolean;
   session: SessionUser | null;
   authLoading: boolean;
@@ -395,6 +396,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       theme,
       admin,
       isMobile,
+      narrow,
       mapFocus,
       session,
       authLoading,
@@ -424,6 +426,7 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
       theme,
       admin,
       isMobile,
+      narrow,
       mapFocus,
       session,
       authLoading,
@@ -452,6 +455,7 @@ const FALLBACK: OpsMode = {
   theme: "light",
   admin: false,
   isMobile: false,
+  narrow: false,
   mapFocus: false,
   session: null,
   authLoading: true,

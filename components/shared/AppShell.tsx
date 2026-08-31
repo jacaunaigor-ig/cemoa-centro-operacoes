@@ -54,6 +54,7 @@ export function AppShell({
     theme,
     admin,
     isMobile,
+    narrow,
     mapFocus,
     session,
     needsSetup,
@@ -79,10 +80,7 @@ export function AppShell({
       <PlantaoSoundUnlock />
       <div
         className={cn(
-          "flex flex-col transition-[min-height] duration-300",
-          mapFocus || !isMobile
-            ? "h-dvh overflow-hidden"
-            : "min-h-dvh",
+          "flex h-dvh flex-col overflow-hidden transition-[min-height] duration-300",
           !mapFocus && !isMobile && "max-lg:h-auto max-lg:min-h-dvh max-lg:overflow-visible",
         )}
       >
@@ -125,6 +123,7 @@ export function AppShell({
         </nav>
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1 sm:gap-x-3">
+          {narrow ? null : (
           <div
             className="flex rounded-lg border border-border bg-hover p-0.5"
             role="group"
@@ -155,6 +154,7 @@ export function AppShell({
               <span className="hidden sm:inline">Mobile</span>
             </button>
           </div>
+          )}
           <button
             type="button"
             className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute transition-colors hover:text-text"
@@ -234,7 +234,17 @@ export function AppShell({
             </div>
           ) : null}
           <HeaderClock compact={isMobile} />
-          {!isMobile ? (
+          {isMobile ? (
+            <div className="text-right leading-tight">
+              <small className="block text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
+                Status operacional
+              </small>
+              <strong className="inline-flex items-center gap-1.5 text-xs font-semibold text-live">
+                <span className="live-dot" aria-hidden />
+                Ao vivo
+              </strong>
+            </div>
+          ) : (
             <InfoTooltip
               label="Sobre a sincronização"
               title="Sincronizado"
@@ -262,8 +272,6 @@ export function AppShell({
                 </span>
               </button>
             </InfoTooltip>
-          ) : (
-            <span className="live-dot" aria-label="Ao vivo" />
           )}
         </div>
       </header>
@@ -281,13 +289,13 @@ export function AppShell({
         id="conteudo"
         className={cn(
           "flex min-h-0 flex-1 flex-col",
-          mapFocus ? "overflow-hidden" : "pb-[env(safe-area-inset-bottom)]",
-          !mapFocus && !isMobile && "overflow-hidden max-lg:overflow-visible",
+          mapFocus || isMobile ? "overflow-hidden" : "overflow-hidden max-lg:overflow-visible",
+          !mapFocus && "pb-[env(safe-area-inset-bottom)]",
         )}
       >
         {children}
       </div>
-      {mapFocus ? null : (
+      {mapFocus || isMobile ? null : (
       <OpsFooter
         source={source}
         updatedAt={updatedAt}
