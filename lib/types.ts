@@ -135,6 +135,8 @@ export type HydroStation = {
   semLeitura: boolean;
   semEstacao: boolean;
   editadoPorOperador?: boolean;
+  cotaFonte?: "snapshot" | "ANA" | "operador";
+  cotaLidaEm?: number | null;
 };
 
 export type HydrologyPayload = {
@@ -147,6 +149,12 @@ export type HydrologyPayload = {
   mudancas24h: HydroChange[];
   rios: HydroRiver[];
   stations: HydroStation[];
+  ana?: {
+    automaticas: number;
+    atualizadas: number;
+    pending: boolean;
+    fetchedAt: number | null;
+  };
 };
 
 export type FrontLog = {

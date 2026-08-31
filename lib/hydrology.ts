@@ -384,6 +384,15 @@ export function contarStatus(stations: HydroStation[], modo: HydroMode) {
   return { total: stations.length, baixo, moderado, alto, severo, comLeitura, semLeitura };
 }
 
+export function catalogAnaCodes(): string[] {
+  const seen = new Set<string>();
+  for (const d of FILE.stations) {
+    const cod = String(d.ana ?? "").trim();
+    if (/^\d{6,}$/.test(cod)) seen.add(cod);
+  }
+  return [...seen];
+}
+
 export function catalogStations(): HydroStation[] {
   return FILE.stations.map((d) => {
     const ana = String(d.ana ?? "");

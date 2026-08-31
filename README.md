@@ -2,10 +2,10 @@
 
 Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
 
-- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, áreas mapeadas de movimento de massa). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
+- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros, comunidades rurais e indígenas), ticker e ficha de alerta (CEMADEN, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08). **Só o operador classifica o grau no mapa** — Painel de Alertas e Boletim Hidrológico abrem em **baixo** até o plantão pintar. Chuva CEMADEN, cota e a fila do plantão sugerem emitir, elevar ou renovar — não pintam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas do boletim usam o recorte operacional (referência 24/08) e, onde há **estação automática ANA**, a telemetria (`telemetriaws1.ana.gov.br`) atualiza a cota ao vivo — o grau do mapa continua só com o operador. **Só o operador classifica o grau no mapa** — Painel de Alertas e Boletim Hidrológico abrem em **baixo** até o plantão pintar. Chuva CEMADEN, cota e a fila do plantão sugerem emitir, elevar ou renovar — não pintam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -68,7 +68,7 @@ No Painel de Alertas a lista ordena região e município pela gravidade, os chip
 
 ## Desktop, mobile e operador
 
-O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata); o ícone **Níveis de risco** abre o texto da Portaria MIDR nº 2.458/2026. No mobile a legenda e o ícone continuam compactos.
+O cabeçalho troca **Desktop** (completo) e **Mobile** (mapa, KPIs, ficha e lista colapsável). Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata); o ícone **Níveis de risco** abre o texto da Portaria MIDR nº 2.458/2026. **Ocultar** some com a legenda do mapa em qualquer posto (sala, mobile ou edição); o chip **Legenda** devolve. A escolha fica em `localStorage` (`cemoa_legend_hidden`). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
@@ -89,7 +89,7 @@ O **Aviso Meteorológico** tem duas camadas:
 
 Com a edição ligada, o operador classifica no **clique**, em **lote** ou por **mancha** (polígono), e pode **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias). O polígono existe só no Painel de Alertas — no boletim a edição continua no clique e no lote.
 
-- **Clique** — escolha o grau e a duração e toque nos municípios. O mapa pinta na hora; a ficha não abre. **Encerrar edição** (ou Esc) fecha a sessão. Na edição, **Ocultar** some com a legenda do mapa (o chip **Legenda** devolve). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
+- **Clique** — escolha o grau e a duração e toque nos municípios. O mapa pinta na hora; a ficha não abre. **Encerrar edição** (ou Esc) fecha a sessão.
 - **Polígono (mancha)** — clique para marcar vértices e **Fechar mancha** (ou duplo clique). Só a área desenhada recebe a cor do grau; o município não é classificado por inteiro. Em Barcelos, Tapauá, Jutaí e outros de grande extensão, um risco local fica na mancha. **Esc** cancela o desenho.
 - **Lote** — escolha grau e duração, cole os nomes **por extenso** (um por linha ou separados por vírgula) e **Encerrar edição**.
 
@@ -177,7 +177,9 @@ Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acr
 
 Sem as chaves do Google, o botão aparece desativado e o login por senha continua valendo.
 
-No boletim, a cota do dia permanece no gráfico e na ficha. O mapa só sobe de Baixo quando o operador classifica. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
+No boletim, a cota do dia permanece no gráfico e na ficha. Onde o código da estação é numérico (ANA), o centro consulta a telemetria oficial e substitui a cota do snapshot. Sem código automático (DCAM ou —), fica o recorte operacional. A API oficial HidroWebService exige cadastro em hidro@ana.gov.br; até 30/06/2026 o centro usa o webservice público `DadosHidrometeorologicos`. O mapa só sobe de Baixo quando o operador classifica. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** é o único que pinta em cinza quem não mandou cota no dia.
+
+A ficha de qualquer produto (e a do boletim) diz se o município **tem área mapeada** de movimento de massa / deslizamento. Se tiver, mostra setores, tipo (deslizamento, movimento de massa, erosão de margem) e o **quantitativo de pessoas em área de risco** do levantamento federal (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem mapeamento, a ficha diz isso com clareza.
 
 ## Chuva 1 h / 6 h / 24 h (CEMADEN)
 

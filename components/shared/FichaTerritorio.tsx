@@ -18,8 +18,8 @@ export function FichaTerritorio({
   const demo = demografiaDo(municipioId);
   const mass = massRiskDo(municipioId);
   const pessoas = pessoasRiscoDo(municipioId);
-  const showMass = tipo === "MOVIMENTO";
-  if (!demo && !showMass) return null;
+  const mapped = mass.setores > 0;
+  const highlight = tipo === "MOVIMENTO";
 
   return (
     <div className="mt-3 grid gap-2">
@@ -58,64 +58,62 @@ export function FichaTerritorio({
             </p>
           </div>
           <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
-            {DEMOGRAFIA_FONTE}. Rural no Amazonas concentra comunidades ribeirinhas.
-            Idosos seguem o Estatuto do Idoso (60 anos ou mais).
+            {DEMOGRAFIA_FONTE}. Rural no Amazonas concentra comunidades ribeirinhas. Idosos seguem o
+            Estatuto do Idoso (60 anos ou mais).
           </p>
         </div>
       ) : null}
 
-      {showMass ? (
-        <div className="rounded-lg border border-border bg-bg/40 p-2.5">
-          <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            Área de risco · Movimento de massa
-          </small>
-          {mass.setores > 0 ? (
-            <>
-              <p className="mt-0.5 text-[13px] font-semibold text-text">
-                Tem área mapeada · {mass.setores} setor{mass.setores === 1 ? "" : "es"} ·
-                susceptibilidade {mass.susceptibilidade}
+      <div
+        className={
+          highlight
+            ? "rounded-lg border border-risco-alto/40 bg-risco-alto/8 p-2.5"
+            : "rounded-lg border border-border bg-bg/40 p-2.5"
+        }
+      >
+        <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Área de risco · Movimento de massa / deslizamento
+        </small>
+        {mapped ? (
+          <>
+            <p className="mt-0.5 text-[13px] font-semibold text-text">
+              Tem área mapeada · {mass.setores} setor{mass.setores === 1 ? "" : "es"} ·
+              susceptibilidade {mass.susceptibilidade}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {mass.tipos.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-border bg-hover px-2 py-0.5 text-[10px] font-bold text-text"
+                >
+                  {MASS_TIPO_LABEL[item]}
+                </span>
+              ))}
+            </div>
+            {typeof pessoas === "number" ? (
+              <p className="mt-1.5 font-mono text-[15px] font-bold tabular-nums text-text">
+                {formatHab(pessoas)}
+                <span className="ml-1 text-[11px] font-semibold text-text-mute">
+                  pessoas em área de risco
+                </span>
               </p>
-              <div className="mt-1.5 flex flex-wrap gap-1">
-                {mass.tipos.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-border bg-hover px-2 py-0.5 text-[10px] font-bold text-text"
-                  >
-                    {MASS_TIPO_LABEL[item]}
-                  </span>
-                ))}
-              </div>
-              {mass.nota ? <p className="mt-1.5 text-[11px] text-text-dim">{mass.nota}</p> : null}
-            </>
-          ) : (
-            <p className="mt-1 text-[13px] font-semibold text-text">Sem área mapeada neste recorte</p>
-          )}
-
-          {typeof pessoas === "number" ? (
-            <p className="mt-1.5 font-mono text-[15px] font-bold tabular-nums text-text">
-              {formatHab(pessoas)}
-              <span className="ml-1 text-[11px] font-semibold text-text-mute">
-                pessoas em área de risco
-              </span>
-            </p>
-          ) : pessoas === null ? (
-            <p className="mt-1.5 text-[12px] text-text-dim">
-              Levantamento federal sem contagem de pessoas neste município.
-            </p>
-          ) : (
-            <p className="mt-1.5 text-[12px] text-text-dim">
-              Não consta no levantamento federal de pessoas em área de risco (2022).
-            </p>
-          )}
-
-          <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
-            {mass.setores > 0
-              ? `Com chuva intensa, os setores mapeados elevam o produto Movimento de massa. ${MASS_RISK_FONTE}.`
-              : "Chuva intensa não eleva automaticamente o produto neste município."}{" "}
-            {MASS_PESSOAS_FONTE}. A contagem inclui deslizamento, enxurrada e inundação.
+            ) : (
+              <p className="mt-1.5 text-[12px] text-text-dim">
+                Levantamento federal sem contagem de pessoas neste município.
+              </p>
+            )}
+            {mass.nota ? <p className="mt-1.5 text-[11px] text-text-dim">{mass.nota}</p> : null}
+          </>
+        ) : (
+          <p className="mt-1 text-[13px] font-semibold text-text">
+            Sem área mapeada de movimento de massa ou deslizamento neste recorte.
           </p>
-        </div>
-      ) : null}
+        )}
+        <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
+          {mapped ? MASS_RISK_FONTE : "Ausência de mapeamento não significa ausência de risco residual."}{" "}
+          {MASS_PESSOAS_FONTE}.
+        </p>
+      </div>
     </div>
   );
 }

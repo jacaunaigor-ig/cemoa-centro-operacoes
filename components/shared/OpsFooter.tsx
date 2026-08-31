@@ -4,6 +4,7 @@ const FONTES = [
   { href: "https://www.gov.br/cemaden/pt-br", label: "CEMADEN" },
   { href: "https://portal.inmet.gov.br", label: "INMET" },
   { href: "https://www.cptec.inpe.br", label: "CPTEC/INPE" },
+  { href: "https://www.gov.br/ana/pt-br", label: "ANA" },
   { href: "https://www.defesacivil.am.gov.br", label: "Defesa Civil AM" },
 ] as const;
 

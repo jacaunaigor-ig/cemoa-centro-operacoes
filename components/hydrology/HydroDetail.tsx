@@ -87,7 +87,29 @@ export function HydroDetail({
           }
         />
         <Metric label="Estação / código" value={station.estacao} />
-        <Metric label="Fonte" value={station.fonte} />
+        <Metric
+          label="Fonte da cota"
+          value={
+            station.cotaFonte === "ANA"
+              ? "ANA · telemetria"
+              : station.cotaFonte === "operador"
+                ? "Operador"
+                : station.fonte
+          }
+          hint={
+            station.cotaFonte === "ANA" && station.cotaLidaEm
+              ? new Intl.DateTimeFormat("pt-BR", {
+                  timeZone: "America/Manaus",
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(station.cotaLidaEm))
+              : station.cotaFonte === "ANA"
+                ? "Estação automática"
+                : undefined
+          }
+        />
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2">

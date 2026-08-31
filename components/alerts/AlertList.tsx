@@ -32,6 +32,8 @@ import { formatMm } from "@/lib/rainfall-display";
 import { RainMmBadge } from "@/components/alerts/RainfallStrip";
 import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
 import { useOpsMode } from "@/components/shared/OpsMode";
+import { massRiskDo, pessoasRiscoDo } from "@/lib/mass-risk";
+import { formatHab } from "@/lib/demografia";
 
 export function AlertList({
   municipios,
@@ -338,7 +340,10 @@ export function AlertList({
                           onClick={() => onSelect(m.nome, m.bacia)}
                           className="flex w-full items-center justify-between gap-2 text-left"
                         >
-                          <span className="truncate font-bold">{m.nome}</span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-bold">{m.nome}</span>
+                            {tipo === "MOVIMENTO" ? <MassLine id={m.id} /> : null}
+                          </span>
                           <span className="flex shrink-0 items-center gap-1.5">
                             <AlertCountdown expiresAt={m.expiresAt ?? alert?.expiresAt} variant="row" />
                             <RiskBadge
@@ -537,5 +542,21 @@ function Chip({
       ) : null}
       {children}
     </button>
+  );
+}
+
+function MassLine({ id }: { id: string }) {
+  const mass = massRiskDo(id);
+  if (mass.setores <= 0) {
+    return (
+      <span className="block text-[10px] font-semibold text-text-mute">Sem área mapeada</span>
+    );
+  }
+  const pessoas = pessoasRiscoDo(id);
+  return (
+    <span className="block text-[10px] font-semibold text-text-dim">
+      {mass.setores} setor{mass.setores === 1 ? "" : "es"} mapeado{mass.setores === 1 ? "" : "s"}
+      {typeof pessoas === "number" ? ` · ${formatHab(pessoas)} pessoas em risco` : ""}
+    </span>
   );
 }

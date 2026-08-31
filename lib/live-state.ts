@@ -3,6 +3,7 @@ import { getOverrideEntry } from "@/lib/overrides";
 import { listStains } from "@/lib/stains";
 import { alertExpiresAt } from "@/lib/alert-validity";
 import { applyHydroOverride } from "@/lib/hydro-overrides";
+import { applyAnaReading, type AnaReading } from "@/lib/ana-telemetria";
 import {
   ALERT_PRODUCTS,
   isAlertActive,
@@ -150,17 +151,33 @@ export function buildAlertsPayload(
   };
 }
 
-export function buildHydrologyPayload(now = Date.now()): Omit<HydrologyPayload, "cache"> {
-  const stations = catalogStations().map(applyHydroOverride);
+export function buildHydrologyPayload(
+  now = Date.now(),
+  ana?: { byCode: Map<string, AnaReading>; pending?: boolean; fetchedAt?: number | null },
+): Omit<HydrologyPayload, "cache"> {
+  const stations = catalogStations()
+    .map((station) => applyAnaReading(station, ana?.byCode.get(station.estacao)))
+    .map(applyHydroOverride);
+  const automaticas = stations.filter((s) => /^\d{6,}$/.test(s.estacao)).length;
+  const atualizadas = stations.filter((s) => s.cotaFonte === "ANA").length;
   return {
     generatedAt: now,
-    source: `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    source:
+      atualizadas > 0
+        ? `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA} · ANA telemetria (${atualizadas} estação${atualizadas === 1 ? "" : "s"})`
+        : `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
     referencia: HYDRO_REFERENCIA,
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],
     mudancas24h: HYDRO_MUDANCAS,
     rios: HYDRO_RIOS,
     stations,
+    ana: {
+      automaticas,
+      atualizadas,
+      pending: Boolean(ana?.pending),
+      fetchedAt: ana?.fetchedAt ?? null,
+    },
   };
 }
 

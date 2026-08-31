@@ -147,7 +147,6 @@ export function HydrologyWorkbench() {
   const overlayVis = useMemo(() => effectiveOverlays(overlays, "BOLETIM"), [overlays]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [paintArmed, setPaintArmed] = useState(true);
-  const [legendHidden, setLegendHidden] = useState(false);
   const [paintLevel, setPaintLevel] = useState<HydroStatus>("ALTO");
   const [editorOpen, setEditorOpen] = useState(false);
   const [undoStack, setUndoStack] = useState<
@@ -157,10 +156,6 @@ export function HydrologyWorkbench() {
   const mapRef = useRef<StationsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
-
-  useEffect(() => {
-    if (!admin) setLegendHidden(false);
-  }, [admin]);
 
   useEffect(() => {
     if (mapFocus) setMobileListOpen(false);
@@ -989,12 +984,7 @@ export function HydrologyWorkbench() {
                 variant="boletim"
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
               />
-              <MapLegendCard
-                title={modo === "vazante" ? "Estiagem" : "Inundação"}
-                hideable={admin}
-                hidden={admin && legendHidden}
-                onHiddenChange={setLegendHidden}
-              >
+              <MapLegendCard title={modo === "vazante" ? "Estiagem" : "Inundação"}>
                 <ul className="space-y-0.5">
                   <LegendDot
                     color={HYDRO_STATUS_COLORS.NORMAL}

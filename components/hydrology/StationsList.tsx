@@ -287,7 +287,9 @@ function StationRow({
               title={label}
             >
               {s.semLeitura || s.cota == null ? "—" : s.cota.toFixed(2)}
-              <span className="ml-0.5 text-[10px] font-semibold text-text-mute">m</span>
+              <span className="ml-0.5 text-[10px] font-semibold text-text-mute">
+                m{s.cotaFonte === "ANA" ? " · ANA" : ""}
+              </span>
             </span>
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-[10px] font-semibold tracking-wide text-text-mute uppercase">

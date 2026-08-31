@@ -61,6 +61,8 @@ export function applyHydroOverride(station: HydroStation): HydroStation {
     statusVazante: patch.statusVazante ?? station.statusVazante,
     statusEnchente: patch.statusEnchente ?? station.statusEnchente,
     editadoPorOperador: true,
+    cotaFonte: "cota" in patch ? "operador" : station.cotaFonte,
+    cotaLidaEm: "cota" in patch ? Date.now() : station.cotaLidaEm,
   };
 }
 

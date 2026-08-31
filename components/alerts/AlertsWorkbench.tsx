@@ -237,7 +237,6 @@ export function AlertsWorkbench() {
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
-  const [legendHidden, setLegendHidden] = useState(false);
   const [paintByTipo, setPaintByTipo] = useState<Partial<Record<AlertType, string>>>({});
   const [paintTtlMs, setPaintTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [clickSessionCount, setClickSessionCount] = useState(0);
@@ -270,7 +269,6 @@ export function AlertsWorkbench() {
     if (!admin) {
       setPaintArmed(false);
       setDrawMode(false);
-      setLegendHidden(false);
     }
     wasAdmin.current = admin;
     // setQuery is stable enough for arming edição
@@ -1399,9 +1397,7 @@ export function AlertsWorkbench() {
               ) : null}
               <MapLegendCard
                 title={product.legendTitle}
-                hideable={admin}
-                hidden={admin && legendHidden}
-                onHiddenChange={setLegendHidden}
+                forceHidden={drawMode}
               >
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
@@ -1478,7 +1474,6 @@ export function AlertsWorkbench() {
                   const next = !v;
                   if (next) {
                     setQuery({ municipio: null });
-                    setLegendHidden(true);
                   } else {
                     mapApi.current?.cancelDraw();
                   }
