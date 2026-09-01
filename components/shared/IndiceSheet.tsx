@@ -85,8 +85,10 @@ export function IndiceSheet({
           </p>
           <p className="text-[10px] text-text-mute">
             {ive === "qualidade_ar"
-              ? `Incêndio florestal · ${filtered.length} municípios · PMIF +5`
-              : `IVG · IVE · ${filtered.length} municípios`}
+              ? `Incêndio florestal · ${filtered.length} municípios · PMIF +20`
+              : ive === "chuva_intensa"
+                ? `Chuva / tempestade · ${filtered.length} municípios`
+                : `IVG · IVE · ${filtered.length} municípios`}
           </p>
         </div>
         <button
@@ -176,7 +178,11 @@ export function IndiceSheet({
                     </strong>
                     <span className="block truncate text-[10px] text-text-mute">
                       {nivelOf(row, ive)} · {row.calha} · {TENDENCIA_LABELS[row.historico.tendencia]}
-                      {ive === "qualidade_ar" && row.pmif ? " · bônus PMIF" : ""}
+                      {ive === "qualidade_ar" && row.pmif ? " · bônus PMIF +20" : ""}
+                      {ive === "chuva_intensa" &&
+                      (row.ive.find((item) => item.id === "chuva_intensa")?.tempestadeBonus ?? 0) > 0
+                        ? " · tempestade"
+                        : ""}
                     </span>
                   </span>
                   <span className="font-mono text-[13px] font-bold tabular-nums text-text">

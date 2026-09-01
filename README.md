@@ -87,17 +87,20 @@ Controle interno do operador: aparece só no **Desktop** com **Edição** ligada
 
 O IVE de cada risco é recalculado na hora, município a município:
 
-**IVE (tipo) = Base estrutural (0–50) + Histórico do tipo (0–10) + Monitoramento do tipo (0–10, ou 0–15 no incêndio).**
+**IVE (tipo) = Base estrutural (0–50) + Histórico do tipo (0–10) + Monitoramento do tipo (0–10) + bônus.**
 
-- **Base** — comum aos cinco riscos: população vulnerável (crianças e idosos, até 15), áreas de risco mapeadas pelo SGB/Defesa Civil (log de habitantes, até 20) e capacidade de resposta (menor IDHM, até 15).
-- **Histórico** — só os desastres daquele tipo reconhecidos pela Defesa Civil AM. Frequência: (anos com o tipo / anos da série) × 5. Diversidade: (subtipos já ocorridos / 3) × 5.
-- **Monitoramento** — nível atual (Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10) a partir do boletim e da classificação do operador. Fonte: **Defesa Civil AM**. Cota fluvial, à parte, continua **ANA**. No **incêndio florestal**, os 23 municípios do PMIF recebem **+5**.
+- **Base** — comum aos cinco riscos: população vulnerável (crianças 0–14 e idosos 60+, até 15), áreas de risco mapeadas pelo SGB (até 20) e capacidade de resposta (menor IDHM, até 15).
+- **Histórico** — só os desastres daquele tipo reconhecidos pela Defesa Civil AM (S2ID). Frequência: (anos com o tipo / anos da série) × 5. Diversidade: (subtipos já ocorridos / 3) × 5.
+- **Monitoramento** — nível atual (Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10). Fonte: **Defesa Civil AM**. Cota fluvial, à parte, continua **ANA**.
+- **Bônus de decreto** — Situação de Emergência há 10 anos ou menos (≥ 2016): **+20**; mais antiga: **+10**. Enchente e estiagem: os 62 municípios entram com decreto recente.
+- **Bônus PMIF** — **+20** no IVE de incêndio florestal para os 23 municípios prioritários (SEMA/AM).
+- **Bônus tempestade** — **+20** no IVE de chuva se houver Tempestade Local/Convectiva, Vendaval ou Chuvas Intensas desde 2018; **+10** se a série for só mais antiga (ex.: Rio Preto da Eva, 2017).
 
-Tipos: incêndio florestal (inclui queimadas; selo PMIF), chuva intensa / alagamento, estiagem, enchente / inundação e movimento de massa. A ficha mostra destaque hidrológico (bacia e rio), os 3 critérios da base, as 5 barras de IVE, a série de anos/tipos e o monitoramento com a fonte. O ranking do painel ordena os 62 municípios por cada IVE.
+O **IVG** é o maior dos cinco IVE do município. Tipos: incêndio (incêndio florestal, queimadas, focos de calor), chuva/tempestade (alagamento, tempestade, vendaval, enxurradas), estiagem (estiagem, seca, vazante), enchente (inundação, cheia, alagamento de cheia) e movimento de massa (deslizamento, erosão de margem e continental).
 
-Cores: Baixo `#2ecc71`, Moderado `#f1c40f`, Alto `#e67e22`, Severo `#e74c3c`, Extremo `#8e44ad`. Faixas 0–20 / 21–40 / 41–55 / 56–80 / 81–100.
+Cores do índice: Baixo `#2ecc71` (0–25), Médio `#f1c40f` (26–45), Alto `#e67e22` (46–65), Muito Alto `#e74c3c` (66–100).
 
-PurpleAir **não** entra sozinho no IVE de incêndio — só a classificação do operador, o boletim DC-AM e o bônus PMIF. O índice **não altera** o grau dos produtos.
+PurpleAir **não** entra sozinho no IVE de incêndio — só a classificação do operador, o boletim DC-AM e os bônus. O índice **não altera** o grau dos produtos.
 
 O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
 

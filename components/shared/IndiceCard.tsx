@@ -132,6 +132,17 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
               </span>
             </p>
             <Bar value={item.total} max={iveTeto(item.id)} color={INDICE_FAIXA_COLORS[item.faixa]} />
+            {item.bonus > 0 ? (
+              <p className="mt-0.5 flex flex-wrap gap-1 text-[9px] font-bold text-text-mute">
+                {item.pmifBonus > 0 ? <span>PMIF +{item.pmifBonus}</span> : null}
+                {item.tempestadeBonus > 0 ? <span>Tempestade +{item.tempestadeBonus}</span> : null}
+                {item.decretoBonus > 0 ? (
+                  <span>
+                    Decreto SE{item.decretoAno ? ` ${item.decretoAno}` : ""} +{item.decretoBonus}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
           </li>
         ))}
       </ul>

@@ -1,7 +1,9 @@
 import { LEVEL_LABELS } from "@/lib/alert-types";
+import { bonusDecretoDo } from "@/lib/decretos";
 import { HYDRO_STATUS_LABELS } from "@/lib/hydrology";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { isPmif, PMIF_BONUS } from "@/lib/pmif";
+import { bonusTempestade } from "@/lib/tempestade";
 import type { AlertLevel, HydroStatus } from "@/lib/types";
 import rawIdhm from "@/data/idhm.json";
 import { demografiaDo } from "@/lib/demografia";
@@ -16,13 +18,13 @@ import {
   type VulnerabTendencia,
 } from "@/lib/vulnerabilidade";
 
-/** IVE = base estrutural + histórico do tipo + monitoramento do tipo. Não altera o grau do produto. */
+/** IVE = base + histórico do tipo + monitoramento do tipo + bônus. Não altera o grau do produto. */
 
 export const INDICE_ESTRUTURAL_MAX = 50;
 export const INDICE_HISTORICO_MAX = 10;
-export const INDICE_MONITOR_MAX = 50;
+export const INDICE_MONITOR_MAX = 10;
 export const INDICE_EVENTO_MAX = 10;
-export const INDICE_INCENDIO_MONITOR_MAX = 15;
+export const INDICE_TETO = 100;
 
 const POP_MAX = 15;
 const RISCO_MAX = 20;
@@ -43,7 +45,7 @@ export const IDHM_FONTE = IDHM_FILE.fonte;
 export const IDHM_NOTA = IDHM_FILE.nota;
 export const INDICE_FONTE_MONITOR = "Defesa Civil AM";
 
-export type IndiceFaixa = "BAIXO" | "MODERADO" | "ALTO" | "SEVERO" | "EXTREMO";
+export type IndiceFaixa = "BAIXO" | "MEDIO" | "ALTO" | "MUITO_ALTO";
 
 export const INDICE_FAIXAS: Array<{
   id: IndiceFaixa;
@@ -53,47 +55,38 @@ export const INDICE_FAIXAS: Array<{
   short: string;
   acao: string;
 }> = [
-  { id: "BAIXO", min: 0, max: 20, label: "Risco baixo", short: "Baixo", acao: "Monitoramento de rotina." },
+  { id: "BAIXO", min: 0, max: 25, label: "Risco baixo", short: "Baixo", acao: "Monitoramento de rotina." },
   {
-    id: "MODERADO",
-    min: 21,
-    max: 40,
-    label: "Risco moderado",
-    short: "Moderado",
-    acao: "Tendência de piora ou vulnerabilidade de base. Manter alerta.",
+    id: "MEDIO",
+    min: 26,
+    max: 45,
+    label: "Risco médio",
+    short: "Médio",
+    acao: "Vulnerabilidade de base ou tendência de piora. Manter alerta.",
   },
   {
     id: "ALTO",
-    min: 41,
-    max: 55,
+    min: 46,
+    max: 65,
     label: "Risco alto",
     short: "Alto",
     acao: "Situação crítica ou evento em andamento. Equipes em prontidão.",
   },
   {
-    id: "SEVERO",
-    min: 56,
-    max: 80,
-    label: "Risco severo",
-    short: "Severo",
-    acao: "Evento extremo e/ou vulnerabilidade estrutural muito alta. Ativar contingência.",
-  },
-  {
-    id: "EXTREMO",
-    min: 81,
+    id: "MUITO_ALTO",
+    min: 66,
     max: 100,
-    label: "Risco extremo",
-    short: "Extremo",
-    acao: "Desastre em curso. Suporte externo e ação emergencial.",
+    label: "Risco muito alto",
+    short: "Muito Alto",
+    acao: "Evento extremo e/ou decreto de Situação de Emergência. Ativar contingência.",
   },
 ];
 
 export const INDICE_FAIXA_COLORS: Record<IndiceFaixa, string> = {
   BAIXO: "#2ecc71",
-  MODERADO: "#f1c40f",
+  MEDIO: "#f1c40f",
   ALTO: "#e67e22",
-  SEVERO: "#e74c3c",
-  EXTREMO: "#8e44ad",
+  MUITO_ALTO: "#e74c3c",
 };
 
 export type { IveId, VulnerabTendencia };
@@ -101,11 +94,11 @@ export { IVE_IDS, IVE_LABELS, TENDENCIA_LABELS };
 
 /** Palavras-chave dos desastres reconhecidos (Defesa Civil AM) para cada IVE. */
 const IVE_TIPO_KEYS: Record<IveId, string[]> = {
-  qualidade_ar: ["INCENDIO", "QUEIMADA"],
-  chuva_intensa: ["INUNDAC", "ALAGAMENTO", "TEMPESTADE", "CHUVA INTENSA", "ENXURRADA"],
-  estiagem: ["ESTIAGEM", "SECA"],
-  inundacao: ["INUNDAC", "CHEIA"],
-  movimento_massa: ["DESLIZ", "EROSAO", "SUBSID", "COLAPSO"],
+  qualidade_ar: ["INCENDIO", "QUEIMADA", "FOCOS DE CALOR", "FOCO DE CALOR"],
+  chuva_intensa: ["ALAGAMENTO", "TEMPESTADE", "CHUVA INTENSA", "CHUVAS INTENSAS", "VENDAVAL", "ENXURRADA"],
+  estiagem: ["ESTIAGEM", "SECA", "VAZANTE"],
+  inundacao: ["INUNDAC", "CHEIA", "ALAGAMENTO"],
+  movimento_massa: ["DESLIZ", "EROSAO"],
 };
 
 export type IndiceEventoId = IveId;
@@ -142,6 +135,10 @@ export type IndiceIve = {
   monitoramento: number;
   monitoramentoMax: number;
   pmifBonus: number;
+  decretoBonus: number;
+  decretoAno: number | null;
+  tempestadeBonus: number;
+  bonus: number;
   rank: number;
 };
 
@@ -187,9 +184,8 @@ export type IndiceLive = {
   };
 };
 
-export function iveTeto(id: IveId) {
-  const monitor = id === "qualidade_ar" ? INDICE_INCENDIO_MONITOR_MAX : INDICE_EVENTO_MAX;
-  return INDICE_ESTRUTURAL_MAX + INDICE_HISTORICO_MAX + monitor;
+export function iveTeto(_id?: IveId) {
+  return INDICE_TETO;
 }
 
 export function labelMonitorNivel(level: string, pontos?: number): string {
@@ -264,10 +260,9 @@ export function faixaFromNivel(nivel: string | null | undefined, total?: number)
     .trim()
     .toLowerCase();
   if (key === "baixo") return "BAIXO";
-  if (key === "moderado") return "MODERADO";
+  if (key === "medio" || key === "moderado") return "MEDIO";
   if (key === "alto") return "ALTO";
-  if (key === "severo" || key === "severio") return "SEVERO";
-  if (key === "extremo") return "EXTREMO";
+  if (key === "muito alto" || key === "severo" || key === "severio" || key === "extremo") return "MUITO_ALTO";
   return faixaDoTotal(total ?? 0).id;
 }
 
@@ -461,21 +456,15 @@ export function scoreMunicipio(
 
   const eventos: IndiceEvento[] = IVE_IDS.map((iveId) => {
     const liveRec = monitoramentoDo(iveId, live, cat);
-    const bonus = iveId === "qualidade_ar" && pmif ? PMIF_BONUS : 0;
-    const max = iveId === "qualidade_ar" ? INDICE_INCENDIO_MONITOR_MAX : INDICE_EVENTO_MAX;
-    const pontos = round1(clamp(liveRec.pontos + bonus, 0, max));
+    const pontos = round1(clamp(liveRec.pontos, 0, INDICE_EVENTO_MAX));
     const nivelLabel = labelMonitorNivel(liveRec.level, liveRec.pontos);
-    const detalhe =
-      bonus > 0
-        ? `${nivelLabel} · ${INDICE_FONTE_MONITOR} · PMIF +${bonus}`
-        : `${nivelLabel} · ${INDICE_FONTE_MONITOR}`;
     return {
       id: iveId,
       label: IVE_LABELS[iveId],
       pontos,
-      max,
+      max: INDICE_EVENTO_MAX,
       nivel: nivelLabel,
-      detalhe,
+      detalhe: `${nivelLabel} · ${INDICE_FONTE_MONITOR}`,
       fonte: INDICE_FONTE_MONITOR,
     };
   });
@@ -483,7 +472,12 @@ export function scoreMunicipio(
   const ive: IndiceIve[] = IVE_IDS.map((iveId) => {
     const hist = historicoDoTipo(historico.eventos, iveId);
     const mon = eventos.find((item) => item.id === iveId)!;
-    const total = round1(base + hist.pontos + mon.pontos);
+    const pmifBonus = iveId === "qualidade_ar" && pmif ? PMIF_BONUS : 0;
+    const decreto = bonusDecretoDo(nome, iveId);
+    const tempestade =
+      iveId === "chuva_intensa" ? bonusTempestade(nome, historico.eventos) : { pontos: 0, ano: null };
+    const bonus = pmifBonus + decreto.pontos + tempestade.pontos;
+    const total = round1(clamp(base + hist.pontos + mon.pontos + bonus, 0, INDICE_TETO));
     const faixa = faixaDoTotal(total);
     return {
       id: iveId,
@@ -495,19 +489,24 @@ export function scoreMunicipio(
       historico: hist.pontos,
       monitoramento: mon.pontos,
       monitoramentoMax: mon.max,
-      pmifBonus: iveId === "qualidade_ar" && pmif ? PMIF_BONUS : 0,
+      pmifBonus,
+      decretoBonus: decreto.pontos,
+      decretoAno: decreto.ano,
+      tempestadeBonus: tempestade.pontos,
+      bonus,
       rank: 0,
     };
   });
 
   const monitoramentoTotal = round1(
     clamp(
-      eventos.reduce((sum, item) => sum + item.pontos, 0),
+      eventos.reduce((sum, item) => sum + item.pontos, 0) / Math.max(eventos.length, 1),
       0,
       INDICE_MONITOR_MAX,
     ),
   );
-  const total = round1(base + historico.total + monitoramentoTotal);
+  const topIve = ive.reduce((best, item) => (item.total > best.total ? item : best), ive[0]);
+  const total = topIve?.total ?? 0;
   const faixa = faixaDoTotal(total);
 
   return {

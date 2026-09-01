@@ -1,0 +1,42 @@
+{
+  "fonte": "Defesa Civil AM · Situação de Emergência",
+  "referencia": 2026,
+  "corte_anos": 10,
+  "bonus_recente": 20,
+  "bonus_antigo": 10,
+  "padrao": {
+    "inundacao": 2024,
+    "estiagem": 2024
+  },
+  "municipios": {
+    "Careiro": { "qualidade_ar": 2023, "chuva_intensa": 2026, "inundacao": 2024, "estiagem": 2024 },
+    "Manaquiri": { "qualidade_ar": 2024, "chuva_intensa": 2022, "inundacao": 2024, "estiagem": 2023 },
+    "Tefé": { "qualidade_ar": 2023, "chuva_intensa": 2023, "inundacao": 2024, "estiagem": 2024 },
+    "Barreirinha": { "chuva_intensa": 2026, "movimento_massa": 2012 },
+    "Borba": { "chuva_intensa": 2026, "movimento_massa": 2012 },
+    "Caapiranga": { "chuva_intensa": 2026 },
+    "Coari": { "chuva_intensa": 2026 },
+    "Fonte Boa": { "chuva_intensa": 2026 },
+    "Iranduba": { "chuva_intensa": 2026 },
+    "Juruá": { "chuva_intensa": 2026 },
+    "Manacapuru": { "chuva_intensa": 2026, "movimento_massa": 2024 },
+    "Manaus": { "chuva_intensa": 2026 },
+    "Manicoré": { "chuva_intensa": 2026, "movimento_massa": 2012 },
+    "Nova Olinda do Norte": { "chuva_intensa": 2026, "movimento_massa": 2012 },
+    "Novo Aripuanã": { "chuva_intensa": 2026 },
+    "Parintins": { "chuva_intensa": 2026, "movimento_massa": 2024 },
+    "Urucurituba": { "chuva_intensa": 2026 },
+    "Rio Preto da Eva": { "chuva_intensa": 2015 },
+    "São Paulo de Olivença": { "movimento_massa": 2024 },
+    "Jutaí": { "movimento_massa": 2024 },
+    "Canutama": { "movimento_massa": 2024 },
+    "Carauari": { "movimento_massa": 2024 },
+    "Boca do Acre": { "movimento_massa": 2024 },
+    "Santo Antônio do Içá": { "movimento_massa": 2024 },
+    "Anamã": { "movimento_massa": 2012 },
+    "Nhamundá": { "movimento_massa": 2012 },
+    "Careiro da Várzea": { "movimento_massa": 2012 },
+    "Humaitá": { "movimento_massa": 2012 },
+    "Itacoatiara": { "movimento_massa": 2012 }
+  }
+}

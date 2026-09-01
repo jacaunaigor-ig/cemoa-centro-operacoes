@@ -14,7 +14,7 @@ export type IveId = (typeof IVE_IDS)[number];
 
 export const IVE_LABELS: Record<IveId, string> = {
   qualidade_ar: "Incêndio florestal",
-  chuva_intensa: "Chuva intensa / alagamento",
+  chuva_intensa: "Chuva intensa / tempestade",
   estiagem: "Estiagem",
   inundacao: "Enchente / inundação",
   movimento_massa: "Movimento de massa",

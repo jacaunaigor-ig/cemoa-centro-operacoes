@@ -13,7 +13,7 @@ import {
 import { VULNERAB_ATUALIZACAO } from "@/lib/vulnerabilidade";
 import type { AlertLevel, HydroStation } from "@/lib/types";
 
-const SOURCE = `Índice de Vulnerabilidade CEMOA · Defesa Civil AM ${VULNERAB_ATUALIZACAO} · Censo 2022 · SGB · Atlas IDHM 2010 · boletim hidrológico · classificação do operador`;
+const SOURCE = `Índice de Vulnerabilidade CEMOA · Defesa Civil AM ${VULNERAB_ATUALIZACAO} · Censo 2022 · SGB · Atlas IDHM 2010 · decretos SE · PMIF SEMA · boletim hidrológico`;
 
 export function buildIndicePayload(
   now = Date.now(),
