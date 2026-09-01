@@ -29,7 +29,7 @@ import { statusAtivo } from "@/lib/hydrology";
 import type { AirQualityPayload, AlertLevel, HydroStation, RainAlert, RainfallPayload } from "@/lib/types";
 import { cn, formatRelative, withAlpha } from "@/lib/utils";
 import { formatMm } from "@/lib/rainfall-display";
-import { RainMmBadge } from "@/components/alerts/RainfallStrip";
+import { RainWindowsPills } from "@/components/alerts/RainfallStrip";
 import { AirPmBadge } from "@/components/alerts/AirQualityStrip";
 import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
 import { useOpsMode } from "@/components/shared/OpsMode";
@@ -46,18 +46,13 @@ export function AlertList({
   selected,
   hovered,
   bacia,
-  risco,
   tipo,
-  levels,
-  counts,
   busca,
   loading,
   onSelect,
   onHover,
   onBacia,
-  onRisco,
   onBusca,
-  onMunicipio,
   onLimpar,
 }: {
   municipios: Array<{
@@ -84,18 +79,13 @@ export function AlertList({
   selected: string | null;
   hovered: string | null;
   bacia: string | null;
-  risco: string | "TODOS";
   tipo: AlertType;
-  levels: readonly string[];
-  counts: Record<string, number>;
   busca: string;
   loading: boolean;
   onSelect: (nome: string, bacia: string) => void;
   onHover: (nome: string | null) => void;
   onBacia: (bacia: string | null) => void;
-  onRisco: (risco: string | "TODOS") => void;
   onBusca: (q: string) => void;
-  onMunicipio: (nome: string | null) => void;
   onLimpar: () => void;
 }) {
   const alertByMuni = useMemo(() => new Map(alerts.map((a) => [a.municipio, a])), [alerts]);
@@ -174,7 +164,7 @@ export function AlertList({
 
   return (
     <Card className="flex h-full min-h-[320px] flex-col overflow-hidden xl:min-h-0">
-      <div className="space-y-3 border-b border-border p-4">
+      <div className="space-y-2 border-b border-border px-3 py-2.5">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
             Lista de municípios
@@ -190,41 +180,8 @@ export function AlertList({
             Limpar
           </button>
         </div>
-        <div className={cn("flex gap-1.5", isMobile ? "overflow-x-auto pb-0.5" : "flex-wrap")} role="toolbar" aria-label="Filtrar por nível de alerta">
-          <Chip
-            active={risco === "TODOS"}
-            color="#5eb4ff"
-            onClick={() => onRisco("TODOS")}
-          >
-            Todos ({counts.TODOS ?? 0})
-          </Chip>
-          <Chip
-            active={risco === "ATIVOS"}
-            color="#f2790f"
-            onClick={() => onRisco("ATIVOS")}
-          >
-            Ativos ({counts.ATIVOS ?? 0})
-          </Chip>
-          <Chip
-            active={risco === "AGRAVADOS"}
-            color="#ef4444"
-            disabled={!counts.AGRAVADOS}
-            onClick={() => onRisco("AGRAVADOS")}
-          >
-            Com agravamento ({counts.AGRAVADOS ?? 0})
-          </Chip>
-          {[...levels].reverse().map((value) => (
-            <Chip
-              key={value}
-              active={risco === value}
-              color={LEVEL_COLORS[value]}
-              onClick={() => onRisco(value)}
-            >
-              {LEVEL_LABELS[value] ?? value} ({counts[value] ?? 0})
-            </Chip>
-          ))}
-        </div>
-        <label className="block text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <label className="block min-w-0 flex-1 text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
           Região
           <select
             className="hydro-select mt-1"
@@ -242,6 +199,15 @@ export function AlertList({
             ))}
             </select>
           </label>
+        <Input
+          id="busca-municipio"
+          value={busca}
+          onChange={(e) => onBusca(e.target.value)}
+          placeholder="Buscar município ou região…"
+          aria-label="Buscar município ou região"
+          className="sm:max-w-[14rem]"
+        />
+        </div>
         {clusters.length ? (
           <div className={cn("flex gap-1.5", isMobile ? "overflow-x-auto pb-0.5" : "flex-wrap")} role="toolbar" aria-label="Regiões com alerta">
             {clusters.map((c) => (
@@ -256,20 +222,13 @@ export function AlertList({
             ))}
           </div>
         ) : null}
-        <Input
-          id="busca-municipio"
-          value={busca}
-          onChange={(e) => onBusca(e.target.value)}
-          placeholder="Buscar município ou região…"
-          aria-label="Buscar município ou região"
-        />
         <PlantaoQueue
           tipo={tipo}
           municipios={fila}
           rain={rain}
           air={air ?? null}
           hydro={hydro}
-          compact={isMobile}
+          compact
           onSelect={onSelect}
         />
       </div>
@@ -316,6 +275,9 @@ export function AlertList({
                     air: air ? air.byNome[m.nome] ?? null : undefined,
                     hydro: cota ?? null,
                   });
+                  const expiresAt = m.expiresAt ?? alert?.expiresAt ?? null;
+                  const prazoVencido =
+                    Boolean(expiresAt) && expiresAt! <= Date.now() && isAlertActive(tipo, m.risco);
                   return (
                     <li
                       key={m.id}
@@ -330,7 +292,7 @@ export function AlertList({
                     >
                       <div
                         className={cn(
-                          "relative flex w-full flex-col gap-1 py-2.5 pr-3 pl-3.5 text-left transition-colors",
+                          "relative flex w-full flex-col gap-1.5 py-2.5 pr-3 pl-3.5 text-left transition-colors",
                           highlighted ? "bg-hover" : "hover:bg-hover",
                         )}
                         style={{
@@ -350,7 +312,7 @@ export function AlertList({
                             {tipo === "MOVIMENTO" ? <MassLine id={m.id} /> : null}
                           </span>
                           <span className="flex shrink-0 items-center gap-1.5">
-                            <AlertCountdown expiresAt={m.expiresAt ?? alert?.expiresAt} variant="row" />
+                            <AlertCountdown expiresAt={expiresAt} variant="row" />
                             <RiskBadge
                               level={m.risco}
                               showAction={!isMobile && isAlertActive(tipo, m.risco)}
@@ -358,9 +320,21 @@ export function AlertList({
                             />
                           </span>
                         </button>
-                        {!isMobile ? (
-                          <p className="line-clamp-2 text-[11px] leading-snug text-text-dim">
-                            {briefing.headline}
+                        {tipo === "INCENDIO" ? (
+                          !isMobile ? (
+                            <p className="line-clamp-2 text-[11px] leading-snug text-text-dim">
+                              {briefing.headline}
+                            </p>
+                          ) : null
+                        ) : rain ? (
+                          <RainWindowsPills
+                            rain={rain.byNome[m.nome] ?? null}
+                            hasStation={Boolean(rain.byNome[m.nome])}
+                          />
+                        ) : null}
+                        {prazoVencido ? (
+                          <p className="text-[10px] font-semibold text-text-mute">
+                            Prazo vencido · grau permanece até o operador alterar
                           </p>
                         ) : null}
                         <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
@@ -379,11 +353,6 @@ export function AlertList({
                           <div className="flex shrink-0 items-center gap-1">
                             {tipo === "INCENDIO" ? (
                               <AirPmBadge rec={air?.byNome[m.nome] ?? null} />
-                            ) : rain ? (
-                              <RainMmBadge
-                                rain={rain.byNome[m.nome] ?? null}
-                                hasStation={Boolean(rain.byNome[m.nome])}
-                              />
                             ) : null}
                             {!isMobile ? (
                               <CotaPeek

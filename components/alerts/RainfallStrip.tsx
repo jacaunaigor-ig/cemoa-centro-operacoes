@@ -7,6 +7,7 @@ import type { AlertType } from "@/lib/alert-types";
 import type { RainFilter, RainfallPayload, RainfallWindows } from "@/lib/types";
 import {
   formatMm,
+  formatMmShort,
   formatWindowsCompact,
   hasRain,
   peakMm,
@@ -172,5 +173,56 @@ export function RainMmBadge({
       <CemadenIcon className="size-3.5" />
       {formatWindowsCompact(rain)}
     </span>
+  );
+}
+
+const RAIN_WINDOWS = [
+  { key: "mm1h" as const, label: "1 h" },
+  { key: "mm6h" as const, label: "6 h" },
+  { key: "mm24h" as const, label: "24 h" },
+];
+
+/** Acumulados CEMADEN em destaque na lista (1 h / 6 h / 24 h). */
+export function RainWindowsPills({
+  rain,
+  hasStation,
+}: {
+  rain?: RainfallWindows | null;
+  hasStation: boolean;
+}) {
+  if (!hasStation) {
+    return (
+      <div className="rounded-md border border-dashed border-border px-2 py-1.5 text-[10px] font-semibold text-text-mute">
+        Sem pluviômetro CEMADEN
+      </div>
+    );
+  }
+  return (
+    <div
+      className="grid grid-cols-3 gap-1"
+      title="Acumulado CEMADEN 1 h · 6 h · 24 h (mm)"
+    >
+      {RAIN_WINDOWS.map(({ key, label }) => {
+        const mm = rain?.[key] ?? null;
+        const band = rainBand(mm);
+        return (
+          <div
+            key={key}
+            className="rounded-md border border-border bg-panel-2 px-1 py-1 text-center"
+          >
+            <p className="text-[9px] font-bold tracking-[0.08em] text-text-mute uppercase">
+              {label}
+            </p>
+            <p
+              className="font-mono text-[12px] font-black tabular-nums leading-tight"
+              style={{ color: rainBandColor(band) }}
+            >
+              {formatMmShort(mm)}
+            </p>
+            <p className="text-[8px] font-semibold text-text-mute">mm</p>
+          </div>
+        );
+      })}
+    </div>
   );
 }

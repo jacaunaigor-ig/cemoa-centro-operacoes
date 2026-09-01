@@ -36,13 +36,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { fetchJson, reportClientError } from "@/lib/client";
-import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow } from "@/lib/live-state";
+import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow, mergeAlertsPreserveOperator } from "@/lib/live-state";
 import { buildIndicePayload } from "@/lib/indice-build";
 import type { IndicePayload } from "@/lib/indice";
 import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides, replaceOverrides } from "@/lib/overrides";
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { DEFAULT_ALERT_DURATION_MS, durationLabel } from "@/lib/alert-duration";
+import { alertExpiresAt } from "@/lib/alert-validity";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
   DEFAULT_OVERLAYS,
@@ -108,7 +109,7 @@ import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
-import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
+import { ensureOpsBoardReset } from "@/lib/ops-board";
 const POLL_MS = 20_000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
@@ -199,6 +200,60 @@ function forgetLocalStain(id: string) {
 
 function clearLocalStains(tipo: AlertType) {
   writeLocalStains(readLocalStains().filter((row) => row.tipo !== tipo));
+}
+
+function parseLocalOverrideEntry(value: unknown): {
+  level: string;
+  issuedAt: number;
+  issuedBy?: string;
+  ttlMs?: number;
+} | null {
+  if (typeof value === "string") return { level: value, issuedAt: Date.now() };
+  if (!value || typeof value !== "object") return null;
+  const row = value as {
+    level?: unknown;
+    issuedAt?: unknown;
+    issuedBy?: unknown;
+    ttlMs?: unknown;
+  };
+  if (typeof row.level !== "string") return null;
+  return {
+    level: row.level,
+    issuedAt: typeof row.issuedAt === "number" ? row.issuedAt : Date.now(),
+    issuedBy: typeof row.issuedBy === "string" ? row.issuedBy : undefined,
+    ttlMs: typeof row.ttlMs === "number" && row.ttlMs > 0 ? row.ttlMs : undefined,
+  };
+}
+
+/** If the server forgot a paint still stored in this browser, keep the operator grau. */
+function applyLocalOverrideFallback(payload: AlertsPayload): AlertsPayload {
+  const local = readLocalOverrides();
+  const prefix = `${payload.tipo}:`;
+  let changed = false;
+  const municipios = payload.municipios.map((m) => {
+    const entry = parseLocalOverrideEntry(local[`${prefix}${m.id}`]);
+    if (!entry) return m;
+    const incomingAt = m.fonte === "admin" ? (m.classifiedAt ?? 0) : 0;
+    if (incomingAt >= entry.issuedAt) return m;
+    changed = true;
+    return {
+      ...m,
+      risco: entry.level as typeof m.risco,
+      fonte: "admin" as const,
+      issuedAt: entry.issuedAt,
+      expiresAt: alertExpiresAt(entry.issuedAt, entry.level, entry.ttlMs),
+      classifiedBy: entry.issuedBy ?? m.classifiedBy,
+      classifiedAt: entry.issuedAt,
+    };
+  });
+  if (!changed) return payload;
+  const byId = new Map(municipios.map((m) => [m.id, m]));
+  const alerts = payload.alerts.filter((a) => byId.get(a.municipioId)?.risco === a.risco);
+  return { ...payload, municipios, alerts };
+}
+
+function takeIncomingAlerts(prev: AlertsPayload | null, incoming: AlertsPayload): AlertsPayload {
+  return mergeAlertsPreserveOperator(prev, applyLocalOverrideFallback(incoming));
 }
 
 function hydrateClientOverrides() {
@@ -413,7 +468,7 @@ export function AlertsWorkbench() {
       }
       if (!opts?.skipRefresh) {
         const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
-        setData(payload);
+        setData((prev) => takeIncomingAlerts(prev, payload));
       }
       if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
         setUndoStack((stack) =>
@@ -591,7 +646,7 @@ export function AlertsWorkbench() {
             method: "POST",
             credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tipo: t, updates, replace: true }),
+            body: JSON.stringify({ tipo: t, updates }),
           });
           if (res.status === 401) {
             return;
@@ -618,8 +673,10 @@ export function AlertsWorkbench() {
     async function load() {
       if (cancelled) return;
       try {
-        ensureOpsBoardReset();
-        if (!hydrated.current) hydrated.current = true;
+        if (!hydrated.current) {
+          ensureOpsBoardReset();
+          hydrated.current = true;
+        }
         if (STATIC_DEPLOY) {
           hydrateClientOverrides();
           if (cancelled) return;
@@ -629,7 +686,6 @@ export function AlertsWorkbench() {
           setError(null);
           return;
         }
-        if (session) await maybeWipeRemoteOpsBoard();
         if (session && !localPushed.current) {
           localPushed.current = true;
           await hydrateLocal();
@@ -650,7 +706,7 @@ export function AlertsWorkbench() {
         if (indiceInterno && indicePayload) setIndice(indicePayload);
         else if (!indiceInterno) setIndice(null);
         if (!editBusy.current || !gotAlerts) {
-          setData(payload);
+          setData((prev) => takeIncomingAlerts(gotAlerts ? prev : null, payload));
           gotAlerts = true;
         }
         setError(null);
@@ -689,7 +745,7 @@ export function AlertsWorkbench() {
           ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
           : Promise.resolve(null),
       ]);
-      setData(payload);
+      setData((prev) => takeIncomingAlerts(prev, payload));
       if (hydroPayload) setHydro(hydroPayload);
       if (rainPayload) setRain(rainPayload);
       if (airPayload) setAir(airPayload);
@@ -903,7 +959,27 @@ export function AlertsWorkbench() {
     plantaoCounts.vencido + plantaoCounts.renovar + plantaoCounts.emitir;
   usePlantaoExpiryChime(tipo, catalog, !isMobile);
   const ProductIcon = PRODUCT_ICONS[tipo];
+  const monitorStrip = (
+    <ProductMonitorStrip
+      tipo={tipo}
+      air={air}
+      rain={rain}
+      airFilter={airFilter}
+      rainFilter={rainFilter}
+      loadingAir={!air && !STATIC_DEPLOY}
+      loadingRain={!rain && !STATIC_DEPLOY}
+      onAirFilter={(next) =>
+        setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
+      }
+      onRainFilter={(next) =>
+        setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
+      }
+    />
+  );
   const listNode = (
+    <div className="flex h-full min-h-[320px] min-w-0 flex-col gap-2 xl:min-h-0">
+      {monitorStrip}
+      <div className="min-h-0 flex-1">
     <AlertList
       municipios={visibleMunicipios}
       catalog={catalog}
@@ -914,10 +990,7 @@ export function AlertsWorkbench() {
       selected={selected}
       hovered={hovered}
       bacia={bacia}
-      risco={activeFilter}
       tipo={tipo}
-      levels={product.levels}
-      counts={counts}
       busca={busca}
       loading={loading}
       onSelect={(nome, basinName) => {
@@ -937,21 +1010,14 @@ export function AlertsWorkbench() {
           municipio: null,
         })
       }
-      onRisco={(next) => setQuery({ risco: next === "TODOS" ? null : next })}
       onBusca={setBusca}
-      onMunicipio={(nome) => {
-        if (!nome) {
-          setQuery({ municipio: null });
-          return;
-        }
-        const row = catalog.find((m) => m.nome === nome);
-        setQuery(geoForNome(nome, row?.bacia));
-      }}
       onLimpar={() => {
         setBusca("");
         setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null, ar: null });
       }}
     />
+      </div>
+    </div>
   );
 
   function geoForNome(nome: string, baciaName?: string | null) {
@@ -998,6 +1064,17 @@ export function AlertsWorkbench() {
       };
     });
     setClickSessionCount((n) => n + 1);
+    try {
+      rememberLocalOverrides(
+        tipo,
+        { [id]: paintLevel },
+        false,
+        [],
+        { issuedBy: session?.name, issuedById: session?.id, ttlMs: paintTtlMs },
+      );
+    } catch {
+      /* ignore quota */
+    }
     void persistOverrides(
       { [id]: paintLevel },
       { source: "clique", ttlMs: paintTtlMs, skipRefresh: true },
@@ -1258,6 +1335,7 @@ export function AlertsWorkbench() {
                     />
                   ))}
                 </div>
+                <div className="mt-1.5">{monitorStrip}</div>
               </DashboardBody>
             </>
           ) : (
@@ -1327,26 +1405,8 @@ export function AlertsWorkbench() {
           </SituationBar>
           </DashboardRow>
 
-          <DashboardBody>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-[minmax(20rem,1.35fr)_repeat(6,minmax(0,1fr))]">
-            <div className="col-span-2 sm:col-span-3 xl:col-span-1">
-                <ProductMonitorStrip
-                  className="h-full"
-                  tipo={tipo}
-                  air={air}
-                  rain={rain}
-                  airFilter={airFilter}
-                  rainFilter={rainFilter}
-                  loadingAir={!air && !STATIC_DEPLOY}
-                  loadingRain={!rain && !STATIC_DEPLOY}
-                  onAirFilter={(next) =>
-                    setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
-                  }
-                  onRainFilter={(next) =>
-                    setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
-                  }
-                />
-            </div>
+          <DashboardBody className="p-2 sm:p-2.5">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
             <KpiCard
               compact
               label="Municípios"
@@ -1393,7 +1453,7 @@ export function AlertsWorkbench() {
           "grid min-h-0 flex-1",
           isMobile || mapFocus
             ? "grid-cols-1"
-            : "gap-4 sm:gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+            : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
           {mapFocus || isMobile ? null : listNode}
 

@@ -26,7 +26,7 @@ O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa oc
 
 ## Abertura do plantão
 
-O Painel de Alertas nasce limpo nas abas de chuva, alagamento, movimento e incêndio (em **baixo** / **boa**, sem mancha de polígono). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente.
+O Painel de Alertas nasce limpo nas abas de chuva, alagamento, movimento e incêndio (em **baixo** / **boa**, sem mancha de polígono). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente. Depois da abertura, o grau que o operador pintar **permanece** até ele classificar de novo ou usar **Restaurar monitoramento** — o prazo do alerta (2–6 h) não devolve o município ao baixo, e o poll da sessão não apaga a classificação.
 
 Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento, movimento e incêndio ficam no nível baixo do produto. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
 

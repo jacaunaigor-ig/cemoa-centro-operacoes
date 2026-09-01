@@ -12,10 +12,6 @@ export const OPS_HYDRO = "cemoa_hydro_overrides_v1";
 
 const EPOCH_KEY = "cemoa_ops_board_epoch";
 
-function remoteWipedKey() {
-  return `cemoa_ops_board_remote_${OPS_BOARD_EPOCH}`;
-}
-
 /** Clears leftover operator paints and polygon stains from this browser. */
 export function ensureOpsBoardReset(): boolean {
   if (typeof window === "undefined") return false;
@@ -36,34 +32,11 @@ export function ensureOpsBoardReset(): boolean {
 }
 
 /**
- * Logged-in operator: wipe server classifications and stains once per epoch.
- * Does not run on anonymous GET — a cold start must not erase the day's work.
+ * Abertura one-shot. Do not call from poll or ordinary page load — a browser
+ * without the epoch flag used to DELETE every classification (Moderado/Alto
+ * snapped back to Baixo). Operators now drop paints only via
+ * "Restaurar monitoramento".
  */
 export async function maybeWipeRemoteOpsBoard(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  try {
-    if (localStorage.getItem(remoteWipedKey()) === "1") return false;
-  } catch {
-    /* quota / private mode */
-  }
-
-  const [overrides, stains, hydro] = await Promise.all([
-    fetch("/api/alerts/overrides", { method: "DELETE", credentials: "same-origin" }),
-    fetch("/api/alerts/stains", { method: "DELETE", credentials: "same-origin" }),
-    fetch("/api/hydrology/overrides", { method: "DELETE", credentials: "same-origin" }),
-  ]);
-
-  if (overrides.status === 401 && stains.status === 401 && hydro.status === 401) {
-    return false;
-  }
-
-  const ok = overrides.ok || stains.ok || hydro.ok;
-  if (ok) {
-    try {
-      localStorage.setItem(remoteWipedKey(), "1");
-    } catch {
-      /* ignore */
-    }
-  }
-  return ok;
+  return false;
 }

@@ -92,8 +92,11 @@ export function buildAlertsPayload(
     const admin = getOverrideEntry(m.id, tipo);
     const risco = (admin?.level ?? idle) as AlertLevel;
     const previous = (admin?.previousLevel ?? idle) as AlertLevel;
-    const issuedAt = admin && isAlertActive(tipo, risco) ? admin.issuedAt : null;
-    const expiresAt = issuedAt ? alertExpiresAt(issuedAt, risco, admin?.ttlMs) : null;
+    const issuedAt = admin ? admin.issuedAt : null;
+    const expiresAt =
+      admin && isAlertActive(tipo, risco)
+        ? alertExpiresAt(issuedAt, risco, admin.ttlMs)
+        : null;
     if (admin && isAlertActive(tipo, risco) && issuedAt) {
       const nestePlantao = issuedAt >= meteoShiftAt(now).startAt;
       const jaTinhaAlerta = isAlertActive(tipo, previous);
@@ -154,6 +157,36 @@ export function buildAlertsPayload(
     municipios,
     stains: listStains(tipo, now),
   };
+}
+
+/** Keep operator grau when a poll comes back idle or older. TTL expiry does not revert to baixo. */
+export function mergeAlertsPreserveOperator(
+  prev: AlertsPayload | null | undefined,
+  next: AlertsPayload,
+): AlertsPayload {
+  if (!prev || prev.tipo !== next.tipo) return next;
+  const prevById = new Map(prev.municipios.map((m) => [m.id, m]));
+  let changed = false;
+  const municipios = next.municipios.map((m) => {
+    const older = prevById.get(m.id);
+    if (!older || older.fonte !== "admin" || !older.classifiedAt) return m;
+    const incomingAt = m.fonte === "admin" ? (m.classifiedAt ?? 0) : 0;
+    if (incomingAt >= older.classifiedAt) return m;
+    changed = true;
+    return {
+      ...m,
+      risco: older.risco,
+      fonte: older.fonte,
+      issuedAt: older.issuedAt,
+      expiresAt: older.expiresAt,
+      classifiedBy: older.classifiedBy,
+      classifiedAt: older.classifiedAt,
+    };
+  });
+  if (!changed) return next;
+  const byId = new Map(municipios.map((m) => [m.id, m]));
+  const alerts = next.alerts.filter((a) => byId.get(a.municipioId)?.risco === a.risco);
+  return { ...next, municipios, alerts };
 }
 
 export function buildHydrologyPayload(

@@ -79,7 +79,7 @@ import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
-import { ensureOpsBoardReset, maybeWipeRemoteOpsBoard } from "@/lib/ops-board";
+import { ensureOpsBoardReset } from "@/lib/ops-board";
 
 const POLL_MS = 25_000;
 const HYDRO_STORAGE = "cemoa_hydro_overrides_v1";
@@ -177,8 +177,10 @@ export function HydrologyWorkbench() {
     async function load() {
       if (cancelled) return;
       try {
-        ensureOpsBoardReset();
-        if (!hydrated.current) hydrated.current = true;
+        if (!hydrated.current) {
+          ensureOpsBoardReset();
+          hydrated.current = true;
+        }
         if (STATIC_DEPLOY) {
           try {
             const raw = localStorage.getItem(HYDRO_STORAGE);
@@ -192,7 +194,6 @@ export function HydrologyWorkbench() {
           setError(null);
           return;
         }
-        if (session) await maybeWipeRemoteOpsBoard();
         if (session && !localPushed.current) {
           localPushed.current = true;
           try {

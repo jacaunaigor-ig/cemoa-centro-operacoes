@@ -120,7 +120,7 @@ export function PlantaoQueue({
           Nada na fila deste produto. Sem vencido, renovação próxima ou limiar sugerido.
         </p>
       ) : (
-        <ol className={cn("mt-1.5 space-y-0.5 overflow-auto", compact ? "max-h-40" : "max-h-56")}>
+        <ol className={cn("mt-1.5 space-y-0.5 overflow-auto", compact ? "max-h-28" : "max-h-56")}>
           {shown.map((item) => (
             <QueueRow key={`${item.action}-${item.nome}`} item={item} onSelect={onSelect} />
           ))}
