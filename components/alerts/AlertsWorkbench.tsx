@@ -1269,7 +1269,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino (MP2,5) em µg/m³, média horária CF=1 dos sensores externos. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador classifica o município; os sensores alimentam o IVE e apoiam o plantão.",
+              text: "Concentração de material particulado fino (MP2,5) em µg/m³, média de 24 h (pm2.5_24hour) dos sensores externos. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador classifica o município; os sensores alimentam o IVE e apoiam o plantão.",
             }
           : undefined,
     });

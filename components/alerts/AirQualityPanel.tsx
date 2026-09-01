@@ -40,15 +40,9 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-            60 min · média
-          </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Hour ?? rec.pm25)}</strong>
-        </div>
-        <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
-          <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
             24 h
           </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Day)}</strong>
+          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Day ?? rec.pm25)}</strong>
         </div>
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
@@ -56,10 +50,16 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
           </small>
           <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Cf1)}</strong>
         </div>
+        <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
+          <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
+            ATM
+          </small>
+          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Atm)}</strong>
+        </div>
       </div>
       <div className="mt-1.5 rounded-md border border-border bg-panel/60 px-2 py-1.5 text-center">
         <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-          Faixa (IVE usa 60 min)
+          Faixa (IVE usa pm2.5_24hour)
         </small>
         <strong className="text-sm">
           {level ? AIR_LABELS[level] : "—"}
@@ -84,7 +84,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        A média municipal do MP2,5 (hora, sensores externos, CF=1 — não soma e não usa pm2.5_atm) apoia o plantão nas faixas Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. Não pinta o município — só o operador classifica. Horários em Manaus (UTC-4). Leitura de baixo custo, não substitui estação regulatória.
+        A média municipal do MP2,5 (24 h, sensores externos, campo pm2.5_24hour — não soma) apoia o plantão nas faixas Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. CF=1 e ATM só aparecem se a API enviar, para conferir se o 24 h está alinhado. Não pinta o município — só o operador classifica. Horários em Manaus (UTC-4). Leitura de baixo custo, não substitui estação regulatória.
       </p>
 
       <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs">

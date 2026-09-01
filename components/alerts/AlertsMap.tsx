@@ -494,7 +494,7 @@ export const AlertsMap = forwardRef<
               const airTip =
                 stateRef.current.pointKind === "air"
                   ? m?.hasAirSensor
-                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (60 min)`
+                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (24 h)`
                     : " · s/ sensor PurpleAir"
                   : m?.hasRainStation
                     ? ` · 1/6/24 h ${formatWindowsCompact({
@@ -579,7 +579,7 @@ export const AlertsMap = forwardRef<
         map,
         territory,
         stateRef.current.overlays,
-        stateRef.current.pointKind === "air" ? "PurpleAir 60 min CF=1" : "CEMADEN",
+        stateRef.current.pointKind === "air" ? "PurpleAir 24 h" : "CEMADEN",
       );
       if (stateRef.current.overlays.pluvio) {
         if (stateRef.current.pointKind === "air") {
@@ -726,7 +726,7 @@ export const AlertsMap = forwardRef<
       map,
       territoryRef.current,
       overlays,
-        pointKind === "air" ? "PurpleAir 60 min CF=1" : "CEMADEN",
+        pointKind === "air" ? "PurpleAir 24 h" : "CEMADEN",
     );
   }, [overlays, pointKind]);
 

@@ -245,12 +245,14 @@ export type AirQualitySensor = {
   name: string;
   lat: number;
   lon: number;
-  /** Média horária (pm2.5_60minute / CF=1) usada no IVE e na sugestão. */
+  /** Campo chave: média de 24 h (pm2.5_24hour). */
   pm25: number;
   pm25Hour: number | null;
   pm25Day: number | null;
-  /** Referência bruta CF=1 (pm2.5_cf_1 / pm2.5hour|d0). */
+  /** Referência CF=1, se a API enviar. */
   pm25Cf1: number | null;
+  /** Referência ATM, se a API enviar — comparar se o 24 h parecer alto. */
+  pm25Atm: number | null;
   temperatureC: number | null;
   lastSeen: number;
   municipioId: string | null;
@@ -265,11 +267,12 @@ export type AirQualityMunicipio = {
   id: string;
   nome: string;
   bacia: string;
-  /** Média aritmética municipal da hora (sensores externos válidos). */
+  /** Média aritmética municipal de pm2.5_24hour (sensores externos válidos). */
   pm25: number | null;
   pm25Hour: number | null;
   pm25Day: number | null;
   pm25Cf1: number | null;
+  pm25Atm: number | null;
   level: AirLevel | null;
   sensors: AirQualitySensor[];
   observedAt: number | null;

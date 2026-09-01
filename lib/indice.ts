@@ -173,7 +173,7 @@ export type IndiceLive = {
   alagamento: AlertLevel;
   movimento: AlertLevel;
   incendio: AlertLevel;
-  /** Média municipal de MP2,5 60 min (PurpleAir CF=1). Alimenta o IVE de incêndio. */
+  /** Média municipal de MP2,5 24 h (PurpleAir pm2.5_24hour). Alimenta o IVE de incêndio. */
   incendioPm25?: number | null;
   cheia: HydroStatus;
   estiagem: HydroStatus;
@@ -416,7 +416,7 @@ function liveNivel(id: IveId, live: IndiceLive): { level: string; pontos: number
     return {
       level,
       pontos: pontosDoNivel(level),
-      detalhe: `MP2,5 ${live.incendioPm25.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} µg/m³ · 60 min · PurpleAir CF=1`,
+      detalhe: `MP2,5 ${live.incendioPm25.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} µg/m³ · 24 h · PurpleAir`,
     };
   }
   return {
