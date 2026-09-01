@@ -92,7 +92,6 @@ import {
 import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
 import {
   airSensorsForMap,
-  applyAirClassification,
   matchesAirFilter,
   parseAirFilter,
 } from "@/lib/air-quality-display";
@@ -225,8 +224,8 @@ function localHydro(): HydrologyPayload {
   return { ...buildHydrologyPayload(), cache: "MISS" };
 }
 
-function localIndice(air?: AirQualityPayload | null): IndicePayload & { cache: "MISS" } {
-  return { ...buildIndicePayload(Date.now(), { air: air ?? null }), cache: "MISS" };
+function localIndice(): IndicePayload & { cache: "MISS" } {
+  return { ...buildIndicePayload(Date.now()), cache: "MISS" };
 }
 
 function shortLevelLabel(level: string) {
@@ -774,11 +773,7 @@ export function AlertsWorkbench() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast, showIndice]);
 
-  const catalog = useMemo(() => {
-    const rows = data?.municipios ?? [];
-    if (tipo !== "INCENDIO") return rows;
-    return applyAirClassification(rows, air);
-  }, [data, tipo, air]);
+  const catalog = useMemo(() => data?.municipios ?? [], [data]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -1136,7 +1131,7 @@ export function AlertsWorkbench() {
       setUndoStack([]);
       toast.success(
         tipo === "INCENDIO"
-          ? "Classificações do operador removidas. O mapa volta à qualidade do ar medida (MP2,5)."
+          ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
           : "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.",
       );
       return;
@@ -1168,7 +1163,7 @@ export function AlertsWorkbench() {
     setUndoStack([]);
     toast.success(
       tipo === "INCENDIO"
-        ? "Classificações do operador removidas. O mapa volta à qualidade do ar medida (MP2,5)."
+        ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
         : "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.",
     );
   }
@@ -1197,7 +1192,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino com diâmetro ≤ 2,5 micrômetros, expressa em µg/m³. Índice igual ao mapa PurpleAir: Raw PM2.5, conversão = Não, média de 1 dia (CF=1), sensores internos e externos. A mediana municipal classifica o município; o operador pode sobrepor.",
+              text: "Concentração de material particulado fino (MP2,5) em µg/m³, média de 24 h. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador classifica o município; os sensores são apoio de monitoramento.",
             }
           : undefined,
     });
@@ -1632,7 +1627,7 @@ export function AlertsWorkbench() {
                     "pointer-events-auto absolute z-[1200]",
                     isMobile
                       ? "inset-x-1.5 bottom-1.5 top-10"
-                      : "left-2 top-12 w-[min(calc(100%-1rem),22rem)] sm:top-2",
+                      : "left-2 top-12 w-[min(calc(100%-1rem),26rem)] sm:top-2",
                   )}
                   rows={indice?.municipios ?? []}
                   onClose={() => setShowIndice(false)}
@@ -1779,7 +1774,7 @@ export function AlertsWorkbench() {
                 paintArmed
                   ? `Clique nos municípios. Encerrar quando terminar.`
                   : tipo === "INCENDIO"
-                    ? "O Raw MP2,5 média de 1 dia (sem conversão, internos e externos) classifica o município. Clique, lote ou polígono sobrepõe o grau."
+                    ? "Só o operador classifica o grau. MP2,5 em 24 h sugere; clique, lote ou polígono pinta o município."
                     : "Só o operador classifica o grau. Polígono aplica o grau na mancha; chuva e cota só sugerem."
               }
               onDraw={() => {

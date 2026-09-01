@@ -141,7 +141,7 @@ export type HydroStation = {
   semLeitura: boolean;
   semEstacao: boolean;
   editadoPorOperador?: boolean;
-  cotaFonte?: "snapshot" | "ANA" | "operador";
+  cotaFonte?: "snapshot" | "ANA" | "fabric" | "operador";
   cotaLidaEm?: number | null;
   maximaHistorica?: HydroExtremo | null;
   minimaHistorica?: HydroExtremo | null;

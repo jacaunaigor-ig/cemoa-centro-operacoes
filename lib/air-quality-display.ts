@@ -59,7 +59,7 @@ export function airApoio(rec: AirQualityMunicipio | null | undefined): AirApoio 
   if (!rec || rec.pm25 == null || !rec.level || rec.level === "BOA") return null;
   return {
     level: rec.level,
-    motivo: `Raw MP2,5 ${formatUg(rec.pm25)} (média de 1 dia, CF=1, sem conversão) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}.`,
+    motivo: `MP2,5 ${formatUg(rec.pm25)} (média de 24 h) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}. Sugestão de monitoramento; só o operador classifica.`,
   };
 }
 

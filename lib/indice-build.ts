@@ -1,22 +1,20 @@
 import { ALERT_TYPES } from "@/lib/alert-types";
-import { applyAirClassification } from "@/lib/air-quality-display";
 import { statusAtivo } from "@/lib/hydrology";
 import { buildAlertsPayload, buildHydrologyPayload } from "@/lib/live-state";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { idleLive, scoreMunicipio, type IndiceLive, type IndicePayload } from "@/lib/indice";
-import type { AirQualityPayload, AlertLevel, HydroStation } from "@/lib/types";
+import { VULNERAB_ATUALIZACAO } from "@/lib/vulnerabilidade";
+import type { AlertLevel, HydroStation } from "@/lib/types";
 
-const SOURCE =
-  "Índice CEMOA · Censo 2022 · SGB áreas mapeadas · Atlas IDHM 2010 · boletim hidrológico · classificação do operador · PurpleAir/SELVA";
+const SOURCE = `Índice de Vulnerabilidade CEMOA · catálogo ${VULNERAB_ATUALIZACAO} · Censo 2022 · SGB · Atlas IDHM 2010 · boletim hidrológico · classificação do operador`;
 
 export function buildIndicePayload(
   now = Date.now(),
-  opts?: { air?: AirQualityPayload | null; stations?: HydroStation[] },
+  opts?: { stations?: HydroStation[] },
 ): Omit<IndicePayload, "cache"> {
   const byTipo = Object.fromEntries(
     ALERT_TYPES.map((tipo) => {
-      let rows = buildAlertsPayload(now, tipo).municipios;
-      if (tipo === "INCENDIO") rows = applyAirClassification(rows, opts?.air);
+      const rows = buildAlertsPayload(now, tipo).municipios;
       const map = new Map(rows.map((row) => [row.id, row.risco]));
       return [tipo, map] as const;
     }),

@@ -63,7 +63,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-              Classificação no mapa
+              Sugestão de monitoramento
             </span>
             <RiskBadge level={apoio.level} />
           </div>
@@ -72,9 +72,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        A mediana municipal do Raw MP2,5 (média de 1 dia, CF=1, sem conversão, internos e externos)
-        classifica o município na escala do mapa PurpleAir (Boa → Péssima).
-        Leitura de baixo custo — não substitui estação regulatória. O operador pode sobrepor o grau.
+        A mediana municipal do MP2,5 (média de 24 h) apoia o plantão nas faixas Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. Não pinta o município — só o operador classifica. Leitura de baixo custo, não substitui estação regulatória.
       </p>
 
       <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs">

@@ -1,0 +1,4217 @@
+{
+  "versao": "1.0",
+  "data_atualizacao": "2026-09-01",
+  "total_municipios": 62,
+  "indice": {
+    "estrutura": {
+      "peso_maximo_base": 50,
+      "peso_maximo_historico": 10,
+      "peso_maximo_monitoramento": 50,
+      "total_maximo": 110
+    },
+    "niveis_alerta": {
+      "baixo": { "min": 0, "max": 20, "cor": "#2ecc71" },
+      "moderado": { "min": 21, "max": 40, "cor": "#f1c40f" },
+      "alto": { "min": 41, "max": 60, "cor": "#e67e22" },
+      "severio": { "min": 61, "max": 80, "cor": "#e74c3c" },
+      "extremo": { "min": 81, "max": 100, "cor": "#8e44ad" }
+    }
+  },
+  "municipios": [
+    {
+      "id": "Alvaraes",
+      "nome": "Alvarães",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 34.2,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 38.2 },
+          "areas_mapeadas": { "pontos": 11.2, "setores": 3, "habitantes": 145 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.482 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 41.2,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 43.2, "nivel": "Alto" },
+          "estiagem": { "total": 42.2, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.2, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.2, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.2, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 15,
+        "inundacao": 12,
+        "estiagem": 18
+      }
+    },
+    {
+      "id": "Amatura",
+      "nome": "Amaturá",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 36.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.1 },
+          "areas_mapeadas": { "pontos": 12.8, "setores": 4, "habitantes": 210 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.465 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.48,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Erosão de Margem Fluvial" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 3,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 43.3,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 44.8, "nivel": "Alto" },
+          "estiagem": { "total": 43.3, "nivel": "Alto" },
+          "chuva_intensa": { "total": 43.3, "nivel": "Alto" },
+          "movimento_massa": { "total": 43.3, "nivel": "Alto" },
+          "qualidade_ar": { "total": 43.3, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 12,
+        "inundacao": 10,
+        "estiagem": 15
+      }
+    },
+    {
+      "id": "Anama",
+      "nome": "Anamã",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 33.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 37.8 },
+          "areas_mapeadas": { "pontos": 10.5, "setores": 2, "habitantes": 98 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.471 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 41.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 43.5, "nivel": "Alto" },
+          "estiagem": { "total": 41.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 16,
+        "inundacao": 11,
+        "estiagem": 20
+      }
+    },
+    {
+      "id": "Anori",
+      "nome": "Anori",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 32.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 36.5 },
+          "areas_mapeadas": { "pontos": 9.8, "setores": 2, "habitantes": 87 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.478 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 5
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 40.3,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 42.8, "nivel": "Alto" },
+          "estiagem": { "total": 41.3, "nivel": "Alto" },
+          "chuva_intensa": { "total": 40.3, "nivel": "Moderado" },
+          "movimento_massa": { "total": 40.3, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 40.3, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 18,
+        "inundacao": 13,
+        "estiagem": 17
+      }
+    },
+    {
+      "id": "Apui",
+      "nome": "Apuí",
+      "calha": "Madeira",
+      "base": {
+        "total": 32.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.2 },
+          "areas_mapeadas": { "pontos": 10.8, "setores": 3, "habitantes": 156 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.502 }
+        }
+      },
+      "historico": {
+        "total": 6.0,
+        "frequencia": 0.38,
+        "diversidade": 2,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2018, "tipo": "Inundações" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 3,
+          "Estiagem": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 38.8,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.8, "nivel": "Moderado" },
+          "estiagem": { "total": 40.8, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 38.8, "nivel": "Moderado" },
+          "movimento_massa": { "total": 38.8, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 38.8, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 22,
+        "inundacao": 25,
+        "estiagem": 19
+      }
+    },
+    {
+      "id": "Atalaia_do_Norte",
+      "nome": "Atalaia do Norte",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 42.6,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 11, "percentual": 44.6 },
+          "areas_mapeadas": { "pontos": 16.6, "setores": 5, "habitantes": 271 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.450 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.66,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 6
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Alto", "pontos": 6 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 56.6,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 54.6, "nivel": "Alto" },
+          "estiagem": { "total": 58.6, "nivel": "Alto" },
+          "chuva_intensa": { "total": 50.6, "nivel": "Alto" },
+          "movimento_massa": { "total": 50.6, "nivel": "Alto" },
+          "qualidade_ar": { "total": 50.6, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 1,
+        "inundacao": 2,
+        "estiagem": 1
+      }
+    },
+    {
+      "id": "Autazes",
+      "nome": "Autazes",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 30.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 33.8 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 76 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.512 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.0, "nivel": "Moderado" },
+          "estiagem": { "total": 38.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 25,
+        "inundacao": 22,
+        "estiagem": 24
+      }
+    },
+    {
+      "id": "Barcelos",
+      "nome": "Barcelos",
+      "calha": "Rio Negro",
+      "base": {
+        "total": 32.6,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.1 },
+          "areas_mapeadas": { "pontos": 12.6, "setores": 4, "habitantes": 198 },
+          "capacidade_idhm": { "pontos": 10, "idhm": 0.548 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.48,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 4,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Alto", "pontos": 6 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 45.1,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 47.1, "nivel": "Alto" },
+          "estiagem": { "total": 39.1, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 39.1, "nivel": "Moderado" },
+          "movimento_massa": { "total": 39.1, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.1, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 9,
+        "inundacao": 8,
+        "estiagem": 23
+      }
+    },
+    {
+      "id": "Barreirinha",
+      "nome": "Barreirinha",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 31.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 39.5 },
+          "areas_mapeadas": { "pontos": 7.8, "setores": 2, "habitantes": 65 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.485 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.62,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Alagamentos" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 3,
+          "Alagamentos": 2,
+          "Erosão de Margem Fluvial": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 39.8,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 41.8, "nivel": "Alto" },
+          "estiagem": { "total": 40.8, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 41.8, "nivel": "Alto" },
+          "movimento_massa": { "total": 39.8, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.8, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 20,
+        "inundacao": 18,
+        "estiagem": 22
+      }
+    },
+    {
+      "id": "Benjamin_Constant",
+      "nome": "Benjamin Constant",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 37.2,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.8 },
+          "areas_mapeadas": { "pontos": 12.2, "setores": 4, "habitantes": 185 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.458 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Alto", "pontos": 6 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 50.7,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 50.7, "nivel": "Alto" },
+          "estiagem": { "total": 52.7, "nivel": "Alto" },
+          "chuva_intensa": { "total": 44.7, "nivel": "Alto" },
+          "movimento_massa": { "total": 44.7, "nivel": "Alto" },
+          "qualidade_ar": { "total": 44.7, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 4,
+        "inundacao": 5,
+        "estiagem": 4
+      }
+    },
+    {
+      "id": "Beruri",
+      "nome": "Beruri",
+      "calha": "Purus",
+      "base": {
+        "total": 33.2,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 36.8 },
+          "areas_mapeadas": { "pontos": 10.2, "setores": 3, "habitantes": 112 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.491 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2023, "tipo": "Erosão Continental - Boçorocas" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 4,
+          "Erosão Continental - Boçorocas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 40.2,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 42.2, "nivel": "Alto" },
+          "estiagem": { "total": 41.2, "nivel": "Alto" },
+          "chuva_intensa": { "total": 40.2, "nivel": "Moderado" },
+          "movimento_massa": { "total": 40.2, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 40.2, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 19,
+        "inundacao": 16,
+        "estiagem": 21
+      }
+    },
+    {
+      "id": "Boa_Vista_do_Ramos",
+      "nome": "Boa Vista do Ramos",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 30.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.5 },
+          "areas_mapeadas": { "pontos": 8.8, "setores": 2, "habitantes": 82 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.508 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.8,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.8, "nivel": "Moderado" },
+          "estiagem": { "total": 38.8, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.8, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.8, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.8, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 24,
+        "inundacao": 20,
+        "estiagem": 25
+      }
+    },
+    {
+      "id": "Boca_do_Acre",
+      "nome": "Boca do Acre",
+      "calha": "Purus",
+      "base": {
+        "total": 32.6,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 37.2 },
+          "areas_mapeadas": { "pontos": 9.6, "setores": 3, "habitantes": 98 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.496 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Alto", "pontos": 6 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 47.1,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 49.1, "nivel": "Alto" },
+          "estiagem": { "total": 49.1, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.1, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.1, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.1, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 10,
+        "inundacao": 7,
+        "estiagem": 10
+      }
+    },
+    {
+      "id": "Borba",
+      "nome": "Borba",
+      "calha": "Madeira",
+      "base": {
+        "total": 31.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 36.2 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 78 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.505 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Alagamentos" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 4,
+          "Alagamentos": 1,
+          "Erosão de Margem Fluvial": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 39.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 40.0, "nivel": "Moderado" },
+          "estiagem": { "total": 40.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 41.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 39.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 21,
+        "inundacao": 24,
+        "estiagem": 16
+      }
+    },
+    {
+      "id": "Caapiranga",
+      "nome": "Caapiranga",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 32.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 36.8 },
+          "areas_mapeadas": { "pontos": 9.0, "setores": 2, "habitantes": 85 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.492 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Enxurradas" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 4,
+          "Enxurradas": 1,
+          "Tempestade Local/Convectiva - Vendaval": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 40.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 42.5, "nivel": "Alto" },
+          "estiagem": { "total": 40.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 41.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 40.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 40.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 17,
+        "inundacao": 14,
+        "estiagem": 26
+      }
+    },
+    {
+      "id": "Canutama",
+      "nome": "Canutama",
+      "calha": "Purus",
+      "base": {
+        "total": 34.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.5 },
+          "areas_mapeadas": { "pontos": 10.5, "setores": 3, "habitantes": 145 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.475 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.62,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 5,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 42.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 44.5, "nivel": "Alto" },
+          "estiagem": { "total": 43.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 42.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 42.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 42.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 13,
+        "inundacao": 9,
+        "estiagem": 12
+      }
+    },
+    {
+      "id": "Carauari",
+      "nome": "Carauari",
+      "calha": "Juruá",
+      "base": {
+        "total": 33.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 39.8 },
+          "areas_mapeadas": { "pontos": 9.8, "setores": 3, "habitantes": 102 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.481 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Enxurradas" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2025, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 4,
+          "Enxurradas": 1,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 41.8,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 43.8, "nivel": "Alto" },
+          "estiagem": { "total": 42.8, "nivel": "Alto" },
+          "chuva_intensa": { "total": 42.8, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.8, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.8, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 14,
+        "inundacao": 15,
+        "estiagem": 14
+      }
+    },
+    {
+      "id": "Careiro",
+      "nome": "Careiro",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 30.2,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 33.5 },
+          "areas_mapeadas": { "pontos": 8.2, "setores": 2, "habitantes": 72 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.518 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Alagamentos" },
+          { "ano": 2014, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Incêndio Florestal" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2026, "tipo": "Alagamentos" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 5,
+          "Alagamentos": 3,
+          "Tempestade Local/Convectiva - Vendaval": 1,
+          "Incêndio Florestal": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 38.7,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 40.7, "nivel": "Moderado" },
+          "estiagem": { "total": 39.7, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 40.7, "nivel": "Moderado" },
+          "movimento_massa": { "total": 38.7, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.7, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 23,
+        "inundacao": 19,
+        "estiagem": 27
+      }
+    },
+    {
+      "id": "Careiro_da_Varzea",
+      "nome": "Careiro da Várzea",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 31.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 36.5 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 80 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.502 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.62,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 5,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 39.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 41.5, "nivel": "Alto" },
+          "estiagem": { "total": 40.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 39.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 39.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 22,
+        "inundacao": 17,
+        "estiagem": 28
+      }
+    },
+    {
+      "id": "Coari",
+      "nome": "Coari",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 28.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 32.0 },
+          "areas_mapeadas": { "pontos": 7.5, "setores": 2, "habitantes": 68 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.586 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 4,
+          "Tempestade Local/Convectiva - Vendaval": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 38.0, "nivel": "Moderado" },
+          "estiagem": { "total": 37.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 36.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 27,
+        "inundacao": 26,
+        "estiagem": 29
+      }
+    },
+    {
+      "id": "Codajas",
+      "nome": "Codajás",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 31.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 35.2 },
+          "areas_mapeadas": { "pontos": 9.0, "setores": 2, "habitantes": 90 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.498 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 4,
+          "Estiagem": 4,
+          "Alagamentos": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 38.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.0, "nivel": "Moderado" },
+          "estiagem": { "total": 39.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 38.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 38.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 38.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 26,
+        "inundacao": 27,
+        "estiagem": 30
+      }
+    },
+    {
+      "id": "Eirunepe",
+      "nome": "Eirunepé",
+      "calha": "Juruá",
+      "base": {
+        "total": 45.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 12, "percentual": 46.8 },
+          "areas_mapeadas": { "pontos": 18.0, "setores": 6, "habitantes": 320 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.442 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2011, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 10,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 53.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 55.5, "nivel": "Alto" },
+          "estiagem": { "total": 53.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 53.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 53.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 53.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 3,
+        "inundacao": 3,
+        "estiagem": 6
+      }
+    },
+    {
+      "id": "Envira",
+      "nome": "Envira",
+      "calha": "Juruá",
+      "base": {
+        "total": 36.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.2 },
+          "areas_mapeadas": { "pontos": 11.5, "setores": 4, "habitantes": 180 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.455 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Enxurradas" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Inundações" },
+          { "ano": 2025, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 4,
+          "Enxurradas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 44.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 46.0, "nivel": "Alto" },
+          "estiagem": { "total": 45.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 45.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 44.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 44.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 11,
+        "inundacao": 8,
+        "estiagem": 9
+      }
+    },
+    {
+      "id": "Fonte_Boa",
+      "nome": "Fonte Boa",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 34.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.2 },
+          "areas_mapeadas": { "pontos": 10.0, "setores": 3, "habitantes": 108 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.475 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2025, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2025, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 5,
+          "Erosão de Margem Fluvial": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 42.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 44.5, "nivel": "Alto" },
+          "estiagem": { "total": 43.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 43.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 42.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 42.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 12,
+        "inundacao": 10,
+        "estiagem": 13
+      }
+    },
+    {
+      "id": "Guajara",
+      "nome": "Guajará",
+      "calha": "Juruá",
+      "base": {
+        "total": 35.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 41.0 },
+          "areas_mapeadas": { "pontos": 11.0, "setores": 3, "habitantes": 150 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.468 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Estiagem" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 5,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 43.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 45.0, "nivel": "Alto" },
+          "estiagem": { "total": 44.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 43.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 43.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 43.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 10,
+        "inundacao": 9,
+        "estiagem": 11
+      }
+    },
+    {
+      "id": "Humaita",
+      "nome": "Humaitá",
+      "calha": "Madeira",
+      "base": {
+        "total": 30.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.2 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 78 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.512 }
+        }
+      },
+      "historico": {
+        "total": 5.5,
+        "frequencia": 0.38,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 3,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 36.5, "nivel": "Moderado" },
+          "estiagem": { "total": 38.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 36.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 28,
+        "inundacao": 30,
+        "estiagem": 23
+      }
+    },
+    {
+      "id": "Ipixuna",
+      "nome": "Ipixuna",
+      "calha": "Juruá",
+      "base": {
+        "total": 36.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.5 },
+          "areas_mapeadas": { "pontos": 11.8, "setores": 4, "habitantes": 195 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.460 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Estiagem" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 6
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 44.8,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 46.8, "nivel": "Alto" },
+          "estiagem": { "total": 45.8, "nivel": "Alto" },
+          "chuva_intensa": { "total": 44.8, "nivel": "Alto" },
+          "movimento_massa": { "total": 44.8, "nivel": "Alto" },
+          "qualidade_ar": { "total": 44.8, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 9,
+        "inundacao": 7,
+        "estiagem": 8
+      }
+    },
+    {
+      "id": "Iranduba",
+      "nome": "Iranduba",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 29.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 32.8 },
+          "areas_mapeadas": { "pontos": 8.8, "setores": 2, "habitantes": 85 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.528 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 3,
+          "Erosão de Margem Fluvial": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.8,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 38.8, "nivel": "Moderado" },
+          "estiagem": { "total": 37.8, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.8, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.8, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.8, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 27,
+        "inundacao": 25,
+        "estiagem": 29
+      }
+    },
+    {
+      "id": "Itacoatiara",
+      "nome": "Itacoatiara",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 29.2,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 31.5 },
+          "areas_mapeadas": { "pontos": 8.2, "setores": 2, "habitantes": 72 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.535 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Enxurradas" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 3,
+          "Enxurradas": 1,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.2,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 38.2, "nivel": "Moderado" },
+          "estiagem": { "total": 37.2, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.2, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.2, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.2, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 29,
+        "inundacao": 28,
+        "estiagem": 31
+      }
+    },
+    {
+      "id": "Itamarati",
+      "nome": "Itamarati",
+      "calha": "Juruá",
+      "base": {
+        "total": 37.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 43.0 },
+          "areas_mapeadas": { "pontos": 12.5, "setores": 4, "habitantes": 210 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.445 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Alagamentos" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Estiagem" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 5,
+          "Alagamentos": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 46.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 48.0, "nivel": "Alto" },
+          "estiagem": { "total": 47.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 46.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 46.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 46.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 8,
+        "inundacao": 6,
+        "estiagem": 7
+      }
+    },
+    {
+      "id": "Itapiranga",
+      "nome": "Itapiranga",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 28.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 31.0 },
+          "areas_mapeadas": { "pontos": 7.0, "setores": 2, "habitantes": 62 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.542 }
+        }
+      },
+      "historico": {
+        "total": 5.0,
+        "frequencia": 0.33,
+        "diversidade": 2,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 3,
+          "Estiagem": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 33.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 34.0, "nivel": "Moderado" },
+          "estiagem": { "total": 34.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 33.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 33.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 33.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 32,
+        "inundacao": 32,
+        "estiagem": 32
+      }
+    },
+    {
+      "id": "Japura",
+      "nome": "Japurá",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 34.3,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.5 },
+          "areas_mapeadas": { "pontos": 10.3, "setores": 3, "habitantes": 115 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.478 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Alto", "pontos": 6 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 47.8,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 49.8, "nivel": "Alto" },
+          "estiagem": { "total": 41.8, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.8, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.8, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.8, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 7,
+        "inundacao": 4,
+        "estiagem": 24
+      }
+    },
+    {
+      "id": "Jurua",
+      "nome": "Juruá",
+      "calha": "Juruá",
+      "base": {
+        "total": 34.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.8 },
+          "areas_mapeadas": { "pontos": 10.8, "setores": 3, "habitantes": 135 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.472 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 5,
+          "Tempestade Local/Convectiva - Vendaval": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 42.8,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 44.8, "nivel": "Alto" },
+          "estiagem": { "total": 43.8, "nivel": "Alto" },
+          "chuva_intensa": { "total": 42.8, "nivel": "Alto" },
+          "movimento_massa": { "total": 42.8, "nivel": "Alto" },
+          "qualidade_ar": { "total": 42.8, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 13,
+        "inundacao": 11,
+        "estiagem": 14
+      }
+    },
+    {
+      "id": "Jutai",
+      "nome": "Jutaí",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 35.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 41.8 },
+          "areas_mapeadas": { "pontos": 10.5, "setores": 3, "habitantes": 130 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.462 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Estiagem" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2023, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 6,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 43.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 45.5, "nivel": "Alto" },
+          "estiagem": { "total": 44.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 43.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 43.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 43.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 11,
+        "inundacao": 9,
+        "estiagem": 10
+      }
+    },
+    {
+      "id": "Labrea",
+      "nome": "Lábrea",
+      "calha": "Purus",
+      "base": {
+        "total": 32.9,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 38.5 },
+          "areas_mapeadas": { "pontos": 9.9, "setores": 3, "habitantes": 105 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.498 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 4,
+          "Alagamentos": 1
+        }
+      },
+      "monitoramento": {
+        "total": 9,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Severo", "pontos": 9 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 49.4,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 40.4, "nivel": "Moderado" },
+          "estiagem": { "total": 54.4, "nivel": "Alto" },
+          "chuva_intensa": { "total": 40.4, "nivel": "Moderado" },
+          "movimento_massa": { "total": 40.4, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 40.4, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 5,
+        "inundacao": 30,
+        "estiagem": 2
+      }
+    },
+    {
+      "id": "Manacapuru",
+      "nome": "Manacapuru",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 28.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 32.2 },
+          "areas_mapeadas": { "pontos": 7.8, "setores": 2, "habitantes": 70 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.538 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2006, "tipo": "Inundações" },
+          { "ano": 2007, "tipo": "Enxurradas" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2009, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Alagamentos" },
+          { "ano": 2014, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2019, "tipo": "Alagamentos" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2024, "tipo": "Subsidências e colapsos" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 5,
+          "Alagamentos": 3,
+          "Erosão de Margem Fluvial": 4,
+          "Enxurradas": 1,
+          "Tempestade Local/Convectiva - Vendaval": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1,
+          "Subsidências e colapsos": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.3,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.3, "nivel": "Moderado" },
+          "estiagem": { "total": 38.3, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 38.3, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.3, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.3, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 25,
+        "inundacao": 24,
+        "estiagem": 28
+      }
+    },
+    {
+      "id": "Manaquiri",
+      "nome": "Manaquiri",
+      "calha": "Baixo Solimões",
+      "base": {
+        "total": 30.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.5 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 78 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.515 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2020, "tipo": "Estiagem" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Incêndio Florestal" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 6,
+          "Alagamentos": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1,
+          "Incêndio Florestal": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 38.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 40.5, "nivel": "Moderado" },
+          "estiagem": { "total": 39.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 39.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 38.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 23,
+        "inundacao": 21,
+        "estiagem": 25
+      }
+    },
+    {
+      "id": "Manaus",
+      "nome": "Manaus",
+      "calha": "Rio Negro",
+      "base": {
+        "total": 25.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 4, "percentual": 28.5 },
+          "areas_mapeadas": { "pontos": 6.8, "setores": 15, "habitantes": 55000 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.737 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.43,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Incêndios em aglomerados residenciais" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Incêndios em aglomerados residenciais" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 3,
+          "Incêndios em aglomerados residenciais": 2,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 2
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Alto", "pontos": 6 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 38.3,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 40.3, "nivel": "Moderado" },
+          "estiagem": { "total": 32.3, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 34.3, "nivel": "Moderado" },
+          "movimento_massa": { "total": 32.3, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 32.3, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 24,
+        "inundacao": 23,
+        "estiagem": 33
+      }
+    },
+    {
+      "id": "Manicore",
+      "nome": "Manicoré",
+      "calha": "Madeira",
+      "base": {
+        "total": 31.2,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 35.0 },
+          "areas_mapeadas": { "pontos": 9.2, "setores": 3, "habitantes": 95 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.508 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2018, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 5,
+          "Erosão de Margem Fluvial": 2,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 38.2,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.2, "nivel": "Moderado" },
+          "estiagem": { "total": 39.2, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 39.2, "nivel": "Moderado" },
+          "movimento_massa": { "total": 38.2, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 38.2, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 24,
+        "inundacao": 27,
+        "estiagem": 22
+      }
+    },
+    {
+      "id": "Maraa",
+      "nome": "Maraã",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 37.3,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.5 },
+          "areas_mapeadas": { "pontos": 12.3, "setores": 4, "habitantes": 190 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.460 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 5
+        }
+      },
+      "monitoramento": {
+        "total": 9,
+        "eventos": {
+          "inundacao": { "nivel": "Severo", "pontos": 9 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 54.3,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 56.3, "nivel": "Alto" },
+          "estiagem": { "total": 45.3, "nivel": "Alto" },
+          "chuva_intensa": { "total": 45.3, "nivel": "Alto" },
+          "movimento_massa": { "total": 45.3, "nivel": "Alto" },
+          "qualidade_ar": { "total": 45.3, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 2,
+        "inundacao": 1,
+        "estiagem": 15
+      }
+    },
+    {
+      "id": "Maues",
+      "nome": "Maués",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 30.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.0 },
+          "areas_mapeadas": { "pontos": 8.0, "setores": 2, "habitantes": 72 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.520 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.48,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 38.0, "nivel": "Moderado" },
+          "estiagem": { "total": 37.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 36.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 28,
+        "inundacao": 29,
+        "estiagem": 27
+      }
+    },
+    {
+      "id": "Nhamunda",
+      "nome": "Nhamundá",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 31.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 37.5 },
+          "areas_mapeadas": { "pontos": 8.8, "setores": 3, "habitantes": 85 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.488 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 39.3,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 41.3, "nivel": "Alto" },
+          "estiagem": { "total": 40.3, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 39.3, "nivel": "Moderado" },
+          "movimento_massa": { "total": 39.3, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.3, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 21,
+        "inundacao": 18,
+        "estiagem": 23
+      }
+    },
+    {
+      "id": "Nova_Olinda_do_Norte",
+      "nome": "Nova Olinda do Norte",
+      "calha": "Madeira",
+      "base": {
+        "total": 29.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 33.0 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 80 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.525 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2011, "tipo": "Enxurradas" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 4,
+          "Enxurradas": 1,
+          "Erosão de Margem Fluvial": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 38.5, "nivel": "Moderado" },
+          "estiagem": { "total": 37.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 29,
+        "inundacao": 28,
+        "estiagem": 30
+      }
+    },
+    {
+      "id": "Novo_Airao",
+      "nome": "Novo Airão",
+      "calha": "Rio Negro",
+      "base": {
+        "total": 31.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 36.5 },
+          "areas_mapeadas": { "pontos": 8.0, "setores": 2, "habitantes": 72 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.495 }
+        }
+      },
+      "historico": {
+        "total": 5.5,
+        "frequencia": 0.38,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 3,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 36.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 37.5, "nivel": "Moderado" },
+          "estiagem": { "total": 37.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 36.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 36.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 36.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 30,
+        "inundacao": 31,
+        "estiagem": 26
+      }
+    },
+    {
+      "id": "Novo_Aripuana",
+      "nome": "Novo Aripuanã",
+      "calha": "Madeira",
+      "base": {
+        "total": 31.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 35.5 },
+          "areas_mapeadas": { "pontos": 9.5, "setores": 3, "habitantes": 98 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.505 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2017, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2018, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 5,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 39.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 41.0, "nivel": "Alto" },
+          "estiagem": { "total": 40.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 41.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 39.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 20,
+        "inundacao": 16,
+        "estiagem": 21
+      }
+    },
+    {
+      "id": "Parintins",
+      "nome": "Parintins",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 29.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 32.5 },
+          "areas_mapeadas": { "pontos": 8.0, "setores": 2, "habitantes": 75 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.530 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 6,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2010, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2018, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2020, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2020, "tipo": "Doenças infecciosas virais" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2022, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2022, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Liberação de produtos químicos" },
+          { "ano": 2024, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2026, "tipo": "Erosão de Margem Fluvial" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 7,
+          "Doenças infecciosas virais": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 3,
+          "Liberação de produtos químicos": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.5, "nivel": "Moderado" },
+          "estiagem": { "total": 38.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 39.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 26,
+        "inundacao": 23,
+        "estiagem": 31
+      }
+    },
+    {
+      "id": "Pauini",
+      "nome": "Pauini",
+      "calha": "Purus",
+      "base": {
+        "total": 34.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.5 },
+          "areas_mapeadas": { "pontos": 10.5, "setores": 3, "habitantes": 140 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.472 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.43,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 2,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 41.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 42.0, "nivel": "Alto" },
+          "estiagem": { "total": 42.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 16,
+        "inundacao": 19,
+        "estiagem": 16
+      }
+    },
+    {
+      "id": "Presidente_Figueiredo",
+      "nome": "Presidente Figueiredo",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 27.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 30.5 },
+          "areas_mapeadas": { "pontos": 6.5, "setores": 1, "habitantes": 45 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.548 }
+        }
+      },
+      "historico": {
+        "total": 4.0,
+        "frequencia": 0.24,
+        "diversidade": 2,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 1,
+          "Estiagem": 2
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 31.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 32.5, "nivel": "Moderado" },
+          "estiagem": { "total": 32.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 31.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 31.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 31.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 33,
+        "inundacao": 33,
+        "estiagem": 33
+      }
+    },
+    {
+      "id": "Rio_Preto_da_Eva",
+      "nome": "Rio Preto da Eva",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 28.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 32.0 },
+          "areas_mapeadas": { "pontos": 7.5, "setores": 2, "habitantes": 68 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.535 }
+        }
+      },
+      "historico": {
+        "total": 6.0,
+        "frequencia": 0.43,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2007, "tipo": "Inundações" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 4,
+          "Estiagem": 4,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 34.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 36.0, "nivel": "Moderado" },
+          "estiagem": { "total": 35.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 35.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 34.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 34.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 31,
+        "inundacao": 30,
+        "estiagem": 28
+      }
+    },
+    {
+      "id": "Santa_Isabel_do_Rio_Negro",
+      "nome": "Santa Isabel do Rio Negro",
+      "calha": "Rio Negro",
+      "base": {
+        "total": 35.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.0 },
+          "areas_mapeadas": { "pontos": 10.0, "setores": 3, "habitantes": 110 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.468 }
+        }
+      },
+      "historico": {
+        "total": 7.0,
+        "frequencia": 0.48,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2018, "tipo": "Estiagem" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 4,
+          "Estiagem": 5
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 42.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 43.0, "nivel": "Alto" },
+          "estiagem": { "total": 43.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 42.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 42.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 42.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 15,
+        "inundacao": 18,
+        "estiagem": 13
+      }
+    },
+    {
+      "id": "Santo_Antonio_do_Ica",
+      "nome": "Santo Antônio do Içá",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 37.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 42.8 },
+          "areas_mapeadas": { "pontos": 12.0, "setores": 4, "habitantes": 175 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.455 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2009, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 7,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 2
+        }
+      },
+      "monitoramento": {
+        "total": 3,
+        "eventos": {
+          "inundacao": { "nivel": "Moderado", "pontos": 3 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 47.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 48.5, "nivel": "Alto" },
+          "estiagem": { "total": 44.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 44.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 44.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 44.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 8,
+        "inundacao": 7,
+        "estiagem": 18
+      }
+    },
+    {
+      "id": "Sao_Gabriel_da_Cachoeira",
+      "nome": "São Gabriel da Cachoeira",
+      "calha": "Rio Negro",
+      "base": {
+        "total": 36.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 11, "percentual": 44.0 },
+          "areas_mapeadas": { "pontos": 10.5, "setores": 3, "habitantes": 125 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.462 }
+        }
+      },
+      "historico": {
+        "total": 5.5,
+        "frequencia": 0.38,
+        "diversidade": 2,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2007, "tipo": "Estiagem" },
+          { "ano": 2016, "tipo": "Estiagem" },
+          { "ano": 2018, "tipo": "Estiagem" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Estiagem": 6
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 42.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 42.0, "nivel": "Alto" },
+          "estiagem": { "total": 43.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 42.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 42.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 42.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 14,
+        "inundacao": 22,
+        "estiagem": 12
+      }
+    },
+    {
+      "id": "Sao_Paulo_de_Olivenca",
+      "nome": "São Paulo de Olivença",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 40.1,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 11, "percentual": 44.8 },
+          "areas_mapeadas": { "pontos": 14.1, "setores": 5, "habitantes": 245 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.452 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.52,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2016, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 5,
+          "Estiagem": 4,
+          "Erosão de Margem Fluvial": 3
+        }
+      },
+      "monitoramento": {
+        "total": 6,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Alto", "pontos": 6 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 53.6,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 53.6, "nivel": "Alto" },
+          "estiagem": { "total": 55.6, "nivel": "Alto" },
+          "chuva_intensa": { "total": 47.6, "nivel": "Alto" },
+          "movimento_massa": { "total": 47.6, "nivel": "Alto" },
+          "qualidade_ar": { "total": 47.6, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 3,
+        "inundacao": 4,
+        "estiagem": 3
+      }
+    },
+    {
+      "id": "Sao_Sebastiao_do_Uatuma",
+      "nome": "São Sebastião do Uatumã",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 30.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.0 },
+          "areas_mapeadas": { "pontos": 8.0, "setores": 2, "habitantes": 72 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.520 }
+        }
+      },
+      "historico": {
+        "total": 5.0,
+        "frequencia": 0.38,
+        "diversidade": 2,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 2,
+          "Estiagem": 3
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 35.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 36.0, "nivel": "Moderado" },
+          "estiagem": { "total": 36.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 35.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 35.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 35.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 30,
+        "inundacao": 31,
+        "estiagem": 26
+      }
+    },
+    {
+      "id": "Silves",
+      "nome": "Silves",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 30.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 34.5 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 78 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.515 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.48,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 4,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 38.0, "nivel": "Moderado" },
+          "estiagem": { "total": 38.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 28,
+        "inundacao": 29,
+        "estiagem": 27
+      }
+    },
+    {
+      "id": "Tabatinga",
+      "nome": "Tabatinga",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 31.8,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 37.5 },
+          "areas_mapeadas": { "pontos": 8.8, "setores": 3, "habitantes": 90 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.488 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 9,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Severo", "pontos": 9 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 48.3,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 45.3, "nivel": "Alto" },
+          "estiagem": { "total": 52.3, "nivel": "Alto" },
+          "chuva_intensa": { "total": 39.3, "nivel": "Moderado" },
+          "movimento_massa": { "total": 39.3, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 39.3, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 6,
+        "inundacao": 15,
+        "estiagem": 5
+      }
+    },
+    {
+      "id": "Tapaua",
+      "nome": "Tapauá",
+      "calha": "Purus",
+      "base": {
+        "total": 34.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 40.0 },
+          "areas_mapeadas": { "pontos": 10.0, "setores": 3, "habitantes": 108 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.475 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2026, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 3
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 41.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 43.5, "nivel": "Alto" },
+          "estiagem": { "total": 41.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 14,
+        "inundacao": 12,
+        "estiagem": 19
+      }
+    },
+    {
+      "id": "Tefe",
+      "nome": "Tefé",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 32.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 8, "percentual": 37.0 },
+          "areas_mapeadas": { "pontos": 9.0, "setores": 3, "habitantes": 95 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.498 }
+        }
+      },
+      "historico": {
+        "total": 8.5,
+        "frequencia": 0.62,
+        "diversidade": 5,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2012, "tipo": "Erosão de Margem Fluvial" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Deslizamentos" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2023, "tipo": "Tempestade Local/Convectiva - Vendaval" },
+          { "ano": 2023, "tipo": "Tempestade Local/Convectiva - Chuvas Intensas" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2023, "tipo": "Incêndio Florestal" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "piorando",
+        "tipos": {
+          "Inundações": 9,
+          "Estiagem": 5,
+          "Erosão de Margem Fluvial": 1,
+          "Deslizamentos": 1,
+          "Tempestade Local/Convectiva - Chuvas Intensas": 2,
+          "Tempestade Local/Convectiva - Vendaval": 1,
+          "Incêndio Florestal": 1
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 40.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 42.5, "nivel": "Alto" },
+          "estiagem": { "total": 41.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 18,
+        "inundacao": 13,
+        "estiagem": 17
+      }
+    },
+    {
+      "id": "Tonantins",
+      "nome": "Tonantins",
+      "calha": "Alto Solimões",
+      "base": {
+        "total": 35.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 10, "percentual": 41.5 },
+          "areas_mapeadas": { "pontos": 10.5, "setores": 3, "habitantes": 135 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.465 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.52,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 43.0,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 45.0, "nivel": "Alto" },
+          "estiagem": { "total": 44.0, "nivel": "Alto" },
+          "chuva_intensa": { "total": 43.0, "nivel": "Alto" },
+          "movimento_massa": { "total": 43.0, "nivel": "Alto" },
+          "qualidade_ar": { "total": 43.0, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 10,
+        "inundacao": 8,
+        "estiagem": 11
+      }
+    },
+    {
+      "id": "Uarini",
+      "nome": "Uarini",
+      "calha": "Médio Solimões",
+      "base": {
+        "total": 33.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 9, "percentual": 39.5 },
+          "areas_mapeadas": { "pontos": 9.5, "setores": 3, "habitantes": 100 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.480 }
+        }
+      },
+      "historico": {
+        "total": 8.0,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2013, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Estiagem" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 8,
+          "Estiagem": 6
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 41.5,
+          "nivel": "Alto",
+          "cor": "#e67e22"
+        },
+        "ive": {
+          "inundacao": { "total": 43.5, "nivel": "Alto" },
+          "estiagem": { "total": 42.5, "nivel": "Alto" },
+          "chuva_intensa": { "total": 41.5, "nivel": "Alto" },
+          "movimento_massa": { "total": 41.5, "nivel": "Alto" },
+          "qualidade_ar": { "total": 41.5, "nivel": "Alto" }
+        }
+      },
+      "rank": {
+        "ivg": 15,
+        "inundacao": 12,
+        "estiagem": 16
+      }
+    },
+    {
+      "id": "Urucara",
+      "nome": "Urucará",
+      "calha": "Baixo Amazonas",
+      "base": {
+        "total": 31.0,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 7, "percentual": 35.5 },
+          "areas_mapeadas": { "pontos": 9.0, "setores": 2, "habitantes": 88 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.505 }
+        }
+      },
+      "historico": {
+        "total": 6.5,
+        "frequencia": 0.48,
+        "diversidade": 3,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2012, "tipo": "Inundações" },
+          { "ano": 2014, "tipo": "Inundações" },
+          { "ano": 2015, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2023, "tipo": "Estiagem" },
+          { "ano": 2024, "tipo": "Estiagem" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 4,
+          "Estiagem": 4
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.5,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.0, "nivel": "Moderado" },
+          "estiagem": { "total": 38.5, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.5, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.5, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.5, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 27,
+        "inundacao": 26,
+        "estiagem": 28
+      }
+    },
+    {
+      "id": "Urucurituba",
+      "nome": "Urucurituba",
+      "calha": "Médio Amazonas",
+      "base": {
+        "total": 29.5,
+        "detalhes": {
+          "criancas_idosos": { "pontos": 6, "percentual": 33.0 },
+          "areas_mapeadas": { "pontos": 8.5, "setores": 2, "habitantes": 80 },
+          "capacidade_idhm": { "pontos": 15, "idhm": 0.525 }
+        }
+      },
+      "historico": {
+        "total": 7.5,
+        "frequencia": 0.57,
+        "diversidade": 4,
+        "eventos": [
+          { "ano": 2005, "tipo": "Estiagem" },
+          { "ano": 2009, "tipo": "Inundações" },
+          { "ano": 2010, "tipo": "Estiagem" },
+          { "ano": 2013, "tipo": "Alagamentos" },
+          { "ano": 2014, "tipo": "Alagamentos" },
+          { "ano": 2015, "tipo": "Alagamentos" },
+          { "ano": 2017, "tipo": "Inundações" },
+          { "ano": 2019, "tipo": "Inundações" },
+          { "ano": 2021, "tipo": "Inundações" },
+          { "ano": 2022, "tipo": "Inundações" },
+          { "ano": 2024, "tipo": "Estiagem" },
+          { "ano": 2025, "tipo": "Inundações" }
+        ],
+        "tendencia": "estavel",
+        "tipos": {
+          "Inundações": 6,
+          "Estiagem": 3,
+          "Alagamentos": 3
+        }
+      },
+      "monitoramento": {
+        "total": 0,
+        "eventos": {
+          "inundacao": { "nivel": "Baixo", "pontos": 0 },
+          "estiagem": { "nivel": "Baixo", "pontos": 0 },
+          "chuva_intensa": { "nivel": "Baixo", "pontos": 0 },
+          "movimento_massa": { "nivel": "Baixo", "pontos": 0 },
+          "qualidade_ar": { "nivel": "Baixo", "pontos": 0 }
+        }
+      },
+      "indices": {
+        "ivg": {
+          "total": 37.0,
+          "nivel": "Moderado",
+          "cor": "#f1c40f"
+        },
+        "ive": {
+          "inundacao": { "total": 39.0, "nivel": "Moderado" },
+          "estiagem": { "total": 38.0, "nivel": "Moderado" },
+          "chuva_intensa": { "total": 37.0, "nivel": "Moderado" },
+          "movimento_massa": { "total": 37.0, "nivel": "Moderado" },
+          "qualidade_ar": { "total": 37.0, "nivel": "Moderado" }
+        }
+      },
+      "rank": {
+        "ivg": 28,
+        "inundacao": 27,
+        "estiagem": 29
+      }
+    }
+  ]
+}

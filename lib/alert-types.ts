@@ -30,16 +30,16 @@ export const AIR_COLORS: Record<AirLevel, string> = {
   PESSIMA: "#8f3f97",
 };
 
-/** Limiares US EPA PM2.5 (µg/m³) usados pelo mapa PurpleAir com conversão = Não. */
+/** Faixas padrão de qualidade do ar (MP2,5 µg/m³ em 24 h). */
 export const AIR_PM25 = {
-  boaMax: 12,
-  moderadoMin: 12.1,
-  moderadoMax: 35.4,
-  ruimMin: 35.5,
-  ruimMax: 55.4,
-  muitoRuimMin: 55.5,
-  muitoRuimMax: 150.4,
-  pessimaMin: 150.5,
+  boaMax: 15,
+  moderadoMin: 15,
+  moderadoMax: 50,
+  ruimMin: 50,
+  ruimMax: 75,
+  muitoRuimMin: 75,
+  muitoRuimMax: 125,
+  pessimaMin: 125,
 } as const;
 
 export const AIR_LABELS: Record<AirLevel, string> = {
@@ -51,11 +51,11 @@ export const AIR_LABELS: Record<AirLevel, string> = {
 };
 
 export const AIR_RANGES: Record<AirLevel, string> = {
-  BOA: "0–12 µg/m³",
-  MODERADO: "12,1–35,4 µg/m³",
-  RUIM: "35,5–55,4 µg/m³",
-  MUITO_RUIM: "55,5–150,4 µg/m³",
-  PESSIMA: ">150,4 µg/m³",
+  BOA: "0–15 µg/m³",
+  MODERADO: "15–50 µg/m³",
+  RUIM: "50–75 µg/m³",
+  MUITO_RUIM: "75–125 µg/m³",
+  PESSIMA: ">125 µg/m³",
 };
 
 export type AlertProduct = {
@@ -114,7 +114,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     scale: "ar",
     levels: AIR_LEVELS,
     low: "BOA",
-    sources: "CEMOA · PurpleAir Raw MP2,5 1 dia · sem conversão · interno e externo",
+    sources: "CEMOA · MP2,5 24 h · sensores de apoio",
   },
 };
 
@@ -149,15 +149,14 @@ export function defaultPaintLevel(tipo: AlertType) {
 }
 
 /**
- * Faixas do produto INCÊNDIO = mapa PurpleAir ( Raw PM2.5, conversão = Não ).
- * Os cortes são os breakpoints US EPA de MP2,5 aplicados ao µg/m³ bruto.
- * Péssima junta Very Unhealthy + Hazardous (>150,4).
+ * Faixas de 24 h do produto INCÊNDIO (µg/m³): Boa 0–15, Moderada 15–50,
+ * Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador pinta o município.
  */
 export function airLevelFromPm25(pm25: number): AirLevel {
-  if (!Number.isFinite(pm25) || pm25 < AIR_PM25.moderadoMin) return "BOA";
-  if (pm25 < AIR_PM25.ruimMin) return "MODERADO";
-  if (pm25 < AIR_PM25.muitoRuimMin) return "RUIM";
-  if (pm25 < AIR_PM25.pessimaMin) return "MUITO_RUIM";
+  if (!Number.isFinite(pm25) || pm25 <= AIR_PM25.boaMax) return "BOA";
+  if (pm25 <= AIR_PM25.moderadoMax) return "MODERADO";
+  if (pm25 <= AIR_PM25.ruimMax) return "RUIM";
+  if (pm25 <= AIR_PM25.muitoRuimMax) return "MUITO_RUIM";
   return "PESSIMA";
 }
 
@@ -292,27 +291,27 @@ export const PNG_AIR_ITEMS: Array<{
 }> = [
   {
     key: "BOA",
-    title: "Boa · 0–12",
-    text: "Raw MP2,5 média de 1 dia na faixa Boa do mapa PurpleAir (sem conversão).",
+    title: "Boa · 0–15",
+    text: "MP2,5 média de 24 h na faixa Boa. Só o operador classifica o município.",
   },
   {
     key: "MODERADO",
-    title: "Moderada · 12,1–35,4",
-    text: "Raw MP2,5 média de 1 dia na faixa Moderada do mapa PurpleAir (sem conversão).",
+    title: "Moderada · 15–50",
+    text: "MP2,5 média de 24 h na faixa Moderada. Sensores apoiam o plantão.",
   },
   {
     key: "RUIM",
-    title: "Ruim · 35,5–55,4",
-    text: "Raw MP2,5 média de 1 dia na faixa Ruim do mapa PurpleAir (sem conversão).",
+    title: "Ruim · 50–75",
+    text: "MP2,5 média de 24 h na faixa Ruim. Sensores apoiam o plantão.",
   },
   {
     key: "MUITO_RUIM",
-    title: "Muito Ruim · 55,5–150,4",
-    text: "Raw MP2,5 média de 1 dia na faixa Muito Ruim do mapa PurpleAir (sem conversão).",
+    title: "Muito ruim · 75–125",
+    text: "MP2,5 média de 24 h na faixa Muito ruim. Sensores apoiam o plantão.",
   },
   {
     key: "PESSIMA",
-    title: "Péssima · >150,4",
-    text: "Raw MP2,5 média de 1 dia acima de 150,4 µg/m³ (Very Unhealthy / Hazardous no PurpleAir).",
+    title: "Péssima · >125",
+    text: "MP2,5 média de 24 h acima de 125 µg/m³. Sensores apoiam o plantão.",
   },
 ];

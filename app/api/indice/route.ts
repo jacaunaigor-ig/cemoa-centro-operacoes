@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { cached } from "@/lib/cache";
-import { getAirQualityPayload } from "@/lib/air-quality";
 import { getSession } from "@/lib/auth";
 import { buildIndicePayload } from "@/lib/indice-build";
 import { buildHydrologyPayload } from "@/lib/live-state";
@@ -20,10 +19,8 @@ export async function GET() {
     hydrateAlertOverridesFromRemote(),
     hydrateHydroOverridesFromRemote(),
   ]);
-  const air = await getAirQualityPayload().catch(() => null);
   const { data, cache } = cached("indice", 4000, () =>
     buildIndicePayload(Date.now(), {
-      air,
       stations: buildHydrologyPayload(Date.now()).stations,
     }),
   );

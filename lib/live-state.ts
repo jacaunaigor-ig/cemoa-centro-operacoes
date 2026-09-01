@@ -4,6 +4,7 @@ import { listStains } from "@/lib/stains";
 import { alertExpiresAt } from "@/lib/alert-validity";
 import { applyHydroOverride } from "@/lib/hydro-overrides";
 import { applyAnaReading, type AnaReading } from "@/lib/ana-telemetria";
+import { applyFabricCotas, type FabricCota } from "@/lib/fabric-cotas";
 import {
   ALERT_PRODUCTS,
   isAlertActive,
@@ -62,11 +63,11 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   }
   if (tipo === "INCENDIO") {
     const copy: Record<string, string> = {
-      BOA: `Qualidade do ar boa em ${nome} (Raw MP2,5 0–12 µg/m³, média de 1 dia).`,
-      MODERADO: `Qualidade do ar moderada em ${nome} (Raw MP2,5 12,1–35,4 µg/m³), com reflexo de queima em área não protegida.`,
-      RUIM: `Qualidade do ar ruim em ${nome} (Raw MP2,5 35,5–55,4 µg/m³). Incêndio florestal com impacto na população.`,
-      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (Raw MP2,5 55,5–150,4 µg/m³). Restringir exposição ao ar livre.`,
-      PESSIMA: `Qualidade do ar péssima em ${nome} (Raw MP2,5 >150,4 µg/m³). Ação imediata de proteção da saúde.`,
+      BOA: `Qualidade do ar boa em ${nome} (MP2,5 0–15 µg/m³ em 24 h).`,
+      MODERADO: `Qualidade do ar moderada em ${nome} (MP2,5 15–50 µg/m³ em 24 h), com reflexo de queima em área não protegida.`,
+      RUIM: `Qualidade do ar ruim em ${nome} (MP2,5 50–75 µg/m³ em 24 h). Incêndio florestal com impacto na população.`,
+      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (MP2,5 75–125 µg/m³ em 24 h). Restringir exposição ao ar livre.`,
+      PESSIMA: `Qualidade do ar péssima em ${nome} (MP2,5 >125 µg/m³ em 24 h). Ação imediata de proteção da saúde.`,
     };
     return copy[risco] ?? copy.BOA;
   }
@@ -80,7 +81,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
-/** Chuva, alagamento e movimento: o grau no mapa é só do operador. Incêndio: a qualidade do ar entra no cliente pelo Raw MP2,5 média de 1 dia. Sem classificação, o município fica no nível baixo do produto. */
+/** Chuva, alagamento, movimento e incêndio: o grau no mapa é só do operador. Sem classificação, o município fica no nível baixo do produto. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",
@@ -157,19 +158,34 @@ export function buildAlertsPayload(
 
 export function buildHydrologyPayload(
   now = Date.now(),
-  ana?: { byCode: Map<string, AnaReading>; pending?: boolean; fetchedAt?: number | null },
+  extras?: {
+    ana?: { byCode: Map<string, AnaReading>; pending?: boolean; fetchedAt?: number | null };
+    fabric?: { byNome: Map<string, FabricCota[]>; pending?: boolean; fetchedAt?: number | null };
+  },
 ): Omit<HydrologyPayload, "cache"> {
+  const ana = extras?.ana;
+  const fabric = extras?.fabric;
   const stations = catalogStations()
+    .map((station) => applyFabricCotas(station, fabric?.byNome ?? new Map()))
     .map((station) => applyAnaReading(station, ana?.byCode.get(station.estacao)))
     .map(applyHydroOverride);
   const automaticas = stations.filter((s) => /^\d{6,}$/.test(s.estacao)).length;
-  const atualizadas = stations.filter((s) => s.cotaFonte === "ANA").length;
+  const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
+  const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
+  const partes = [`${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`];
+  if (atualizadasFabric > 0) {
+    partes.push(
+      `Fabric (${atualizadasFabric} ${atualizadasFabric === 1 ? "estação" : "estações"})`,
+    );
+  }
+  if (atualizadasAna > 0) {
+    partes.push(
+      `ANA telemetria (${atualizadasAna} ${atualizadasAna === 1 ? "estação" : "estações"})`,
+    );
+  }
   return {
     generatedAt: now,
-    source:
-      atualizadas > 0
-        ? `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA} · ANA telemetria (${atualizadas} ${atualizadas === 1 ? "estação" : "estações"})`
-        : `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    source: partes.join(" · "),
     referencia: HYDRO_REFERENCIA,
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],
@@ -178,9 +194,9 @@ export function buildHydrologyPayload(
     stations,
     ana: {
       automaticas,
-      atualizadas,
-      pending: Boolean(ana?.pending),
-      fetchedAt: ana?.fetchedAt ?? null,
+      atualizadas: atualizadasAna,
+      pending: Boolean(ana?.pending || fabric?.pending),
+      fetchedAt: ana?.fetchedAt ?? fabric?.fetchedAt ?? null,
     },
   };
 }

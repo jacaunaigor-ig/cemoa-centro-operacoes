@@ -185,13 +185,12 @@ export function RiskHelpButton({
 
                 <div className="mx-4 mb-5 rounded-xl border border-border bg-hover p-3.5">
                   <p className="text-[11px] font-semibold tracking-[0.08em] text-text-mute uppercase">
-                    Qualidade do ar — mapa PurpleAir
+                    Qualidade do ar — 24 h
                   </p>
                   <p className="mt-1 text-xs text-text-dim">
-                    Não segue o art. 12 da Portaria MIDR nº 2.458/2026. No produto Incêndio
-                    florestal vale a configuração do mapa PurpleAir: camada Raw PM2.5 (µg/m³),
-                    conversão = Não, média de 1 dia, sensores internos e externos. As cores
-                    seguem o AQI dos EUA aplicado ao µg/m³ bruto (sem conversão EPA).
+                    No produto Incêndio florestal as faixas de MP2,5 em 24 h são: Boa 0–15, Moderada
+                    15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. Só o operador
+                    classifica o município; os sensores aparecem como apoio de monitoramento.
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {AIR_CHIPS.map(([key, label, color]) => (

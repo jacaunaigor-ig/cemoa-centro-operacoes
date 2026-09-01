@@ -1070,7 +1070,7 @@ export function HydrologyWorkbench() {
                     "pointer-events-auto absolute z-[1200]",
                     isMobile
                       ? "inset-x-1.5 bottom-1.5 top-10"
-                      : "left-2 top-12 w-[min(calc(100%-1rem),22rem)] sm:top-2",
+                      : "left-2 top-12 w-[min(calc(100%-1rem),26rem)] sm:top-2",
                   )}
                   rows={indice?.municipios ?? []}
                   onClose={() => setShowIndice(false)}

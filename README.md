@@ -5,7 +5,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**30/08/2026**, relatórios CEMOA de inundação e estiagem): estiagem 38 baixo / 10 moderado / 14 alto; inundação 60 baixo / 1 moderado (Maraã) / 1 alto (Japurá). Onde há **estação automática ANA**, a telemetria atualiza a cota ao vivo — **não muda o grau**. Onde a leitura é **DC-AM/SEMA**, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento e movimento só recebem grau com o operador (abrem em baixo). No produto **Incêndio florestal**, o Raw MP2,5 média de 1 dia da PurpleAir (sem conversão, internos e externos) classifica o município; o operador pode sobrepor. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. Chuva CEMADEN e a fila do plantão sugerem emitir, elevar ou renovar — não classificam o município. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**01/09/2026**): o painel hidrometeorológico Fabric atualiza as cotas ao vivo (sem mudar o grau) e a **telemetria ANA** sobrepõe onde há estação automática. Onde a leitura é **DC-AM/SEMA** e o Fabric ainda não publicou o dia, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento, movimento e **incêndio** só recebem grau com o operador (abrem em baixo / boa). Sensores PurpleAir e chuva CEMADEN sugerem emitir, elevar ou renovar — **não classificam** o município. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -16,9 +16,9 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 | `MOVIMENTO` | Baixo → Extremo | Deslizamento, movimento de massa e erosão de margem; só eleva onde há setor mapeado |
 | `INCENDIO` | Boa → Péssima | Incêndio em áreas não protegidas com reflexos na qualidade do ar (MP2,5 µg/m³) |
 
-A classificação de qualidade do ar não segue o art. 12 da Portaria MIDR nº 2.458/2026. No incêndio vale a configuração do [mapa PurpleAir](https://map.purpleair.com/): camada **Raw PM2.5 (µg/m³)**, **Apply conversion = No**, **averaging period = 1-day**, **show outside + show inside**. As cores seguem o AQI dos EUA aplicado ao µg/m³ bruto. Faixas: Boa 0–12, Moderada 12,1–35,4, Ruim 35,5–55,4, Muito Ruim 55,5–150,4, Péssima >150,4 µg/m³.
+A classificação de qualidade do ar **não pinta o mapa**. O PNG e a legenda usam faixas de MP2,5 em **24 h**: Boa **0–15**, Moderada **15–50**, Ruim **50–75**, Muito ruim **75–125**, Péssima **>125** µg/m³. Os sensores PurpleAir continuam na camada de apoio e na fila do plantão como sugestão.
 
-No produto **Incêndio florestal** o painel consulta `/api/air-quality` com `pm2.5_cf_1` e `average=1440`, sem filtrar `location_type` (internos e externos no recorte do Amazonas). Só entram no polígono de um dos 62 municípios (com folga de 55 km da sede se a malha simplificada falhar — para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. Os marcadores no mapa são bolhas numeradas com o degradê PurpleAir. Sem `PURPLEAIR_API_KEY`, o centro cai no App SELVA (leitura **atual**, não a média de 1 dia) e avisa isso na fonte. A média de 1 dia **classifica** o município. Sem sensor, o município permanece em **Boa**. O operador pode sobrepor o grau. Leitura de baixo custo: não substitui estação regulatória. A conta “show my” da PurpleAir não entra (exige login na conta deles).
+No produto **Incêndio florestal** o painel consulta `/api/air-quality` com `pm2.5_cf_1` e `average=1440`, sem filtrar `location_type` (internos e externos no recorte do Amazonas). Só entram no polígono de um dos 62 municípios (com folga de 55 km da sede se a malha simplificada falhar — para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. Os marcadores no mapa são bolhas numeradas. Sem `PURPLEAIR_API_KEY`, o centro cai no App SELVA (leitura **atual**) e avisa isso na fonte. Sem classificação do operador o município permanece em **Boa**. Leitura de baixo custo: não substitui estação regulatória.
 
 Ainda não entram no recorte (dados que o SELVA também publica em `route=files`): estimado CAMS e focos FIRMS. Quando entrar, ficam no mesmo produto de incêndio — sem cartão novo no centro.
 
@@ -26,9 +26,9 @@ O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa oc
 
 ## Abertura do plantão
 
-O Painel de Alertas nasce limpo nas abas de chuva, alagamento e movimento (em **baixo**, sem mancha de polígono). O produto de incêndio já abre com a qualidade do ar medida (Raw MP2,5 média de 1 dia). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente.
+O Painel de Alertas nasce limpo nas abas de chuva, alagamento, movimento e incêndio (em **baixo** / **boa**, sem mancha de polígono). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente.
 
-Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento e movimento ficam em **baixo**; incêndio segue o Raw MP2,5 média de 1 dia. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
+Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento, movimento e incêndio ficam no nível baixo do produto. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
 
 O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s, qualidade do ar ~90 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
 
@@ -79,20 +79,22 @@ A ficha do alerta junta três blocos de clima (não alteram o grau):
 - **Temperatura · INMET** — **atual** da estação automática mais próxima (`estacao/proxima/{IBGE}`, campo `TEM_INS`, horário tratado como UTC e convertido para Manaus), **máxima** e **mínima** da previsão do dia (Prevmet), com a observação da estação como reserva.
 - **Previsão · INMET** — horizontes **24 h, 48 h, 72 h e 5 dias** (resumo + T máx) a partir de `apiprevmet3.inmet.gov.br/previsao/{IBGE}`.
 
-Na **versão admin** (Desktop com Edição ligada) a ficha também traz o **Índice de Vulnerabilidade** (0–100). Ele não altera o grau do produto.
+Na **versão admin** (Desktop com Edição ligada) a ficha também traz o **Índice de Vulnerabilidade** (IVG + IVE). Ele não altera o grau do produto.
 
 ## Índice de Vulnerabilidade
 
 Controle interno do operador: aparece só no **Desktop** com **Edição** ligada. Não entra no mobile nem para quem só visualiza o mapa.
 
-Dois blocos, cada um até 50 pontos:
+Catálogo dos 62 municípios (`data/vulnerabilidade.json`):
 
-- **Base estrutural (50)** — muda pouco. Crianças 0–14 + idosos 60+ (Censo 2022, até 15), áreas de risco mapeadas SGB (até 20; sem mapeamento = 0), capacidade de resposta pelo **IDHM 2010** (até 15). O IDHM entra no lugar do PIB total: Coari pode ser a segunda economia e mesmo assim pontuar vulnerabilidade, porque a renda do Atlas não acompanha o PIB do gás.
-- **Monitoramento (50)** — ao vivo, 10 pontos por evento. Cheia e estiagem vêm do boletim (o operador pode sobrepor; a cota ANA não altera o grau). Chuva intensa e alagamento entram no **maior** dos dois graus, para não contar duas vezes o mesmo temporal. Movimento de massa usa a classificação do operador. Qualidade do ar usa o Raw MP2,5 média de 1 dia (o operador pode sobrepor).
+- **Nome**, **IVG** (pontuação total) e **nível de alerta**
+- **IVE** por tipo de desastre: inundação, estiagem, chuva intensa, movimento de massa e qualidade do ar
+- Ficha com **base** (crianças/idosos, áreas mapeadas, IDHM), **histórico** (eventos e tendência) e **monitoramento**
+- Filtros por **IVE**, **tendência** (piorando / estável / melhorando) e **calha** (Rio Negro, Madeira, Solimões…)
 
-Cada grau vira o teto da faixa: Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10. Soma 0–20 baixo, 21–40 moderado, 41–60 alto, 61–80 severo, 81–100 extremo.
+Cores: Baixo `#2ecc71`, Moderado `#f1c40f`, Alto `#e67e22`, Severo `#e74c3c`, Extremo `#8e44ad`. Faixas 0–20 / 21–40 / 41–60 / 61–80 / 81–100.
 
-O índice **não altera** o grau de chuva, alagamento, movimento, incêndio nem o boletim. No Desktop admin, o botão **Índice de Vulnerabilidade** lista os 62 ordenados pela soma; o clique abre a ficha. **Amazonas** devolve o mapa do produto.
+O monitoramento ao vivo (boletim e classificação do operador) pode somar pontos em cima do catálogo. Qualidade do ar **não** entra sozinha pelo sensor — só se o operador classificar. O índice **não altera** o grau dos produtos.
 
 O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
 
@@ -102,9 +104,9 @@ O posto segue a largura da tela: no **telefone** (largura &lt; 768 px) o layout 
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
-A **fila do plantão** (lista da esquerda) junta o que **sugere** ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Em chuva, alagamento e movimento a ação do operador é soberana — não classifica o município. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila. Em incêndio, o Raw MP2,5 média de 1 dia já classifica o município; a fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer.
+A **fila do plantão** (lista da esquerda) junta o que **sugere** ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Em todos os produtos a ação do operador é soberana — sensores e cotas **não classificam** o município. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila. Em incêndio, o MP2,5 de 24 h só sugere.
 
-No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). Chuva, alagamento e movimento não mudam de cor sozinhos; o incêndio segue o Raw MP2,5 média de 1 dia. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
+No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). Nenhum produto muda de cor sozinho. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
 
 O **Aviso Meteorológico** tem duas camadas:
 
@@ -209,7 +211,7 @@ Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acr
 
 Sem as chaves do Google, o botão aparece desativado e o login por senha continua valendo.
 
-No boletim, a ficha do município mostra só o extremo do modo ativo: **máxima histórica** na inundação e **mínima histórica** na vazante (data e cota do relatório CEMOA). A cota entra na série **por data** (hoje por padrão; dá para lançar um dia antigo quando o município fica semanas sem enviar) e atualiza a ficha, o gráfico e o rótulo Atualizado / Dado de DD/MM. No lote, campo vazio na data escolhida vira **sem leitura**. Onde o código da estação é numérico (ANA), o centro consulta a telemetria oficial e preenche a cota **do dia da leitura**. Sem código automático (DCAM ou —), fica o recorte operacional até o operador lançar. A API oficial HidroWebService exige cadastro em hidro@ana.gov.br; até 30/06/2026 o centro usa o webservice público `DadosHidrometeorologicos`. O mapa mostra o grau do relatório CEMOA (estiagem e inundação); a cota ANA não reclassifica. O KPI **62 municípios** mostra todos com o status operacional. O KPI **Sem leitura** conta quem **não tem cota no dia** (horário de Manaus).
+No boletim, a ficha do município mostra só o extremo do modo ativo: **máxima histórica** na inundação e **mínima histórica** na vazante (data e cota do relatório CEMOA). A cota entra na série **por data** (hoje por padrão; dá para lançar um dia antigo quando o município fica semanas sem enviar) e atualiza a ficha, o gráfico e o rótulo Atualizado / Dado de DD/MM. No lote, campo vazio na data escolhida vira **sem leitura**. O painel **Fabric** (monitoramento hidrometeorológico CEMOA) preenche as cotas dos rios; onde o código da estação é numérico, a **ANA** sobrepõe a telemetria do dia da leitura. Sem leitura no dia (horário de Manaus), o KPI **Sem leitura** conta o município. O mapa mostra o grau do relatório CEMOA (estiagem e inundação); cota Fabric/ANA **não reclassifica**.
 
 A ficha de qualquer produto (e a do boletim) diz se o município **tem área mapeada** de movimento de massa / deslizamento. Se tiver, mostra setores, tipo (deslizamento, movimento de massa, erosão de margem) e o **quantitativo de pessoas em área de risco** do levantamento federal (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem mapeamento, a ficha diz isso com clareza.
 
@@ -247,9 +249,9 @@ A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
 | --- | --- | --- | --- | --- |
 | Chuva intensa | Estado | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h (extremo: 60 mm/1 h ou 90 mm/6 h) |
 | Alagamento | Estado (exceto Manaus) | 20–40 mm/h | 40–70 mm/h | >70 mm/h |
-| Alagamento | Manaus | — | — | ≥ 40 mm/h (severo) |
+| Alagamento | Manaus | — | — | >20 mm/h (severo) |
 | Movimento de massa | Estado (exceto Manaus) | 50–85 mm/24 h | 85–140 mm/24 h | >140 mm/24 h |
-| Movimento de massa | Manaus | — | — | 50–70 mm/24 h (severo, ≥ 50 mm/24 h) |
+| Movimento de massa | Manaus | — | — | >30 mm/24 h (severo) |
 
 Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e o limiar do produto (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`: ≥ 20 mm/h na chuva/alagamento, ≥ 50 mm/24 h no movimento de massa).
 

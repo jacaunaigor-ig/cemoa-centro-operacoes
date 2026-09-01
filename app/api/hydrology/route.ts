@@ -3,15 +3,19 @@ import { cached } from "@/lib/cache";
 import { buildHydrologyPayload } from "@/lib/live-state";
 import { hydrateHydroOverridesFromRemote } from "@/lib/supabase-ops";
 import { getAnaReadings } from "@/lib/ana-telemetria";
+import { getFabricCotas } from "@/lib/fabric-cotas";
 import { catalogAnaCodes } from "@/lib/hydrology";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   await hydrateHydroOverridesFromRemote();
-  const ana = await getAnaReadings(catalogAnaCodes());
-  if (ana.pending) {
-    const data = buildHydrologyPayload(Date.now(), ana);
+  const [ana, fabric] = await Promise.all([
+    getAnaReadings(catalogAnaCodes()),
+    getFabricCotas(),
+  ]);
+  if (ana.pending || fabric.pending) {
+    const data = buildHydrologyPayload(Date.now(), { ana, fabric });
     return NextResponse.json(
       { ...data, cache: "MISS" },
       {
@@ -23,7 +27,7 @@ export async function GET() {
     );
   }
   const { data, cache } = cached("hydrology", 4000, () =>
-    buildHydrologyPayload(Date.now(), ana),
+    buildHydrologyPayload(Date.now(), { ana, fabric }),
   );
   return NextResponse.json(
     { ...data, cache },

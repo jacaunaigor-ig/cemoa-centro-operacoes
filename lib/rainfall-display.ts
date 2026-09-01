@@ -161,7 +161,7 @@ export function rainApoio(
       return {
         level: "BAIXO",
         motivo: isManaus(where)
-          ? `1 h com ${formatMm(mm)} — Manaus · severo (≥ 40 mm/h).`
+          ? `1 h com ${formatMm(mm)} — Manaus · severo (>20 mm/h).`
           : `1 h com ${formatMm(mm)} — abaixo do limiar de alagamento do estado (20 mm/h).`,
       };
     }
@@ -184,7 +184,7 @@ export function rainApoio(
     return {
       level: "BAIXO",
       motivo: isManaus(where)
-        ? `24 h com ${formatMm(mm24)} — Manaus · severo (≥ 50 mm/24 h).`
+        ? `24 h com ${formatMm(mm24)} — Manaus · severo (>30 mm/24 h).`
         : `24 h com ${formatMm(mm24)} — abaixo do limiar de movimento de massa do estado (50 mm/24 h).`,
     };
   }

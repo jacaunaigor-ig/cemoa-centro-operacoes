@@ -5,8 +5,17 @@ import { HYDRO_STATUS_LABELS } from "@/lib/hydrology";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import type { AlertLevel, HydroStatus } from "@/lib/types";
 import rawIdhm from "@/data/idhm.json";
+import {
+  IVE_IDS,
+  IVE_LABELS,
+  TENDENCIA_LABELS,
+  vulnerabDo,
+  type IveId,
+  type VulnerabMunicipio,
+  type VulnerabTendencia,
+} from "@/lib/vulnerabilidade";
 
-/** Pontuação 0–100: 50 estrutural (lento) + 50 monitoramento (ao vivo). Não altera o grau do produto. */
+/** IVG do catálogo CEMOA (base + histórico + monitoramento). Não altera o grau do produto. */
 
 export const INDICE_ESTRUTURAL_MAX = 50;
 export const INDICE_MONITOR_MAX = 50;
@@ -73,19 +82,17 @@ export const INDICE_FAIXAS: Array<{
 ];
 
 export const INDICE_FAIXA_COLORS: Record<IndiceFaixa, string> = {
-  BAIXO: "#10b981",
-  MODERADO: "#f59e0b",
-  ALTO: "#f97316",
-  SEVERO: "#ef4444",
-  EXTREMO: "#7c3aed",
+  BAIXO: "#2ecc71",
+  MODERADO: "#f1c40f",
+  ALTO: "#e67e22",
+  SEVERO: "#e74c3c",
+  EXTREMO: "#8e44ad",
 };
 
-export type IndiceEventoId =
-  | "cheia"
-  | "estiagem"
-  | "chuvaAlagamento"
-  | "movimento"
-  | "ar";
+export type { IveId, VulnerabTendencia };
+export { IVE_IDS, IVE_LABELS, TENDENCIA_LABELS };
+
+export type IndiceEventoId = IveId;
 
 export type IndiceEvento = {
   id: IndiceEventoId;
@@ -107,15 +114,36 @@ export type IndiceEstrutural = {
   pessoasRisco: number | null | undefined;
 };
 
+export type IndiceIve = {
+  id: IveId;
+  label: string;
+  total: number;
+  nivel: string;
+  faixa: IndiceFaixa;
+};
+
+export type IndiceHistorico = {
+  total: number;
+  frequencia: number;
+  diversidade: number;
+  tendencia: VulnerabTendencia;
+  eventos: Array<{ ano: number; tipo: string }>;
+  tipos: Record<string, number>;
+};
+
 export type IndiceMunicipio = {
   id: string;
   nome: string;
   bacia: string;
+  calha: string;
   estrutural: IndiceEstrutural;
+  historico: IndiceHistorico;
   monitoramento: { eventos: IndiceEvento[]; total: number };
+  ive: IndiceIve[];
   total: number;
   faixa: IndiceFaixa;
   acao: string;
+  rank: number;
 };
 
 export type IndiceLive = {
@@ -169,6 +197,20 @@ export function faixaDoTotal(total: number): (typeof INDICE_FAIXAS)[number] {
   return INDICE_FAIXAS.find((f) => n <= f.max) ?? INDICE_FAIXAS[INDICE_FAIXAS.length - 1];
 }
 
+export function faixaFromNivel(nivel: string | null | undefined, total?: number): IndiceFaixa {
+  const key = String(nivel ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  if (key === "baixo") return "BAIXO";
+  if (key === "moderado") return "MODERADO";
+  if (key === "alto") return "ALTO";
+  if (key === "severo" || key === "severio") return "SEVERO";
+  if (key === "extremo") return "EXTREMO";
+  return faixaDoTotal(total ?? 0).id;
+}
+
 function labelRisco(level: AlertLevel) {
   return LEVEL_LABELS[level] ?? level;
 }
@@ -220,20 +262,39 @@ export function estruturalDo(id: string): IndiceEstrutural {
   };
 }
 
-function evento(
-  id: IndiceEventoId,
-  label: string,
-  level: string,
-  detalhe: string,
-): IndiceEvento {
+function historicoVazio(): IndiceHistorico {
   return {
-    id,
-    label,
-    pontos: pontosDoNivel(level),
-    max: INDICE_EVENTO_MAX,
-    nivel: level,
-    detalhe,
+    total: 0,
+    frequencia: 0,
+    diversidade: 0,
+    tendencia: "estavel",
+    eventos: [],
+    tipos: {},
   };
+}
+
+function estruturalFromCatalog(cat: VulnerabMunicipio): IndiceEstrutural {
+  const d = cat.base.detalhes;
+  return {
+    populacao: d.criancas_idosos.pontos,
+    areasRisco: d.areas_mapeadas.pontos,
+    capacidade: d.capacidade_idhm.pontos,
+    total: cat.base.total,
+    pctVulneravel: d.criancas_idosos.percentual,
+    idhm: d.capacidade_idhm.idhm,
+    setores: d.areas_mapeadas.setores,
+    pessoasRisco: d.areas_mapeadas.habitantes,
+  };
+}
+
+function ivePontosLive(id: IveId, live: IndiceLive): number {
+  if (id === "inundacao") return pontosDoNivel(live.cheia);
+  if (id === "estiagem") return pontosDoNivel(live.estiagem);
+  if (id === "chuva_intensa") {
+    return Math.max(pontosDoNivel(live.chuva), pontosDoNivel(live.alagamento));
+  }
+  if (id === "movimento_massa") return pontosDoNivel(live.movimento);
+  return pontosDoNivel(live.incendio);
 }
 
 export function scoreMunicipio(
@@ -242,44 +303,63 @@ export function scoreMunicipio(
   bacia: string,
   live: IndiceLive,
 ): IndiceMunicipio {
-  const estrutural = estruturalDo(id);
-  const chuvaPts = pontosDoNivel(live.chuva);
-  const alagaPts = pontosDoNivel(live.alagamento);
-  const chuvaAlaga = chuvaPts >= alagaPts ? live.chuva : live.alagamento;
-  const eventos: IndiceEvento[] = [
-    evento(
-      "cheia",
-      "Inundação / cheia",
-      live.cheia,
-      `Boletim · ${HYDRO_STATUS_LABELS[live.cheia]}`,
-    ),
-    evento(
-      "estiagem",
-      "Estiagem / vazante",
-      live.estiagem,
-      `Boletim · ${HYDRO_STATUS_LABELS[live.estiagem]}`,
-    ),
-    evento(
-      "chuvaAlagamento",
-      "Chuva intensa / alagamento",
-      chuvaAlaga,
-      chuvaPts >= alagaPts
-        ? `Chuva ${labelRisco(live.chuva)}`
-        : `Alagamento ${labelRisco(live.alagamento)}`,
-    ),
-    evento(
-      "movimento",
-      "Movimento de massa",
-      live.movimento,
-      labelRisco(live.movimento),
-    ),
-    evento(
-      "ar",
-      "Qualidade do ar / queimadas",
-      live.incendio,
-      labelRisco(live.incendio),
-    ),
-  ];
+  const cat = vulnerabDo(id);
+  const estrutural = cat ? estruturalFromCatalog(cat) : estruturalDo(id);
+  const historico: IndiceHistorico = cat
+    ? {
+        total: cat.historico.total,
+        frequencia: cat.historico.frequencia,
+        diversidade: cat.historico.diversidade,
+        tendencia: cat.historico.tendencia,
+        eventos: cat.historico.eventos,
+        tipos: cat.historico.tipos,
+      }
+    : historicoVazio();
+
+  const eventos: IndiceEvento[] = IVE_IDS.map((iveId) => {
+    const catalogo = cat?.monitoramento.eventos[iveId];
+    const livePts = ivePontosLive(iveId, live);
+    const pontos = Math.max(catalogo?.pontos ?? 0, livePts);
+    const nivel =
+      livePts > (catalogo?.pontos ?? 0)
+        ? iveId === "inundacao"
+          ? live.cheia
+          : iveId === "estiagem"
+            ? live.estiagem
+            : iveId === "chuva_intensa"
+              ? pontosDoNivel(live.chuva) >= pontosDoNivel(live.alagamento)
+                ? live.chuva
+                : live.alagamento
+              : iveId === "movimento_massa"
+                ? live.movimento
+                : live.incendio
+        : (catalogo?.nivel ?? "Baixo");
+    const detalhe =
+      livePts > 0
+        ? iveId === "inundacao"
+          ? `Boletim · ${HYDRO_STATUS_LABELS[live.cheia]}`
+          : iveId === "estiagem"
+            ? `Boletim · ${HYDRO_STATUS_LABELS[live.estiagem]}`
+            : iveId === "chuva_intensa"
+              ? pontosDoNivel(live.chuva) >= pontosDoNivel(live.alagamento)
+                ? `Chuva ${labelRisco(live.chuva)}`
+                : `Alagamento ${labelRisco(live.alagamento)}`
+              : labelRisco(
+                  iveId === "movimento_massa" ? live.movimento : live.incendio,
+                )
+        : catalogo
+          ? `${catalogo.nivel} · catálogo`
+          : "Sem evento";
+    return {
+      id: iveId,
+      label: IVE_LABELS[iveId],
+      pontos: round1(pontos),
+      max: INDICE_EVENTO_MAX,
+      nivel: String(nivel),
+      detalhe,
+    };
+  });
+
   const monitoramentoTotal = round1(
     clamp(
       eventos.reduce((sum, item) => sum + item.pontos, 0),
@@ -287,17 +367,41 @@ export function scoreMunicipio(
       INDICE_MONITOR_MAX,
     ),
   );
-  const total = clamp(Math.round(estrutural.total + monitoramentoTotal), 0, 100);
+  const baseMaisHist = round1((cat?.base.total ?? estrutural.total) + historico.total);
+  const total = round1(baseMaisHist + monitoramentoTotal);
   const faixa = faixaDoTotal(total);
+  const ive: IndiceIve[] = IVE_IDS.map((iveId) => {
+    const ev = eventos.find((item) => item.id === iveId);
+    const published = cat?.indices.ive[iveId];
+    const iveTotal =
+      ev && (ev.pontos > 0 || !published)
+        ? round1(baseMaisHist + ev.pontos)
+        : (published?.total ?? round1(baseMaisHist));
+    const iveFaixa = faixaFromNivel(published?.nivel, iveTotal);
+    return {
+      id: iveId,
+      label: IVE_LABELS[iveId],
+      total: iveTotal,
+      nivel: published?.nivel ?? faixaDoTotal(iveTotal).label.replace(/^Risco /i, ""),
+      faixa: ev && ev.pontos > 0 ? faixaDoTotal(iveTotal).id : iveFaixa,
+    };
+  });
+
   return {
     id,
     nome,
     bacia,
+    calha: cat?.calha ?? bacia,
     estrutural,
+    historico,
     monitoramento: { eventos, total: monitoramentoTotal },
+    ive,
     total,
-    faixa: faixa.id,
+    faixa: cat && monitoramentoTotal === (cat.monitoramento.total ?? 0)
+      ? faixaFromNivel(cat.indices.ivg.nivel, total)
+      : faixa.id,
     acao: faixa.acao,
+    rank: cat?.rank.ivg ?? 0,
   };
 }
 

@@ -106,9 +106,9 @@ export function RainWindowsChart({
       {!compact ? (
         <p className="col-span-3 text-[10px] text-text-mute">
           {tipo === "ALAGAMENTO"
-            ? "Traços na 1 h: 20 / 40 / 70 mm/h no estado; Manaus · severo (≥ 40 mm/h)."
+            ? "Traços na 1 h: 20 / 40 / 70 mm/h no estado; Manaus · severo (>20 mm/h)."
             : tipo === "MOVIMENTO"
-              ? "Traços nas 24 h: 50 / 85 / 140 mm/24 h no estado; Manaus · severo (≥ 50 mm/24 h)."
+              ? "Traços nas 24 h: 50 / 85 / 140 mm/24 h no estado; Manaus · severo (>30 mm/24 h)."
               : "Traço vermelho = 20 mm/h na 1 h."}
           {focus ? ` Destaque em ${focus === "1h" ? "1 h" : "24 h"}.` : ""}
         </p>

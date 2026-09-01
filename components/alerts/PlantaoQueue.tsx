@@ -74,7 +74,7 @@ export function PlantaoQueue({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         tipo === "INCENDIO"
-          ? "O Raw MP2,5 média de 1 dia (sem conversão, internos e externos) classifica o município. A fila só pede ação se o operador estiver abaixo da medida ou se um alerta vencer."
+          ? "MP2,5 em 24 h sugere ação. Só o operador classifica o município."
           : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não alteram o grau."
       }
     >
@@ -92,8 +92,8 @@ export function PlantaoQueue({
       {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
         <p className="mt-1 text-[10px] leading-snug text-text-dim">
           {tipo === "ALAGAMENTO"
-            ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo ≥ 40 mm/h."
-            : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo ≥ 50 mm/24 h."}{" "}
+            ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo >20 mm/h."
+            : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo >30 mm/24 h."}{" "}
           Não classifica o grau.
         </p>
       ) : null}

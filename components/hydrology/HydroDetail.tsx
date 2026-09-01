@@ -106,6 +106,8 @@ export function HydroDetail({
           value={
             station.cotaFonte === "ANA"
               ? "ANA · telemetria"
+              : station.cotaFonte === "fabric"
+                ? "Fabric · monitoramento"
               : station.cotaFonte === "operador"
                 ? "Operador"
                 : station.fonte
@@ -119,8 +121,18 @@ export function HydroDetail({
                   hour: "2-digit",
                   minute: "2-digit",
                 }).format(new Date(station.cotaLidaEm))
+              : station.cotaFonte === "fabric" && station.cotaLidaEm
+                ? new Intl.DateTimeFormat("pt-BR", {
+                    timeZone: "America/Manaus",
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(station.cotaLidaEm))
               : station.cotaFonte === "ANA"
                 ? "Estação automática"
+                : station.cotaFonte === "fabric"
+                  ? "Painel hidrometeorológico CEMOA"
                 : station.fonte === "Defesa Civil AM"
                   ? `Boletim CEMOA · ${formatHydroRef(HYDRO_REFERENCIA)}`
                   : undefined
