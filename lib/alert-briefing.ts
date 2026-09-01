@@ -31,7 +31,7 @@ export function buildAlertBriefing({
     tipo === "INCENDIO"
       ? [
           air && air.pm25 != null
-            ? `${nome}: qualidade do ar ${nivel} (MP2,5 24 h ${formatUg(air.pm25)}).`
+            ? `${nome}: qualidade do ar ${nivel} (MP2,5 60 min ${formatUg(air.pm25)}).`
             : `${nome}: qualidade do ar ${nivel}${air === null ? " — sem monitor PurpleAir neste município" : ""}.`,
         ]
       : [`${nome}: alerta ${nivel}${isAlertActive(tipo, risco) ? "" : " em monitoramento"}.`];

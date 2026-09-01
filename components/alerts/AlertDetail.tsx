@@ -166,7 +166,7 @@ export function AlertDetail({
           <AirQualityPanel rec={air} />
         ) : (
           <p className="mt-3 text-[11px] text-text-mute">
-            Sem monitor PurpleAir neste município (Raw MP2,5 média de 1 dia, internos e externos, dentro do polígono CEMOA).
+            Sem monitor PurpleAir externo neste município (MP2,5 60 min CF=1, dentro do polígono CEMOA).
           </p>
         )
       ) : rain === undefined ? null : rain ? (

@@ -18,7 +18,7 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 
 A classificação de qualidade do ar **não pinta o mapa**. O PNG e a legenda usam faixas de MP2,5 em **24 h**: Boa **0–15**, Moderada **15–50**, Ruim **50–75**, Muito ruim **75–125**, Péssima **>125** µg/m³. Os sensores PurpleAir continuam na camada de apoio e na fila do plantão como sugestão.
 
-No produto **Incêndio florestal** o painel consulta `/api/air-quality` com `pm2.5_cf_1` e `average=1440`, sem filtrar `location_type` (internos e externos no recorte do Amazonas). Só entram no polígono de um dos 62 municípios (com folga de 55 km da sede se a malha simplificada falhar — para não puxar RO/AC). A mediana municipal ignora valores acima de **500 µg/m³**. Os marcadores no mapa são bolhas numeradas. Sem `PURPLEAIR_API_KEY`, o centro cai no App SELVA (leitura **atual**) e avisa isso na fonte. Sem classificação do operador o município permanece em **Boa**. Leitura de baixo custo: não substitui estação regulatória.
+No produto **Incêndio florestal** o painel consulta `/api/air-quality` em `GET https://api.purpleair.com/v1/sensors` com `pm2.5_cf_1`, `pm2.5_60minute` e `pm2.5_24hour`, `location_type=0` (só externos) e recorte do Amazonas. Sensores offline ou nulos saem da conta. A **média aritmética** municipal (nunca a soma) ignora valores acima de **500 µg/m³**. O IVE de qualidade do ar usa a **média horária** (`pm2.5_60minute`, CF=1 / `pm2.5hour|d0` como referência — não `pm2.5_atm`). Horários em **America/Manaus (UTC-4)**. A cada ciclo (~60 s no servidor, poll do painel ~20 s) o último valor atualiza o índice. Sem `PURPLEAIR_API_KEY` o centro cai no App SELVA (leitura atual) e avisa isso na fonte. Sem classificação do operador o município permanece em **Boa** no mapa. Leitura de baixo custo: não substitui estação regulatória.
 
 Ainda não entram no recorte (dados que o SELVA também publica em `route=files`): estimado CAMS e focos FIRMS. Quando entrar, ficam no mesmo produto de incêndio — sem cartão novo no centro.
 
@@ -30,7 +30,7 @@ O Painel de Alertas nasce limpo nas abas de chuva, alagamento, movimento e incê
 
 Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento, movimento e incêndio ficam no nível baixo do produto. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
 
-O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s, qualidade do ar ~90 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
+O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s, qualidade do ar ~60 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
 
 ## Exportar PNG
 
@@ -62,7 +62,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|INCENDIO`) |
 | `/api/hydrology` | JSON das estações e cotas |
 | `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h / 72 h / 96 h por município e estação |
-| `/api/air-quality` | Raw MP2,5 média de 1 dia (PurpleAir CF=1, sem conversão, internos e externos); fallback SELVA (leitura atual) |
+| `/api/air-quality` | PurpleAir `/v1/sensors`: CF=1, `pm2.5_60minute` + `pm2.5_24hour`, só externos; média municipal; fallback SELVA |
 | `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
 | `/api/indice` | Índice de Vulnerabilidade 0–100 (sessão autenticada; só no Desktop com Edição). |
 | `/api/logs` | Log de erros de mapa/dados no front |
@@ -163,7 +163,7 @@ CEMOA_ADMIN_NAME=Igor
 PURPLEAIR_API_KEY=chave-de-leitura-purpleair
 ```
 
-`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface. `PURPLEAIR_API_KEY` é a chave de leitura em [develop.purpleair.com](https://develop.purpleair.com/) — sem ela o incêndio cai no App SELVA (leitura atual, não o Raw média de 1 dia). Com a chave, a consulta replica o mapa PurpleAir: Raw CF=1, sem conversão, média 1440 min, internos e externos.
+`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface. `PURPLEAIR_API_KEY` é a chave de leitura em [develop.purpleair.com](https://develop.purpleair.com/) — sem ela o incêndio cai no App SELVA (leitura atual). Com a chave, a consulta usa `/v1/sensors` com `pm2.5_cf_1`, `pm2.5_60minute`, `pm2.5_24hour` e `location_type=0` (externos). O IVE usa a média horária CF=1, não `pm2.5_atm`. Horários em America/Manaus (UTC-4).
 
 O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app). O alias `operacoes.vercel.app` não aponta para um deploy — use o endereço completo acima.
 

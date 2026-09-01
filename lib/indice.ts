@@ -1,4 +1,4 @@
-import { LEVEL_LABELS } from "@/lib/alert-types";
+import { LEVEL_LABELS, airLevelFromPm25 } from "@/lib/alert-types";
 import { bonusDecretoDo } from "@/lib/decretos";
 import { HYDRO_STATUS_LABELS } from "@/lib/hydrology";
 import { MUNICIPALITIES } from "@/lib/municipalities";
@@ -173,6 +173,8 @@ export type IndiceLive = {
   alagamento: AlertLevel;
   movimento: AlertLevel;
   incendio: AlertLevel;
+  /** Média municipal de MP2,5 60 min (PurpleAir CF=1). Alimenta o IVE de incêndio. */
+  incendioPm25?: number | null;
   cheia: HydroStatus;
   estiagem: HydroStatus;
   /** Operador classificou este produto — o grau ao vivo prevalece sobre o boletim DC-AM. */
@@ -409,6 +411,14 @@ function liveNivel(id: IveId, live: IndiceLive): { level: string; pontos: number
       detalhe: `${labelRisco(live.movimento)} · ${INDICE_FONTE_MONITOR}`,
     };
   }
+  if (typeof live.incendioPm25 === "number" && Number.isFinite(live.incendioPm25)) {
+    const level = airLevelFromPm25(live.incendioPm25);
+    return {
+      level,
+      pontos: pontosDoNivel(level),
+      detalhe: `MP2,5 ${live.incendioPm25.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} µg/m³ · 60 min · PurpleAir CF=1`,
+    };
+  }
   return {
     level: live.incendio,
     pontos: pontosDoNivel(live.incendio),
@@ -422,6 +432,7 @@ function monitoramentoDo(
   cat: VulnerabMunicipio | null,
 ): { level: string; pontos: number; detalhe: string } {
   const liveRec = liveNivel(iveId, live);
+  if (iveId === "qualidade_ar" && typeof live.incendioPm25 === "number") return liveRec;
   if (operadorNoTipo(iveId, live)) return liveRec;
   const catRec = catalogMonitor(cat, iveId);
   if (liveRec.pontos >= catRec.pontos) return liveRec;

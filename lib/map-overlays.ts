@@ -317,10 +317,10 @@ export function syncAirSensors(L: LeafletNS, layer: LayerGroup, sensors: AirQual
       zIndexOffset: 40 + Math.min(90, n),
     })
       .bindTooltip(
-        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${place} · ${where}<br/>Raw MP2,5 1 dia ${formatUg(s.pm25)} · ${level}${
+        `<strong>${s.name}</strong><br/>${AIR_NETWORK_LABELS[s.network]} · ${place} · ${where}<br/>MP2,5 60 min ${formatUg(s.pm25Hour ?? s.pm25)} · 24 h ${formatUg(s.pm25Day)} · CF=1 ${formatUg(s.pm25Cf1)} · ${level}${
           s.temperatureC != null ? `<br/>${s.temperatureC.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} °C` : ""
         }<br/>${formatRelative(s.lastSeen)} · coordenada real PurpleAir${
-          s.anomalous ? "<br/><em>Valor acima de 500 µg/m³ — fora da mediana municipal</em>" : ""
+          s.anomalous ? "<br/><em>Valor acima de 500 µg/m³ — fora da média municipal</em>" : ""
         }`,
         { direction: "top", className: "map-point-tip" },
       )

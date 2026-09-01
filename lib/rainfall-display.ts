@@ -1,5 +1,5 @@
 import type { AlertType } from "@/lib/alert-types";
-import type { RainBand, RainfallWindows, RiskLevel } from "@/lib/types";
+import type { RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
 import {
   classifyMonitorRain,
   formatBandFloor,
@@ -69,6 +69,37 @@ export function hasRainReading(rain: RainfallWindows | null | undefined): boolea
 export function hasRain(rain: RainfallWindows | null | undefined): boolean {
   if (!rain) return false;
   return (rain.mm1h ?? 0) > 0 || (rain.mm6h ?? 0) > 0 || (rain.mm24h ?? 0) > 0;
+}
+
+export type RainNowPlace = {
+  nome: string;
+  bacia: string;
+  mm1h: number | null;
+  mm6h: number | null;
+  mm24h: number | null;
+};
+
+/** Municípios com chuva agora, do maior acumulado de 1 h para o menor — a faixa do CEMADEN passa por todos. */
+export function rainingPlaces(rain: RainfallPayload | null | undefined): RainNowPlace[] {
+  if (!rain) return [];
+  const rows: RainNowPlace[] = [];
+  for (const rec of Object.values(rain.byNome)) {
+    if (!hasRain(rec)) continue;
+    rows.push({
+      nome: rec.nome,
+      bacia: rec.bacia,
+      mm1h: rec.mm1h,
+      mm6h: rec.mm6h,
+      mm24h: rec.mm24h,
+    });
+  }
+  return rows.sort(
+    (a, b) =>
+      (b.mm1h ?? 0) - (a.mm1h ?? 0) ||
+      (b.mm6h ?? 0) - (a.mm6h ?? 0) ||
+      (b.mm24h ?? 0) - (a.mm24h ?? 0) ||
+      a.nome.localeCompare(b.nome, "pt-BR"),
+  );
 }
 
 export const INTENSE_MM_PER_H = 20;

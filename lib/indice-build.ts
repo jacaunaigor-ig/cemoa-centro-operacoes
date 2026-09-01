@@ -11,13 +11,13 @@ import {
   type IndicePayload,
 } from "@/lib/indice";
 import { VULNERAB_ATUALIZACAO } from "@/lib/vulnerabilidade";
-import type { AlertLevel, HydroStation } from "@/lib/types";
+import type { AlertLevel, AirQualityPayload, HydroStation } from "@/lib/types";
 
 const SOURCE = `Índice de Vulnerabilidade CEMOA · Defesa Civil AM ${VULNERAB_ATUALIZACAO} · Censo 2022 · SGB · Atlas IDHM 2010 · decretos SE · PMIF SEMA · boletim hidrológico`;
 
 export function buildIndicePayload(
   now = Date.now(),
-  opts?: { stations?: HydroStation[] },
+  opts?: { stations?: HydroStation[]; air?: AirQualityPayload | null },
 ): Omit<IndicePayload, "cache"> {
   const byTipo = Object.fromEntries(
     ALERT_TYPES.map((tipo) => {
@@ -39,6 +39,7 @@ export function buildIndicePayload(
       alagamento: byTipo.ALAGAMENTO.get(m.id) ?? "BAIXO",
       movimento: byTipo.MOVIMENTO.get(m.id) ?? "BAIXO",
       incendio: byTipo.INCENDIO.get(m.id) ?? "BOA",
+      incendioPm25: opts?.air?.byId[m.id]?.pm25 ?? opts?.air?.byNome[m.nome]?.pm25 ?? null,
       cheia: station ? statusAtivo(station, "enchente") : "NORMAL",
       estiagem: station ? statusAtivo(station, "vazante") : "NORMAL",
       classificado: {

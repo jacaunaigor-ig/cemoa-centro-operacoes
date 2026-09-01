@@ -3,6 +3,7 @@ import { cached } from "@/lib/cache";
 import { getSession } from "@/lib/auth";
 import { buildIndicePayload } from "@/lib/indice-build";
 import { buildHydrologyPayload } from "@/lib/live-state";
+import { getAirQualityPayload } from "@/lib/air-quality";
 import {
   hydrateAlertOverridesFromRemote,
   hydrateHydroOverridesFromRemote,
@@ -19,10 +20,12 @@ export async function GET() {
     hydrateAlertOverridesFromRemote(),
     hydrateHydroOverridesFromRemote(),
   ]);
+  const [stations, air] = await Promise.all([
+    Promise.resolve(buildHydrologyPayload(Date.now()).stations),
+    getAirQualityPayload().catch(() => null),
+  ]);
   const { data, cache } = cached("indice", 4000, () =>
-    buildIndicePayload(Date.now(), {
-      stations: buildHydrologyPayload(Date.now()).stations,
-    }),
+    buildIndicePayload(Date.now(), { stations, air }),
   );
   return NextResponse.json(
     { ...data, cache },

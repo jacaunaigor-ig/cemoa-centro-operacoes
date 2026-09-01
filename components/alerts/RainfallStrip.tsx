@@ -14,17 +14,10 @@ import {
   rainBand,
   rainBandColor,
   rainBandLabel,
+  rainingPlaces,
 } from "@/lib/rainfall-display";
 import { mapBurstThreshold } from "@/lib/monitor-thresholds";
 import { cn } from "@/lib/utils";
-
-function picoText(
-  label: string,
-  pico: { nome: string; mm: number } | null | undefined,
-): string | null {
-  if (!pico || pico.mm <= 0) return null;
-  return `${label} ${pico.nome} ${formatMm(pico.mm)}`;
-}
 
 export function RainfallStrip({
   rain,
@@ -43,10 +36,7 @@ export function RainfallStrip({
 }) {
   const cov = rain?.coverage;
   const picos = cov?.picos;
-  const destaque =
-    picoText("1 h", picos?.mm1h) ??
-    picoText("6 h", picos?.mm6h) ??
-    picoText("24 h", picos?.mm24h);
+  const chovendo = rainingPlaces(rain);
   const burst = mapBurstThreshold(tipo);
   const burstCount =
     tipo === "MOVIMENTO"
@@ -64,8 +54,8 @@ export function RainfallStrip({
 
   return (
     <div className={cn(
-      "flex items-center gap-2 rounded-xl border border-border bg-panel shadow-[var(--shadow-card)]",
-      isMobile ? "flex-nowrap px-2 py-1.5" : "flex-wrap px-3.5 py-2.5 gap-3",
+      "flex flex-col gap-1.5 rounded-xl border border-border bg-panel shadow-[var(--shadow-card)]",
+      isMobile ? "px-2 py-1.5" : "px-3.5 py-2.5",
       className,
     )}>
       <div className="flex min-w-0 items-center gap-2">
@@ -82,22 +72,42 @@ export function RainfallStrip({
           <p className="text-xs text-risco-alto">Pluviômetros indisponíveis.</p>
         ) : (
           <p className="truncate text-xs text-text">
-            {cov?.comEstacao ?? 0}/{cov?.municipiosCemoa ?? 62}
-            {destaque ? (
-              <span className="text-text-mute"> · pico {destaque}</span>
+            {cov?.comEstacao ?? 0}/{cov?.municipiosCemoa ?? 62} com estação
+            {chovendo.length ? (
+              <span className="text-text-mute">
+                {" "}
+                · {chovendo.length} com chuva agora
+              </span>
             ) : (
-              <span className="text-text-mute"> · sem chuva</span>
+              <span className="text-text-mute"> · sem chuva neste ciclo</span>
             )}
           </p>
         )}
-      </div>
       </div>
       {!isMobile ? (
       <div className="hidden w-[9.5rem] shrink-0 sm:block">
         <RainWindowsChart rain={statewide} compact tipo={tipo} />
       </div>
       ) : null}
-      <div className={cn("flex min-w-0 gap-1", isMobile ? "flex-1 overflow-x-auto" : "ml-auto flex-wrap")}>
+      </div>
+      {chovendo.length ? (
+        <div className="ticker-wrapper ticker-inline" aria-label="Municípios com chuva agora">
+          <div className="ticker-track">
+            {[0, 1].map((copy) =>
+              chovendo.map((m) => (
+                <span key={`${copy}-${m.nome}`} className="ticker-item">
+                  <strong className="text-text">{m.nome}</strong>
+                  <span className="font-mono tabular-nums" style={{ color: rainBandColor(rainBand(m.mm1h ?? m.mm6h ?? m.mm24h)) }}>
+                    {formatMm(m.mm1h)} / {formatMmShort(m.mm6h)} / {formatMmShort(m.mm24h)}
+                  </span>
+                  <span className="text-text-mute">1 h · 6 h · 24 h</span>
+                </span>
+              )),
+            )}
+          </div>
+        </div>
+      ) : null}
+      <div className={cn("flex min-w-0 gap-1", isMobile ? "overflow-x-auto" : "flex-wrap")}>
         <RainChip active={filter === "TODOS"} onClick={() => onFilter("TODOS")}>
           Todos
         </RainChip>
@@ -110,15 +120,15 @@ export function RainfallStrip({
         <RainChip active={filter === "INTENSO"} onClick={() => onFilter("INTENSO")}>
           {burst.label.replace("≥ ", "≥")} ({burstCount})
         </RainChip>
+        {hasRain(rain?.maior ?? null) ? (
+          <span
+            className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold lg:inline"
+            style={{ color: rainBandColor(band), background: `${rainBandColor(band)}22` }}
+          >
+            {rainBandLabel(band)}
+          </span>
+        ) : null}
       </div>
-      {hasRain(rain?.maior ?? null) ? (
-        <span
-          className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold lg:inline"
-          style={{ color: rainBandColor(band), background: `${rainBandColor(band)}22` }}
-        >
-          {rainBandLabel(band)}
-        </span>
-      ) : null}
     </div>
   );
 }

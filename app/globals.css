@@ -255,11 +255,18 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   }
 }
 
-.ticker-wrapper {
+.ticker-inline {
   overflow: hidden;
-  border-top: 1px solid var(--border);
-  background: var(--panel-2);
-  height: 38px;
+  min-width: 0;
+  flex: 1;
+  height: 22px;
+  border: 0;
+  background: transparent;
+}
+.ticker-inline .ticker-track {
+  animation-duration: 36s;
+  padding: 2px 0;
+  gap: 1.25rem;
 }
 
 .ticker-track {

@@ -13,19 +13,19 @@ import type {
 const SELVA_ORIGIN = "https://www.appselva.com.br";
 const PURPLEAIR_API = "https://api.purpleair.com/v1/sensors";
 const UA = "CEMOA-CentroOperacoes/1.0 (Defesa Civil do Amazonas)";
-const TTL_MS = 90_000;
+const TTL_MS = 60_000;
 const COOKIE_TTL_MS = 20 * 60_000;
-const FRESH_MS = 7 * 24 * 60 * 60 * 1000;
-const MAX_AGE_SEC = 7 * 24 * 3600;
+const FRESH_MS = 2 * 60 * 60 * 1000;
+const MAX_AGE_SEC = 2 * 3600;
 const MAX_KM = 55;
 const ANOMALOUS_UG = 500;
 const AM_BBOX = { west: -73.9, south: -11.2, east: -56.0, north: 2.4 };
 const MESH_PATH = join(process.cwd(), "public/geo/amazonas-municipios.json");
 
 const SOURCE_PURPLEAIR =
-  "PurpleAir · Raw MP2,5 média de 1 dia (CF=1), sem conversão, sensores internos e externos no recorte do Amazonas";
+  "PurpleAir · MP2,5 CF=1, média horária (pm2.5_60minute) e 24 h, só sensores externos (location_type=0), média municipal — não soma. Horários em America/Manaus (UTC-4)";
 const SOURCE_SELVA =
-  "App SELVA · MP2,5 leitura atual (fallback). O índice do incêndio é o Raw MP2,5 média de 1 dia da PurpleAir, sem conversão, internos e externos";
+  "App SELVA · fallback da leitura atual. O incêndio no IVE usa PurpleAir pm2.5_60minute (CF=1), externos, média municipal";
 
 type Memo = { at: number; data: AirQualityPayload };
 let memo: Memo | null = null;
@@ -60,11 +60,94 @@ function kmBetween(lat1: number, lon1: number, lat2: number, lon2: number) {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-function median(nums: number[]): number | null {
-  if (!nums.length) return null;
-  const sorted = [...nums].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+function mean(nums: number[]): number | null {
+  const valid = nums.filter((n) => Number.isFinite(n) && n >= 0);
+  if (!valid.length) return null;
+  return Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10;
+}
+
+function numField(row: unknown[], fields: string[], names: string[]): number | null {
+  for (const name of names) {
+    const i = fields.indexOf(name);
+    if (i < 0) continue;
+    const n = Number(row[i]);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return null;
+}
+
+function statsNumber(stats: unknown, names: string[]): number | null {
+  if (!stats) return null;
+  let rec: unknown = stats;
+  if (typeof rec === "string") {
+    try {
+      rec = JSON.parse(rec);
+    } catch {
+      return null;
+    }
+  }
+  if (!rec || typeof rec !== "object") return null;
+  const obj = rec as Record<string, unknown>;
+  for (const name of names) {
+    const n = Number(obj[name]);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return null;
+}
+
+function purpleAirKey(): string | null {
+  const key =
+    process.env.PURPLEAIR_API_KEY?.trim() || process.env.PURPLEAIR_READ_KEY?.trim() || "";
+  return key || null;
+}
+
+/** CF=1 bruto (pm2.5hour|d0). Nunca usa pm2.5_atm. */
+function pm25Cf1FromRow(row: unknown[], fields: string[]): number | null {
+  const iStats = fields.indexOf("stats");
+  return (
+    numField(row, fields, ["pm2.5_cf_1", "pm2.5_raw"]) ??
+    statsNumber(iStats >= 0 ? row[iStats] : null, ["pm2.5_cf_1", "pm2.5"])
+  );
+}
+
+function pm25HourFromRow(row: unknown[], fields: string[]): number | null {
+  const iStats = fields.indexOf("stats");
+  return (
+    numField(row, fields, ["pm2.5_60minute", "pm2.5_cf_1"]) ??
+    statsNumber(iStats >= 0 ? row[iStats] : null, ["pm2.5_60minute", "pm2.5hour", "pm2.5_cf_1"])
+  );
+}
+
+function pm25DayFromRow(row: unknown[], fields: string[]): number | null {
+  const iStats = fields.indexOf("stats");
+  return (
+    numField(row, fields, ["pm2.5_24hour", "pm2.5_cf_1_24hour"]) ??
+    statsNumber(iStats >= 0 ? row[iStats] : null, ["pm2.5_24hour", "pm2.5_cf_1"])
+  );
+}
+
+async function fetchPurpleAirPacket(key: string): Promise<SelvaPacket> {
+  const params = new URLSearchParams({
+    fields:
+      "sensor_index,last_seen,name,latitude,longitude,location_type,pm2.5_cf_1,pm2.5_60minute,pm2.5_24hour",
+    location_type: "0",
+    max_age: String(MAX_AGE_SEC),
+    nwlng: String(AM_BBOX.west),
+    nwlat: String(AM_BBOX.north),
+    selng: String(AM_BBOX.east),
+    selat: String(AM_BBOX.south),
+  });
+  const res = await fetch(`${PURPLEAIR_API}?${params}`, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": UA,
+      "X-API-Key": key,
+    },
+    signal: AbortSignal.timeout(20_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`PurpleAir HTTP ${res.status}`);
+  return parseJsonBody(await res.text());
 }
 
 function fahrenheitToC(raw: unknown): number | null {
@@ -98,61 +181,6 @@ function cookieFromHeaders(headers: Headers): string | null {
     if (match) return match[1];
   }
   return null;
-}
-
-function purpleAirKey(): string | null {
-  const key =
-    process.env.PURPLEAIR_API_KEY?.trim() || process.env.PURPLEAIR_READ_KEY?.trim() || "";
-  return key || null;
-}
-
-function pm25FromRow(row: unknown[], fields: string[]): number | null {
-  for (const name of ["pm2.5_cf_1", "pm2.5_cf_1_24hour", "pm2.5_24hour", "pm2.5_atm", "pm2.5"]) {
-    const i = fields.indexOf(name);
-    if (i < 0) continue;
-    const n = Number(row[i]);
-    if (Number.isFinite(n)) return n;
-  }
-  const iStats = fields.indexOf("stats");
-  if (iStats < 0) return null;
-  let stats: unknown = row[iStats];
-  if (typeof stats === "string") {
-    try {
-      stats = JSON.parse(stats);
-    } catch {
-      return null;
-    }
-  }
-  if (!stats || typeof stats !== "object") return null;
-  const rec = stats as Record<string, unknown>;
-  for (const name of ["pm2.5_24hour", "pm2.5_cf_1", "pm2.5"]) {
-    const n = Number(rec[name]);
-    if (Number.isFinite(n)) return n;
-  }
-  return null;
-}
-
-async function fetchPurpleAirPacket(key: string): Promise<SelvaPacket> {
-  const params = new URLSearchParams({
-    fields: "sensor_index,last_seen,name,latitude,longitude,pm2.5_cf_1,location_type",
-    average: "1440",
-    max_age: String(MAX_AGE_SEC),
-    nwlng: String(AM_BBOX.west),
-    nwlat: String(AM_BBOX.north),
-    selng: String(AM_BBOX.east),
-    selat: String(AM_BBOX.south),
-  });
-  const res = await fetch(`${PURPLEAIR_API}?${params}`, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": UA,
-      "X-API-Key": key,
-    },
-    signal: AbortSignal.timeout(20_000),
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`PurpleAir HTTP ${res.status}`);
-  return parseJsonBody(await res.text());
 }
 
 async function fetchSelvaCookie(): Promise<string> {
@@ -294,10 +322,10 @@ function buildFromPacket(
   const iLoc = fieldIndex(fields, ["location_type"]);
   const hasPm =
     fieldIndex(fields, [
+      "pm2.5_60minute",
       "pm2.5_cf_1",
-      "pm2.5_cf_1_24hour",
       "pm2.5_24hour",
-      "pm2.5_atm",
+      "pm2.5_cf_1_24hour",
       "pm2.5",
       "stats",
     ]) >= 0;
@@ -314,31 +342,39 @@ function buildFromPacket(
     if (!Array.isArray(row)) continue;
     const lat = Number(row[iLat]);
     const lon = Number(row[iLon]);
-    const pm25 = pm25FromRow(row, fields);
     const lastSeenSec = Number(row[iSeen]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon) || pm25 == null) continue;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     if (lat < AM_BBOX.south || lat > AM_BBOX.north || lon < AM_BBOX.west || lon > AM_BBOX.east) {
       continue;
     }
-    const lastSeen = Number.isFinite(lastSeenSec) ? lastSeenSec * 1000 : 0;
-    if (lastSeen < freshAfter) continue;
+    const indoor = iLoc >= 0 && Number(row[iLoc]) === 1;
+    if (indoor) continue;
+    const lastSeen = Number.isFinite(lastSeenSec) && lastSeenSec > 0 ? lastSeenSec * 1000 : 0;
+    if (!lastSeen || lastSeen < freshAfter) continue;
+    const pm25Hour = pm25HourFromRow(row, fields);
+    const pm25Day = pm25DayFromRow(row, fields);
+    const pm25Cf1 = pm25Cf1FromRow(row, fields);
+    const pm25 = pm25Hour ?? pm25Cf1 ?? pm25Day;
+    if (pm25 == null) continue;
     const hit = municipioOf(lat, lon);
     if (!hit) continue;
     const name = String(row[iName] ?? `sensor ${row[iIndex]}`);
-    const indoor = iLoc >= 0 && Number(row[iLoc]) === 1;
     sensors.push({
       sensorIndex: Number(row[iIndex]) || 0,
       name,
       lat,
       lon,
       pm25,
+      pm25Hour,
+      pm25Day,
+      pm25Cf1,
       temperatureC: iTemp >= 0 ? fahrenheitToC(row[iTemp]) : null,
       lastSeen,
       municipioId: hit.id,
       municipioNome: hit.nome,
       kmSede: Math.round(hit.km * 10) / 10,
       anomalous: pm25 > ANOMALOUS_UG,
-      indoor,
+      indoor: false,
       network: networkOf(name),
     });
   }
@@ -363,7 +399,10 @@ function buildFromPacket(
     const list = grouped.get(m.id);
     if (!list?.length) continue;
     const valid = list.filter((s) => !s.anomalous);
-    const pm25 = median(valid.map((s) => s.pm25));
+    const pm25Hour = mean(valid.map((s) => s.pm25Hour).filter((n): n is number => n != null));
+    const pm25Day = mean(valid.map((s) => s.pm25Day).filter((n): n is number => n != null));
+    const pm25Cf1 = mean(valid.map((s) => s.pm25Cf1).filter((n): n is number => n != null));
+    const pm25 = pm25Hour ?? mean(valid.map((s) => s.pm25));
     const level = pm25 == null ? null : airLevelFromPm25(pm25);
     const observedAt = Math.max(...list.map((s) => s.lastSeen));
     const rec: AirQualityMunicipio = {
@@ -371,6 +410,9 @@ function buildFromPacket(
       nome: m.nome,
       bacia: m.bacia,
       pm25,
+      pm25Hour,
+      pm25Day,
+      pm25Cf1,
       level,
       sensors: list.sort((a, b) => b.pm25 - a.pm25),
       observedAt,
@@ -418,7 +460,9 @@ export async function getAirQualityPayload(): Promise<AirQualityPayload> {
     inflight = (async () => {
       try {
         const key = purpleAirKey();
-        let purpleError: string | null = null;
+        let purpleError: string | null = key
+          ? null
+          : "Sem PURPLEAIR_API_KEY. Gere uma chave de leitura em https://develop.purpleair.com/";
         if (key) {
           try {
             const packet = await fetchPurpleAirPacket(key);
@@ -434,7 +478,7 @@ export async function getAirQualityPayload(): Promise<AirQualityPayload> {
           const data = buildFromPacket(
             packet,
             purpleError
-              ? `${purpleError}. Usando SELVA (leitura atual, não o Raw média de 1 dia).`
+              ? `${purpleError}. Usando SELVA (leitura atual, não o pm2.5_60minute da PurpleAir).`
               : null,
             SOURCE_SELVA,
           );
