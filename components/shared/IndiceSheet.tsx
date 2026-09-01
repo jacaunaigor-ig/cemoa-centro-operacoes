@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PmifBadge } from "@/components/shared/PmifBadge";
 import {
   INDICE_FAIXA_COLORS,
   INDICE_FAIXAS,
@@ -82,7 +83,11 @@ export function IndiceSheet({
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
             Índice de Vulnerabilidade
           </p>
-          <p className="text-[10px] text-text-mute">IVG · IVE · {filtered.length} municípios</p>
+          <p className="text-[10px] text-text-mute">
+            {ive === "qualidade_ar"
+              ? `Incêndio florestal · ${filtered.length} municípios · PMIF +5`
+              : `IVG · IVE · ${filtered.length} municípios`}
+          </p>
         </div>
         <button
           type="button"
@@ -165,9 +170,13 @@ export function IndiceSheet({
                     aria-hidden
                   />
                   <span className="min-w-0 flex-1">
-                    <strong className="block truncate text-[12px] text-text">{row.nome}</strong>
+                    <strong className="flex min-w-0 items-center gap-1 text-[12px] text-text">
+                      <span className="truncate">{row.nome}</span>
+                      {row.pmif ? <PmifBadge bonus={ive === "qualidade_ar"} /> : null}
+                    </strong>
                     <span className="block truncate text-[10px] text-text-mute">
                       {nivelOf(row, ive)} · {row.calha} · {TENDENCIA_LABELS[row.historico.tendencia]}
+                      {ive === "qualidade_ar" && row.pmif ? " · bônus PMIF" : ""}
                     </span>
                   </span>
                   <span className="font-mono text-[13px] font-bold tabular-nums text-text">

@@ -85,16 +85,19 @@ Na **versão admin** (Desktop com Edição ligada) a ficha também traz o **Índ
 
 Controle interno do operador: aparece só no **Desktop** com **Edição** ligada. Não entra no mobile nem para quem só visualiza o mapa.
 
-Catálogo dos 62 municípios (`data/vulnerabilidade.json`):
+O IVE de cada risco é recalculado na hora, município a município:
 
-- **Nome**, **IVG** (pontuação total) e **nível de alerta**
-- **IVE** por tipo de desastre: inundação, estiagem, chuva intensa, movimento de massa e qualidade do ar
-- Ficha com **base** (crianças/idosos, áreas mapeadas, IDHM), **histórico** (eventos e tendência) e **monitoramento**
-- Filtros por **IVE**, **tendência** (piorando / estável / melhorando) e **calha** (Rio Negro, Madeira, Solimões…)
+**IVE (tipo) = Base estrutural (0–50) + Histórico do tipo (0–10) + Monitoramento do tipo (0–10, ou 0–15 no incêndio).**
 
-Cores: Baixo `#2ecc71`, Moderado `#f1c40f`, Alto `#e67e22`, Severo `#e74c3c`, Extremo `#8e44ad`. Faixas 0–20 / 21–40 / 41–60 / 61–80 / 81–100.
+- **Base** — comum aos cinco riscos: população vulnerável (crianças e idosos, até 15), áreas de risco mapeadas pelo SGB/Defesa Civil (log de habitantes, até 20) e capacidade de resposta (menor IDHM, até 15).
+- **Histórico** — só os desastres daquele tipo reconhecidos pela Defesa Civil AM. Frequência: (anos com o tipo / anos da série) × 5. Diversidade: (subtipos já ocorridos / 3) × 5.
+- **Monitoramento** — nível atual (Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10) a partir do boletim e da classificação do operador. Fonte: **Defesa Civil AM**. Cota fluvial, à parte, continua **ANA**. No **incêndio florestal**, os 23 municípios do PMIF recebem **+5**.
 
-O monitoramento ao vivo (boletim e classificação do operador) pode somar pontos em cima do catálogo. Qualidade do ar **não** entra sozinha pelo sensor — só se o operador classificar. O índice **não altera** o grau dos produtos.
+Tipos: incêndio florestal (inclui queimadas; selo PMIF), chuva intensa / alagamento, estiagem, enchente / inundação e movimento de massa. A ficha mostra destaque hidrológico (bacia e rio), os 3 critérios da base, as 5 barras de IVE, a série de anos/tipos e o monitoramento com a fonte. O ranking do painel ordena os 62 municípios por cada IVE.
+
+Cores: Baixo `#2ecc71`, Moderado `#f1c40f`, Alto `#e67e22`, Severo `#e74c3c`, Extremo `#8e44ad`. Faixas 0–20 / 21–40 / 41–55 / 56–80 / 81–100.
+
+PurpleAir **não** entra sozinho no IVE de incêndio — só a classificação do operador, o boletim DC-AM e o bônus PMIF. O índice **não altera** o grau dos produtos.
 
 O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
 

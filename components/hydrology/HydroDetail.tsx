@@ -457,6 +457,7 @@ function RiskCard({
         <span className="text-xs font-bold">{title}</span>
         <HydroStatusBadge status={status} missing={missing} />
       </div>
+      <p className="mt-1 text-[10px] text-text-mute">Grau · Defesa Civil AM</p>
       <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-text-mute">
         <div>
           Moderado{" "}
@@ -471,6 +472,7 @@ function RiskCard({
           </b>
         </div>
       </div>
+      <p className="mt-1.5 text-[10px] text-text-mute">Limiar de cota · ANA</p>
     </div>
   );
 }

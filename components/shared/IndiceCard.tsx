@@ -2,9 +2,12 @@ import { formatHab } from "@/lib/demografia";
 import {
   INDICE_FAIXA_COLORS,
   INDICE_FAIXAS,
+  INDICE_FONTE_MONITOR,
   TENDENCIA_LABELS,
+  iveTeto,
   type IndiceMunicipio,
 } from "@/lib/indice";
+import { PmifBadge } from "@/components/shared/PmifBadge";
 import { cn } from "@/lib/utils";
 
 function Bar({ value, max, color }: { value: number; max: number; color: string }) {
@@ -34,7 +37,10 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
   const pessoas =
     typeof rec.estrutural.pessoasRisco === "number" ? formatHab(rec.estrutural.pessoasRisco) : null;
   const faixa = INDICE_FAIXAS.find((f) => f.id === rec.faixa);
-  const tipos = Object.entries(rec.historico.tipos).sort((a, b) => b[1] - a[1]);
+  const historico = rec.historico.eventos
+    .slice()
+    .sort((a, b) => b.ano - a.ano || a.tipo.localeCompare(b.tipo, "pt-BR"));
+  const incendio = rec.ive.find((item) => item.id === "qualidade_ar");
 
   return (
     <div className="rounded-lg border border-border bg-bg/40 p-2.5">
@@ -43,9 +49,9 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
             Índice de Vulnerabilidade
           </small>
-          <p className="truncate text-[13px] font-bold text-text">{rec.nome}</p>
-          <p className="text-[10px] text-text-mute">
-            {rec.calha} · {TENDENCIA_LABELS[rec.historico.tendencia]}
+          <p className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[13px] font-bold text-text">{rec.nome}</span>
+            {rec.pmif ? <PmifBadge bonus={Boolean(incendio?.pmifBonus)} /> : null}
           </p>
         </div>
         <span
@@ -60,38 +66,32 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
         {faixa?.label ?? rec.faixa} · IVG
       </p>
 
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <div>
-          <p className="flex justify-between text-[10px] font-bold text-text-mute uppercase">
-            Base <span className="font-mono tabular-nums text-text">{rec.estrutural.total}/50</span>
-          </p>
-          <Bar value={rec.estrutural.total} max={50} color={INDICE_FAIXA_COLORS[rec.faixa]} />
-        </div>
-        <div>
-          <p className="flex justify-between text-[10px] font-bold text-text-mute uppercase">
-            Histórico <span className="font-mono tabular-nums text-text">{rec.historico.total}/10</span>
-          </p>
-          <Bar value={rec.historico.total} max={10} color={INDICE_FAIXA_COLORS[rec.faixa]} />
-        </div>
-      </div>
-      <div className="mt-2">
-        <p className="flex justify-between text-[10px] font-bold text-text-mute uppercase">
-          Monitoramento{" "}
-          <span className="font-mono tabular-nums text-text">{rec.monitoramento.total}/50</span>
+      <section className="mt-2 rounded-md border border-border/80 bg-panel/40 px-2 py-1.5">
+        <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
+          Destaque hidrológico
         </p>
-        <Bar value={rec.monitoramento.total} max={50} color={INDICE_FAIXA_COLORS[rec.faixa]} />
-      </div>
+        <p className="mt-0.5 text-[12px] font-semibold text-text">
+          {rec.bacia}
+          {rec.rio ? ` · ${rec.rio}` : ""}
+        </p>
+        <p className="text-[10px] text-text-mute">{rec.calha}</p>
+      </section>
 
-      <dl className="mt-2 grid gap-1 text-[11px] text-text-dim">
+      <p className="mt-2 flex justify-between text-[10px] font-bold tracking-wide text-text-mute uppercase">
+        Base estrutural
+        <span className="font-mono tabular-nums text-text">{rec.estrutural.total}/50</span>
+      </p>
+      <Bar value={rec.estrutural.total} max={50} color={INDICE_FAIXA_COLORS[rec.faixa]} />
+      <dl className="mt-1.5 grid gap-1 text-[11px] text-text-dim">
         <div className="flex justify-between gap-2">
-          <dt>Crianças e idosos</dt>
+          <dt>População vulnerável</dt>
           <dd className="font-mono tabular-nums text-text">
             {rec.estrutural.populacao}/15
             {rec.estrutural.pctVulneravel != null ? ` · ${rec.estrutural.pctVulneravel}%` : ""}
           </dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt>Áreas mapeadas</dt>
+          <dt>Áreas de risco mapeadas</dt>
           <dd className="font-mono tabular-nums text-text">
             {rec.estrutural.areasRisco}/20
             {rec.estrutural.setores
@@ -101,54 +101,65 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
           </dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt>Capacidade (IDHM)</dt>
+          <dt>Capacidade de resposta</dt>
           <dd className="font-mono tabular-nums text-text">
             {rec.estrutural.capacidade}/15
             {rec.estrutural.idhm != null
-              ? ` · ${rec.estrutural.idhm.toLocaleString("pt-BR", { minimumFractionDigits: 3 })}`
+              ? ` · IDHM ${rec.estrutural.idhm.toLocaleString("pt-BR", { minimumFractionDigits: 3 })}`
               : ""}
           </dd>
         </div>
       </dl>
 
-      <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">IVE por desastre</p>
-      <ul className="mt-1 grid gap-1">
+      <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+        IVE por desastre
+      </p>
+      <ul className="mt-1 grid gap-1.5">
         {rec.ive.map((item) => (
-          <li key={item.id} className="flex items-center justify-between gap-2 text-[11px] text-text-dim">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span
-                className="size-2 shrink-0 rounded-sm"
-                style={{ background: INDICE_FAIXA_COLORS[item.faixa] }}
-                aria-hidden
-              />
-              <span className="truncate">{item.label}</span>
-            </span>
-            <span className="shrink-0 font-mono tabular-nums text-text">
-              {item.total.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} · {item.nivel}
-            </span>
+          <li key={item.id}>
+            <p className="flex items-center justify-between gap-2 text-[11px] text-text-dim">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span
+                  className="size-2 shrink-0 rounded-sm"
+                  style={{ background: INDICE_FAIXA_COLORS[item.faixa] }}
+                  aria-hidden
+                />
+                <span className="truncate">{item.label}</span>
+                {item.id === "qualidade_ar" && rec.pmif ? <PmifBadge bonus /> : null}
+              </span>
+              <span className="shrink-0 font-mono tabular-nums text-text">
+                {item.total.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} · {item.nivel}
+              </span>
+            </p>
+            <Bar value={item.total} max={iveTeto(item.id)} color={INDICE_FAIXA_COLORS[item.faixa]} />
           </li>
         ))}
       </ul>
 
       <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">Histórico</p>
-      <p className="mt-0.5 text-[11px] text-text-dim">
-        {tipos.length
-          ? tipos.map(([tipo, n]) => `${tipo} (${n})`).join(" · ")
-          : "Sem série de eventos no catálogo."}
-      </p>
-      {rec.historico.eventos.length ? (
-        <p className="mt-0.5 text-[10px] text-text-mute">
-          {rec.historico.eventos
-            .slice()
-            .sort((a, b) => b.ano - a.ano)
-            .slice(0, 6)
-            .map((ev) => `${ev.ano} ${ev.tipo}`)
-            .join(" · ")}
-          {rec.historico.eventos.length > 6 ? "…" : ""}
+      {historico.length ? (
+        <ol className="mt-1 max-h-28 overflow-y-auto overscroll-contain text-[11px] text-text-dim">
+          {historico.map((ev, i) => (
+            <li key={`${ev.ano}-${ev.tipo}-${i}`} className="flex justify-between gap-2 py-px">
+              <span className="min-w-0 truncate">{ev.tipo}</span>
+              <span className="shrink-0 font-mono tabular-nums text-text-mute">{ev.ano}</span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-0.5 text-[11px] text-text-dim">
+          Sem desastre reconhecido pela Defesa Civil AM neste município.
         </p>
-      ) : null}
+      )}
+      <p className="mt-0.5 text-[10px] text-text-mute">
+        {TENDENCIA_LABELS[rec.historico.tendencia]} · {rec.historico.eventos.length} registro
+        {rec.historico.eventos.length === 1 ? "" : "s"}
+      </p>
 
-      <ul className="mt-2 grid gap-1">
+      <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+        Monitoramento
+      </p>
+      <ul className="mt-1 grid gap-1">
         {rec.monitoramento.eventos.map((ev) => (
           <li
             key={ev.id}
@@ -159,7 +170,7 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
           >
             <span className="min-w-0 truncate">
               {ev.label}
-              <span className="text-text-mute"> · {ev.detalhe}</span>
+              <span className="text-text-mute"> · {ev.nivel}</span>
             </span>
             <span className="shrink-0 font-mono tabular-nums text-text">
               {ev.pontos}/{ev.max}
@@ -167,6 +178,7 @@ export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined })
           </li>
         ))}
       </ul>
+      <p className="mt-1 text-[10px] text-text-mute">Fonte: {INDICE_FONTE_MONITOR}</p>
     </div>
   );
 }

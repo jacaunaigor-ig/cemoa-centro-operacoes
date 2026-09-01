@@ -3,21 +3,21 @@ import { normalizeMunicipio } from "@/lib/hydrology";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 
 export const IVE_IDS = [
-  "inundacao",
-  "estiagem",
-  "chuva_intensa",
-  "movimento_massa",
   "qualidade_ar",
+  "chuva_intensa",
+  "estiagem",
+  "inundacao",
+  "movimento_massa",
 ] as const;
 
 export type IveId = (typeof IVE_IDS)[number];
 
 export const IVE_LABELS: Record<IveId, string> = {
-  inundacao: "Inundação",
+  qualidade_ar: "Incêndio florestal",
+  chuva_intensa: "Chuva intensa / alagamento",
   estiagem: "Estiagem",
-  chuva_intensa: "Chuva intensa",
+  inundacao: "Enchente / inundação",
   movimento_massa: "Movimento de massa",
-  qualidade_ar: "Qualidade do ar",
 };
 
 export type VulnerabTendencia = "piorando" | "estavel" | "melhorando";
