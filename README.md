@@ -94,7 +94,7 @@ O IVE de cada risco é recalculado na hora, município a município:
 - **Monitoramento** — nível atual (Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10). Fonte: **Defesa Civil AM**. Cota fluvial, à parte, continua **ANA**.
 - **Bônus de decreto** — Situação de Emergência há 10 anos ou menos (≥ 2016): **+20**; mais antiga: **+10**. Enchente e estiagem: os 62 municípios entram com decreto recente.
 - **Bônus PMIF** — **+20** no IVE de incêndio florestal para os 23 municípios prioritários (SEMA/AM).
-- **Bônus tempestade** — **+20** no IVE de chuva se houver Tempestade Local/Convectiva, Vendaval ou Chuvas Intensas desde 2018; **+10** se a série for só mais antiga (ex.: Rio Preto da Eva, 2017).
+- **Bônus tempestade** — **+20** no IVE de chuva para os 17 municípios com tempestade recente (Tempestade Local/Convectiva, Vendaval ou Chuvas Intensas) e para Rio Preto da Eva; decreto de 2017 em Rio Preto da Eva soma **+10**. Os demais não recebem esse bônus.
 
 O **IVG** é o maior dos cinco IVE do município. Tipos: incêndio (incêndio florestal, queimadas, focos de calor), chuva/tempestade (alagamento, tempestade, vendaval, enxurradas), estiagem (estiagem, seca, vazante), enchente (inundação, cheia, alagamento de cheia) e movimento de massa (deslizamento, erosão de margem e continental).
 

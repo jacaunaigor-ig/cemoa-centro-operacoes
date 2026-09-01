@@ -95,7 +95,7 @@ export { IVE_IDS, IVE_LABELS, TENDENCIA_LABELS };
 /** Palavras-chave dos desastres reconhecidos (Defesa Civil AM) para cada IVE. */
 const IVE_TIPO_KEYS: Record<IveId, string[]> = {
   qualidade_ar: ["INCENDIO", "QUEIMADA", "FOCOS DE CALOR", "FOCO DE CALOR"],
-  chuva_intensa: ["ALAGAMENTO", "TEMPESTADE", "CHUVA INTENSA", "CHUVAS INTENSAS", "VENDAVAL", "ENXURRADA"],
+  chuva_intensa: ["TEMPESTADE", "CHUVA INTENSA", "CHUVAS INTENSAS", "VENDAVAL"],
   estiagem: ["ESTIAGEM", "SECA", "VAZANTE"],
   inundacao: ["INUNDAC", "CHEIA", "ALAGAMENTO"],
   movimento_massa: ["DESLIZ", "EROSAO"],
