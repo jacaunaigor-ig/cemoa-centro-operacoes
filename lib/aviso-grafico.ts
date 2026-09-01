@@ -1,7 +1,8 @@
-/** Aviso Meteorológico oficial — janela de 4 h (00–04, 04–08, 08–12, 12–16, 16–20, 20–00), Manaus. */
+/** Aviso Meteorológico oficial — janela de 4 h a partir das 02 h (02–06, 06–10, 10–14, 14–18, 18–22, 22–02), Manaus. */
 
 export const AVISO_GRAFICO_HOURS = 4;
-export const AVISO_SLOT_HOURS = ["00–04", "04–08", "08–12", "12–16", "16–20", "20–00"] as const;
+export const AVISO_SLOT_OFFSET_HOUR = 2;
+export const AVISO_SLOT_HOURS = ["02–06", "06–10", "10–14", "14–18", "18–22", "22–02"] as const;
 export type AvisoSlotHours = (typeof AVISO_SLOT_HOURS)[number];
 
 export const AVISO_CALHAS = [
@@ -84,19 +85,38 @@ export function avisoJanelasTexto() {
 
 export function avisoSlotAt(now = Date.now()): AvisoSlot {
   const w = manausWall(now);
-  const startHour = Math.floor(w.hour / AVISO_GRAFICO_HOURS) * AVISO_GRAFICO_HOURS;
-  const startAt = manausWallToUtc(w.year, w.month, w.day, startHour);
-  let endAt: number;
-  if (startHour + AVISO_GRAFICO_HOURS >= 24) {
-    const next = addCalendarDays(w.year, w.month, w.day, 1);
-    endAt = manausWallToUtc(next.year, next.month, next.day, 0);
+  const offset = AVISO_SLOT_OFFSET_HOUR;
+  const span = AVISO_GRAFICO_HOURS;
+  let year = w.year;
+  let month = w.month;
+  let day = w.day;
+  let startHour: number;
+
+  if (w.hour < offset) {
+    const prev = addCalendarDays(year, month, day, -1);
+    year = prev.year;
+    month = prev.month;
+    day = prev.day;
+    startHour = 24 - span + offset;
   } else {
-    endAt = manausWallToUtc(w.year, w.month, w.day, startHour + AVISO_GRAFICO_HOURS);
+    startHour = offset + Math.floor((w.hour - offset) / span) * span;
   }
+
+  const startAt = manausWallToUtc(year, month, day, startHour);
+  let endAt: number;
+  const endHour = startHour + span;
+  if (endHour >= 24) {
+    const next = addCalendarDays(year, month, day, 1);
+    endAt = manausWallToUtc(next.year, next.month, next.day, endHour - 24);
+  } else {
+    endAt = manausWallToUtc(year, month, day, endHour);
+  }
+
+  const idx = startHour === 24 - span + offset ? AVISO_SLOT_HOURS.length - 1 : (startHour - offset) / span;
   return {
     startAt,
     endAt,
-    hours: AVISO_SLOT_HOURS[startHour / AVISO_GRAFICO_HOURS],
+    hours: AVISO_SLOT_HOURS[idx],
   };
 }
 
