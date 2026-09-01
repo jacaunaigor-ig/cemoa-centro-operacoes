@@ -17,7 +17,9 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { fetchJson } from "@/lib/client";
 import {
   AVISO_CALHAS,
+  AVISO_GRAFICO_HOURS,
   AVISO_TEXTO_PADRAO,
+  avisoJanelasTexto,
   avisoSlotAt,
   draftAvisoGrafico,
   formatManausStamp,
@@ -106,12 +108,12 @@ export function AvisoGraficoButton({ compact = false }: { compact?: boolean }) {
       type="button"
       onClick={() => setOpen(true)}
       className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-border bg-panel px-2 py-1 text-left hover:border-border-strong"
-      title="Montar o Aviso Meteorológico de 6 horas com a imagem GOES do CPTEC/INPE"
+      title={`Montar o Aviso Meteorológico de ${AVISO_GRAFICO_HOURS} horas com a imagem GOES do CPTEC/INPE`}
     >
       <Satellite className="size-4 shrink-0 text-focus" />
       <span className="min-w-0 leading-tight">
         <span className="block text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
-          {compact ? `Aviso ${slot.hours}` : `Aviso 6 h · ${slot.hours}`}
+          {compact ? `Aviso ${slot.hours}` : `Aviso ${AVISO_GRAFICO_HOURS} h · ${slot.hours}`}
         </span>
         <strong className="block truncate text-xs">
           {last ? last.codigo : "Montar aviso"}
@@ -232,8 +234,8 @@ function AvisoGraficoComposer({
       onClose={onClose}
       wide
       className="max-h-[min(96dvh,980px)] sm:max-w-6xl"
-      title="Aviso Meteorológico · 6 horas"
-      description="Mesmo formato do aviso oficial da Defesa Civil: cenário, calhas e imagem GOES infravermelho do CPTEC/INPE. A validade fecha no fim desta janela de 6 h (00–06, 06–12, 12–18 ou 18–00, Manaus)."
+      title={`Aviso Meteorológico · ${AVISO_GRAFICO_HOURS} horas`}
+      description={`Mesmo formato do aviso oficial da Defesa Civil: cenário, calhas e imagem GOES infravermelho do CPTEC/INPE. A validade fecha no fim desta janela de ${AVISO_GRAFICO_HOURS} h (${avisoJanelasTexto()}, Manaus).`}
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <AvisoPreview aviso={draft} goes={goes} loading={loadingGoes} imgRef={imgRef} />

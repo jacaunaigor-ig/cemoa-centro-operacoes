@@ -1,6 +1,8 @@
-/** Aviso Meteorológico oficial — janela de 6 h (00–06, 06–12, 12–18, 18–00), Manaus. */
+/** Aviso Meteorológico oficial — janela de 4 h (00–04, 04–08, 08–12, 12–16, 16–20, 20–00), Manaus. */
 
-export const AVISO_GRAFICO_HOURS = 6;
+export const AVISO_GRAFICO_HOURS = 4;
+export const AVISO_SLOT_HOURS = ["00–04", "04–08", "08–12", "12–16", "16–20", "20–00"] as const;
+export type AvisoSlotHours = (typeof AVISO_SLOT_HOURS)[number];
 
 export const AVISO_CALHAS = [
   "Alto Solimões",
@@ -27,7 +29,7 @@ export type AvisoCalha = (typeof AVISO_CALHAS)[number];
 export type AvisoSlot = {
   startAt: number;
   endAt: number;
-  hours: "00–06" | "06–12" | "12–18" | "18–00";
+  hours: AvisoSlotHours;
 };
 
 export type AvisoGrafico = {
@@ -74,23 +76,27 @@ function addCalendarDays(year: number, month: number, day: number, delta: number
   return { year: dt.getUTCFullYear(), month: dt.getUTCMonth() + 1, day: dt.getUTCDate() };
 }
 
-const SLOT_HOURS = ["00–06", "06–12", "12–18", "18–00"] as const;
+export function avisoJanelasTexto() {
+  const items = [...AVISO_SLOT_HOURS];
+  const last = items.pop();
+  return `${items.join(", ")} ou ${last}`;
+}
 
 export function avisoSlotAt(now = Date.now()): AvisoSlot {
   const w = manausWall(now);
-  const startHour = (Math.floor(w.hour / 6) * 6) as 0 | 6 | 12 | 18;
+  const startHour = Math.floor(w.hour / AVISO_GRAFICO_HOURS) * AVISO_GRAFICO_HOURS;
   const startAt = manausWallToUtc(w.year, w.month, w.day, startHour);
   let endAt: number;
-  if (startHour === 18) {
+  if (startHour + AVISO_GRAFICO_HOURS >= 24) {
     const next = addCalendarDays(w.year, w.month, w.day, 1);
     endAt = manausWallToUtc(next.year, next.month, next.day, 0);
   } else {
-    endAt = manausWallToUtc(w.year, w.month, w.day, startHour + 6);
+    endAt = manausWallToUtc(w.year, w.month, w.day, startHour + AVISO_GRAFICO_HOURS);
   }
   return {
     startAt,
     endAt,
-    hours: SLOT_HOURS[startHour / 6],
+    hours: AVISO_SLOT_HOURS[startHour / AVISO_GRAFICO_HOURS],
   };
 }
 
@@ -121,7 +127,7 @@ export function formatManausStamp(ts: number | null | undefined) {
 }
 
 export const AVISO_TEXTO_PADRAO =
-  "As imagens do satélite GOES, no canal infravermelho realçado, indicam o cenário convectivo sobre o Amazonas, com os limites municipais. Descreva aqui chuvas, descargas elétricas e nebulosidade observadas neste recorte de 6 horas.";
+  "As imagens do satélite GOES, no canal infravermelho realçado, indicam o cenário convectivo sobre o Amazonas, com os limites municipais. Descreva aqui chuvas, descargas elétricas e nebulosidade observadas neste recorte de 4 horas.";
 
 export function draftAvisoGrafico(input: {
   issuedBy?: string;
