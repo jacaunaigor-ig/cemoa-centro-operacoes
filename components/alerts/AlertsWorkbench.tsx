@@ -330,6 +330,8 @@ export function AlertsWorkbench() {
   const [showIndice, setShowIndice] = useState(false);
   const [indice, setIndice] = useState<IndicePayload | null>(null);
   const [showRivers, setShowRivers] = useState(true);
+  const [showFocosCalor, setShowFocosCalor] = useState(false);
+const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; data: string; satelite: string }>>([]);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
@@ -786,6 +788,46 @@ export function AlertsWorkbench() {
     setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
     window.setTimeout(() => mapApi.current?.fitAmazonas(), 80);
   }
+const toggleFocosCalor = async () => {
+  if (showFocosCalor) {
+    setShowFocosCalor(false);
+    setFocosCalor([]);
+    return;
+  }
+
+  setShowFocosCalor(true);
+
+  try {
+    // 🔥 Usando sua própria API do INPE
+    const response = await fetch('/api/focus?uf=AM&dias=7');
+    
+    if (!response.ok) {
+      throw new Error(`Erro na API: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.focos) {
+      // Converte os dados do INPE para o formato esperado pelo mapa
+      const focosFormatados = data.focos.map((foco: any) => ({
+        lat: foco.latitude,
+        lon: foco.longitude,
+        data: new Date(foco.datahora).toLocaleString(),
+        satelite: foco.satelite || 'N/A',
+        municipio: foco.municipio || 'Desconhecido',
+        confianca: foco.confianca || 0
+      }));
+      
+      setFocosCalor(focosFormatados);
+      console.log(`🔥 ${focosFormatados.length} focos do INPE carregados`);
+    } else {
+      console.error('Erro ao carregar focos:', data.error);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar focos de calor:', error);
+    toast.error('Erro ao carregar focos do INPE');
+  }
+};
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -1571,6 +1613,13 @@ export function AlertsWorkbench() {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
+<MapToolButton
+  active={showFocosCalor}
+  onClick={toggleFocosCalor}
+  icon={<Flame className="size-3.5" />}
+>
+  {showFocosCalor ? "Ocultar Focos de Calor" : "Focos de Calor"}
+</MapToolButton>
                     <MapOverlayToggles vis={overlays} product={tipo} onChange={setOverlays} />
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
@@ -1656,6 +1705,8 @@ export function AlertsWorkbench() {
                   pluvio={pluvio}
                   airSensors={airPoints}
                   pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
+                  focosCalor={focosCalor}
+                  showFocosCalor={showFocosCalor}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}

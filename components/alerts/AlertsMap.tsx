@@ -94,6 +94,8 @@ export const AlertsMap = forwardRef<
     drawMode?: boolean;
     eraseMode?: boolean;
     stains?: AlertStain[];
+        focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
+    showFocosCalor?: boolean;
     onSelect: (nome: string, bacia: string) => void;
     onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
@@ -123,6 +125,8 @@ export const AlertsMap = forwardRef<
     drawMode = false,
     eraseMode = false,
     stains = [],
+    focosCalor = [],
+    showFocosCalor = false,
     onSelect,
     onHover,
     onPaint,
@@ -143,6 +147,7 @@ export const AlertsMap = forwardRef<
   const rainLayerRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
   const stainLayerRef = useRef<GeoJSONType | null>(null);
+   const focosLayerRef = useRef<LayerGroup | null>(null);
   const hoverTipRef = useRef<Tooltip | null>(null);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
@@ -294,6 +299,7 @@ export const AlertsMap = forwardRef<
     if (!L || !map) return;
     stainLayerRef.current?.remove();
     stainLayerRef.current = null;
+    focosLayerRef.current = null;
     const list = stateRef.current.stains;
     if (!list.length) return;
     if (!map.getPane("stainPane")) {
@@ -729,15 +735,69 @@ export const AlertsMap = forwardRef<
         pointKind === "air" ? "PurpleAir 24 h" : "CEMADEN",
     );
   }, [overlays, pointKind]);
-
+  // Efeito para desenhar/remover os focos de calor
   useEffect(() => {
+    const map = mapRef.current;
     const L = leafletRef.current;
-    const layer = territoryRef.current?.pluvio;
-    if (!L || !layer || !overlays.pluvio) return;
-    if (pointKind === "air") syncAirSensors(L, layer, airSensors);
-    else syncPluviometers(L, layer, pluvio);
-  }, [pluvio, airSensors, overlays.pluvio, pointKind]);
+    if (!map || !L) return;
 
+    // Remover camada anterior
+    if (focosLayerRef.current) {
+      map.removeLayer(focosLayerRef.current);
+      focosLayerRef.current = null;
+    }
+
+    if (showFocosCalor && focosCalor.length > 0) {
+      const layer = L.layerGroup();
+      
+      focosCalor.forEach((foco) => {
+        const lat = parseFloat(String(foco.lat));
+        const lon = parseFloat(String(foco.lon));
+        
+        if (!isNaN(lat) && !isNaN(lon)) {
+          // 🔵 CÍRCULO - dados da NASA (sem confiança)
+          const circle = L.circleMarker([lat, lon], {
+            radius: 5,
+            fillColor: '#ff4500',
+            color: '#ffffff',
+            weight: 1,
+            opacity: 0.9,
+            fillOpacity: 0.85,
+            zIndexOffset: 50,
+            interactive: true,
+            riseOnHover: true,
+          });
+          
+          // Popup com informações (apenas o que existe)
+          circle.bindPopup(`
+            <div style="min-width:150px;font-size:13px;">
+              <strong>🔥 Foco de Calor</strong><br/>
+              📅 ${foco.data || 'N/A'}<br/>
+              🛰️ ${foco.satelite || 'N/A'}
+            </div>
+          `);
+          
+          // Tooltip ao passar o mouse
+          circle.bindTooltip(
+            `🔥 ${foco.satelite || 'Foco'}`,
+            { 
+              permanent: false, 
+              direction: 'top',
+              className: 'foco-tooltip'
+            }
+          );
+          
+          layer.addLayer(circle);
+        }
+      });
+
+      layer.addTo(map);
+      focosLayerRef.current = layer;
+      
+      console.log(`✅ ${focosCalor.length} focos de calor desenhados`);
+    }
+  }, [showFocosCalor, focosCalor]);
+ 
   return (
     <div
       ref={hostRef}

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Focos de Calor - Amazonas</title>
+    
+    <!-- CSS do Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #1a1a2e; }
+        
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 1000;
+            min-width: 220px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-panel h2 {
+            color: #ff6b35;
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-panel .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+        }
+        
+        .info-panel .stat:last-child {
+            border-bottom: none;
+        }
+        
+        .info-panel .label { color: #aaa; }
+        .info-panel .value { color: #fff; font-weight: bold; }
+        .info-panel .value.fire { color: #ff6b35; font-size: 20px; }
+        
+        .atualizar-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .atualizar-btn:hover {
+            transform: scale(1.05);
+            background: #ff5722;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            z-index: 2000;
+            font-size: 18px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .fire-marker {
+            filter: drop-shadow(0 0 10px rgba(255, 107, 53, 0.8));
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .custom-popup {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .custom-popup strong {
+            color: #ff6b35;
+        }
+        
+        .legenda {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .legenda span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Painel de informações -->
+    <div class="info-panel">
+        <h2>🔥 Focos de Calor</h2>
+        <div class="stat">
+            <span class="label">Estado</span>
+            <span class="value">Amazonas (AM)</span>
+        </div>
+        <div class="stat">
+            <span class="label">Período</span>
+            <span class="value" id="periodo">Carregando...</span>
+        </div>
+        <div class="stat">
+            <span class="label">Total de focos</span>
+            <span class="value fire" id="totalFocos">0</span>
+        </div>
+        <div class="stat">
+            <span class="label">Última atualização</span>
+            <span class="value" id="ultimaAtualizacao">--:--:--</span>
+        </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="legenda">
+        <span>🔥 Foco de calor ativo</span>
+        <span>🔄 Atualização automática a cada 10 min</span>
+    </div>
+
+    <!-- Botão de atualizar -->
+    <button class="atualizar-btn" onclick="carregarFocos()">
+        🔄 Atualizar Dados
+    </button>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Carregando focos de calor...</span>
+    </div>
+
+    <!-- Mapa -->
+    <div id="map"></div>
+
+    <!-- JavaScript do Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Seu script separado -->
+    <script src="/script.js"></script>
+</body>
+</html>
