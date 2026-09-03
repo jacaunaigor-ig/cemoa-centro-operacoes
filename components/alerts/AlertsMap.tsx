@@ -756,17 +756,13 @@ export const AlertsMap = forwardRef<
         
         if (!isNaN(lat) && !isNaN(lon)) {
           // 🔵 CÍRCULO - dados da NASA (sem confiança)
-          const circle = L.circleMarker([lat, lon], {
-            radius: 5,
-            fillColor: '#ff4500',
-            color: '#ffffff',
-            weight: 1,
-            opacity: 0.9,
-            fillOpacity: 0.85,
-            zIndexOffset: 50,
-            interactive: true,
-            riseOnHover: true,
-          });
+        const circle = L.circle([lat, lon], {
+  radius: 50, // metros
+  fillColor: '#ff4500',
+  color: '#fff',
+  weight: 1,
+  fillOpacity: 0.5
+});
           
           // Popup com informações (apenas o que existe)
           circle.bindPopup(`
