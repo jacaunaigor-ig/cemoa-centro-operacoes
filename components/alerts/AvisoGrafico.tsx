@@ -153,7 +153,7 @@ function AvisoGraficoComposer({
         imageUrl: null,
         product: "GOES-19 · Infravermelho realçado · limites municipais",
         credit: "CPTEC / INPE",
-        error: "A imagem ao vivo do CPTEC precisa do servidor do Centro de Operações.",
+        error: "A imagem ao vivo do CPTEC precisa do servidor do Centro de Monitoramento.",
       });
       return;
     }
