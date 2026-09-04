@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { OpsModeProvider } from "@/components/shared/OpsMode";
 import { ThemeToaster } from "@/components/shared/ThemeToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </TooltipProvider>
           <ThemeToaster />
         </OpsModeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
