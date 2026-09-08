@@ -1,4 +1,4 @@
-# CEMOA — Centro de Operações
+# CEMOA — Centro de Monitoramento
 
 Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
 

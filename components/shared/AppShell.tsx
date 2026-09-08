@@ -143,7 +143,7 @@ export function AppShell({
               </p>
             ) : null}
             <h1 className="truncate text-sm font-bold tracking-tight sm:text-lg">
-              {isMobile ? "CEMOA" : "CEMOA · Centro de Operações"}
+              {isMobile ? "CEMOA" : "CEMOA · Centro de Monitoramento"}
             </h1>
           </div>
         </Link>

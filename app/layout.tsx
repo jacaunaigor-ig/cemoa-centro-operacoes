@@ -18,7 +18,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CEMOA — Centro de Operações da Defesa Civil do Amazonas",
+  title: "CEMOA — Centro de Monitoramento da Defesa Civil do Amazonas",
   description:
     "Painel integrado de alertas de chuva intensa e boletim hidrológico para operadores da Defesa Civil do Amazonas.",
 };
