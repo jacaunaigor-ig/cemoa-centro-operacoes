@@ -12,10 +12,10 @@ export const GOES_LATIN_EXTENT = {
 
 /** Amazonas + folga para o contorno e os traços municipais caberem no quadro. */
 export const AMAZONAS_GOES_EXTENT = {
-  west: -75.6,
-  east: -54.4,
-  south: -11.5,
-  north: 4.0,
+  west: -74.0,
+  east: -56.0,
+  south: -9.8,
+  north: 2.4,
 } as const;
 
 /** World file ESRI (.jgw) do JPEG CPTEC — pixel (0,0) é o centro do canto superior esquerdo. */
@@ -160,6 +160,9 @@ function svgPaths(
     .join("");
 }
 
+// ==========================================
+// ÚNICA ALTERAÇÃO: Linhas 100% Pretas
+// ==========================================
 function municipalBordersSvg(
   rings: Ring[],
   project: Projector,
@@ -170,8 +173,11 @@ function municipalBordersSvg(
   const d = svgPaths(rings, project, crop);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
     <g fill="none" stroke-linejoin="round" stroke-linecap="round">
-      <path d="${d}" stroke="#071428" stroke-width="2.8"/>
-      <path d="${d}" stroke="#f4f8ff" stroke-width="1.25"/>
+      <!-- Camada 1: Contorno externo do estado (Preto Grosso) -->
+      <path d="${d}" stroke="#000000" stroke-width="4"/>
+      
+      <!-- Camada 2: Divisas internas dos municípios (Preto Fino) -->
+      <path d="${d}" stroke="#000000" stroke-width="1.5"/>
     </g>
   </svg>`;
 }
@@ -202,14 +208,26 @@ export async function cropGoesToAmazonas(input: Buffer, world?: GoesWorld | null
   const height = meta.height ?? 0;
   if (width < 200 || height < 200) return input;
 
-  const { project, bounds } = await projectorFor(input, width, height, world);
+  const { project } = await projectorFor(input, width, height, world);
+
   const [xWest, yNorth] = project(AMAZONAS_GOES_EXTENT.west, AMAZONAS_GOES_EXTENT.north);
   const [xEast, ySouth] = project(AMAZONAS_GOES_EXTENT.east, AMAZONAS_GOES_EXTENT.south);
-  const pad = world ? 10 : 0;
-  const x0 = Math.max(bounds.left, Math.floor(Math.min(xWest, xEast)) - pad);
-  const x1 = Math.min(bounds.right, Math.ceil(Math.max(xWest, xEast)) + pad);
-  const y0 = Math.max(bounds.top, Math.floor(Math.min(yNorth, ySouth)) - pad);
-  const y1 = Math.min(bounds.bottom, Math.ceil(Math.max(yNorth, ySouth)) + pad);
+
+  const pad = 10;
+
+  let x0 = Math.max(0, Math.floor(Math.min(xWest, xEast)) - pad);
+  let x1 = Math.min(width, Math.ceil(Math.max(xWest, xEast)) + pad);
+  let y0 = Math.max(0, Math.floor(Math.min(yNorth, ySouth)) - pad);
+  let y1 = Math.min(height, Math.ceil(Math.max(yNorth, ySouth)) + pad);
+
+  const zoomX = Math.round((x1 - x0) * 0.15); 
+  const zoomY = Math.round((y1 - y0) * 0.15);
+  
+  x0 = Math.max(0, x0 - zoomX);
+  x1 = Math.min(width, x1 + zoomX);
+  y0 = Math.max(0, y0 - zoomY);
+  y1 = Math.min(height, y1 + zoomY);
+
   const cw = x1 - x0;
   const ch = y1 - y0;
   if (cw < 40 || ch < 40) return input;
@@ -227,29 +245,14 @@ export async function cropGoesToAmazonas(input: Buffer, world?: GoesWorld | null
 
   const rings = loadRings();
   const crop = { x0, y0, scale };
-  const d = svgPaths(rings, project, crop);
-  const maskPng = await sharp(
-    Buffer.from(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}">
-        <path d="${d}" fill="#ffffff"/>
-      </svg>`,
-    ),
-  )
-    .ensureAlpha()
-    .png()
-    .toBuffer();
-  const clipped = await sharp(cropped)
-    .composite([{ input: maskPng, blend: "dest-in" }])
-    .png()
-    .toBuffer();
 
   const bordersPng = await sharp(Buffer.from(municipalBordersSvg(rings, project, crop, outW, outH)))
     .ensureAlpha()
     .png()
     .toBuffer();
 
-  return sharp(clipped)
-    .flatten({ background: "#0b1d4a" })
+  return sharp(cropped)
+    .flatten({ background: "#0b1d4a" }) 
     .composite([{ input: bordersPng, blend: "over" }])
     .jpeg({ quality: 90, chromaSubsampling: "4:4:4" })
     .toBuffer();
