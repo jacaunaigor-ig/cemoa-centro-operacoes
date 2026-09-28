@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type {
   CircleMarker,
   GeoJSON as GeoJSONType,
@@ -97,6 +97,7 @@ export const AlertsMap = forwardRef<
         focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
     showFocosCalor?: boolean;
     fillByNome?: Record<string, string> | null;
+    labelByNome?: Record<string, string> | null;
     onSelect: (nome: string, bacia: string) => void;
     onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
@@ -129,6 +130,7 @@ export const AlertsMap = forwardRef<
     focosCalor = [],
     showFocosCalor = false,
     fillByNome = null,
+    labelByNome = null,
     onSelect,
     onHover,
     onPaint,
@@ -151,6 +153,7 @@ export const AlertsMap = forwardRef<
   const stainLayerRef = useRef<GeoJSONType | null>(null);
    const focosLayerRef = useRef<LayerGroup | null>(null);
   const hoverTipRef = useRef<Tooltip | null>(null);
+  const [meshReady, setMeshReady] = useState(0);
   const layersByNameRef = useRef(new Map<string, Path>());
   const prevHoveredRef = useRef<string | null>(null);
   const drawLineRef = useRef<Polyline | null>(null);
@@ -181,6 +184,7 @@ export const AlertsMap = forwardRef<
     eraseMode,
     stains,
     fillByNome,
+    labelByNome,
   });
 
   useEffect(() => {
@@ -209,6 +213,7 @@ export const AlertsMap = forwardRef<
       eraseMode,
       stains,
       fillByNome,
+      labelByNome,
     };
   }, [
     onSelect,
@@ -235,6 +240,7 @@ export const AlertsMap = forwardRef<
     eraseMode,
     stains,
     fillByNome,
+    labelByNome,
   ]);
 
   function paintFeature(nome: string) {
@@ -504,8 +510,11 @@ export const AlertsMap = forwardRef<
                   : stateRef.current.adminMode
                     ? "Classificar · "
                     : "";
+              const focosN = stateRef.current.labelByNome?.[nome];
               const airTip =
-                stateRef.current.pointKind === "air"
+                focosN != null
+                  ? `<br/><strong>${focosN} focos</strong>`
+                  : stateRef.current.pointKind === "air"
                   ? m?.hasAirSensor
                     ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (24 h)`
                     : " · s/ sensor PurpleAir"
@@ -543,6 +552,7 @@ export const AlertsMap = forwardRef<
           },
         }).addTo(map);
         layerRef.current = layer;
+        setMeshReady((n) => n + 1);
         onGeoErrorRef.current?.(null);
       } catch (err) {
         reportClientError(
@@ -644,8 +654,25 @@ export const AlertsMap = forwardRef<
   useEffect(() => {
     const layer = layerRef.current;
     layer?.setStyle((feature) => styleFor(feature));
+    const labels = stateRef.current.labelByNome;
+    for (const [nome, lyr] of layersByNameRef.current) {
+      const atual = lyr.getTooltip();
+      const permanente = Boolean(atual?.options.permanent);
+      if (!labels) {
+        if (permanente) lyr.unbindTooltip();
+        continue;
+      }
+      if (permanente) lyr.unbindTooltip();
+      const valor = labels[nome] ?? "0";
+      lyr.bindTooltip(valor, {
+        permanent: true,
+        direction: "center",
+        className: valor === "0" ? "foco-balao foco-balao-zero" : "foco-balao",
+        opacity: 1,
+      });
+    }
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
-  }, [riscoSig, selected, filter, basin, calhaSig, adminMode, opacity, theme, fillByNome]);
+  }, [riscoSig, selected, filter, basin, calhaSig, adminMode, opacity, theme, fillByNome, labelByNome, meshReady]);
 
   useEffect(() => {
     const L = leafletRef.current;

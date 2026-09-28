@@ -71,7 +71,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | `/api/air-quality` | App SELVA primeiro; PurpleAir `pm2.5_24hour` se o SELVA falhar |
 | `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
 | `/api/risco` | Índice de Risco dos 62 municípios — metodologia CEMOA do app original (IVM, IRE por evento, IRG, prioridades P1–P4, fator de alerta ao vivo). |
-| `/api/notificacoes` | Bot do Telegram: `GET` status + log de envios (sessão); `POST` envia mensagem de teste (`{"municipio":"Manaus"}`) ou limpa a deduplicação (`{"limpar":true}`). Admin. |
+| `/api/clima/merge` | PNG MERGE/CPTEC: anomalia mensal (`?produto=anomalia&qual=atual` ou `anterior`), dias sem precipitação (`?produto=dd`) e dias consecutivos sem precipitação (`?produto=cdd`) |
 | `/api/logs` | Log de erros de mapa/dados no front |
 | `/api/satellite/goes` | Metadados do infravermelho GOES-19 (CPTEC/INPE); `?refresh=1` força nova busca |
 | `/api/satellite/goes/image` | JPEG do último recorte em cache |
@@ -102,22 +102,7 @@ A metodologia de priorização do app Streamlit original (`cemoa_app`) foi porta
 
 O índice **não altera** o grau dos produtos. PurpleAir **não** entra no IRE de incêndio — só a classificação do operador (fator de alerta). Paridade numérica com o app original validada nos 62 municípios (diferenças máximas de ±0,01 por arredondamento de ponto flutuante, sem mudança de nível ou prioridade).
 
-## Notificações — bot do Telegram
-
-Port do `notificacoes.py` do cemoa_app (`lib/notificacoes.ts`). Quando o operador classifica um município em **Moderado ou superior** em qualquer produto (chuva, alagamento, movimento, incêndio), o centro envia a mensagem CEMOA/DCA ao Telegram — com IRG, IRE do evento, flags P1/P1X da metodologia, orientação principal, medidas de proteção e contatos de emergência (tabelas da planilha Alertas_DCA em `data/recomendacoes-cemoa.json`). O disparo acontece após cada classificação (`/api/alerts/overrides`) e no ciclo de consulta do painel (`/api/alerts`), sempre via `after()` — nunca atrasa a resposta. A **deduplicação de 30 min** (`NOTIF_DEDUP_MINUTOS`) evita reenvio do mesmo município + evento + nível.
-
-Configuração em `.env.local` (sem as variáveis, o bot fica desligado em silêncio):
-
-```
-TELEGRAM_ENABLED=true
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_IDS=-100..., 12345...
-NOTIF_DEDUP_MINUTOS=30
-```
-
-O envio usa `https.request` (não `fetch`): algumas redes bloqueiam a fingerprint TLS do undici para `api.telegram.org`. O log de envios e o teste do bot ficam em `/api/notificacoes`.
-
-O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
+O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave). A aba Clima de Meteorologia mostra a anomalia mensal do MERGE (CPTEC/INPE), o número de dias sem precipitação e o número de dias consecutivos sem precipitação, com exportação PNG desses dois índices.
 
 ## Desktop, mobile e operador
 

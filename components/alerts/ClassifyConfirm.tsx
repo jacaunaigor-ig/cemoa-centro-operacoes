@@ -5,33 +5,43 @@ import { Modal } from "@/components/shared/Modal";
 
 export function ClassifyConfirm({
   open,
-  title,
-  description,
   level,
+  duration,
   names,
-  by,
   busy,
   onCancel,
+  onUndo,
   onConfirm,
 }: {
   open: boolean;
-  title: string;
-  description?: string;
   level: string;
+  duration: string;
   names: string[];
-  by?: string | null;
   busy?: boolean;
   onCancel: () => void;
+  onUndo: () => void;
   onConfirm: () => void;
 }) {
-  const extra = names.length > 8 ? names.length - 8 : 0;
-  const shown = names.slice(0, 8);
+  const extra = names.length > 12 ? names.length - 12 : 0;
+  const shown = names.slice(0, 12);
   return (
-    <Modal open={open} onClose={onCancel} title={title} description={description}>
+    <Modal
+      open={open}
+      onClose={onCancel}
+      title="Encerrar edição"
+      description="Os cliques desta sessão já estão no mapa. Confirme para fechar o modo, ou desfaça a edição."
+    >
       <p className="text-sm text-text">
-        Classificar {names.length === 1 ? <strong>{names[0]}</strong> : <strong>{names.length} municípios</strong>}{" "}
-        como <strong>{level}</strong>
-        {by ? <span className="text-text-mute"> · {by}</span> : null}.
+        {names.length === 1 ? (
+          <>
+            <strong>{names[0]}</strong> em <strong>{level}</strong>
+          </>
+        ) : (
+          <>
+            <strong>{names.length} municípios</strong> em <strong>{level}</strong>
+          </>
+        )}
+        <span className="text-text-mute"> · {duration}</span>.
       </p>
       {names.length > 1 ? (
         <p className="mt-2 text-xs text-text-dim">
@@ -39,12 +49,15 @@ export function ClassifyConfirm({
           {extra ? ` e mais ${extra}` : ""}.
         </p>
       ) : null}
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel} disabled={busy}>
-          Cancelar
+          Continuar editando
+        </Button>
+        <Button type="button" variant="secondary" onClick={onUndo} disabled={busy}>
+          Desfazer edição
         </Button>
         <Button type="button" onClick={onConfirm} disabled={busy}>
-          Confirmar classificação
+          Confirmar
         </Button>
       </div>
     </Modal>

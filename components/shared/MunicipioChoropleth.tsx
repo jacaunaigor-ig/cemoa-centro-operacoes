@@ -12,11 +12,13 @@ export function MunicipioChoropleth({
   titles,
   selected,
   onSelect,
+  className,
 }: {
   fills: Record<string, string>;
   titles?: Record<string, string>;
   selected?: string | null;
   onSelect?: (nome: string) => void;
+  className?: string;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -96,8 +98,8 @@ export function MunicipioChoropleth({
   return (
     <div
       ref={hostRef}
-      className="w-full overflow-hidden rounded-xl border border-border"
-      style={{ height: "min(68vh, 640px)" }}
+      className={`w-full overflow-hidden rounded-xl border border-border ${className ?? ""}`}
+      style={className ? undefined : { height: "min(68vh, 640px)" }}
     />
   );
 }

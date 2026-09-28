@@ -23,7 +23,7 @@ export async function GET() {
       }
     }
 
-    const jpeg = await cropGoesToAmazonas(buffer, world);
+    const jpeg = await cropGoesToAmazonas(buffer, world, meta.imageAt);
 
     return new NextResponse(new Uint8Array(jpeg), {
       headers: {

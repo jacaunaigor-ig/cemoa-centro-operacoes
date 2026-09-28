@@ -1,17 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CloudSun, Droplets, RefreshCw } from "lucide-react";
+import { CloudSun, Droplets, ImageDown, RefreshCw } from "lucide-react";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { AppShell } from "@/components/shared/AppShell";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { fetchJson } from "@/lib/client";
-import { startVisiblePoll } from "@/lib/client-hooks";
+import { startVisiblePoll, useNow } from "@/lib/client-hooks";
+import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { formatMm, rainHeatColor } from "@/lib/rainfall-display";
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import type { RainfallMunicipio, RainfallPayload } from "@/lib/types";
 import { cn, formatAmazonDateTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 const POLL_MS = 20_000;
 
@@ -50,6 +52,8 @@ export function MeteorologiaWorkbench() {
   const [goes, setGoes] = useState<GoesPayload | null>(null);
   const [goesLoading, setGoesLoading] = useState(false);
   const [goesStamp, setGoesStamp] = useState(0);
+  const [painel, setPainel] = useState<"chuva" | "satelite" | "clima">("chuva");
+  const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
 
   const loadGoes = useCallback((refresh = false) => {
     if (STATIC_DEPLOY) return;
@@ -121,6 +125,36 @@ export function MeteorologiaWorkbench() {
 
   const foco = selected ? rain?.byNome[selected] : null;
 
+  async function exportarChuva(id: "mm1h" | "mm24h", rotulo: string) {
+    if (!rain) throw new Error("Ainda não há leitura do CEMADEN.");
+    const porNome = new Map<string, { valor: string; color: string; mm: number }>();
+    for (const item of Object.values(rain.byNome)) {
+      const mm = item[id];
+      if (mm == null || !Number.isFinite(mm) || mm <= 0) continue;
+      porNome.set(item.nome, { valor: formatMm(mm), color: rainHeatColor(mm), mm });
+    }
+    if (!porNome.size) throw new Error(`Nenhum município com acumulado de ${rotulo}.`);
+    const municipios = [...porNome.entries()]
+      .sort((a, b) => b[1].mm - a[1].mm)
+      .map(([nome, row]) => ({ nome, valor: row.valor, color: row.color }));
+    setExportando(id);
+    try {
+      await exportInstitutionalPng({
+        title: "Meteorologia",
+        productLegend: `Chuva CEMADEN · acumulado de ${rotulo} por município`,
+        filename: pngFilename(`chuva_cemaden_${id}`),
+        colorFor: (nome) => porNome.get(nome)?.color ?? "#e8eef5",
+        legendTitle: `Acumulado ${rotulo}`,
+        legendItems: [],
+        municipios,
+        footerSources: "CEMADEN · pluviômetros automáticos do Amazonas",
+      });
+      toast.success(`PNG de ${rotulo} exportado.`);
+    } finally {
+      setExportando(null);
+    }
+  }
+
   return (
     <AppShell source="CEMADEN · pluviômetros do Amazonas · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
@@ -138,12 +172,36 @@ export function MeteorologiaWorkbench() {
         <MeteoAvisoDutyCard />
 
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-          <KpiCard label="Com chuva" value={rain ? String(comChuva) : "—"} sub={`na janela de ${JANELAS.find((item) => item.id === janela)?.label}`} accent="#1d4ed8" icon={<Droplets className="size-4" />} loading={!rain && !error} active={false} onClick={() => undefined} />
-          <KpiCard label="Maior acumulado" value={pico?.mm != null ? formatMm(pico.mm) : "—"} sub={pico?.item.nome ?? "sem leitura"} accent="#1e3a8a" loading={!rain && !error} active={false} onClick={() => undefined} />
-          <KpiCard label="Com leitura" value={rain ? String(rain.coverage.comLeitura) : "—"} sub="municípios com pluviômetro" accent="#3b82d6" loading={!rain && !error} active={false} onClick={() => undefined} />
-          <KpiCard label="Intenso em 1 h" value={rain ? String(rain.coverage.intenso1h) : "—"} sub="≥ 20 mm na última hora" accent="#1e3a8a" loading={!rain && !error} active={false} onClick={() => undefined} />
+          <KpiCard label="Com chuva" value={rain ? String(comChuva) : "—"} sub={`na janela de ${JANELAS.find((item) => item.id === janela)?.label}`} accent="#1d4ed8" icon={<Droplets className="size-4" />} loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard label="Maior acumulado" value={pico?.mm != null ? formatMm(pico.mm) : "—"} sub={pico?.item.nome ?? "sem leitura"} accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard label="Com leitura" value={rain ? String(rain.coverage.comLeitura) : "—"} sub="municípios com pluviômetro" accent="#3b82d6" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard label="Intenso em 1 h" value={rain ? String(rain.coverage.intenso1h) : "—"} sub="≥ 20 mm na última hora" accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
         </div>
 
+        <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
+          {([
+            ["chuva", "Chuva"],
+            ["satelite", "Satélite"],
+            ["clima", "Clima"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={painel === id}
+              onClick={() => setPainel(id)}
+              className={cn(
+                "min-h-11 flex-1 rounded-lg border text-sm font-bold",
+                painel === id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel === "clima" && "hidden")}>
+        <div className={cn("grid content-start gap-2", painel !== "chuva" && "max-lg:hidden")}>
         <div className="flex flex-wrap gap-1">
           {JANELAS.map((item) => (
             <button
@@ -152,23 +210,38 @@ export function MeteorologiaWorkbench() {
               aria-pressed={janela === item.id}
               onClick={() => setJanela(item.id)}
               className={cn(
-                "rounded-lg border px-3 py-1.5 text-[12px] font-bold",
+                "min-h-11 min-w-14 flex-1 rounded-lg border px-3 text-[13px] font-bold sm:flex-none",
                 janela === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
               )}
             >
               {item.label}
             </button>
           ))}
+          <button
+            type="button"
+            disabled={!rain || exportando != null || STATIC_DEPLOY}
+            onClick={() => void exportarChuva("mm1h", "1 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+          >
+            <ImageDown className="size-3.5" />
+            {exportando === "mm1h" ? "Gerando…" : "PNG 1 h"}
+          </button>
+          <button
+            type="button"
+            disabled={!rain || exportando != null || STATIC_DEPLOY}
+            onClick={() => void exportarChuva("mm24h", "24 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+          >
+            <ImageDown className="size-3.5" />
+            {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
+          </button>
         </div>
-
-        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <div className="grid gap-2">
             {STATIC_DEPLOY ? (
               <p className="rounded-xl border border-border bg-panel p-4 text-sm text-text-mute">
                 O mapa de chuva fica indisponível na publicação estática.
               </p>
             ) : (
-              <MunicipioChoropleth fills={fills} titles={titles} selected={selected} onSelect={setSelected} />
+              <MunicipioChoropleth className="meteo-map" fills={fills} titles={titles} selected={selected} onSelect={setSelected} />
             )}
             <ul className="flex flex-wrap gap-2 text-[10px] text-text-mute">
               {ESCALA.map((item) => (
@@ -178,8 +251,10 @@ export function MeteorologiaWorkbench() {
                 </li>
               ))}
             </ul>
-          </div>
-          <aside className="flex max-h-[68vh] flex-col rounded-xl border border-border bg-panel">
+        </div>
+
+        <div className="grid content-start gap-2">
+          <aside className={cn("meteo-lista flex flex-col rounded-xl border border-border bg-panel", painel !== "chuva" && "max-lg:hidden")}>
             <div className="border-b border-border px-3 py-2">
               <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">Acumulado</h3>
               {foco ? <Foco item={foco} janela={janela} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}
@@ -191,7 +266,7 @@ export function MeteorologiaWorkbench() {
                     type="button"
                     onClick={() => setSelected(item.nome)}
                     className={cn(
-                      "flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-hover",
+                      "flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-hover",
                       selected === item.nome && "bg-hover font-bold",
                     )}
                   >
@@ -203,25 +278,21 @@ export function MeteorologiaWorkbench() {
               ))}
             </ul>
           </aside>
-        </div>
 
-        <section className="rounded-xl border border-border bg-panel p-3">
+        <section className={cn("rounded-xl border border-border bg-panel p-3", painel !== "satelite" && "max-lg:hidden")}>
           <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <h3 className="flex items-center gap-1.5 text-sm font-black">
                 <CloudSun className="size-4 text-brand" />
                 GOES-19
               </h3>
-              <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
-                Infravermelho realçado com os limites municipais georreferenciados. Fonte: {goes?.credit ?? "CPTEC / INPE"}.
-                {goes?.imageAt ? ` Imagem de ${formatAmazonDateTime(goes.imageAt)} (Manaus).` : ""}
-              </p>
+              <GoesNotice goes={goes} loading={goesLoading} />
             </div>
             <button
               type="button"
               onClick={() => loadGoes(true)}
               disabled={goesLoading || STATIC_DEPLOY}
-              className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
             >
               <RefreshCw className={cn("size-3.5", goesLoading && "animate-spin")} />
               Atualizar
@@ -234,13 +305,45 @@ export function MeteorologiaWorkbench() {
             <img
               src={`${withBase(goes.imageUrl)}?t=${goesStamp || goes.generatedAt}`}
               alt={goes.product}
-              className="max-h-[70vh] w-full rounded-lg border border-border bg-black object-contain"
+              className="meteo-goes-img h-auto w-full rounded-lg border border-border bg-[#0b1d4a] object-contain"
             />
           ) : (
             <p className="text-sm text-text-mute">
               {goesLoading ? "Consultando o acervo CPTEC/INPE…" : goes?.error ?? "Sem imagem GOES neste momento."}
             </p>
           )}
+        </section>
+        </div>
+        </div>
+
+        <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
+          <div>
+            <h3 className="text-sm font-black">Anomalia de precipitação</h3>
+            <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
+              MERGE do CPTEC/INPE: precipitação do mês comparada à climatologia. Azul é excesso e vermelho é déficit.
+              Fonte:{" "}
+              <a className="underline" href="https://data.inpe.br/dados/merge/" target="_blank" rel="noreferrer">
+                data.inpe.br/dados/merge
+              </a>
+              .
+            </p>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <MergeCard qual="anterior" titulo="Mês anterior" />
+            <MergeCard qual="atual" titulo="Mês atual" />
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <IndiceCard
+              produto="dd"
+              titulo="Número de dias sem precipitação"
+              texto="Quantos dias do mês ficaram sem chuva no MERGE. O CPTEC publica o mês já fechado."
+            />
+            <IndiceCard
+              produto="cdd"
+              titulo="Número de dias consecutivos sem precipitação"
+              texto="Maior sequência de dias secos seguida no mês, no MERGE. O CPTEC publica o mês já fechado."
+            />
+          </div>
         </section>
 
         <p className="text-[11px] leading-snug text-text-mute">
@@ -251,14 +354,116 @@ export function MeteorologiaWorkbench() {
   );
 }
 
-function Foco({ item, janela }: { item: RainfallMunicipio; janela: Janela }) {
+const GOES_ATRASO_MS = 30 * 60 * 1000;
+
+function atrasoLabel(ms: number) {
+  const min = Math.max(1, Math.round(ms / 60000));
+  if (min < 60) return `${min} min`;
+  const horas = Math.floor(min / 60);
+  const resto = min % 60;
+  return resto ? `${horas} h ${resto} min` : `${horas} h`;
+}
+
+function MergeCard({ qual, titulo }: { qual: "atual" | "anterior"; titulo: string }) {
+  const src = withBase(`/api/clima/merge?produto=anomalia&qual=${qual}`);
   return (
-    <p className="mt-1 text-[12px]">
-      <strong>{item.nome}</strong>
-      <span className="mt-0.5 block font-mono text-text-mute">
-        1 h {formatMm(item.mm1h)} · 6 h {formatMm(item.mm6h)} · 24 h {formatMm(item.mm24h)} · 72 h {formatMm(item.mm72h)}
-      </span>
-      <span className="sr-only">{janela}</span>
+    <figure className="overflow-hidden rounded-xl border border-border bg-panel">
+      <figcaption className="border-b border-border px-3 py-2 text-[12px] font-bold">{titulo}</figcaption>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={`Anomalia de precipitação MERGE — ${titulo}`} className="h-auto w-full bg-white object-contain" />
+    </figure>
+  );
+}
+
+function IndiceCard({ produto, titulo, texto }: { produto: "dd" | "cdd"; titulo: string; texto: string }) {
+  const src = withBase(`/api/clima/merge?produto=${produto}`);
+  const [baixando, setBaixando] = useState(false);
+  async function baixar() {
+    setBaixando(true);
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error("Imagem indisponível.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = pngFilename(produto === "dd" ? "merge_dias_sem_precipitacao" : "merge_dias_consecutivos_sem_precipitacao");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      toast.success("PNG exportado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao exportar.");
+    } finally {
+      setBaixando(false);
+    }
+  }
+  return (
+    <figure className="overflow-hidden rounded-xl border border-border bg-panel">
+      <figcaption className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
+        <span>
+          <span className="block text-[12px] font-bold">{titulo}</span>
+          <span className="mt-0.5 block text-[11px] font-normal text-text-mute">{texto}</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => void baixar()}
+          disabled={baixando || STATIC_DEPLOY}
+          className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[12px] font-bold disabled:opacity-50"
+        >
+          <ImageDown className="size-3.5" />
+          {baixando ? "Gerando…" : "PNG"}
+        </button>
+      </figcaption>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={`${titulo} — MERGE/CPTEC`} className="h-auto w-full bg-white object-contain" />
+    </figure>
+  );
+}
+
+function GoesNotice({ goes, loading }: { goes: GoesPayload | null; loading: boolean }) {
+  const now = useNow();
+  if (loading && !goes?.imageAt) {
+    return <p className="mt-1 text-[12px] text-text-mute">Consultando o acervo CPTEC/INPE…</p>;
+  }
+  if (!goes?.imageAt) {
+    return (
+      <p className="mt-1 text-[12px] font-semibold text-risco-alto" role="status">
+        {goes?.error ?? "Sem hora da imagem. O aviso GOES precisa de uma cena do CPTEC/INPE."}
+      </p>
+    );
+  }
+  const age = (now || Date.now()) - goes.imageAt;
+  const quando = formatAmazonDateTime(goes.imageAt);
+  const atrasada = age >= GOES_ATRASO_MS;
+  return (
+    <p className={cn("mt-1 text-[12px]", atrasada ? "font-semibold text-risco-alto" : "text-text-mute")} role={atrasada ? "status" : undefined}>
+      {atrasada
+        ? `Atraso de ${atrasoLabel(age)}. Imagem de ${quando} (Manaus). O CPTEC publica cerca de 10 em 10 min — atualize antes de montar o aviso.`
+        : `Imagem recente · ${quando} (Manaus). Canal 13, recorte do Amazonas.`}
     </p>
+  );
+}
+
+function Foco({ item, janela }: { item: RainfallMunicipio; janela: Janela }) {
+  const valores = [
+    ["1 h", item.mm1h],
+    ["6 h", item.mm6h],
+    ["24 h", item.mm24h],
+    ["72 h", item.mm72h],
+  ] as const;
+  return (
+    <div className="mt-1">
+      <strong className="text-[13px]">{item.nome}</strong>
+      <dl className="mt-1 grid grid-cols-4 gap-1">
+        {valores.map(([label, mm]) => (
+          <div key={label} className={cn("rounded-md px-1 py-0.5", JANELAS.find((item) => item.id === janela)?.label === label && "bg-hover")}>
+            <dt className="text-[10px] text-text-mute">{label}</dt>
+            <dd className="font-mono text-[12px] tabular-nums">{formatMm(mm)}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }

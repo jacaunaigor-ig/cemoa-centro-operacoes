@@ -15,6 +15,7 @@ export function KpiCard({
   onClick,
   compact = false,
   dense = false,
+  interactive = true,
 }: {
   label: string;
   value: string;
@@ -26,6 +27,7 @@ export function KpiCard({
   onClick: () => void;
   compact?: boolean;
   dense?: boolean;
+  interactive?: boolean;
 }) {
   const { isMobile } = useOpsMode();
   return (
@@ -33,9 +35,10 @@ export function KpiCard({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      title={`${label}: ${value}. Clique para filtrar o mapa.`}
+      title={interactive ? `${label}: ${value}. Clique para filtrar o mapa.` : `${label}: ${value}`}
       className={cn(
-        "group card-in relative cursor-pointer overflow-hidden rounded-xl border border-border bg-panel text-left shadow-[var(--shadow-card)] transition-all duration-200 touch-manipulation active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-md",
+        "group card-in relative overflow-hidden rounded-xl border border-border bg-panel text-left shadow-[var(--shadow-card)] transition-all duration-200 touch-manipulation",
+        interactive ? "cursor-pointer active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-md" : "cursor-default",
         dense
           ? "flex h-full flex-col items-center justify-center gap-0.5 px-1 py-2 text-center"
           : compact || isMobile

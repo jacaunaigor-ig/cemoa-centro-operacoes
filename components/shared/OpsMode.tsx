@@ -322,8 +322,8 @@ export function OpsModeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape" || event.defaultPrevented) return;
-      const target = event.target as HTMLElement | null;
-      if (target && (target.closest("input, textarea, select, [contenteditable=true]"))) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest("input, textarea, select, [contenteditable=true]")) return;
       if (!getMapFocus()) return;
       event.preventDefault();
       try {

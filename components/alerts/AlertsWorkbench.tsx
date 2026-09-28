@@ -99,6 +99,7 @@ import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
 import { AlertTicker } from "@/components/alerts/AlertTicker";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
+import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
 import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
@@ -276,6 +277,13 @@ function localHydro(): HydrologyPayload {
   return { ...buildHydrologyPayload(), cache: "MISS" };
 }
 
+type SessionPaint = {
+  id: string;
+  nome: string;
+  level: string;
+  previous: string | null;
+};
+
 function shortLevelLabel(level: string) {
   if (level === "MODERADO") return "Mod.";
   if (level === "EXTREMO") return "Ext.";
@@ -314,6 +322,10 @@ export function AlertsWorkbench() {
   const [clickSessionCount, setClickSessionCount] = useState(0);
   const [undoStack, setUndoStack] = useState<UndoItem[]>([]);
   const [classifying, setClassifying] = useState(false);
+  const [sessionPaints, setSessionPaints] = useState<SessionPaint[]>([]);
+  const [sessionReview, setSessionReview] = useState(false);
+  const sessionReviewRef = useRef(false);
+  sessionReviewRef.current = sessionReview;
   const [editorOpen, setEditorOpen] = useState(false);
   const editBusy = useRef(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
@@ -383,7 +395,7 @@ export function AlertsWorkbench() {
         ttlMs?: number;
         skipRefresh?: boolean;
       },
-    ) => {
+    ): Promise<{ ok: boolean }> => {
       const tipoAlvo = opts?.tipo ?? tipo;
       const replace = Boolean(opts?.replace);
       const remove = opts?.remove ?? [];
@@ -400,16 +412,7 @@ export function AlertsWorkbench() {
         issuedById: session?.id,
         ttlMs: opts?.ttlMs,
       };
-      if (STATIC_DEPLOY) {
-        if (replace) replaceOverrides(tipoAlvo, updates, Date.now(), meta);
-        else if (Object.keys(updates).length) mergeOverrides(tipoAlvo, updates, Date.now(), meta);
-        if (remove.length) removeOverrides(tipoAlvo, remove);
-        try {
-          rememberLocalOverrides(tipoAlvo, updates, replace, remove, meta);
-        } catch {
-          /* ignore quota */
-        }
-        if (tipoAlvo === tipo) setData(localAlerts(tipoAlvo));
+      const rememberHistory = () => {
         if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
           setUndoStack((stack) =>
             [
@@ -423,7 +426,19 @@ export function AlertsWorkbench() {
             ].slice(0, 20),
           );
         }
-        return true;
+      };
+      if (STATIC_DEPLOY) {
+        if (replace) replaceOverrides(tipoAlvo, updates, Date.now(), meta);
+        else if (Object.keys(updates).length) mergeOverrides(tipoAlvo, updates, Date.now(), meta);
+        if (remove.length) removeOverrides(tipoAlvo, remove);
+        try {
+          rememberLocalOverrides(tipoAlvo, updates, replace, remove, meta);
+        } catch {
+          /* ignore quota */
+        }
+        if (tipoAlvo === tipo) setData(localAlerts(tipoAlvo));
+        rememberHistory();
+        return { ok: true };
       }
       const res = await fetch("/api/alerts/overrides", {
         method: "POST",
@@ -440,35 +455,24 @@ export function AlertsWorkbench() {
       });
       if (res.status === 401) {
         toast.error("Entre como operador para alterar o mapa.");
-        return false;
+        return { ok: false };
       }
       if (!res.ok) {
         toast.error("Não foi possível gravar a classificação.");
-        return false;
+        return { ok: false };
       }
+      await res.json().catch(() => null);
       try {
         rememberLocalOverrides(tipoAlvo, updates, replace, remove, meta);
       } catch {
         /* ignore quota */
       }
       if (!opts?.skipRefresh) {
-        const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
-        setData((prev) => takeIncomingAlerts(prev, payload));
+        const next = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`);
+        setData((prev) => takeIncomingAlerts(prev, next));
       }
-      if (!opts?.skipHistory && (Object.keys(updates).length || remove.length)) {
-        setUndoStack((stack) =>
-          [
-            {
-              kind: "override" as const,
-              tipo: tipoAlvo,
-              previous,
-              next: updates,
-            },
-            ...stack,
-          ].slice(0, 20),
-        );
-      }
-      return true;
+      rememberHistory();
+      return { ok: true };
     },
     [tipo, data, session],
   );
@@ -589,13 +593,13 @@ export function AlertsWorkbench() {
         if (prev == null) remove.push(id);
         else updates[id] = prev;
       }
-      const ok = await persistOverrides(updates, {
+      const undone = await persistOverrides(updates, {
         remove,
         skipHistory: true,
         source: "desfazer",
         tipo: item.tipo,
       });
-      if (!ok) return;
+      if (!undone.ok) return;
       setUndoStack((stack) => stack.slice(1));
       toast.success("Última classificação desfeita.");
     } finally {
@@ -778,7 +782,8 @@ export function AlertsWorkbench() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+        if (event.key === "Escape") {
+        if (sessionReviewRef.current) return;
         if (editorOpen) return;
         if (drawMode) {
           mapApi.current?.cancelDraw();
@@ -796,13 +801,13 @@ export function AlertsWorkbench() {
         if (selected) setQuery({ municipio: null });
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
-        const target = event.target as HTMLElement | null;
+        const target = event.target;
         const typing =
-          target &&
+          target instanceof Element &&
           (target.tagName === "INPUT" ||
             target.tagName === "TEXTAREA" ||
             target.tagName === "SELECT" ||
-            target.isContentEditable);
+            (target instanceof HTMLElement && target.isContentEditable));
         if (typing || !admin || classifying) return;
         if (!undoStack.length) return;
         event.preventDefault();
@@ -864,6 +869,13 @@ export function AlertsWorkbench() {
     const max = Math.max(1, ...Object.values(focosRef.byId));
     const next: Record<string, string> = {};
     for (const item of catalog) next[item.nome] = focoFill(focosRef.byId[item.id] ?? 0, max);
+    return next;
+  }, [tipo, focosMapa, focosRef, catalog]);
+
+  const focoLabels = useMemo(() => {
+    if (tipo !== "INCENDIO" || !focosMapa || !focosRef) return null;
+    const next: Record<string, string> = {};
+    for (const item of catalog) next[item.nome] = String(focosRef.byId[item.id] ?? 0);
     return next;
   }, [tipo, focosMapa, focosRef, catalog]);
 
@@ -987,7 +999,7 @@ export function AlertsWorkbench() {
       onSelect={(nome, basinName) => {
         if (admin && paintArmed) {
           const row = catalog.find((m) => m.nome === nome);
-          if (row) paintMunicipio(row.id, row.nome, row.bacia);
+          if (row) requestPaint(row.id, row.nome, row.bacia);
           return;
         }
         setHovered(null);
@@ -1021,20 +1033,67 @@ export function AlertsWorkbench() {
   }
 
   function finishClickSession() {
-    const n = clickSessionCount;
+    if (sessionPaints.length) {
+      setSessionReview(true);
+      return;
+    }
     setPaintArmed(false);
+    setClickSessionCount(0);
+  }
+
+  function confirmClickSession() {
+    const n = sessionPaints.length;
+    setSessionReview(false);
+    setPaintArmed(false);
+    setSessionPaints([]);
     setClickSessionCount(0);
     if (n) {
       toast.success(
         n === 1
-          ? `Edição encerrada · 1 município em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`
-          : `Edição encerrada · ${n} municípios em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`,
+          ? `Edição confirmada · 1 município em ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}`
+          : `Edição confirmada · ${n} municípios · ${durationLabel(paintTtlMs)}`,
       );
     }
   }
 
-  function paintMunicipio(id: string, nome: string, _baciaName: string) {
+  async function undoClickSession() {
+    if (!sessionPaints.length || classifying) {
+      setSessionReview(false);
+      return;
+    }
+    const updates: Record<string, string> = {};
+    const remove: string[] = [];
+    for (const paint of sessionPaints) {
+      if (paint.previous == null) remove.push(paint.id);
+      else updates[paint.id] = paint.previous;
+    }
+    setClassifying(true);
+    try {
+      const saved = await persistOverrides(updates, {
+        remove,
+        skipHistory: true,
+        source: "desfazer",
+        ttlMs: paintTtlMs,
+      });
+      if (!saved.ok) return;
+      setSessionReview(false);
+      setPaintArmed(false);
+      setSessionPaints([]);
+      setClickSessionCount(0);
+      toast.success("Edição desfeita. O mapa voltou ao que estava antes dos cliques.");
+    } finally {
+      setClassifying(false);
+    }
+  }
+
+  function requestPaint(id: string, nome: string, bacia: string) {
+    if (classifying || sessionReview) return;
+    void paintMunicipio(id, nome, bacia);
+  }
+
+  async function paintMunicipio(id: string, nome: string, _baciaName: string) {
     const now = Date.now();
+    setClassifying(true);
     setData((prev) => {
       if (!prev) return prev;
       return {
@@ -1055,6 +1114,15 @@ export function AlertsWorkbench() {
       };
     });
     setClickSessionCount((n) => n + 1);
+    setSessionPaints((prev) => {
+      const already = prev.find((paint) => paint.id === id);
+      if (already) return prev.map((paint) => (paint.id === id ? { ...paint, level: paintLevel } : paint));
+      const row = data?.municipios.find((m) => m.id === id);
+      return [
+        ...prev,
+        { id, nome, level: paintLevel, previous: row?.fonte === "admin" ? row.risco : null },
+      ];
+    });
     try {
       rememberLocalOverrides(
         tipo,
@@ -1066,12 +1134,15 @@ export function AlertsWorkbench() {
     } catch {
       /* ignore quota */
     }
-    void persistOverrides(
-      { [id]: paintLevel },
-      { source: "clique", ttlMs: paintTtlMs, skipRefresh: true },
-    ).then((ok) => {
-      if (!ok) toast.error(`Não gravou ${nome}.`);
-    });
+    try {
+      const saved = await persistOverrides(
+        { [id]: paintLevel },
+        { source: "clique", ttlMs: paintTtlMs, skipRefresh: true },
+      );
+      if (!saved.ok) toast.error(`Não gravou ${nome}.`);
+    } finally {
+      setClassifying(false);
+    }
   }
 
   async function applyPolygon(points: Array<{ lat: number; lng: number }>) {
@@ -1640,6 +1711,7 @@ export function AlertsWorkbench() {
                   airSensors={airPoints}
                   pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
                   fillByNome={focoFills}
+                  labelByNome={focoLabels}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
@@ -1650,7 +1722,7 @@ export function AlertsWorkbench() {
                     setQuery(geoForNome(nome, basinName));
                   }}
                   onHover={setHovered}
-                  onPaint={paintMunicipio}
+                  onPaint={requestPaint}
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
                   onStainClick={(stain) => void deleteStain(stain)}
                   onGeoError={setGeoError}
@@ -1796,7 +1868,7 @@ export function AlertsWorkbench() {
               stainCount={(data?.stains ?? []).length}
               paintHint={
                 paintArmed
-                  ? `Clique nos municípios. Encerrar quando terminar.`
+                  ? `Grau ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}. A confirmação aparece ao encerrar a edição.`
                   : tipo === "INCENDIO"
                     ? "Só o operador classifica o grau. MP2,5 em 24 h sugere; clique, lote ou polígono pinta o município."
                     : "Só o operador classifica o grau. Polígono aplica o grau na mancha; chuva e cota só sugerem."
@@ -1820,6 +1892,7 @@ export function AlertsWorkbench() {
                 if (on) {
                   setPaintArmed(true);
                   setClickSessionCount(0);
+                  setSessionPaints([]);
                   setQuery({ municipio: null });
                 } else finishClickSession();
               }}
@@ -1842,6 +1915,20 @@ export function AlertsWorkbench() {
         </div>
       </div>
 
+      <ClassifyConfirm
+        open={sessionReview}
+        level={
+          sessionPaints.every((paint) => paint.level === sessionPaints[0]?.level)
+            ? levelLabel(sessionPaints[0]?.level ?? paintLevel)
+            : "graus diferentes"
+        }
+        duration={durationLabel(paintTtlMs)}
+        names={sessionPaints.map((paint) => paint.nome)}
+        busy={classifying}
+        onCancel={() => setSessionReview(false)}
+        onUndo={() => void undoClickSession()}
+        onConfirm={confirmClickSession}
+      />
       <RiskEditorDialog
         open={editorOpen}
         rows={data?.municipios ?? []}
@@ -1849,8 +1936,8 @@ export function AlertsWorkbench() {
         productLabel={product.label}
         onClose={() => setEditorOpen(false)}
         onApply={async (updates, ttlMs) => {
-          const ok = await persistOverrides(updates, { source: "lote", ttlMs });
-          if (ok) {
+          const saved = await persistOverrides(updates, { source: "lote", ttlMs });
+          if (saved.ok) {
             toast.success(
               `${Object.keys(updates).length} município(s) em ${levelLabel(Object.values(updates)[0] ?? paintLevel)} · ${durationLabel(ttlMs)}.`,
             );

@@ -29,7 +29,7 @@ import {
   type AvisoGrafico,
 } from "@/lib/aviso-grafico";
 import { exportAvisoPng } from "@/lib/export-aviso-png";
-import { STATIC_DEPLOY } from "@/lib/site";
+import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "cemoa_aviso_grafico_v1";
@@ -100,14 +100,17 @@ export function useAvisoGrafico() {
   return ctx;
 }
 
-export function AvisoGraficoButton({ compact = false }: { compact?: boolean }) {
+export function AvisoGraficoButton({ compact = false, className }: { compact?: boolean; className?: string }) {
   const { setOpen, last } = useAvisoGrafico();
   const slot = avisoSlotAt();
   return (
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-border bg-panel px-2 py-1 text-left hover:border-border-strong"
+      className={cn(
+        "inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-panel px-2.5 py-1 text-left hover:border-border-strong",
+        className,
+      )}
       title={`Montar o Aviso Meteorológico de ${AVISO_GRAFICO_HOURS} horas com a imagem GOES do CPTEC/INPE`}
     >
       <Satellite className="size-4 shrink-0 text-focus" />
@@ -370,7 +373,7 @@ function AvisoPreview({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             ref={imgRef}
-            src={`${goes.imageUrl}?t=${goes.generatedAt}`}
+            src={`${withBase(goes.imageUrl)}?t=${goes.generatedAt}`}
             alt="Infravermelho GOES-19 do CPTEC/INPE"
             className="aspect-[4/3] w-full object-contain bg-[#0b1d4a]"
           />

@@ -34,6 +34,7 @@ export type InstitutionalPngOptions = {
   footerSources: string;
   extraNote?: { title: string; text: string };
   stains?: Array<{ geometry: Geom; color: string }>;
+  municipios?: Array<{ nome: string; valor: string; color: string }>;
 };
 
 function merc(lon: number, lat: number): [number, number] {
@@ -320,7 +321,35 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   wrapText(ctx, opts.productLegend, panelX + 38, panelY + 108, panelW - 76, 24, "800 18px Arial, sans-serif");
 
   let y = panelY + 195;
-  for (const item of opts.legendItems) {
+  if (opts.municipios?.length) {
+    const usable = panelH - 180;
+    const rowH = Math.max(22, Math.min(40, Math.floor(usable / opts.municipios.length)));
+    const fontPx = Math.max(18, Math.min(26, rowH - 12));
+    const sw = Math.round(fontPx * 0.7);
+    y = panelY + 152;
+    for (const row of opts.municipios) {
+      ctx.fillStyle = row.color;
+      ctx.fillRect(panelX + 32, y - sw + 4, sw, sw);
+      ctx.strokeStyle = "#c5d0d8";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(panelX + 32, y - sw + 4, sw, sw);
+      ctx.fillStyle = "#173044";
+      ctx.font = `700 ${fontPx}px Arial, sans-serif`;
+      ctx.textAlign = "right";
+      ctx.fillText(row.valor, panelX + panelW - 28, y);
+      const valorW = ctx.measureText(row.valor).width;
+      const maxW = panelW - 32 - sw - 16 - 28 - valorW - 12;
+      ctx.textAlign = "left";
+      let nome = row.nome;
+      if (ctx.measureText(nome).width > maxW) {
+        while (nome.length > 1 && ctx.measureText(`${nome}…`).width > maxW) nome = nome.slice(0, -1);
+        nome = `${nome}…`;
+      }
+      ctx.fillText(nome, panelX + 32 + sw + 10, y);
+      y += rowH;
+    }
+  }
+  for (const item of opts.municipios?.length ? [] : opts.legendItems) {
     ctx.fillStyle = item.color;
     ctx.beginPath();
     ctx.arc(panelX + 58, y - 6, 23, 0, Math.PI * 2);

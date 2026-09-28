@@ -1,4 +1,4 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ALERT_TYPES, parseAlertType, productOf, type AlertType } from "@/lib/alert-types";
 import {
   clearOverrides,
@@ -11,7 +11,6 @@ import {
 } from "@/lib/overrides";
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
-import { processarAlertasParaNotificar } from "@/lib/notificacoes";
 import { withOperatorRole } from "@/lib/equipe";
 import { parseAlertTtlMs } from "@/lib/alert-duration";
 import {
@@ -83,14 +82,6 @@ export async function POST(request: Request) {
     );
     invalidate(`alerts:${tipo}`);
     invalidate("alerts");
-    // Bot do Telegram: dispara logo após a classificação do operador.
-    after(async () => {
-      try {
-        await processarAlertasParaNotificar();
-      } catch {
-        /* notificação não derruba a classificação */
-      }
-    });
     return NextResponse.json({ ok: true, tipo, overrides: getOverrides(tipo) });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });

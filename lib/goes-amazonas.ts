@@ -160,17 +160,96 @@ function svgPaths(
     .join("");
 }
 
+/** Recorte operacional da sala: pixels fixos do JPEG baixa e a extensão geográfica correspondente. */
+const GOES_SALA = {
+  x1: 1025,
+  y1: 850,
+  x2: 1470,
+  y2: 1150,
+  west: -74.15,
+  east: -55.15,
+  south: -9.98,
+  north: 2.85,
+} as const;
+
 function municipalBordersSvg(
   rings: Ring[],
   project: Projector,
   crop: { x0: number; y0: number; scale: number },
   width: number,
   height: number,
+  stroke = 1.6,
 ) {
   const d = svgPaths(rings, project, crop);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    <path d="${d}" fill="none" stroke="#111111" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="#111111" stroke-width="${stroke}" stroke-linejoin="round" stroke-linecap="round"/>
   </svg>`;
+}
+
+function horaManaus(imageAt: number | null) {
+  if (imageAt == null) return "CPTEC/INPE";
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Manaus",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(imageAt);
+}
+
+async function cropSala(input: Buffer, imageAt: number | null) {
+  const cw = GOES_SALA.x2 - GOES_SALA.x1;
+  const ch = GOES_SALA.y2 - GOES_SALA.y1;
+  const outW = 1600;
+  const outH = Math.round((ch * outW) / cw);
+  const cropped = await sharp(input)
+    .extract({ left: GOES_SALA.x1, top: GOES_SALA.y1, width: cw, height: ch })
+    .resize(outW, outH, { kernel: "lanczos3" })
+    .ensureAlpha()
+    .png()
+    .toBuffer();
+
+  const project: Projector = (lon, lat) => {
+    const x = ((lon - GOES_SALA.west) / (GOES_SALA.east - GOES_SALA.west)) * outW;
+    const y = ((GOES_SALA.north - lat) / (GOES_SALA.north - GOES_SALA.south)) * outH;
+    return [x, y] as const;
+  };
+  const borders = await sharp(
+    Buffer.from(
+      municipalBordersSvg(loadRings(), project, { x0: 0, y0: 0, scale: 1 }, outW, outH, 1.15),
+    ),
+  )
+    .png()
+    .toBuffer();
+  const body = await sharp(cropped)
+    .flatten({ background: "#0b1d4a" })
+    .composite([{ input: borders, blend: "over" }])
+    .jpeg({ quality: 90, chromaSubsampling: "4:4:4" })
+    .toBuffer();
+
+  const bannerH = 72;
+  const quando = horaManaus(imageAt);
+  const banner = await sharp(
+    Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${bannerH}">
+      <rect width="100%" height="100%" fill="#0b1d4a"/>
+      <text x="50%" y="30" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="22" font-weight="700">SATÉLITE GOES-19 · INFRAVERMELHO CANAL 13 (10,3 µm)</text>
+      <text x="50%" y="56" text-anchor="middle" fill="#dbe4f0" font-family="sans-serif" font-size="16">Hora local (Manaus): ${quando} · CPTEC/INPE</text>
+    </svg>`),
+  )
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: { width: outW, height: outH + bannerH, channels: 3, background: "#0b1d4a" },
+  })
+    .composite([
+      { input: banner, top: 0, left: 0 },
+      { input: body, top: bannerH, left: 0 },
+    ])
+    .jpeg({ quality: 90, chromaSubsampling: "4:4:4" })
+    .toBuffer();
 }
 
 /** Moldura branca do JPEG CPTEC. O .jgw nasce na grade, não no pixel (0,0) da imagem. */
@@ -225,10 +304,15 @@ async function projectorFor(
   };
 }
 
-export async function cropGoesToAmazonas(input: Buffer, world?: GoesWorld | null): Promise<Buffer> {
+export async function cropGoesToAmazonas(
+  input: Buffer,
+  world?: GoesWorld | null,
+  imageAt?: number | null,
+): Promise<Buffer> {
   const meta = await sharp(input).metadata();
   const width = meta.width ?? 0;
   const height = meta.height ?? 0;
+  if (width >= GOES_SALA.x2 && height >= GOES_SALA.y2) return cropSala(input, imageAt ?? null);
   if (width < 200 || height < 200) return input;
 
   const { project } = await projectorFor(input, width, height, world);

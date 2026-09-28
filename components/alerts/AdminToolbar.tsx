@@ -77,7 +77,7 @@ export function AdminToolbar({
             aria-pressed={paintArmed}
           >
             <MousePointerClick />
-            Classificar no clique
+            {paintArmed ? `Classificando · ${labels[paintLevel] ?? paintLevel}` : "Classificar no clique"}
           </Button>
         ) : null}
         <Button type="button" size="sm" variant="secondary" onClick={onOpenBatch}>
@@ -147,8 +147,8 @@ export function AdminToolbar({
             ? `Clique os vértices · Fechar aplica o grau só na mancha (${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}) — o município não muda por inteiro`
             : paintHint ??
               (paintArmed
-                ? `Clique nos municípios: ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}. Encerrar quando terminar.`
-                : "Defina o grau e clique no mapa.")}
+                ? `Grau ${labels[paintLevel] ?? paintLevel}${paintTtlMs ? ` · ${durationLabel(paintTtlMs)}` : ""}. A confirmação aparece ao encerrar a edição.`
+                : "Escolha o grau e a duração, depois ligue o clique.")}
           {overrideCount ? ` · ${overrideCount} município(s)` : ""}
           {stainCount ? ` · ${stainCount} mancha(s)` : ""}
         </span>
@@ -172,7 +172,7 @@ export function AdminToolbar({
               type="button"
               onClick={() => onPaintLevel(level)}
               className={cn(
-                "rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
+                "min-h-8 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-colors duration-150 active:scale-[0.97]",
                 paintLevel === level ? "text-bg" : "border-border text-text-dim",
               )}
               style={
@@ -201,7 +201,7 @@ export function AdminToolbar({
               type="button"
               onClick={() => onPaintTtl(preset.ms)}
               className={cn(
-                "rounded-full border px-2 py-0.5 text-[10px] font-bold transition-colors duration-150",
+                "min-h-8 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-colors duration-150",
                 paintTtlMs === preset.ms
                   ? "border-brand bg-brand text-white"
                   : "border-border text-text-dim hover:text-text",
