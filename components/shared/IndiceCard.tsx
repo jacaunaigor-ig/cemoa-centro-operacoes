@@ -1,14 +1,26 @@
 import { formatHab } from "@/lib/demografia";
 import {
-  INDICE_FAIXA_COLORS,
-  INDICE_FAIXAS,
-  INDICE_FONTE_MONITOR,
-  TENDENCIA_LABELS,
-  iveTeto,
-  type IndiceMunicipio,
-} from "@/lib/indice";
+  BONUS_PIMF,
+  CLASSES_IVM,
+  EVENTOS_ORDEM,
+  EVENTOS_SUBITOS,
+  FATOR_ALERTA,
+  nivelDe,
+  TETO_IRG,
+  type MetodologiaEvento,
+} from "@/lib/metodologia";
+import type { MetodologiaRow } from "@/lib/metodologia-build";
 import { PmifBadge } from "@/components/shared/PmifBadge";
 import { cn } from "@/lib/utils";
+
+const EVENTO_LABEL: Record<MetodologiaEvento, string> = {
+  Estiagem: "Estiagem",
+  "Inundação": "Inundação",
+  "Incêndio/QAr": "Incêndio / Q. do ar",
+  "Erosão": "Erosão",
+  "Mov. Massa": "Mov. de massa",
+  Chuvas: "Chuvas",
+};
 
 function Bar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max <= 0 ? 0 : Math.min(100, Math.round((value / max) * 100));
@@ -22,174 +34,148 @@ function Bar({ value, max, color }: { value: number; max: number; color: string 
   );
 }
 
-export function IndiceCard({ rec }: { rec: IndiceMunicipio | null | undefined }) {
+function fmt(n: number) {
+  return n.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) {
   if (!rec) {
     return (
       <div className="rounded-lg border border-border bg-bg/40 p-2.5">
         <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Índice de Vulnerabilidade
+          Índice de Risco · IRE/IRG
         </small>
         <p className="mt-1 text-[12px] text-text-mute">Carregando…</p>
       </div>
     );
   }
 
-  const pessoas =
-    typeof rec.estrutural.pessoasRisco === "number" ? formatHab(rec.estrutural.pessoasRisco) : null;
-  const faixa = INDICE_FAIXAS.find((f) => f.id === rec.faixa);
-  const historico = rec.historico.eventos
-    .slice()
-    .sort((a, b) => b.ano - a.ano || a.tipo.localeCompare(b.tipo, "pt-BR"));
-  const incendio = rec.ive.find((item) => item.id === "qualidade_ar");
+  const classe = CLASSES_IVM.find((c) => c.id === rec.classe);
+  const pessoas = rec.fontesSetores ? formatHab(rec.fontesSetores.popR3R4) : null;
 
   return (
     <div className="rounded-lg border border-border bg-bg/40 p-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            Índice de Vulnerabilidade
+            Índice de Risco · IRE/IRG
           </small>
           <p className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[13px] font-bold text-text">{rec.nome}</span>
-            {rec.pmif ? <PmifBadge bonus={Boolean(incendio?.pmifBonus)} /> : null}
+            {rec.pmif ? <PmifBadge bonus /> : null}
           </p>
         </div>
         <span
           className="rounded-md px-2 py-1 font-mono text-lg font-black tabular-nums leading-none text-white"
-          style={{ background: INDICE_FAIXA_COLORS[rec.faixa] }}
+          style={{ background: rec.cor }}
+          title={`IRG ${fmt(rec.irg)} · teto ${TETO_IRG}`}
         >
-          {rec.total.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+          {fmt(rec.irg)}
         </span>
       </div>
 
-      <p className="mt-1.5 text-[11px] font-semibold" style={{ color: INDICE_FAIXA_COLORS[rec.faixa] }}>
-        {faixa?.label ?? rec.faixa} · IVG
+      <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
+        <span
+          className="rounded-full px-1.5 py-0.5 text-[10px] font-black text-white"
+          style={{ background: rec.cor }}
+        >
+          {rec.prioridade}
+        </span>
+        <span style={{ color: rec.cor }}>
+          Nível {rec.nivel} · {rec.nomeNivel} · IRG
+        </span>
+        {rec.p1Confirmado ? (
+          <span className="rounded-full border border-border bg-hover px-1.5 py-0.5 text-[9px] font-bold text-text uppercase">
+            P1 confirmado
+          </span>
+        ) : null}
+        {rec.rebaixadoSemAlerta ? (
+          <span className="rounded-full border border-border bg-hover px-1.5 py-0.5 text-[9px] font-bold text-text-mute uppercase">
+            Rebaixado sem alerta
+          </span>
+        ) : null}
       </p>
 
       <section className="mt-2 rounded-md border border-border/80 bg-panel/40 px-2 py-1.5">
         <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Destaque hidrológico
+          Território
         </p>
         <p className="mt-0.5 text-[12px] font-semibold text-text">
           {rec.bacia}
           {rec.rio ? ` · ${rec.rio}` : ""}
         </p>
-        <p className="text-[10px] text-text-mute">{rec.calha}</p>
+        <p className="text-[10px] text-text-mute">
+          Calha {rec.calha}
+          {pessoas ? ` · ${pessoas} hab. em área de risco R3R4` : ""}
+        </p>
       </section>
 
       <p className="mt-2 flex justify-between text-[10px] font-bold tracking-wide text-text-mute uppercase">
-        Base estrutural
-        <span className="font-mono tabular-nums text-text">{rec.estrutural.total}/50</span>
+        Vulnerabilidade (IVM)
+        <span className="font-mono tabular-nums text-text">
+          {fmt(rec.ivm)} · Classe {rec.classe}
+        </span>
       </p>
-      <Bar value={rec.estrutural.total} max={50} color={INDICE_FAIXA_COLORS[rec.faixa]} />
-      <dl className="mt-1.5 grid gap-1 text-[11px] text-text-dim">
-        <div className="flex justify-between gap-2">
-          <dt>População vulnerável</dt>
-          <dd className="font-mono tabular-nums text-text">
-            {rec.estrutural.populacao}/15
-            {rec.estrutural.pctVulneravel != null ? ` · ${rec.estrutural.pctVulneravel}%` : ""}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Áreas de risco mapeadas</dt>
-          <dd className="font-mono tabular-nums text-text">
-            {rec.estrutural.areasRisco}/20
-            {rec.estrutural.setores
-              ? ` · ${rec.estrutural.setores} setor${rec.estrutural.setores === 1 ? "" : "es"}`
-              : " · sem mapeamento"}
-            {pessoas ? ` · ${pessoas} hab.` : ""}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt>Capacidade de resposta</dt>
-          <dd className="font-mono tabular-nums text-text">
-            {rec.estrutural.capacidade}/15
-            {rec.estrutural.idhm != null
-              ? ` · IDHM ${rec.estrutural.idhm.toLocaleString("pt-BR", { minimumFractionDigits: 3 })}`
-              : ""}
-          </dd>
-        </div>
-      </dl>
+      <p className="text-[10px] text-text-mute">
+        {classe?.nome ?? rec.classeNome}
+        {rec.bc > 0 ? ` · bônus contextual +${rec.bc} (ruralidade/TI)` : ""}
+        {rec.pmif ? ` · PIMF +${BONUS_PIMF} na ameaça de incêndio` : ""}
+      </p>
 
       <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
-        IVE por desastre
+        IRE por evento <span className="normal-case">(teto {TETO_IRG})</span>
       </p>
       <ul className="mt-1 grid gap-1.5">
-        {rec.ive.map((item) => (
-          <li key={item.id}>
-            <p className="flex items-center justify-between gap-2 text-[11px] text-text-dim">
-              <span className="flex min-w-0 items-center gap-1.5">
-                <span
-                  className="size-2 shrink-0 rounded-sm"
-                  style={{ background: INDICE_FAIXA_COLORS[item.faixa] }}
-                  aria-hidden
-                />
-                <span className="truncate">{item.label}</span>
-                {item.id === "qualidade_ar" && rec.pmif ? <PmifBadge bonus /> : null}
-              </span>
-              <span className="shrink-0 font-mono tabular-nums text-text">
-                {item.total.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} · {item.nivel}
-              </span>
-            </p>
-            <Bar value={item.total} max={iveTeto(item.id)} color={INDICE_FAIXA_COLORS[item.faixa]} />
-            {item.bonus > 0 ? (
-              <p className="mt-0.5 flex flex-wrap gap-1 text-[9px] font-bold text-text-mute">
-                {item.pmifBonus > 0 ? <span>PMIF +{item.pmifBonus}</span> : null}
-                {item.tempestadeBonus > 0 ? <span>Tempestade +{item.tempestadeBonus}</span> : null}
-                {item.decretoBonus > 0 ? (
+        {EVENTOS_ORDEM.map((ev) => {
+          const valor = rec.ire[ev];
+          const nivel = nivelDe(valor);
+          const critico = ev === rec.eventoCritico;
+          const fe = rec.fePorEvento[ev];
+          const agr = rec.agrPorEvento[ev];
+          const alerta = rec.alertasVivos[ev];
+          const subito = EVENTOS_SUBITOS.includes(ev);
+          return (
+            <li key={ev}>
+              <p className="flex items-center justify-between gap-2 text-[11px] text-text-dim">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span
+                    className="size-2 shrink-0 rounded-sm"
+                    style={{ background: nivel.cor }}
+                    aria-hidden
+                  />
+                  <span
+                    className={cn("truncate", critico && "font-bold text-text")}
+                  >
+                    {EVENTO_LABEL[ev]}
+                    {critico ? " ●" : ""}
+                  </span>
+                  {ev === "Incêndio/QAr" && rec.pmif ? <PmifBadge bonus /> : null}
+                </span>
+                <span className="shrink-0 font-mono tabular-nums text-text">
+                  {fmt(valor)} · {nivel.nome}
+                </span>
+              </p>
+              <Bar value={valor} max={TETO_IRG} color={nivel.cor} />
+              <p className="mt-0.5 flex flex-wrap gap-x-2 text-[9px] font-bold text-text-mute">
+                {agr > 0 ? <span>Agravo +{agr}</span> : null}
+                {fe !== 1 ? <span>FE ×{fmt(fe)}</span> : null}
+                {subito ? (
                   <span>
-                    Decreto SE{item.decretoAno ? ` ${item.decretoAno}` : ""} +{item.decretoBonus}
+                    FA ×{FATOR_ALERTA[alerta ?? "Sem alerta"]}
+                    {alerta && alerta !== "Sem alerta" ? ` (${alerta})` : " (sem alerta)"}
                   </span>
                 ) : null}
               </p>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-
-      <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">Histórico</p>
-      {historico.length ? (
-        <ol className="mt-1 max-h-28 overflow-y-auto overscroll-contain text-[11px] text-text-dim">
-          {historico.map((ev, i) => (
-            <li key={`${ev.ano}-${ev.tipo}-${i}`} className="flex justify-between gap-2 py-px">
-              <span className="min-w-0 truncate">{ev.tipo}</span>
-              <span className="shrink-0 font-mono tabular-nums text-text-mute">{ev.ano}</span>
             </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="mt-0.5 text-[11px] text-text-dim">
-          Sem desastre reconhecido pela Defesa Civil AM neste município.
-        </p>
-      )}
-      <p className="mt-0.5 text-[10px] text-text-mute">
-        {TENDENCIA_LABELS[rec.historico.tendencia]} · {rec.historico.eventos.length} registro
-        {rec.historico.eventos.length === 1 ? "" : "s"}
-      </p>
-
-      <p className="mt-2 text-[10px] font-bold tracking-wide text-text-mute uppercase">
-        Monitoramento
-      </p>
-      <ul className="mt-1 grid gap-1">
-        {rec.monitoramento.eventos.map((ev) => (
-          <li
-            key={ev.id}
-            className={cn(
-              "flex items-center justify-between gap-2 text-[11px]",
-              ev.pontos === 0 ? "text-text-mute" : "text-text-dim",
-            )}
-          >
-            <span className="min-w-0 truncate">
-              {ev.label}
-              <span className="text-text-mute"> · {ev.nivel}</span>
-            </span>
-            <span className="shrink-0 font-mono tabular-nums text-text">
-              {ev.pontos}/{ev.max}
-            </span>
-          </li>
-        ))}
+          );
+        })}
       </ul>
-      <p className="mt-1 text-[10px] text-text-mute">Fonte: {INDICE_FONTE_MONITOR}</p>
+
+      <p className="mt-2 text-[10px] text-text-mute">
+        Metodologia CEMOA (cemoa_app) · IRE = ((IVM + ameaça) × FS + agravo) × FE ×
+        FA · IRG = 0,7 × maior IRE + 0,3 × média · FA ao vivo pela classificação do
+        operador.
+      </p>
     </div>
   );
 }

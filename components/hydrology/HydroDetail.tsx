@@ -22,15 +22,12 @@ import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
 import { cotaOnIso, hydroTodayIso } from "@/lib/hydro-series";
 import { cn } from "@/lib/utils";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
-import { IndiceCard } from "@/components/shared/IndiceCard";
-import type { IndiceMunicipio } from "@/lib/indice";
 
 export function HydroDetail({
   station,
   modo,
   admin = false,
   compact = false,
-  indice,
   onClose,
   onSave,
 }: {
@@ -38,7 +35,6 @@ export function HydroDetail({
   modo: HydroMode;
   admin?: boolean;
   compact?: boolean;
-  indice?: IndiceMunicipio | null;
   onClose: () => void;
   onSave?: (patch: HydroPatch) => void;
 }) {
@@ -73,11 +69,6 @@ export function HydroDetail({
       </div>
 
       <p className="mt-2 text-sm font-semibold">{tendenciaTexto(station.tendencia)}</p>
-      {indice !== undefined ? (
-        <div className="mt-3">
-          <IndiceCard rec={indice} />
-        </div>
-      ) : null}
       <FichaTerritorio municipioId={station.id} />
 
       {admin && onSave ? (

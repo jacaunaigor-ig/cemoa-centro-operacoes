@@ -12,7 +12,7 @@ export type RiskLevel = (typeof RISK_LEVELS)[number];
 
 export type TimeWindow = "1h" | "6h" | "hoje" | "24h";
 
-export type AlertProductId = "CHUVA" | "ALAGAMENTO" | "MOVIMENTO" | "INCENDIO";
+export type AlertProductId = "CHUVA" | "ALAGAMENTO" | "MOVIMENTO" | "EROSAO" | "INCENDIO";
 
 export type AirLevel = "BOA" | "MODERADO" | "RUIM" | "MUITO_RUIM" | "PESSIMA";
 

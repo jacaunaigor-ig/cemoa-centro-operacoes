@@ -4,8 +4,10 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
+- **Meteorologia** — aviso meteorológico do plantão, monitoramento pluviométrico do CEMADEN (mapa azul que intensifica com o acumulado) e imagem GOES-19 do CPTEC/INPE com limites municipais georreferenciados.
+- **Gestão de Risco** — metodologia CEMOA (IRE/IRG) dos 62 municípios: fila por prioridade, ficha municipal, pizzas de nível/prioridade/evento, território (Censo 2022 e área), degradê de decretos de estiagem (vermelho) e inundação (azul), e tabela exportável. O índice não pinta o mapa de alertas nem o boletim.
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**01/09/2026**): o painel hidrometeorológico da Defesa Civil/AM atualiza as cotas ao vivo (sem mudar o grau) e a **telemetria ANA** sobrepõe onde há estação automática. Onde a leitura é **DC-AM/SEMA** e o Fabric ainda não publicou o dia, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento, movimento e **incêndio** só recebem grau com o operador (abrem em baixo / boa). Sensores PurpleAir e chuva CEMADEN sugerem emitir, elevar ou renovar — **não classificam** o município. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**01/09/2026**): o painel hidrometeorológico da Defesa Civil/AM atualiza as cotas ao vivo (sem mudar o grau) e a **telemetria ANA** sobrepõe onde há estação automática e é relida depois das **07:00 (Brasília)**. O painel Fabric/Power BI é relido depois das **07:00 e das 16:00 (Brasília)**. Onde a leitura é **DC-AM/SEMA** e o Fabric ainda não publicou o dia, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento, movimento e **erosão de margem** só recebem grau com o operador (abrem em baixo). Em **Incêndio/Qualidade do ar**, o App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima; Boa fica sem cor e a classificação do operador prevalece. O monitoramento pluviométrico do CEMADEN ficou na aba Meteorologia. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
 
 ## Produtos de alerta
 
@@ -13,14 +15,15 @@ Município, bacia e calha são compartilhados na troca de abas. Os 62 município
 | --- | --- | --- |
 | `CHUVA` (padrão) | Baixo → Extremo | Risco de chuva intensa |
 | `ALAGAMENTO` | Baixo → Extremo | Risco de alagamento |
-| `MOVIMENTO` | Baixo → Extremo | Deslizamento, movimento de massa e erosão de margem; só eleva onde há setor mapeado |
-| `INCENDIO` | Boa → Péssima | Incêndio em áreas não protegidas com reflexos na qualidade do ar (MP2,5 µg/m³) |
+| `MOVIMENTO` | Baixo → Extremo | Deslizamento e movimento de massa; só eleva onde há setor mapeado |
+| `EROSAO` | Baixo → Extremo | Alerta de erosão de margem |
+| `INCENDIO` | Boa → Péssima | Incêndio/Qualidade do ar (MP2,5 µg/m³). Moderada ou pior pinta o mapa. O botão Focos de calor troca para o degradê vermelho dos focos absolutos AQUA_M-T |
 
-A classificação de qualidade do ar **não pinta o mapa**. O PNG e a legenda usam faixas de MP2,5 em **24 h**: Boa **0–15**, Moderada **15–50**, Ruim **50–75**, Muito ruim **75–125**, Péssima **>125** µg/m³. Os sensores PurpleAir continuam na camada de apoio e na fila do plantão como sugestão.
+O PNG e a legenda usam faixas de MP2,5 em **24 h**: Boa **0–15**, Moderada **15–50**, Ruim **50–75**, Muito ruim **75–125**, Péssima **>125** µg/m³. Boa não colore o município.
 
-No produto **Incêndio florestal** o painel consulta `/api/air-quality` em `GET https://api.purpleair.com/v1/sensors?fields=name,pm2.5_24hour,latitude,longitude&location_type=0` (mapa da área, só externos). Um sensor isolado usa `GET /v1/sensors/{sensor_index}?fields=name,pm2.5_24hour,latitude,longitude` (mais barato em pontos). A chave vai no header `x-api-key`. O campo chave é **`pm2.5_24hour`**. Sensores nulos saem da conta. A **média aritmética** municipal (nunca a soma) ignora valores acima de **500 µg/m³**. O IVE de qualidade do ar usa essa média de 24 h. Se o valor parecer alto demais, conferir `pm2.5_cf_1` e `pm2.5_atm` quando a API enviar. Horários em **America/Manaus (UTC-4)**. A cada ciclo (~60 s no servidor, poll do painel ~20 s) o último valor atualiza o índice. Sem `PURPLEAIR_API_KEY` o centro cai no App SELVA (leitura atual) e avisa isso na fonte. Sem classificação do operador o município permanece em **Boa** no mapa. Leitura de baixo custo: não substitui estação regulatória.
+No produto **Incêndio/Qualidade do ar** o painel consulta primeiro o App SELVA (`https://www.appselva.com.br/api.php?route=purpleair`) e, se essa leitura falhar, `/api/air-quality` via PurpleAir. O mapa usa a faixa municipal quando ela é Moderada ou pior. Sem leitura degradada e sem classificação do operador o município permanece sem cor de alerta. O fallback PurpleAir usa `GET https://api.purpleair.com/v1/sensors?fields=name,pm2.5_24hour,latitude,longitude&location_type=0` (mapa da área, só externos). Um sensor isolado usa `GET /v1/sensors/{sensor_index}?fields=name,pm2.5_24hour,latitude,longitude` (mais barato em pontos). A chave vai no header `x-api-key`. O campo chave é **`pm2.5_24hour`**. Sensores nulos saem da conta. A **média aritmética** municipal (nunca a soma) ignora valores acima de **500 µg/m³**. O IVE de qualidade do ar usa essa média de 24 h. Se o valor parecer alto demais, conferir `pm2.5_cf_1` e `pm2.5_atm` quando a API enviar. Horários em **America/Manaus (UTC-4)**. A cada ciclo (~60 s no servidor, poll do painel ~20 s) o último valor atualiza o índice. Se o App SELVA falhar e houver `PURPLEAIR_API_KEY`, a faixa vem do `pm2.5_24hour`. Leitura de baixo custo: não substitui estação regulatória.
 
-Ainda não entram no recorte (dados que o SELVA também publica em `route=files`): estimado CAMS e focos FIRMS. Quando entrar, ficam no mesmo produto de incêndio — sem cartão novo no centro.
+Os focos de calor do produto vêm do INPE BDQueimadas (arquivos diários, satélite de referência AQUA_M-T, bioma Amazônia, Amazonas), somados nos últimos 15 dias com arquivo. O degradê é o total absoluto por município. O estimado CAMS do SELVA continua fora do recorte.
 
 O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa ocupa a tela com os totais (grau + ação da Portaria) e a faixa de alertas. **Operação** ou **Esc** restaura o posto de trabalho. A escolha fica em `localStorage` (`cemoa_map_focus`).
 
@@ -59,12 +62,16 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | --- | --- |
 | `/` | Painel de Alertas |
 | `/boletim` | Boletim Hidrológico |
-| `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|INCENDIO`) |
+| `/meteorologia` | Meteorologia (aviso do plantão, chuva CEMADEN em degradê azul e GOES-19) |
+| `/risco` | Gestão de Risco (IRE/IRG, fila, ficha, pizzas, território, decretos e tabela) |
+| `/api/focos` | Focos absolutos INPE AQUA_M-T, Amazônia, Amazonas |
+| `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|EROSAO\|INCENDIO`) |
 | `/api/hydrology` | JSON das estações e cotas |
 | `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h / 72 h / 96 h por município e estação |
-| `/api/air-quality` | PurpleAir `/v1/sensors`: `pm2.5_24hour`, só externos (`location_type=0`); média municipal; fallback SELVA |
+| `/api/air-quality` | App SELVA primeiro; PurpleAir `pm2.5_24hour` se o SELVA falhar |
 | `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
-| `/api/indice` | Índice de Vulnerabilidade 0–100 (sessão autenticada; só no Desktop com Edição). |
+| `/api/risco` | Índice de Risco dos 62 municípios — metodologia CEMOA do app original (IVM, IRE por evento, IRG, prioridades P1–P4, fator de alerta ao vivo). |
+| `/api/notificacoes` | Bot do Telegram: `GET` status + log de envios (sessão); `POST` envia mensagem de teste (`{"municipio":"Manaus"}`) ou limpa a deduplicação (`{"limpar":true}`). Admin. |
 | `/api/logs` | Log de erros de mapa/dados no front |
 | `/api/satellite/goes` | Metadados do infravermelho GOES-19 (CPTEC/INPE); `?refresh=1` força nova busca |
 | `/api/satellite/goes/image` | JPEG do último recorte em cache |
@@ -79,34 +86,42 @@ A ficha do alerta junta três blocos de clima (não alteram o grau):
 - **Temperatura · INMET** — **atual** da estação automática mais próxima (`estacao/proxima/{IBGE}`, campo `TEM_INS`, horário tratado como UTC e convertido para Manaus), **máxima** e **mínima** da previsão do dia (Prevmet), com a observação da estação como reserva.
 - **Previsão · INMET** — horizontes **24 h, 48 h, 72 h e 5 dias** (resumo + T máx) a partir de `apiprevmet3.inmet.gov.br/previsao/{IBGE}`.
 
-Na **versão admin** (Desktop com Edição ligada) a ficha também traz o **Índice de Vulnerabilidade** (IVG + IVE). Ele não altera o grau do produto.
+Na **Gestão de Risco** (`/risco`) a ficha municipal traz o **Índice de Risco** da metodologia CEMOA (IVM + IRE por evento + IRG), a chuva CEMADEN e a previsão INMET. Ele não altera o grau do produto.
 
-## Índice de Vulnerabilidade
+## Índice de Risco — Metodologia CEMOA (IVM · IRE · IRG)
 
-Controle interno do operador: aparece só no **Desktop** com **Edição** ligada. Não entra no mobile nem para quem só visualiza o mapa.
+A metodologia fica inteira na aba **Gestão de Risco** (`/risco`): KPIs, fila, ranking, ficha, pizzas, território, decretos e tabela. A imagem GOES-19 e o mapa de chuva ficam em **Meteorologia** (`/meteorologia`). Saiu da ficha do alerta e da ficha do boletim.
 
-O IVE de cada risco é recalculado na hora, município a município:
+A metodologia de priorização do app Streamlit original (`cemoa_app`) foi portada para TypeScript (`lib/metodologia.ts`), sem alterar os parâmetros de calibração, e é servida em `/api/risco` (`lib/metodologia-build.ts`). O IRE de cada evento e o IRG são recalculados na hora, município a município:
 
-**IVE (tipo) = Base estrutural (0–50) + Histórico do tipo (0–10) + Monitoramento do tipo (0–10) + bônus.**
+- **IRE (evento)** = `((IVM + ameaça) × FS + agravo) × FE × FA`, teto 60. Eventos: Estiagem, Inundação, Incêndio/QAr, Erosão, Mov. Massa e Chuvas.
+- **IRG** = `0,7 × maior IRE + 0,3 × média`. Níveis P1 (Crítico ≥ 50 / Extremo ≥ 58), P2 (Alto ≥ 40), P3 (Elevado ≥ 30), P4 (Moderado ≥ 20 / Baixo). P1 só é confirmado com alerta do operador em evento súbito; sem alerta, rebaixa para P2.
+- **Dados mais atuais do Centro**: população e % rural do **Censo 2022** (`demografia.json`); pessoas em área de risco pelo **maior valor** entre os setores R3R4 do app original e o levantamento **SGB/CPRM + Casa Civil NT 1/2023** (`risco-movimento.json`, 39 municípios contra 30 do recorte antigo).
+- **Importados do app original** (`data/metodologia-cemoa.json`): IVM, % de terras indígenas, agravo por evento (0–9) e setores R3R4 (população, adensamento, flag de capital).
+- **Fator de alerta (FA)** ao vivo: classificação do operador nos produtos CHUVA, MOVIMENTO e INCENDIO — BAIXO/BOA = sem alerta (0,30), Moderado 0,70, Alto/RUIM 1,00, Severo/MUITO_RUIM 1,30, Extremo/PESSIMA 1,60. Eventos graduais (Estiagem, Inundação, Erosão) têm FA = 1.
 
-- **Base** — comum aos cinco riscos: população vulnerável (crianças 0–14 e idosos 60+, até 15), áreas de risco mapeadas pelo SGB (até 20) e capacidade de resposta (menor IDHM, até 15).
-- **Histórico** — só os desastres daquele tipo reconhecidos pela Defesa Civil AM (S2ID). Frequência: (anos com o tipo / anos da série) × 5. Diversidade: (subtipos já ocorridos / 3) × 5.
-- **Monitoramento** — nível atual (Baixo 0, Moderado 3, Alto 6, Severo 9, Extremo 10). Fonte: **Defesa Civil AM**. Cota fluvial, à parte, continua **ANA**.
-- **Bônus de decreto** — Situação de Emergência há 10 anos ou menos (≥ 2016): **+20**; mais antiga: **+10**. Enchente e estiagem: os 62 municípios entram com decreto recente.
-- **Bônus PMIF** — **+20** no IVE de incêndio florestal para os 23 municípios prioritários (SEMA/AM).
-- **Bônus tempestade** — **+20** no IVE de chuva para os 17 municípios com tempestade recente (Tempestade Local/Convectiva, Vendaval ou Chuvas Intensas) e para Rio Preto da Eva; decreto de 2017 em Rio Preto da Eva soma **+10**. Os demais não recebem esse bônus.
+O índice **não altera** o grau dos produtos. PurpleAir **não** entra no IRE de incêndio — só a classificação do operador (fator de alerta). Paridade numérica com o app original validada nos 62 municípios (diferenças máximas de ±0,01 por arredondamento de ponto flutuante, sem mudança de nível ou prioridade).
 
-O **IVG** é o maior dos cinco IVE do município. Tipos: incêndio (incêndio florestal, queimadas, focos de calor), chuva/tempestade (alagamento, tempestade, vendaval, enxurradas), estiagem (estiagem, seca, vazante), enchente (inundação, cheia, alagamento de cheia) e movimento de massa (deslizamento, erosão de margem e continental).
+## Notificações — bot do Telegram
 
-Cores do índice: Baixo `#2ecc71` (0–25), Médio `#f1c40f` (26–45), Alto `#e67e22` (46–65), Muito Alto `#e74c3c` (66–100).
+Port do `notificacoes.py` do cemoa_app (`lib/notificacoes.ts`). Quando o operador classifica um município em **Moderado ou superior** em qualquer produto (chuva, alagamento, movimento, incêndio), o centro envia a mensagem CEMOA/DCA ao Telegram — com IRG, IRE do evento, flags P1/P1X da metodologia, orientação principal, medidas de proteção e contatos de emergência (tabelas da planilha Alertas_DCA em `data/recomendacoes-cemoa.json`). O disparo acontece após cada classificação (`/api/alerts/overrides`) e no ciclo de consulta do painel (`/api/alerts`), sempre via `after()` — nunca atrasa a resposta. A **deduplicação de 30 min** (`NOTIF_DEDUP_MINUTOS`) evita reenvio do mesmo município + evento + nível.
 
-PurpleAir **não** entra sozinho no IVE de incêndio — só a classificação do operador, o boletim DC-AM e os bônus. O índice **não altera** o grau dos produtos.
+Configuração em `.env.local` (sem as variáveis, o bot fica desligado em silêncio):
+
+```
+TELEGRAM_ENABLED=true
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_IDS=-100..., 12345...
+NOTIF_DEDUP_MINUTOS=30
+```
+
+O envio usa `https.request` (não `fetch`): algumas redes bloqueiam a fingerprint TLS do undici para `api.telegram.org`. O log de envios e o teste do bot ficam em `/api/notificacoes`.
 
 O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave).
 
 ## Desktop, mobile e operador
 
-O posto segue a largura da tela: no **telefone** (largura &lt; 768 px) o layout mobile; no computador, o Desktop completo. Não há botão para forçar o mobile no posto de trabalho. Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No telefone: **CEMOA + status operacional** no topo, **4–5 indicadores** (os graus do produto) e o **mapa ocupando o restante**. O botão **Amazonas** devolve o estado inteiro: fecha a ficha, limpa filtro de grau/bacia/calha e ajusta o recorte com os 62 municípios no grau **daquele produto**. O **Índice de Vulnerabilidade** é interno: só no Desktop com Edição ligada. Os nomes dos municípios ficam em **Mapa → Mostrar nomes**. Toque no polígono para abrir a ficha. O rodapé, a fila do plantão e o chrome de operador ficam no Desktop. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** (Desktop) deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata). O ícone **Níveis de risco** (só no Desktop) abre o texto do art. 12 da Portaria MIDR nº 2.458/2026 — corpo, ação e rodapé de cada grau — e a classificação própria de qualidade do ar (MP2,5, que não segue o art. 12). No mobile o ícone não aparece: a legenda do mapa já traz o grau. **Ocultar** some com a legenda do mapa em qualquer posto (sala, mobile ou edição); o chip **Legenda** devolve. A escolha fica em `localStorage` (`cemoa_legend_hidden`). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
+O posto segue a largura da tela: no **telefone** (largura &lt; 768 px) o layout mobile; no computador, o Desktop completo. Não há botão para forçar o mobile no posto de trabalho. Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No telefone: **CEMOA + status operacional** no topo, **4–5 indicadores** (os graus do produto) e o **mapa ocupando o restante**. O botão **Amazonas** devolve o estado inteiro: fecha a ficha, limpa filtro de grau/bacia/calha e ajusta o recorte com os 62 municípios no grau **daquele produto**. O **Índice de Risco (IRE/IRG)** fica na aba Gestão de Risco. Os nomes dos municípios ficam em **Mapa → Mostrar nomes**. Toque no polígono para abrir a ficha. O rodapé, a fila do plantão e o chrome de operador ficam no Desktop. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** (Desktop) deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata). O ícone **Níveis de risco** (só no Desktop) abre o texto do art. 12 da Portaria MIDR nº 2.458/2026 — corpo, ação e rodapé de cada grau — e a classificação própria de qualidade do ar (MP2,5, que não segue o art. 12). No mobile o ícone não aparece: a legenda do mapa já traz o grau. **Ocultar** some com a legenda do mapa em qualquer posto (sala, mobile ou edição); o chip **Legenda** devolve. A escolha fica em `localStorage` (`cemoa_legend_hidden`). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
 
 Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
 
@@ -117,7 +132,7 @@ No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Avi
 O **Aviso Meteorológico** tem duas camadas:
 
 - **Plantão 12 h** — turno do meteorologista, **07–19** (diurno) e **19–07** (noturno). O cronômetro vale até o fim daquele plantão. Faltando **1 hora**, o cartão do plantão fica amarelo; faltando **15 minutos** ou vencido, o pulso e o pedido de emissão ficam **só nesse cartão** — o mapa e o boletim não ganham faixa. Quem está autenticado emite pelo cartão. Na sala de situação o mapa permanece livre; o sino avisa o vencimento.
-- **Aviso 4 h** — arte oficial (código, cenário, calhas abrangidas, potencial evolução e validade). Janelas **02–06, 06–10, 10–14, 14–18, 18–22 e 22–02**, horário de Manaus. O compositor puxa o infravermelho **realçado** GOES-19 (sistemas convectivos) do acervo **CPTEC/INPE**, recorta no **contorno do Amazonas**, desenha os **limites municipais** e gera o PNG retrato. Sem imagem nova, o aviso ainda pode ser montado e o painel avisa com honestidade. O ícone **Montar aviso** aparece só no **Painel de Alertas**.
+- **Aviso 4 h** — arte oficial (código, cenário, calhas abrangidas, potencial evolução e validade). Janelas **02–06, 06–10, 10–14, 14–18, 18–22 e 22–02**, horário de Manaus. O compositor puxa o infravermelho **realçado** GOES-19 (sistemas convectivos) do acervo **CPTEC/INPE**, recorta no **contorno do Amazonas**, desenha os **limites municipais** e gera o PNG retrato. Sem imagem nova, o aviso ainda pode ser montado e o painel avisa com honestidade. O cartão do aviso e o ícone **Montar aviso** ficam na aba **Meteorologia**.
 
 **Operador** só no Desktop. O fluxo agora é separado:
 

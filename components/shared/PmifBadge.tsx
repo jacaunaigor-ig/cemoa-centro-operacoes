@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { PMIF_BONUS } from "@/lib/pmif";
+import { BONUS_PIMF } from "@/lib/metodologia";
 
 export function PmifBadge({
   bonus = false,
@@ -14,9 +14,9 @@ export function PmifBadge({
         "inline-flex shrink-0 items-center rounded-full border border-risco-alto/40 bg-risco-alto/12 px-1.5 py-0.5 text-[9px] font-black tracking-wide text-risco-alto uppercase",
         className,
       )}
-      title={`Município prioritário do PMIF (23 no Amazonas). Recebe +${PMIF_BONUS} no IVE de incêndio florestal.`}
+      title={`Município prioritário do PIMF (metodologia CEMOA). Recebe +${BONUS_PIMF} na ameaça de Incêndio/QAr do IRE.`}
     >
-      PMIF{bonus ? ` +${PMIF_BONUS}` : ""}
+      PIMF{bonus ? ` +${BONUS_PIMF}` : ""}
     </span>
   );
 }

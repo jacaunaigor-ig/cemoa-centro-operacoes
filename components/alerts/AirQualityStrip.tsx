@@ -43,7 +43,7 @@ export function AirQualityStrip({
         </span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-            PurpleAir · MP2,5 24 h
+            {air && /selva/i.test(air.source) ? "App SELVA · qualidade do ar" : "PurpleAir · MP2,5 24 h"}
           </p>
           {loading && !air ? (
             <p className="text-xs text-text-mute">Consultando monitores…</p>

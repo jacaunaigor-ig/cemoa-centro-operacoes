@@ -59,7 +59,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       </div>
       <div className="mt-1.5 rounded-md border border-border bg-panel/60 px-2 py-1.5 text-center">
         <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-          Faixa (IVE usa pm2.5_24hour)
+          Faixa (pm2.5_24hour · 24 h)
         </small>
         <strong className="text-sm">
           {level ? AIR_LABELS[level] : "—"}
@@ -84,7 +84,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        A média municipal do MP2,5 (24 h, sensores externos, campo pm2.5_24hour — não soma) apoia o plantão nas faixas Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. CF=1 e ATM só aparecem se a API enviar, para conferir se o 24 h está alinhado. Não pinta o município — só o operador classifica. Horários em Manaus (UTC-4). Leitura de baixo custo, não substitui estação regulatória.
+        O App SELVA pinta o município quando a qualidade está Moderada, Ruim, Muito Ruim ou Péssima. Boa permanece sem cor de alerta. A classificação do operador prevalece. Faixas de MP2,5: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. Horários em Manaus (UTC-4). Leitura de baixo custo, não substitui estação regulatória.
       </p>
 
       <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs">

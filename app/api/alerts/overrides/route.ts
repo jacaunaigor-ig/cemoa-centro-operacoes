@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { parseAlertType, productOf, type AlertType } from "@/lib/alert-types";
+import { after, NextResponse } from "next/server";
+import { ALERT_TYPES, parseAlertType, productOf, type AlertType } from "@/lib/alert-types";
 import {
   clearOverrides,
   getOverride,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/overrides";
 import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
+import { processarAlertasParaNotificar } from "@/lib/notificacoes";
 import { withOperatorRole } from "@/lib/equipe";
 import { parseAlertTtlMs } from "@/lib/alert-duration";
 import {
@@ -82,6 +83,14 @@ export async function POST(request: Request) {
     );
     invalidate(`alerts:${tipo}`);
     invalidate("alerts");
+    // Bot do Telegram: dispara logo após a classificação do operador.
+    after(async () => {
+      try {
+        await processarAlertasParaNotificar();
+      } catch {
+        /* notificação não derruba a classificação */
+      }
+    });
     return NextResponse.json({ ok: true, tipo, overrides: getOverrides(tipo) });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
@@ -97,6 +106,6 @@ export async function DELETE(request: Request) {
   clearOverrides(tipo);
   await deleteRemoteAlertOverrides(tipo);
   invalidate("alerts");
-  for (const t of ["CHUVA", "ALAGAMENTO", "MOVIMENTO", "INCENDIO"]) invalidate(`alerts:${t}`);
+  for (const t of ALERT_TYPES) invalidate(`alerts:${t}`);
   return NextResponse.json({ ok: true, overrides: tipo ? getOverrides(tipo) : {} });
 }

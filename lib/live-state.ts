@@ -71,6 +71,16 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
     };
     return copy[risco] ?? copy.BOA;
   }
+  if (tipo === "EROSAO") {
+    const copy: Record<string, string> = {
+      MODERADO: `Erosão de margem em evolução em ${nome}. Acompanhar barrancos e acessos ribeirinhos.`,
+      ALTO: `Erosão de margem alta em ${nome}. Preparar isolamento de edificações e vias na beira do rio.`,
+      SEVERO: `Erosão de margem severa em ${nome}. Risco de perda de terreno e isolamento de comunidades.`,
+      EXTREMO: `Erosão de margem extrema em ${nome}. Ação imediata de proteção da população ribeirinha.`,
+      BAIXO: `Sem classificação de erosão de margem em ${nome}.`,
+    };
+    return copy[risco] ?? copy.BAIXO;
+  }
   const rain: Record<string, string> = {
     MODERADO: `Chuva moderada a forte sobre ${nome}. Acompanhar acumulados na bacia ${bacia}.`,
     ALTO: `Chuva intensa em ${nome}, com risco de alagamentos pontuais e transbordo de igarapés.`,
@@ -81,7 +91,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
-/** Chuva, alagamento, movimento e incêndio: o grau no mapa é só do operador. Sem classificação, o município fica no nível baixo do produto. */
+/** Sem classificação do operador, o município fica no nível baixo do produto. Incêndio/Qualidade do ar recebe a faixa do App SELVA por cima, exceto Boa. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",
@@ -205,7 +215,11 @@ export function buildHydrologyPayload(
   const automaticas = stations.filter((s) => /^\d{6,}$/.test(s.estacao)).length;
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
-  const partes = [`${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`];
+  const partes = [
+    `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    "ANA às 07:00 (Brasília)",
+    "Fabric às 07:00 e 16:00 (Brasília)",
+  ];
   if (atualizadasFabric > 0) {
     partes.push(
       `Fabric (${atualizadasFabric} ${atualizadasFabric === 1 ? "estação" : "estações"})`,

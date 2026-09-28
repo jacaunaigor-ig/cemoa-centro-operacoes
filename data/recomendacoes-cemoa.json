@@ -1,0 +1,324 @@
+{
+ "LABEL_NIVEL_ALERTA": {
+  "Moderado": "🟡 MODERADO",
+  "Alto": "🟠 ALTO",
+  "Severo": "🔴 SEVERO",
+  "Extremo": "⚫ EXTREMO"
+ },
+ "COR_NIVEL_ALERTA": {
+  "Moderado": "#f1c40f",
+  "Alto": "#e67e22",
+  "Severo": "#e74c3c",
+  "Extremo": "#8e44ad"
+ },
+ "RECOMENDACOES_CEMOA": {
+  "Deslizamento": {
+   "Moderado": {
+    "frase": "Evite encostas e acompanhe atualizações.",
+    "whatsapp": "Evite áreas de encosta e redobre a atenção em áreas inclinadas. Observe sinais em encostas e evite áreas de risco. Acompanhe as atualizações da Defesa Civil.",
+    "medidas": [
+     "Evite encostas e acompanhe atualizações.",
+     "Observe sinais em encostas.",
+     "Evite áreas de encosta.",
+     "Redobre atenção em áreas inclinadas.",
+     "Evite áreas de risco."
+    ]
+   },
+   "Alto": {
+    "frase": "Procure local seguro.",
+    "whatsapp": "Procure local seguro. Evite encostas e áreas de risco. Evite áreas inclinadas. Acompanhe atualizações.",
+    "medidas": [
+     "Evite encostas e áreas de risco.",
+     "Procure local seguro.",
+     "Evite áreas inclinadas.",
+     "Acompanhe atualizações."
+    ]
+   },
+   "Severo": {
+    "frase": "Afaste-se de encostas. Procure abrigo seguro.",
+    "whatsapp": "Saia de áreas de encosta. Fique em local seguro. Proteja-se e acompanhe atualizações. Observe sinais de movimentação do terreno: rachaduras no chão; árvores, postes ou cercas inclinadas; desníveis ou fendas; barulhos vindos do chão. Se observar algum desses sinais, saia imediatamente.",
+    "medidas": [
+     "Afaste-se de encostas. Procure abrigo seguro.",
+     "Saia de áreas de encosta.",
+     "Fique em local seguro.",
+     "Proteja-se e acompanhe atualizações."
+    ]
+   },
+   "Extremo": {
+    "frase": "Afaste-se de encostas já. Risco à vida.",
+    "whatsapp": "PERIGO IMINENTE. Afaste-se de encostas imediatamente. Procure abrigo seguro. Proteja sua vida. Auxilie crianças, idosos e pessoas com dificuldade de locomoção. Não volte até liberação oficial.",
+    "medidas": [
+     "Afaste-se de encostas já.",
+     "Procure abrigo seguro.",
+     "Risco à vida. Fique em abrigo seguro.",
+     "Proteja sua vida. Procure local seguro."
+    ]
+   }
+  },
+  "Inundação": {
+   "Moderado": {
+    "frase": "Fique atento e acompanhe atualizações.",
+    "whatsapp": "Fique atento e acompanhe atualizações. Evite áreas ribeirinhas. Redobre a atenção. Evite áreas baixas.",
+    "medidas": [
+     "Fique atento e acompanhe atualizações.",
+     "Evite áreas ribeirinhas.",
+     "Redobre a atenção.",
+     "Evite áreas baixas."
+    ]
+   },
+   "Alto": {
+    "frase": "Prepare-se e evite áreas baixas.",
+    "whatsapp": "Evite contato com a água de inundações, pois pode estar contaminada e provocar doenças. Nunca atravesse pontes, ruas ou avenidas inundadas, mesmo estando de carro, moto ou bicicleta — a força da água poderá arrastá-lo. Se estiver no trânsito, utilize serviços de rádio ou aplicativos para traçar rotas que evitem áreas inundadas.",
+    "medidas": [
+     "Prepare-se e evite áreas baixas.",
+     "Evite deslocamentos.",
+     "Procure local seguro.",
+     "Nível de igarapé pode causar inundação."
+    ]
+   },
+   "Severo": {
+    "frase": "Evite áreas ribeirinhas. Procure local seguro.",
+    "whatsapp": "Evite áreas ribeirinhas. Procure local seguro. Proteja-se. Afaste-se de áreas baixas. Acompanhe atualizações e fique em abrigo.",
+    "medidas": [
+     "Evite áreas ribeirinhas. Procure local seguro.",
+     "Proteja-se.",
+     "Afaste-se de áreas baixas.",
+     "Acompanhe atualizações e fique em abrigo."
+    ]
+   },
+   "Extremo": {
+    "frase": "Risco à vida. Procure abrigo seguro já.",
+    "whatsapp": "Situação perigosa. Evite sair. Proteja sua vida. Fique em abrigo seguro. Procure local seguro. Perigo iminente. Procure abrigo. Siga rotas de fuga oficiais e aguarde liberação para retornar.",
+    "medidas": [
+     "Risco à vida. Procure abrigo seguro já.",
+     "Situação perigosa. Evite sair.",
+     "Proteja sua vida. Fique em abrigo seguro.",
+     "Procure local seguro.",
+     "Perigo iminente. Procure abrigo."
+    ]
+   }
+  },
+  "Enxurrada": {
+   "Moderado": {
+    "frase": "Evite áreas baixas e acompanhe atualizações.",
+    "whatsapp": "Auxilie crianças, idosos e pessoas com dificuldade de locomoção próximas a você. Evite contato com a água da enxurrada, pois pode estar contaminada e provocar doenças. Se estiver em um veículo, procure um local alto e espere o nível da água baixar.",
+    "medidas": [
+     "Evite áreas baixas e acompanhe atualizações.",
+     "Redobre atenção.",
+     "Evite áreas de correnteza.",
+     "Evite atravessar a água."
+    ]
+   },
+   "Alto": {
+    "frase": "Evite deslocamentos.",
+    "whatsapp": "Evite áreas baixas e deslocamentos. Não atravesse água. Enxurradas podem ser fortes — procure local seguro. Evite ruas com correnteza.",
+    "medidas": [
+     "Evite áreas baixas e deslocamentos.",
+     "Não atravesse água.",
+     "Enxurradas podem ser fortes. Procure local seguro.",
+     "Evite ruas com correnteza."
+    ]
+   },
+   "Severo": {
+    "frase": "Não atravesse água. Procure abrigo seguro.",
+    "whatsapp": "Não atravesse água. Procure abrigo seguro. Evite sair e fique em local seguro. Afaste-se de canais. Evite áreas baixas e correnteza.",
+    "medidas": [
+     "Não atravesse água. Procure abrigo seguro.",
+     "Evite sair e fique em local seguro.",
+     "Afaste-se de canais.",
+     "Evite áreas baixas e correnteza."
+    ]
+   },
+   "Extremo": {
+    "frase": "Risco à vida. Procure abrigo seguro já.",
+    "whatsapp": "Risco à vida. Procure abrigo seguro já. Situação perigosa. Fique em abrigo. Evite sair e proteja sua vida. Perigo iminente. Procure local seguro.",
+    "medidas": [
+     "Risco à vida. Procure abrigo seguro já.",
+     "Situação perigosa. Fique em abrigo.",
+     "Evite sair e proteja sua vida.",
+     "Perigo iminente. Procure local seguro."
+    ]
+   }
+  },
+  "Alagamento": {
+   "Moderado": {
+    "frase": "Evite áreas baixas e acompanhe atualizações.",
+    "whatsapp": "Evite áreas baixas e acompanhe atualizações. Redobre atenção. Evite ruas alagadas. Fique atento e evite áreas baixas.",
+    "medidas": [
+     "Evite áreas baixas e acompanhe atualizações.",
+     "Redobre atenção.",
+     "Evite ruas alagadas.",
+     "Fique atento e evite áreas baixas."
+    ]
+   },
+   "Alto": {
+    "frase": "Evite áreas alagadas e fique em local seguro.",
+    "whatsapp": "Tenha sempre lanternas e pilhas em condições de uso. Não use velas ou lamparinas devido ao risco de incêndio. Monte um kit com água potável, roupas e remédios, caso tenha que sair rápido de sua casa. Procure prever locais seguros, como casa de parentes e amigos, ou abrigos indicados pela Prefeitura.",
+    "medidas": [
+     "Evite áreas alagadas e fique em local seguro.",
+     "Evite deslocamentos.",
+     "Redobre cuidados e evite áreas baixas.",
+     "Acompanhe atualizações e evite áreas de risco."
+    ]
+   },
+   "Severo": {
+    "frase": "Não enfrente áreas alagadas. Procure local seguro.",
+    "whatsapp": "Não enfrente áreas alagadas. Procure local seguro. Evite sair e fique em local seguro. Proteja-se e acompanhe atualizações. Evite áreas baixas.",
+    "medidas": [
+     "Não enfrente áreas alagadas. Procure local seguro.",
+     "Evite sair e fique em local seguro.",
+     "Proteja-se e acompanhe atualizações.",
+     "Procure abrigo seguro. Evite áreas baixas."
+    ]
+   },
+   "Extremo": {
+    "frase": "Risco à vida. Procure abrigo seguro já.",
+    "whatsapp": "Risco à vida. Procure abrigo seguro já. Situação perigosa. Fique em abrigo seguro. Evite sair. Proteja sua vida. Busque local seguro. Perigo iminente. Procure abrigo seguro.",
+    "medidas": [
+     "Risco à vida. Procure abrigo seguro já.",
+     "Situação perigosa. Fique em abrigo seguro.",
+     "Evite sair. Proteja sua vida.",
+     "Busque local seguro.",
+     "Perigo iminente. Procure abrigo seguro."
+    ]
+   }
+  },
+  "Chuva intensa": {
+   "Moderado": {
+    "frase": "Evite áreas com histórico de alagamento.",
+    "whatsapp": "Se houver vendaval, granizo ou descargas elétricas, fique atento às recomendações para estes tipos de ameaças. Auxilie crianças, idosos e pessoas com dificuldade de locomoção próximas a você. Evite contato com a água de alagamentos.",
+    "medidas": [
+     "Atenção para chuva intensa nas próximas horas.",
+     "Evite áreas com histórico de alagamento.",
+     "Redobre o cuidado ao dirigir.",
+     "Mantenha-se atento às condições do tempo."
+    ]
+   },
+   "Alto": {
+    "frase": "Chuva intensa pode causar alagamentos pontuais.",
+    "whatsapp": "Chuva intensa pode causar alagamentos pontuais. Evite transitar por áreas de risco. Não enfrente ruas alagadas. Redobre a atenção no deslocamento. Acompanhe os alertas oficiais.",
+    "medidas": [
+     "Chuva intensa pode causar alagamentos pontuais.",
+     "Evite transitar por áreas de risco.",
+     "Não enfrente ruas alagadas.",
+     "Redobre a atenção no deslocamento."
+    ]
+   },
+   "Severo": {
+    "frase": "Chuva intensa com risco de alagamentos e enxurradas.",
+    "whatsapp": "Chuva intensa com risco de alagamentos e enxurradas. Evite sair de casa, se possível. Afaste-se de áreas alagáveis. Não atravesse vias inundadas.",
+    "medidas": [
+     "Chuva intensa com risco de alagamentos e enxurradas.",
+     "Evite sair de casa, se possível.",
+     "Afaste-se de áreas alagáveis.",
+     "Não atravesse vias inundadas."
+    ]
+   },
+   "Extremo": {
+    "frase": "Risco elevado à vida devido à chuva intensa.",
+    "whatsapp": "Risco elevado à vida devido à chuva intensa. Proteja-se e acompanhe as atualizações. Procure local seguro imediatamente. Evite deslocamentos. Afaste-se de áreas de risco. Proteja sua vida e siga as orientações da Defesa Civil.",
+    "medidas": [
+     "Proteja-se e acompanhe as atualizações.",
+     "Risco elevado à vida devido à chuva intensa.",
+     "Procure local seguro imediatamente.",
+     "Evite deslocamentos.",
+     "Afaste-se de áreas de risco."
+    ]
+   }
+  },
+  "Qualidade do Ar": {
+   "Moderado": {
+    "frase": "Acompanhar as previsões meteorológicas.",
+    "whatsapp": "Acompanhe as previsões meteorológicas. Siga as instruções dadas pelos órgãos locais. Use máscara ao sair de casa e evite exposição à fumaça.",
+    "medidas": [
+     "Acompanhar as previsões meteorológicas.",
+     "Seguir as instruções dadas pelos órgãos locais.",
+     "Use máscara ao sair de casa e evite exposição à fumaça."
+    ]
+   },
+   "Alto": {
+    "frase": "Aumentar a ingestão de água e líquidos.",
+    "whatsapp": "Aumente a ingestão de água e líquidos. Evite atividades e exercícios ao ar livre. Use máscara ao sair de casa e evite exposição à fumaça.",
+    "medidas": [
+     "Aumentar a ingestão de água e líquidos.",
+     "Evitar atividades e exercícios ao ar livre.",
+     "Use máscara ao sair de casa e evite exposição à fumaça."
+    ]
+   },
+   "Severo": {
+    "frase": "Use máscara ao sair de casa e evite exposição à fumaça.",
+    "whatsapp": "Beba líquidos mesmo sem sede para proteger as vias aéreas. Evite trabalho pesado, atividades e exercícios ao ar livre. Umidifique o ambiente com umidificadores, bacias de água ou toalhas úmidas. Pessoas vulneráveis e doentes crônicos devem evitar exposição. Procure uma unidade médica ao notar dificuldade para respirar.",
+    "medidas": [
+     "Aumentar a ingestão de água e líquidos.",
+     "Use bacia com água ou toalha úmida para umidificar o ar.",
+     "Evitar atividades e exercícios ao ar livre.",
+     "Use máscara ao sair de casa."
+    ]
+   },
+   "Extremo": {
+    "frase": "PERIGO CRÍTICO À SAÚDE. Não saia de casa.",
+    "whatsapp": "PERIGO CRÍTICO À SAÚDE. Não saia de casa. Mantenha janelas fechadas e ar-condicionado ligado. Use máscara PFF2 se precisar sair. Procure atendimento médico imediatamente se tiver sintomas respiratórios.",
+    "medidas": [
+     "Não saia de casa. Mantenha janelas fechadas.",
+     "Use máscara PFF2 se precisar sair.",
+     "Procure atendimento médico se tiver sintomas respiratórios.",
+     "Evite qualquer atividade ao ar livre."
+    ]
+   }
+  },
+  "Estiagem": {
+   "Moderado": {
+    "frase": "Siga as orientações da defesa civil local.",
+    "whatsapp": "Siga as orientações da defesa civil local. Consuma apenas água filtrada, fervida ou tratada com hipoclorito de sódio. Em áreas com risco de isolamento logístico, estoque alimentos não perecíveis, água potável e medicamentos. Acompanhe os boletins hidrológicos.",
+    "medidas": [
+     "Economize água. Evite queimadas.",
+     "Armazene água potável com antecedência.",
+     "Consuma apenas água filtrada, fervida ou tratada.",
+     "Lave as mãos e os alimentos antes do preparo."
+    ]
+   },
+   "Alto": {
+    "frase": "Prepare-se e evite áreas baixas.",
+    "whatsapp": "Prepare-se e evite áreas baixas. Estoque água potável e alimentos não perecíveis. Reduza consumo de água ao mínimo. Rios com níveis baixos escondem bancos de areia/pedrais. Embarcações devem operar com carga reduzida.",
+    "medidas": [
+     "Reduza consumo de água ao mínimo.",
+     "Não faça queimadas.",
+     "Evite banhos longos e lavagem de calçadas.",
+     "Acompanhe os boletins hidrológicos."
+    ]
+   },
+   "Severo": {
+    "frase": "Racionamento pode ser decretado. Priorize água para beber.",
+    "whatsapp": "Racionamento pode ser decretado. Priorize água para beber e cozinhar. Denuncie queimadas (193/181). Estoque alimentos não perecíveis, água potável e medicamentos. Redobre a vigilância com crianças e idosos.",
+    "medidas": [
+     "Priorize água para beber e cozinhar.",
+     "Denuncie queimadas (193/181).",
+     "Estoque alimentos não perecíveis e água potável.",
+     "Redobre a vigilância com crianças e idosos."
+    ]
+   },
+   "Extremo": {
+    "frase": "Crise hídrica severa. Siga orientações da Defesa Civil.",
+    "whatsapp": "Crise hídrica severa. Siga orientações da Defesa Civil. Não consuma água de fontes não tratadas. Procure pontos de distribuição de água potável. Priorize o consumo humano e animal.",
+    "medidas": [
+     "Não consuma água de fontes não tratadas.",
+     "Procure pontos de distribuição de água potável.",
+     "Priorize o consumo humano e animal.",
+     "Acione Defesa Civil (199)."
+    ]
+   }
+  }
+ },
+ "MAPA_RISCO": {
+  "Estiagem": "Estiagem",
+  "Inundação": "Inundação",
+  "Incêndio/QAr": "Qualidade do Ar",
+  "Erosão": "Deslizamento",
+  "Mov. Massa": "Deslizamento",
+  "Chuvas": "Chuva intensa"
+ },
+ "CONTATOS_MUNICIPAIS": {
+  "Barreirinha": "193/199",
+  "Manaus": "193/199"
+ }
+}

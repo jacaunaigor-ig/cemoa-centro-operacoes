@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { parseAlertType, type AlertType } from "@/lib/alert-types";
+import { ALERT_TYPES, parseAlertType, type AlertType } from "@/lib/alert-types";
 import {
   addStain,
   clearStains,
@@ -27,7 +27,7 @@ function bust(tipo?: AlertType) {
   invalidate("alerts");
   if (tipo) invalidate(`alerts:${tipo}`);
   else {
-    for (const t of ["CHUVA", "ALAGAMENTO", "MOVIMENTO", "INCENDIO"] as const) {
+    for (const t of ALERT_TYPES) {
       invalidate(`alerts:${t}`);
     }
   }

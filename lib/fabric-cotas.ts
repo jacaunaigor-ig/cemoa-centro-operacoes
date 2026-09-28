@@ -1,4 +1,5 @@
 import https from "node:https";
+import { FABRIC_HORAS, leituraDoBoletim } from "@/lib/boletim-horario";
 import { addDaysIso, hydroTodayIso, upsertCotaOnDate } from "@/lib/hydro-series";
 import { normalizeMunicipio } from "@/lib/hydrology";
 import type { HydroStation } from "@/lib/types";
@@ -10,7 +11,6 @@ const DATASET_ID = "9443963e-1e61-4bab-a4fc-1e4a8d8ba765";
 const REPORT_ID = "33f8972c-3350-42ef-8b5f-b9127c537475";
 const ENTITY = "PrimeiraHoraPorDataFiltrada";
 
-const CACHE_MS = 8 * 60_000;
 const FETCH_MS = 20_000;
 const LOOKBACK_DAYS = 8;
 
@@ -257,7 +257,7 @@ export async function getFabricCotas(): Promise<{
   pending: boolean;
   fetchedAt: number | null;
 }> {
-  if (cache && Date.now() - cache.at < CACHE_MS) {
+  if (cache && leituraDoBoletim(cache.at, Date.now(), FABRIC_HORAS)) {
     return { byNome: cache.byNome, pending: false, fetchedAt: cache.at };
   }
   if (!inflight) inflight = refresh();

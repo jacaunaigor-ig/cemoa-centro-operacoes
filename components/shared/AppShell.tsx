@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Activity,
+  CloudRain,
   Droplets,
   Info,
   LogIn,
@@ -12,6 +13,7 @@ import {
   Pencil,
   Radio,
   Shield,
+  ShieldAlert,
   Sun,
   Users,
 } from "lucide-react";
@@ -112,7 +114,7 @@ export function AppShell({
         </div>
         <nav
           aria-label="Produtos"
-          className="mt-1.5 grid grid-cols-2 gap-1 rounded-xl border border-border bg-hover p-1"
+          className="mt-1.5 grid grid-cols-4 gap-1 rounded-xl border border-border bg-hover p-1"
         >
           <NavTab
             href={`/${suffix}`}
@@ -129,6 +131,22 @@ export function AppShell({
             compact
           >
             Boletim
+          </NavTab>
+          <NavTab
+            href={`/meteorologia${suffix}`}
+            active={pathname.startsWith("/meteorologia")}
+            icon={<CloudRain className="size-3.5" />}
+            compact
+          >
+            Meteo
+          </NavTab>
+          <NavTab
+            href={`/risco${suffix}`}
+            active={pathname.startsWith("/risco")}
+            icon={<ShieldAlert className="size-3.5" />}
+            compact
+          >
+            Risco
           </NavTab>
         </nav>
       </header>
@@ -167,6 +185,22 @@ export function AppShell({
             compact={isMobile}
           >
             {isMobile ? "Boletim" : "Boletim Hidrológico"}
+          </NavTab>
+          <NavTab
+            href={`/meteorologia${suffix}`}
+            active={pathname.startsWith("/meteorologia")}
+            icon={<CloudRain className="size-3.5" />}
+            compact={isMobile}
+          >
+            {isMobile ? "Meteo" : "Meteorologia"}
+          </NavTab>
+          <NavTab
+            href={`/risco${suffix}`}
+            active={pathname.startsWith("/risco")}
+            icon={<ShieldAlert className="size-3.5" />}
+            compact={isMobile}
+          >
+            {isMobile ? "Risco" : "Gestão de Risco"}
           </NavTab>
         </nav>
 
@@ -289,7 +323,7 @@ export function AppShell({
         </div>
       </header>
       )}
-      {admin && !mapFocus ? (
+      {admin && !mapFocus && !pathname.startsWith("/risco") && !pathname.startsWith("/meteorologia") ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
           {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva, cota e qualidade do ar são

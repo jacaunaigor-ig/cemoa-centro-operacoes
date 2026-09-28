@@ -3,72 +3,86 @@
 import { useMemo, useState } from "react";
 import { PmifBadge } from "@/components/shared/PmifBadge";
 import {
-  INDICE_FAIXA_COLORS,
-  INDICE_FAIXAS,
-  IVE_IDS,
-  IVE_LABELS,
-  TENDENCIA_LABELS,
-  type IndiceMunicipio,
-  type IveId,
-  type VulnerabTendencia,
-} from "@/lib/indice";
+  BONUS_PIMF,
+  EVENTOS_ORDEM,
+  nivelDe,
+  type MetodologiaEvento,
+  type MetPrioridade,
+} from "@/lib/metodologia";
+import type { MetodologiaRow } from "@/lib/metodologia-build";
 import { cn } from "@/lib/utils";
 
-const IVE_FILTERS: Array<{ id: "ivg" | IveId; label: string }> = [
-  { id: "ivg", label: "IVG" },
-  ...IVE_IDS.map((id) => ({ id, label: IVE_LABELS[id] })),
+type FiltroEvento = "irg" | MetodologiaEvento;
+
+const EVENTO_FILTERS: Array<{ id: FiltroEvento; label: string }> = [
+  { id: "irg", label: "IRG (geral)" },
+  ...EVENTOS_ORDEM.map((id) => ({ id: id as FiltroEvento, label: id })),
 ];
 
-const TENDENCIA_FILTERS: Array<{ id: "todas" | VulnerabTendencia; label: string }> = [
-  { id: "todas", label: "Tendência" },
-  { id: "piorando", label: TENDENCIA_LABELS.piorando },
-  { id: "estavel", label: TENDENCIA_LABELS.estavel },
-  { id: "melhorando", label: TENDENCIA_LABELS.melhorando },
+const PRIORIDADE_FILTERS: Array<{ id: "todas" | MetPrioridade; label: string }> = [
+  { id: "todas", label: "Todas" },
+  { id: "P1", label: "P1 · Crítico/Extremo" },
+  { id: "P2", label: "P2 · Alto" },
+  { id: "P3", label: "P3 · Elevado" },
+  { id: "P4", label: "P4 · Moderado/Baixo" },
 ];
 
-function scoreOf(row: IndiceMunicipio, ive: "ivg" | IveId) {
-  if (ive === "ivg") return row.total;
-  return row.ive.find((item) => item.id === ive)?.total ?? row.total;
+function scoreOf(row: MetodologiaRow, filtro: FiltroEvento) {
+  if (filtro === "irg") return row.irg;
+  return row.ire[filtro] ?? row.irg;
 }
 
-function faixaOf(row: IndiceMunicipio, ive: "ivg" | IveId) {
-  if (ive === "ivg") return row.faixa;
-  return row.ive.find((item) => item.id === ive)?.faixa ?? row.faixa;
+function corOf(row: MetodologiaRow, filtro: FiltroEvento) {
+  if (filtro === "irg") return row.cor;
+  return nivelDe(row.ire[filtro] ?? 0).cor;
 }
 
-function nivelOf(row: IndiceMunicipio, ive: "ivg" | IveId) {
-  if (ive === "ivg") return INDICE_FAIXAS.find((f) => f.id === row.faixa)?.label ?? row.faixa;
-  return row.ive.find((item) => item.id === ive)?.nivel ?? "";
+function nivelOf(row: MetodologiaRow, filtro: FiltroEvento) {
+  if (filtro === "irg") return `${row.prioridade} · ${row.nomeNivel}`;
+  return nivelDe(row.ire[filtro] ?? 0).nome;
 }
 
 export function IndiceSheet({
   rows,
   onPick,
   onClose,
+  selectedId,
+  hideScopeFilters = false,
+  loading = false,
   className,
 }: {
-  rows: IndiceMunicipio[];
-  onPick: (row: IndiceMunicipio) => void;
-  onClose: () => void;
+  rows: MetodologiaRow[];
+  onPick: (row: MetodologiaRow) => void;
+  onClose?: () => void;
+  selectedId?: string | null;
+  hideScopeFilters?: boolean;
+  loading?: boolean;
   className?: string;
 }) {
-  const [ive, setIve] = useState<"ivg" | IveId>("ivg");
-  const [tendencia, setTendencia] = useState<"todas" | VulnerabTendencia>("todas");
+  const [evento, setEvento] = useState<FiltroEvento>("irg");
+  const [prioridade, setPrioridade] = useState<"todas" | MetPrioridade>("todas");
   const [calha, setCalha] = useState("todas");
 
   const calhas = useMemo(
-    () => [...new Set(rows.map((row) => row.calha).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR")),
+    () =>
+      [...new Set(rows.map((row) => row.calha).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, "pt-BR"),
+      ),
     [rows],
   );
 
   const filtered = useMemo(() => {
     return rows
-      .filter((row) => (tendencia === "todas" ? true : row.historico.tendencia === tendencia))
+      .filter((row) =>
+        prioridade === "todas" ? true : row.prioridade === prioridade,
+      )
       .filter((row) => (calha === "todas" ? true : row.calha === calha))
-      .sort((a, b) => scoreOf(b, ive) - scoreOf(a, ive) || a.nome.localeCompare(b.nome, "pt-BR"));
-  }, [rows, ive, tendencia, calha]);
-
-  const loaded = rows.length > 0;
+      .sort(
+        (a, b) =>
+          scoreOf(b, evento) - scoreOf(a, evento) ||
+          a.nome.localeCompare(b.nome, "pt-BR"),
+      );
+  }, [rows, evento, prioridade, calha]);
 
   return (
     <aside
@@ -76,54 +90,61 @@ export function IndiceSheet({
         "flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-panel/96 shadow-lg backdrop-blur-md",
         className,
       )}
-      aria-label="Índice de Vulnerabilidade dos 62 municípios"
+      aria-label="Índice de Risco (IRE/IRG) dos 62 municípios"
     >
       <header className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
-            Índice de Vulnerabilidade
+            Índice de Risco · IRE/IRG
           </p>
           <p className="text-[10px] text-text-mute">
-            {ive === "qualidade_ar"
-              ? `Incêndio florestal · ${filtered.length} municípios · PMIF +20`
-              : ive === "chuva_intensa"
-                ? `Chuva / tempestade · ${filtered.length} municípios`
-                : `IVG · IVE · ${filtered.length} municípios`}
+            {evento === "irg"
+              ? `IRG · ${filtered.length} municípios · metodologia CEMOA`
+              : `IRE ${evento} · ${filtered.length} municípios`}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-md px-2 py-1 text-[11px] font-bold text-text-dim hover:bg-hover"
-        >
-          Fechar
-        </button>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-[11px] font-bold text-text-dim hover:bg-hover"
+          >
+            Fechar
+          </button>
+        ) : null}
       </header>
 
       <div className="grid gap-1.5 border-b border-border px-3 py-2">
         <label className="grid gap-0.5">
-          <span className="text-[9px] font-bold tracking-wide text-text-mute uppercase">Tipo de desastre</span>
+          <span className="text-[9px] font-bold tracking-wide text-text-mute uppercase">
+            Evento
+          </span>
           <select
-            value={ive}
-            onChange={(e) => setIve(e.target.value as "ivg" | IveId)}
+            value={evento}
+            onChange={(e) => setEvento(e.target.value as FiltroEvento)}
             className="rounded-md border border-border bg-bg px-2 py-1 text-[11px] text-text"
           >
-            {IVE_FILTERS.map((opt) => (
+            {EVENTO_FILTERS.map((opt) => (
               <option key={opt.id} value={opt.id}>
                 {opt.label}
               </option>
             ))}
           </select>
         </label>
+        {hideScopeFilters ? null : (
         <div className="grid grid-cols-2 gap-1.5">
           <label className="grid gap-0.5">
-            <span className="text-[9px] font-bold tracking-wide text-text-mute uppercase">Tendência</span>
+            <span className="text-[9px] font-bold tracking-wide text-text-mute uppercase">
+              Prioridade
+            </span>
             <select
-              value={tendencia}
-              onChange={(e) => setTendencia(e.target.value as "todas" | VulnerabTendencia)}
+              value={prioridade}
+              onChange={(e) =>
+                setPrioridade(e.target.value as "todas" | MetPrioridade)
+              }
               className="rounded-md border border-border bg-bg px-2 py-1 text-[11px] text-text"
             >
-              {TENDENCIA_FILTERS.map((opt) => (
+              {PRIORIDADE_FILTERS.map((opt) => (
                 <option key={opt.id} value={opt.id}>
                   {opt.label}
                 </option>
@@ -131,7 +152,9 @@ export function IndiceSheet({
             </select>
           </label>
           <label className="grid gap-0.5">
-            <span className="text-[9px] font-bold tracking-wide text-text-mute uppercase">Calha</span>
+            <span className="text-[9px] font-bold tracking-wide text-text-mute uppercase">
+              Calha
+            </span>
             <select
               value={calha}
               onChange={(e) => setCalha(e.target.value)}
@@ -146,52 +169,62 @@ export function IndiceSheet({
             </select>
           </label>
         </div>
+        )}
       </div>
 
-      {!loaded ? (
-        <p className="px-3 py-4 text-[12px] text-text-mute">Carregando o índice dos 62 municípios…</p>
+      {loading ? (
+        <p className="px-3 py-4 text-[12px] text-text-mute">
+          Carregando o índice dos 62 municípios…
+        </p>
       ) : filtered.length === 0 ? (
-        <p className="px-3 py-4 text-[12px] text-text-mute">Nenhum município neste recorte.</p>
+        <p className="px-3 py-4 text-[12px] text-text-mute">
+          Nenhum município neste recorte.
+        </p>
       ) : (
         <ol className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-0.5">
-          {filtered.map((row, index) => {
-            const faixa = faixaOf(row, ive);
-            return (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  onClick={() => onPick(row)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-hover"
-                >
-                  <span className="w-6 shrink-0 text-right font-mono text-[11px] tabular-nums text-text-mute">
-                    {index + 1}
+          {filtered.map((row, index) => (
+            <li key={row.codigo}>
+              <button
+                type="button"
+                onClick={() => onPick(row)}
+                className={cn(
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-hover",
+                  selectedId === row.codigo && "bg-brand/10",
+                )}
+                aria-current={selectedId === row.codigo ? "true" : undefined}
+              >
+                <span className="w-6 shrink-0 text-right font-mono text-[11px] tabular-nums text-text-mute">
+                  {index + 1}
+                </span>
+                <span
+                  className="size-2.5 shrink-0 rounded-sm"
+                  style={{ background: corOf(row, evento) }}
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1">
+                  <strong className="flex min-w-0 items-center gap-1 text-[12px] text-text">
+                    <span className="truncate">{row.nome}</span>
+                    {row.pmif ? (
+                      <PmifBadge bonus={evento === "Incêndio/QAr"} />
+                    ) : null}
+                  </strong>
+                  <span className="block truncate text-[10px] text-text-mute">
+                    {nivelOf(row, evento)} · {row.calha} · IVM {row.ivm} ({row.classe})
+                    {evento === "Incêndio/QAr" && row.pmif
+                      ? ` · PIMF +${BONUS_PIMF}`
+                      : ""}
+                    {row.p1Confirmado ? " · P1 confirmado" : ""}
+                    {row.rebaixadoSemAlerta ? " · rebaixado sem alerta" : ""}
                   </span>
-                  <span
-                    className="size-2.5 shrink-0 rounded-sm"
-                    style={{ background: INDICE_FAIXA_COLORS[faixa] }}
-                    aria-hidden
-                  />
-                  <span className="min-w-0 flex-1">
-                    <strong className="flex min-w-0 items-center gap-1 text-[12px] text-text">
-                      <span className="truncate">{row.nome}</span>
-                      {row.pmif ? <PmifBadge bonus={ive === "qualidade_ar"} /> : null}
-                    </strong>
-                    <span className="block truncate text-[10px] text-text-mute">
-                      {nivelOf(row, ive)} · {row.calha} · {TENDENCIA_LABELS[row.historico.tendencia]}
-                      {ive === "qualidade_ar" && row.pmif ? " · bônus PMIF +20" : ""}
-                      {ive === "chuva_intensa" &&
-                      (row.ive.find((item) => item.id === "chuva_intensa")?.tempestadeBonus ?? 0) > 0
-                        ? " · tempestade"
-                        : ""}
-                    </span>
-                  </span>
-                  <span className="font-mono text-[13px] font-bold tabular-nums text-text">
-                    {scoreOf(row, ive).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
+                </span>
+                <span className="font-mono text-[13px] font-bold tabular-nums text-text">
+                  {scoreOf(row, evento).toLocaleString("pt-BR", {
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </button>
+            </li>
+          ))}
         </ol>
       )}
     </aside>

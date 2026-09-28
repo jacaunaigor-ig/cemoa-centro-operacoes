@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  Gauge,
   Layers,
   MapPinned,
   Maximize2,
@@ -28,8 +27,6 @@ import {
 } from "@/lib/map-overlays";
 import { fetchJson, reportClientError } from "@/lib/client";
 import { buildHydrologyPayload } from "@/lib/live-state";
-import { buildIndicePayload } from "@/lib/indice-build";
-import type { IndicePayload } from "@/lib/indice";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { toast } from "sonner";
 import { mergeHydroOverrides, replaceHydroOverrides, clearHydroOverrides, removeHydroOverrides, mergeHydroPatch, type HydroPatch } from "@/lib/hydro-overrides";
@@ -70,8 +67,6 @@ import { PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
 import { AmazonasMapButton } from "@/components/shared/AmazonasMapButton";
-import { IndiceMapButton } from "@/components/shared/IndiceMapButton";
-import { IndiceSheet } from "@/components/shared/IndiceSheet";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { HydroEditorDialog } from "@/components/hydrology/HydroEditorDialog";
@@ -128,7 +123,6 @@ export function HydrologyWorkbench() {
   const pathname = usePathname();
   const params = useSearchParams();
   const { admin, isMobile, session, mapFocus, setMapFocus } = useOpsMode();
-  const indiceInterno = admin && !isMobile;
   const selected = params.get("municipio");
   const modo = parseModo(params.get("modo"));
   const status = parseStatus(params.get("status"));
@@ -142,8 +136,6 @@ export function HydrologyWorkbench() {
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
-  const [showIndice, setShowIndice] = useState(false);
-  const [indice, setIndice] = useState<IndicePayload | null>(null);
   const [showRivers, setShowRivers] = useState(true);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [opacity, setOpacity] = useState(58);
@@ -160,12 +152,6 @@ export function HydrologyWorkbench() {
   const mapRef = useRef<StationsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
-
-  useEffect(() => {
-    if (indiceInterno) return;
-    setShowIndice(false);
-    setIndice(null);
-  }, [indiceInterno]);
 
   useEffect(() => {
     const t = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 80);
@@ -190,7 +176,6 @@ export function HydrologyWorkbench() {
           }
           if (cancelled) return;
           setData({ ...buildHydrologyPayload(), cache: "MISS" });
-          setIndice(indiceInterno ? buildIndicePayload() : null);
           setError(null);
           return;
         }
@@ -228,16 +213,9 @@ export function HydrologyWorkbench() {
             /* ignore */
           }
         }
-        const [payload, indicePayload] = await Promise.all([
-          fetchJson<HydrologyPayload>("/api/hydrology"),
-          indiceInterno
-            ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
-            : Promise.resolve(null),
-        ]);
+        const payload = await fetchJson<HydrologyPayload>("/api/hydrology");
         if (cancelled) return;
         setData(payload);
-        if (indiceInterno && indicePayload) setIndice(indicePayload);
-        else if (!indiceInterno) setIndice(null);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -251,7 +229,7 @@ export function HydrologyWorkbench() {
       cancelled = true;
       stop();
     };
-  }, [session, indiceInterno]);
+  }, [session]);
 
   function setQuery(next: Record<string, string | null>) {
     const usp = new URLSearchParams(params.toString());
@@ -272,7 +250,6 @@ export function HydrologyWorkbench() {
     });
     setOnlyRisk(false);
     setShowNames(true);
-    setShowIndice(false);
     setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
     window.setTimeout(() => mapRef.current?.fitAmazonas(), 80);
   }
@@ -280,10 +257,6 @@ export function HydrologyWorkbench() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (showIndice) {
-          setShowIndice(false);
-          return;
-        }
         if (selected && !editorOpen) setQuery({ municipio: null });
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
@@ -303,7 +276,7 @@ export function HydrologyWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, admin, classifying, undoStack.length, showIndice]);
+  }, [selected, editorOpen, admin, classifying, undoStack.length]);
 
   const catalog = useMemo(() => data?.stations ?? [], [data]);
   const geoStations = useMemo(
@@ -819,12 +792,6 @@ export function HydrologyWorkbench() {
                 ) : (
                   <>
                     {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!data} /> : null}
-                    {indiceInterno && !mapFocus ? (
-                      <IndiceMapButton
-                        active={showIndice}
-                        onToggle={() => setShowIndice((v) => !v)}
-                      />
-                    ) : null}
                   </>
                 )}
                 {mapFocus || isMobile ? null : (
@@ -917,15 +884,6 @@ export function HydrologyWorkbench() {
                     >
                       Ajustar ao Amazonas
                     </MapToolButton>
-                    {indiceInterno ? (
-                      <MapToolButton
-                        active={showIndice}
-                        onClick={() => setShowIndice((v) => !v)}
-                        icon={<Gauge className="size-3.5" />}
-                      >
-                        Índice de Vulnerabilidade
-                      </MapToolButton>
-                    ) : null}
                     <MapToolButton
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
@@ -1065,31 +1023,6 @@ export function HydrologyWorkbench() {
                 variant="boletim"
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
               />
-              {indiceInterno && showIndice && !selected ? (
-                <IndiceSheet
-                  className={cn(
-                    "pointer-events-auto absolute z-[1200]",
-                    isMobile
-                      ? "inset-x-1.5 bottom-1.5 top-10"
-                      : "left-2 top-12 w-[min(calc(100%-1rem),26rem)] sm:top-2",
-                  )}
-                  rows={indice?.municipios ?? []}
-                  onClose={() => setShowIndice(false)}
-                  onPick={(row) => {
-                    setShowIndice(false);
-                    const station =
-                      catalog.find((s) => s.id === row.id) ??
-                      catalog.find((s) => s.municipio === row.nome);
-                    if (station) {
-                      setQuery({
-                        municipio: station.municipio,
-                        bacia: station.bacia,
-                        calha: station.calha,
-                      });
-                    }
-                  }}
-                />
-              ) : null}
               {selectedStation && (isMobile || mapFocus) ? (
                 <div
                   className={cn(
@@ -1104,7 +1037,6 @@ export function HydrologyWorkbench() {
                     modo={modo}
                     admin={admin}
                     compact
-                    indice={indiceInterno ? (indice?.byId[selectedStation.id] ?? null) : undefined}
                     onClose={() => setQuery({ municipio: null })}
                     onSave={async (patch) => {
                       const ok = await persistHydro({ [selectedStation.id]: patch });
@@ -1168,7 +1100,6 @@ export function HydrologyWorkbench() {
                 station={selectedStation}
                 modo={modo}
                 admin={admin}
-                indice={indiceInterno ? (indice?.byId[selectedStation.id] ?? null) : undefined}
                 onClose={() => setQuery({ municipio: null })}
                 onSave={async (patch) => {
                   const ok = await persistHydro({ [selectedStation.id]: patch });

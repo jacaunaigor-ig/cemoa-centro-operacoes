@@ -1,4 +1,5 @@
 import https from "node:https";
+import { ANA_HORAS, leituraDoBoletim } from "@/lib/boletim-horario";
 import { hydroTodayIso, isoFromTimestamp, upsertCotaOnDate } from "@/lib/hydro-series";
 import type { HydroStation } from "@/lib/types";
 
@@ -10,7 +11,6 @@ export type AnaReading = {
 };
 
 const ANA_HOST = "telemetriaws1.ana.gov.br";
-const CACHE_MS = 8 * 60_000;
 const FETCH_MS = 8_000;
 const CONCURRENCY = 6;
 const MAX_AGE_MS = 48 * 60 * 60_000;
@@ -140,7 +140,7 @@ export async function getAnaReadings(codes: string[]): Promise<{
   pending: boolean;
   fetchedAt: number | null;
 }> {
-  if (cache && Date.now() - cache.at < CACHE_MS) {
+  if (cache && leituraDoBoletim(cache.at, Date.now(), ANA_HORAS)) {
     return { byCode: cache.byCode, pending: false, fetchedAt: cache.at };
   }
   if (!inflight) inflight = refresh(codes);

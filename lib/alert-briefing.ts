@@ -75,6 +75,9 @@ export function buildAlertBriefing({
   if (tipo === "MOVIMENTO" && isAlertActive(tipo, risco)) {
     risks.push("Risco de movimento de massa onde houver setor mapeado");
   }
+  if (tipo === "EROSAO" && isAlertActive(tipo, risco)) {
+    risks.push("Risco de erosão de margem e solapamento de barranco");
+  }
 
   if (tipo !== "INCENDIO" && rain === null) {
     parts.push("Sem pluviômetro CEMADEN neste município");

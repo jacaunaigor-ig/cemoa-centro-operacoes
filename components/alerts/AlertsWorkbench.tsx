@@ -5,8 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   CloudRain,
+  Dam,
   Flame,
-  Gauge,
   Layers,
   MapPinned,
   Maximize2,
@@ -25,8 +25,6 @@ import { MapFocusButton } from "@/components/shared/MapFocusButton";
 import { DashboardBody, DashboardPanel, DashboardRow } from "@/components/shared/DashboardPanel";
 import { MapChromeBar } from "@/components/shared/MapChromeBar";
 import { AmazonasMapButton } from "@/components/shared/AmazonasMapButton";
-import { IndiceMapButton } from "@/components/shared/IndiceMapButton";
-import { IndiceSheet } from "@/components/shared/IndiceSheet";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,9 +34,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { fetchJson, reportClientError } from "@/lib/client";
-import { buildAlertsPayload, buildHydrologyPayload, filterAlertsByWindow, mergeAlertsPreserveOperator } from "@/lib/live-state";
-import { buildIndicePayload } from "@/lib/indice-build";
-import type { IndicePayload } from "@/lib/indice";
+import { buildAlertsPayload, buildHydrologyPayload, mergeAlertsPreserveOperator } from "@/lib/live-state";
 import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides, replaceOverrides } from "@/lib/overrides";
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -84,15 +80,17 @@ import { cn } from "@/lib/utils";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
-import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayload, TimeWindow } from "@/lib/types";
+import { focoFill, type FocosReferencia } from "@/lib/focos-display";
+import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayload } from "@/lib/types";
 import {
   hasRain,
   hasRainReading,
   parseRainFilter,
 } from "@/lib/rainfall-display";
-import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
+import { hitsMapBurst } from "@/lib/monitor-thresholds";
 import {
   airSensorsForMap,
+  applyAirClassification,
   matchesAirFilter,
   parseAirFilter,
 } from "@/lib/air-quality-display";
@@ -100,11 +98,9 @@ import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
 import { AlertTicker } from "@/components/alerts/AlertTicker";
-import { TimeFilter } from "@/components/alerts/TimeFilter";
 import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
-import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
@@ -125,6 +121,7 @@ const PRODUCT_ICONS = {
   CHUVA: CloudRain,
   ALAGAMENTO: Waves,
   MOVIMENTO: Mountain,
+  EROSAO: Dam,
   INCENDIO: Flame,
 } as const;
 
@@ -279,10 +276,6 @@ function localHydro(): HydrologyPayload {
   return { ...buildHydrologyPayload(), cache: "MISS" };
 }
 
-function localIndice(): IndicePayload & { cache: "MISS" } {
-  return { ...buildIndicePayload(Date.now()), cache: "MISS" };
-}
-
 function shortLevelLabel(level: string) {
   if (level === "MODERADO") return "Mod.";
   if (level === "EXTREMO") return "Ext.";
@@ -296,7 +289,6 @@ export function AlertsWorkbench() {
   const pathname = usePathname();
   const params = useSearchParams();
   const { admin, isMobile, session, mapFocus, setMapFocus } = useOpsMode();
-  const indiceInterno = admin && !isMobile;
   const selected = params.get("municipio");
   const bacia = parseSharedBacia(params.get("bacia"));
   const calha = parseSharedCalha(params.get("calha"));
@@ -312,7 +304,6 @@ export function AlertsWorkbench() {
   const [air, setAir] = useState<AirQualityPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
-  const [windowFilter, setWindowFilter] = useState<TimeWindow>("hoje");
   const [busca, setBusca] = useState("");
   const buscaFiltro = useDebouncedValue(busca, 180);
   const [paintArmed, setPaintArmed] = useState(false);
@@ -327,11 +318,9 @@ export function AlertsWorkbench() {
   const editBusy = useRef(false);
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
-  const [showIndice, setShowIndice] = useState(false);
-  const [indice, setIndice] = useState<IndicePayload | null>(null);
   const [showRivers, setShowRivers] = useState(true);
-  const [showFocosCalor, setShowFocosCalor] = useState(false);
-const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; data: string; satelite: string }>>([]);
+  const [focosMapa, setFocosMapa] = useState(false);
+  const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
@@ -346,12 +335,6 @@ const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; d
   const paintLevel = paintByTipo[tipo] ?? defaultPaintLevel(tipo);
   const wasAdmin = useRef(false);
   editBusy.current = paintArmed || drawMode || eraseMode || classifying;
-
-  useEffect(() => {
-    if (indiceInterno) return;
-    setShowIndice(false);
-    setIndice(null);
-  }, [indiceInterno]);
 
   useEffect(() => {
     if (paintArmed || drawMode || eraseMode) toast.dismiss();
@@ -684,7 +667,6 @@ const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; d
           if (cancelled) return;
           setData(localAlerts(tipo));
           setHydro(localHydro());
-          setIndice(indiceInterno ? localIndice() : null);
           setError(null);
           return;
         }
@@ -692,21 +674,16 @@ const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; d
           localPushed.current = true;
           await hydrateLocal();
         }
-        const [payload, hydroPayload, rainPayload, airPayload, indicePayload] = await Promise.all([
+        const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
           fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
           fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
-          indiceInterno
-            ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
-            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         if (rainPayload) setRain(rainPayload);
         if (airPayload) setAir(airPayload);
         if (hydroPayload) setHydro(hydroPayload);
-        if (indiceInterno && indicePayload) setIndice(indicePayload);
-        else if (!indiceInterno) setIndice(null);
         if (!editBusy.current || !gotAlerts) {
           setData((prev) => takeIncomingAlerts(gotAlerts ? prev : null, payload));
           gotAlerts = true;
@@ -725,7 +702,7 @@ const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; d
       cancelled = true;
       stop();
     };
-  }, [tipo, session, indiceInterno]);
+  }, [tipo, session]);
 
   async function refreshNow() {
     setRefreshing(true);
@@ -734,25 +711,19 @@ const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; d
         hydrateClientOverrides();
         setData(localAlerts(tipo));
         setHydro(localHydro());
-        setIndice(indiceInterno ? localIndice() : null);
         setError(null);
         return;
       }
-      const [payload, hydroPayload, rainPayload, airPayload, indicePayload] = await Promise.all([
+      const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
         fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
         fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
         fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
-        indiceInterno
-          ? fetchJson<IndicePayload>("/api/indice").catch(() => null)
-          : Promise.resolve(null),
       ]);
       setData((prev) => takeIncomingAlerts(prev, payload));
       if (hydroPayload) setHydro(hydroPayload);
       if (rainPayload) setRain(rainPayload);
       if (airPayload) setAir(airPayload);
-      if (indiceInterno && indicePayload) setIndice(indicePayload);
-      else if (!indiceInterno) setIndice(null);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
@@ -784,59 +755,31 @@ const [focosCalor, setFocosCalor] = useState<Array<{ lat: number; lon: number; d
     });
     setOnlyRisk(false);
     setShowNames(true);
-    setShowIndice(false);
     setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
     window.setTimeout(() => mapApi.current?.fitAmazonas(), 80);
   }
-const toggleFocosCalor = async () => {
-  if (showFocosCalor) {
-    setShowFocosCalor(false);
-    setFocosCalor([]);
-    return;
-  }
-
-  setShowFocosCalor(true);
-
-  try {
-    // 🔥 Usando sua própria API do INPE
-    const response = await fetch('/api/focus?uf=AM&dias=7');
-    
-    if (!response.ok) {
-      throw new Error(`Erro na API: ${response.status}`);
+  async function toggleFocosMapa() {
+    if (tipo !== "INCENDIO") return;
+    if (focosMapa) {
+      setFocosMapa(false);
+      return;
     }
-    
-    const data = await response.json();
-    
-    if (data.success && data.focos) {
-      // Converte os dados do INPE para o formato esperado pelo mapa
-      const focosFormatados = data.focos.map((foco: any) => ({
-        lat: foco.latitude,
-        lon: foco.longitude,
-        data: new Date(foco.datahora).toLocaleString(),
-        satelite: foco.satelite || 'N/A',
-        municipio: foco.municipio || 'Desconhecido',
-        confianca: foco.confianca || 0
-      }));
-      
-      setFocosCalor(focosFormatados);
-      console.log(`🔥 ${focosFormatados.length} focos do INPE carregados`);
-    } else {
-      console.error('Erro ao carregar focos:', data.error);
+    setFocosMapa(true);
+    if (focosRef && !focosRef.error) return;
+    try {
+      const data = await fetchJson<FocosReferencia>("/api/focos");
+      setFocosRef(data);
+      if (data.error) toast.error(data.error);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível ler os focos do INPE.");
+      setFocosMapa(false);
     }
-  } catch (error) {
-    console.error('Erro ao carregar focos de calor:', error);
-    toast.error('Erro ao carregar focos do INPE');
   }
-};
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (editorOpen) return;
-        if (showIndice) {
-          setShowIndice(false);
-          return;
-        }
         if (drawMode) {
           mapApi.current?.cancelDraw();
           setDrawMode(false);
@@ -869,9 +812,13 @@ const toggleFocosCalor = async () => {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast, showIndice]);
+  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast]);
 
-  const catalog = useMemo(() => data?.municipios ?? [], [data]);
+  const catalog = useMemo(() => {
+    const rows = data?.municipios ?? [];
+    if (tipo !== "INCENDIO") return rows;
+    return applyAirClassification(rows, air);
+  }, [data, tipo, air]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -889,17 +836,17 @@ const toggleFocosCalor = async () => {
 
   const mudancas = useMemo(
     () =>
-      filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
+      (data?.alerts ?? []).filter(
         (a) =>
           (a.novo || a.agravado) && matchMunicipioGeo(a.municipio, a.bacia, geo),
       ),
-    [data, windowFilter, geo],
+    [data, geo],
   );
   const mudancaNomes = useMemo(() => new Set(mudancas.map((a) => a.municipio)), [mudancas]);
 
   const filteredAlerts = useMemo(() => {
     if (!data) return [];
-    let list = filterAlertsByWindow(data.alerts, windowFilter, data.generatedAt);
+    let list = data.alerts;
     if (activeFilter === "AGRAVADOS") {
       list = list.filter((a) => a.novo || a.agravado);
     } else if (activeFilter === "ATIVOS") {
@@ -910,7 +857,15 @@ const toggleFocosCalor = async () => {
     list = list.filter((a) => matchMunicipioGeo(a.municipio, a.bacia, geo));
     if (selected) list = list.filter((a) => a.municipio === selected);
     return list;
-  }, [data, windowFilter, activeFilter, geo, selected, tipo]);
+  }, [data, activeFilter, geo, selected, tipo]);
+
+  const focoFills = useMemo(() => {
+    if (tipo !== "INCENDIO" || !focosMapa || !focosRef) return null;
+    const max = Math.max(1, ...Object.values(focosRef.byId));
+    const next: Record<string, string> = {};
+    for (const item of catalog) next[item.nome] = focoFill(focosRef.byId[item.id] ?? 0, max);
+    return next;
+  }, [tipo, focosMapa, focosRef, catalog]);
 
   const visibleMunicipios = useMemo(() => {
     const needle = buscaFiltro.trim().toLowerCase();
@@ -966,7 +921,7 @@ const toggleFocosCalor = async () => {
     null;
   const selectedHydro = estacaoDoMunicipio(selected, hydroStations);
   const urgentAlert = useMemo(() => {
-    const list = filterAlertsByWindow(data?.alerts ?? [], windowFilter, data?.generatedAt ?? 0).filter(
+    const list = (data?.alerts ?? []).filter(
       (a) => matchMunicipioGeo(a.municipio, a.bacia, geo) && a.expiresAt,
     );
     if (!list.length) return null;
@@ -977,7 +932,7 @@ const toggleFocosCalor = async () => {
     );
     const top = list[0];
     return { municipio: top.municipio, risco: top.risco, expiresAt: top.expiresAt };
-  }, [data, windowFilter, geo, tipo]);
+  }, [data, geo, tipo]);
   const plantaoCounts = useMemo(
     () =>
       countPlantao(
@@ -1005,16 +960,10 @@ const toggleFocosCalor = async () => {
     <ProductMonitorStrip
       tipo={tipo}
       air={air}
-      rain={rain}
       airFilter={airFilter}
-      rainFilter={rainFilter}
       loadingAir={!air && !STATIC_DEPLOY}
-      loadingRain={!rain && !STATIC_DEPLOY}
       onAirFilter={(next) =>
         setQuery({ ar: next === "TODOS" ? null : next, municipio: null, chuva: null })
-      }
-      onRainFilter={(next) =>
-        setQuery({ chuva: next === "TODOS" ? null : next, municipio: null, ar: null })
       }
     />
   );
@@ -1311,7 +1260,7 @@ const toggleFocosCalor = async () => {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino (MP2,5) em µg/m³, média de 24 h (pm2.5_24hour) dos sensores externos. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador classifica o município; os sensores alimentam o IVE e apoiam o plantão.",
+              text: "Concentração de material particulado fino (MP2,5) em µg/m³, média de 24 h (pm2.5_24hour) dos sensores externos. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador classifica o município; os sensores apoiam o plantão.",
             }
           : undefined,
     });
@@ -1415,11 +1364,9 @@ const toggleFocosCalor = async () => {
                     ))}
                   </select>
                 </label>
-                <TimeFilter value={windowFilter} onChange={setWindowFilter} />
               </>
             }
           >
-            <MeteoAvisoDutyCard />
             {plantaoTotal > 0 ? (
               <a
                 href="#fila-plantao"
@@ -1545,12 +1492,6 @@ const toggleFocosCalor = async () => {
                 ) : (
                   <>
                     {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null}
-                    {indiceInterno && !mapFocus ? (
-                      <IndiceMapButton
-                        active={showIndice}
-                        onToggle={() => setShowIndice((v) => !v)}
-                      />
-                    ) : null}
                   </>
                 )}
                 <Popover>
@@ -1592,15 +1533,6 @@ const toggleFocosCalor = async () => {
                     >
                       Ajustar ao Amazonas
                     </MapToolButton>
-                    {indiceInterno ? (
-                      <MapToolButton
-                        active={showIndice}
-                        onClick={() => setShowIndice((v) => !v)}
-                        icon={<Gauge className="size-3.5" />}
-                      >
-                        Índice de Vulnerabilidade
-                      </MapToolButton>
-                    ) : null}
                     <MapToolButton
                       active={showNames}
                       onClick={() => setShowNames((v) => !v)}
@@ -1613,13 +1545,15 @@ const toggleFocosCalor = async () => {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
-<MapToolButton
-  active={showFocosCalor}
-  onClick={toggleFocosCalor}
-  icon={<Flame className="size-3.5" />}
->
-  {showFocosCalor ? "Ocultar Focos de Calor" : "Focos de Calor"}
-</MapToolButton>
+                    {tipo === "INCENDIO" ? (
+                      <MapToolButton
+                        active={focosMapa}
+                        onClick={() => void toggleFocosMapa()}
+                        icon={<Flame className="size-3.5" />}
+                      >
+                        {focosMapa ? "Qualidade do ar" : "Focos de calor"}
+                      </MapToolButton>
+                    ) : null}
                     <MapOverlayToggles vis={overlays} product={tipo} onChange={setOverlays} />
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
@@ -1705,8 +1639,7 @@ const toggleFocosCalor = async () => {
                   pluvio={pluvio}
                   airSensors={airPoints}
                   pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
-                  focosCalor={focosCalor}
-                  showFocosCalor={showFocosCalor}
+                  fillByNome={focoFills}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
@@ -1732,22 +1665,6 @@ const toggleFocosCalor = async () => {
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
                 tipo={tipo}
               />
-              {indiceInterno && showIndice && !selected ? (
-                <IndiceSheet
-                  className={cn(
-                    "pointer-events-auto absolute z-[1200]",
-                    isMobile
-                      ? "inset-x-1.5 bottom-1.5 top-10"
-                      : "left-2 top-12 w-[min(calc(100%-1rem),26rem)] sm:top-2",
-                  )}
-                  rows={indice?.municipios ?? []}
-                  onClose={() => setShowIndice(false)}
-                  onPick={(row) => {
-                    setShowIndice(false);
-                    setQuery(geoForNome(row.nome, row.bacia));
-                  }}
-                />
-              ) : null}
               {selectedRow && !paintArmed && !drawMode && !eraseMode ? (
                   <div
                     className={cn(
@@ -1774,7 +1691,6 @@ const toggleFocosCalor = async () => {
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
-                    indice={indiceInterno ? (indice?.byId[selectedRow.id] ?? null) : undefined}
                     onClose={() => setQuery({ municipio: null })}
                   />
                 </div>
@@ -1818,6 +1734,24 @@ const toggleFocosCalor = async () => {
                   ))}
                 </ul>
                 {tipo === "INCENDIO" ? (
+                  <>
+                  <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
+                    {focosMapa
+                      ? `Focos absolutos AQUA_M-T, bioma Amazônia${focosRef ? ` · ${focosRef.periodo.inicio} a ${focosRef.periodo.fim} · ${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Cinza é zero. A classificação do operador continua na lista.`
+                      : "App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor. A classificação do operador prevalece."}
+                  </p>
+                  {focosMapa && focosRef ? (
+                    <ul className="mt-1 space-y-0.5">
+                      {focosRef.ranking.slice(0, 5).map((item) => (
+                        <li key={item.id} className="flex items-center gap-1.5 text-[10px]">
+                          <span className="size-2.5 rounded-sm" style={{ background: focoFill(item.total, focosRef.ranking[0]?.total ?? 1) }} />
+                          <span className="min-w-0 flex-1 truncate">{item.nome}</span>
+                          <span className="font-mono">{item.total}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {!focosMapa ? (
                   <button
                     type="button"
                     className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
@@ -1834,34 +1768,13 @@ const toggleFocosCalor = async () => {
                     MP2,5 ≥ 35,5 µg/m³
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
-                ) : (
-                <>
-                <button
-                  type="button"
-                  className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
-                  aria-pressed={rainFilter === "INTENSO"}
-                  onClick={() =>
-                    setQuery({
-                      chuva: rainFilter === "INTENSO" ? null : "INTENSO",
-                      municipio: null,
-                    })
-                  }
-                >
-                  <span className="size-2.5 rounded-full bg-risco-severo" />
-                  {mapBurstThreshold(tipo).label}
-                  <span className="ml-auto font-mono">
-                    {tipo === "MOVIMENTO"
-                      ? Object.values(rain?.byNome ?? {}).filter((r) => (r.mm24h ?? 0) >= 50).length
-                      : (rain?.coverage.intenso1h ?? 0)}
-                  </span>
-                </button>
-                {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+                  ) : null}
+                  </>
+                ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
                   <div className="mt-2 border-t border-border/70 pt-2">
                     <MonitorThresholdLegend tipo={tipo} />
                   </div>
                 ) : null}
-                </>
-                )}
               </MapLegendCard>
             </div>
 

@@ -1,8 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+﻿import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const BASE_URL =
-  "https://ftp.cptec.inpe.br/goes/goes19/goes19_web/ams_ret_ch13_baixa/";
+const BASE_URL = "https://ftp.cptec.inpe.br/goes/goes19/goes19_web/ams_ret_ch13_baixa/";
 
 const CACHE_DIR = path.join(process.env.TEMP ?? "/tmp", "cemoa-goes");
 const META_PATH = path.join(CACHE_DIR, "latest.json");
@@ -10,7 +9,7 @@ const IMAGE_PATH = path.join(CACHE_DIR, "goes19-ch13-baixa.jpg");
 const STALE_MS = 15 * 60_000;
 const FETCH_MS = 8_000;
 
-export type GoesMeta = {
+type GoesMeta = {
   generatedAt: number;
   imageAt: number | null;
   sourceUrl: string | null;
@@ -20,7 +19,7 @@ export type GoesMeta = {
 
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_MS) });
-  if (!res.ok) throw new Error(`HTTP ${res.status} em ${url}`);
+  if (!res.ok) throw new Error("HTTP " + res.status + " em " + url);
   return res.text();
 }
 
@@ -42,7 +41,7 @@ async function findLatestImageUrl(): Promise<string> {
   const years = [now.getUTCFullYear(), now.getUTCFullYear() - 1];
 
   for (const year of years) {
-    const yearUrl = `${BASE_URL}${year}/`;
+    const yearUrl = BASE_URL + year + "/";
     let yearHtml: string;
     try {
       yearHtml = await fetchText(yearUrl);
@@ -57,7 +56,7 @@ async function findLatestImageUrl(): Promise<string> {
       .reverse();
 
     for (const month of months) {
-      const monthUrl = `${yearUrl}${month}/`;
+      const monthUrl = yearUrl + month + "/";
       let monthHtml: string;
       try {
         monthHtml = await fetchText(monthUrl);
@@ -71,7 +70,7 @@ async function findLatestImageUrl(): Promise<string> {
         .reverse();
 
       if (jpgs.length > 0) {
-        return `${monthUrl}${jpgs[0]}`;
+        return monthUrl + jpgs[0];
       }
     }
   }
@@ -92,46 +91,24 @@ async function writeMeta(meta: GoesMeta) {
   await writeFile(META_PATH, JSON.stringify(meta), "utf8");
 }
 
-/**
- * Só devolve o meta atual (do cache), sem baixar nada.
- * Se quiser garantir que está fresco, chame baixarImagemBaixa() antes.
- */
-export async function getGoesMeta(): Promise<GoesMeta | null> {
-  return readMeta();
-}
-
-/**
- * Caminho absoluto do JPG em cache (pode não existir ainda).
- */
-export function getGoesImagePath(): string {
-  return IMAGE_PATH;
-}
-
-/**
- * Baixa (se o cache estiver vencido) e devolve o buffer + meta.
- */
-export async function baixarImagemBaixa(force = false): Promise<{
-  buffer: Buffer;
-  meta: GoesMeta;
-}> {
+async function baixarImagemBaixa(): Promise<{ buffer: Buffer; meta: GoesMeta }> {
   const now = Date.now();
   const cached = await readMeta();
 
-  if (!force && cached && now - cached.generatedAt < STALE_MS) {
+  if (cached && now - cached.generatedAt < STALE_MS) {
     try {
       const buffer = await readFile(IMAGE_PATH);
       return { buffer, meta: cached };
     } catch {
-      // cache corrompido, refaz
+      // cache corrompido, segue
     }
   }
 
   const sourceUrl = await findLatestImageUrl();
+  console.log("Baixando (baixa):", sourceUrl);
 
-  const res = await fetch(sourceUrl, {
-    signal: AbortSignal.timeout(FETCH_MS),
-  });
-  if (!res.ok) throw new Error(`Falha no download: HTTP ${res.status}`);
+  const res = await fetch(sourceUrl, { signal: AbortSignal.timeout(FETCH_MS) });
+  if (!res.ok) throw new Error("Falha no download: HTTP " + res.status);
 
   const buffer = Buffer.from(await res.arrayBuffer());
 
@@ -162,3 +139,17 @@ export async function baixarImagemBaixa(force = false): Promise<{
 
   return { buffer, meta };
 }
+
+async function main() {
+  const { meta } = await baixarImagemBaixa();
+  console.log("Salvo em " + IMAGE_PATH + " (" + meta.bytes + " bytes)");
+  console.log("Origem: " + meta.sourceUrl);
+  if (meta.imageAt) {
+    console.log("Imagem de: " + new Date(meta.imageAt).toISOString());
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

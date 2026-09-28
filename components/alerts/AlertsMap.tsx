@@ -96,6 +96,7 @@ export const AlertsMap = forwardRef<
     stains?: AlertStain[];
         focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
     showFocosCalor?: boolean;
+    fillByNome?: Record<string, string> | null;
     onSelect: (nome: string, bacia: string) => void;
     onHover?: (nome: string | null) => void;
     onPaint: (id: string, nome: string, bacia: string) => void;
@@ -127,6 +128,7 @@ export const AlertsMap = forwardRef<
     stains = [],
     focosCalor = [],
     showFocosCalor = false,
+    fillByNome = null,
     onSelect,
     onHover,
     onPaint,
@@ -178,6 +180,7 @@ export const AlertsMap = forwardRef<
     drawMode,
     eraseMode,
     stains,
+    fillByNome,
   });
 
   useEffect(() => {
@@ -205,6 +208,7 @@ export const AlertsMap = forwardRef<
       drawMode,
       eraseMode,
       stains,
+      fillByNome,
     };
   }, [
     onSelect,
@@ -230,6 +234,7 @@ export const AlertsMap = forwardRef<
     drawMode,
     eraseMode,
     stains,
+    fillByNome,
   ]);
 
   function paintFeature(nome: string) {
@@ -389,6 +394,8 @@ export const AlertsMap = forwardRef<
     } = stateRef.current;
     const m = list.find((item) => item.nome === nome);
     const risco = m?.risco ?? "BAIXO";
+    const choropleth = stateRef.current.fillByNome?.[nome];
+    const semAlertaAr = !choropleth && stateRef.current.tipo === "INCENDIO" && risco === "BOA";
     const matchLevel =
       f === "TODOS" || f === "ATIVOS"
         ? f === "TODOS" || (risco !== "BAIXO" && risco !== "BOA")
@@ -403,7 +410,7 @@ export const AlertsMap = forwardRef<
       color: muniStroke(isSel, isHov, match),
       weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.1 : 0.7,
       opacity: match || isSel || isHov ? 1 : 0.28,
-      fillColor: LEVEL_COLORS[risco] ?? "#7c8fab",
+      fillColor: choropleth ?? (semAlertaAr ? "#d5dde6" : (LEVEL_COLORS[risco] ?? "#7c8fab")),
       fillOpacity: isSel
         ? Math.min(0.95, fill + 0.12)
         : isHov
@@ -638,7 +645,7 @@ export const AlertsMap = forwardRef<
     const layer = layerRef.current;
     layer?.setStyle((feature) => styleFor(feature));
     if (selected) layersByNameRef.current.get(selected)?.bringToFront();
-  }, [riscoSig, selected, filter, basin, calhaSig, adminMode, opacity, theme]);
+  }, [riscoSig, selected, filter, basin, calhaSig, adminMode, opacity, theme, fillByNome]);
 
   useEffect(() => {
     const L = leafletRef.current;

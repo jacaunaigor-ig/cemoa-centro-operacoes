@@ -5,6 +5,7 @@ export const ALERT_TYPES = [
   "CHUVA",
   "ALAGAMENTO",
   "MOVIMENTO",
+  "EROSAO",
   "INCENDIO",
 ] as const;
 
@@ -97,24 +98,34 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     id: "MOVIMENTO",
     label: "Risco de Movimento de Massa",
     short: "Movimento de massa",
-    subtitle: "Deslizamento, movimento de massa e erosão de margem fluvial",
+    subtitle: "Deslizamento e movimento de massa em encostas",
     legendTitle: "Movimento de massa",
     scale: "risco",
     levels: RISK_LEVELS,
     low: "BAIXO",
     sources: "CEMOA · CENSIPAM · SGB",
   },
+  EROSAO: {
+    id: "EROSAO",
+    label: "Alerta de Erosão de Margem",
+    short: "Erosão de margem",
+    subtitle: "Recuo de margem fluvial e solapamento de barranco",
+    legendTitle: "Erosão de margem",
+    scale: "risco",
+    levels: RISK_LEVELS,
+    low: "BAIXO",
+    sources: "CEMOA · SGB · CENSIPAM",
+  },
   INCENDIO: {
     id: "INCENDIO",
-    label: "Incêndio Florestal",
-    short: "Incêndio florestal",
-    subtitle:
-      "Incêndio em áreas não protegidas com reflexos na qualidade do ar",
+    label: "Incêndio/Qualidade do ar",
+    short: "Incêndio/Qualidade do ar",
+    subtitle: "Queima em área não protegida com reflexo na qualidade do ar",
     legendTitle: "Qualidade do ar (µg/m³)",
     scale: "ar",
     levels: AIR_LEVELS,
     low: "BOA",
-    sources: "CEMOA · MP2,5 24 h · sensores de apoio",
+    sources: "CEMOA · App SELVA · MP2,5",
   },
 };
 
@@ -150,7 +161,7 @@ export function defaultPaintLevel(tipo: AlertType) {
 
 /**
  * Faixas de 24 h do produto INCÊNDIO (µg/m³): Boa 0–15, Moderada 15–50,
- * Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador pinta o município.
+ * Ruim 50–75, Muito ruim 75–125, Péssima >125. Moderada ou pior pinta o mapa.
  */
 export function airLevelFromPm25(pm25: number): AirLevel {
   if (!Number.isFinite(pm25) || pm25 <= AIR_PM25.boaMax) return "BOA";

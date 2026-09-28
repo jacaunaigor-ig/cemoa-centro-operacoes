@@ -1,0 +1,994 @@
+{
+  "fonte": "cemoa_app (Streamlit) · parâmetros da metodologia IRE/IRG",
+  "nota": "IVM, %TI (Censo), agravo por evento (0-9), calha e setores R3R4 (popR3R4, adensamento, capital) importados do app original. População e %rural vêm do Censo 2022 (demografia.json). O fator de alerta vem da classificação ao vivo do operador.",
+  "municipios": {
+    "1300029": {
+      "ivm": 17.5,
+      "calha": "Médio Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300060": {
+      "ivm": 20.0,
+      "calha": "Alto Solimões",
+      "pctTI": 20.0,
+      "agr": {
+        "Estiagem": 2,
+        "Inundação": 7,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300086": {
+      "ivm": 18.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300102": {
+      "ivm": 17.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300144": {
+      "ivm": 18.0,
+      "calha": "Madeira",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 2,
+        "Inundação": 7,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300201": {
+      "ivm": 20.0,
+      "calha": "Alto Solimões",
+      "pctTI": 35.2,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1100,
+        "adensamento": 0.5,
+        "capital": false
+      }
+    },
+    "1300300": {
+      "ivm": 17.5,
+      "calha": "Médio Amazonas",
+      "pctTI": 35.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 7,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1150,
+        "adensamento": 6.0,
+        "capital": false
+      }
+    },
+    "1300409": {
+      "ivm": 20.0,
+      "calha": "Rio Negro",
+      "pctTI": 45.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 7,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 800,
+        "adensamento": 0.7,
+        "capital": false
+      }
+    },
+    "1300508": {
+      "ivm": 17.5,
+      "calha": "Baixo Amazonas",
+      "pctTI": 15.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 900,
+        "adensamento": 1.8,
+        "capital": false
+      }
+    },
+    "1300607": {
+      "ivm": 19.0,
+      "calha": "Alto Solimões",
+      "pctTI": 35.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 2750,
+        "adensamento": 1.0,
+        "capital": false
+      }
+    },
+    "1300631": {
+      "ivm": 19.0,
+      "calha": "Purus",
+      "pctTI": 5.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 4,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300680": {
+      "ivm": 18.0,
+      "calha": "Baixo Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300706": {
+      "ivm": 18.5,
+      "calha": "Purus",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1450,
+        "adensamento": 1.7,
+        "capital": false
+      }
+    },
+    "1300805": {
+      "ivm": 17.0,
+      "calha": "Madeira",
+      "pctTI": 15.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 2,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300839": {
+      "ivm": 18.0,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1300904": {
+      "ivm": 18.5,
+      "calha": "Purus",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1301001": {
+      "ivm": 20.0,
+      "calha": "Juruá",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 5,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1550,
+        "adensamento": 1.3,
+        "capital": false
+      }
+    },
+    "1301100": {
+      "ivm": 18.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 3
+      },
+      "setores": null
+    },
+    "1301159": {
+      "ivm": 18.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1301209": {
+      "ivm": 19.0,
+      "calha": "Médio Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 3050,
+        "adensamento": 1.3,
+        "capital": false
+      }
+    },
+    "1301308": {
+      "ivm": 17.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1301407": {
+      "ivm": 19.5,
+      "calha": "Juruá",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 2,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 2350,
+        "adensamento": 1.3,
+        "capital": false
+      }
+    },
+    "1301506": {
+      "ivm": 19.5,
+      "calha": "Juruá",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 700,
+        "adensamento": 0.7,
+        "capital": false
+      }
+    },
+    "1301605": {
+      "ivm": 19.0,
+      "calha": "Médio Solimões",
+      "pctTI": 5.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 950,
+        "adensamento": 1.2,
+        "capital": false
+      }
+    },
+    "1301654": {
+      "ivm": 19.5,
+      "calha": "Juruá",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 850,
+        "adensamento": 0.7,
+        "capital": false
+      }
+    },
+    "1301704": {
+      "ivm": 18.0,
+      "calha": "Madeira",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 7,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 3400,
+        "adensamento": 1.9,
+        "capital": false
+      }
+    },
+    "1301803": {
+      "ivm": 20.5,
+      "calha": "Juruá",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 800,
+        "adensamento": 1.1,
+        "capital": false
+      }
+    },
+    "1301852": {
+      "ivm": 13.0,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 2,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1050,
+        "adensamento": 1.0,
+        "capital": false
+      }
+    },
+    "1301902": {
+      "ivm": 15.5,
+      "calha": "Médio Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 7,
+        "Incêndio/QAr": 7,
+        "Erosão": 7,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 2600,
+        "adensamento": 12.8,
+        "capital": false
+      }
+    },
+    "1301951": {
+      "ivm": 20.0,
+      "calha": "Juruá",
+      "pctTI": 15.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 3,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1302009": {
+      "ivm": 16.5,
+      "calha": "Médio Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 2,
+        "Inundação": 3,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1302108": {
+      "ivm": 19.5,
+      "calha": "Médio Solimões",
+      "pctTI": 20.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1302207": {
+      "ivm": 20.0,
+      "calha": "Juruá",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 750,
+        "adensamento": 0.5,
+        "capital": false
+      }
+    },
+    "1302306": {
+      "ivm": 19.0,
+      "calha": "Médio Solimões",
+      "pctTI": 20.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1302405": {
+      "ivm": 18.5,
+      "calha": "Purus",
+      "pctTI": 15.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1300,
+        "adensamento": 0.7,
+        "capital": false
+      }
+    },
+    "1302504": {
+      "ivm": 13.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 5,
+        "Erosão": 5,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 3100,
+        "adensamento": 15.2,
+        "capital": false
+      }
+    },
+    "1302553": {
+      "ivm": 16.5,
+      "calha": "Baixo Solimões",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1302603": {
+      "ivm": 8.0,
+      "calha": "Rio Negro",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 3,
+        "Incêndio/QAr": 0,
+        "Erosão": 0,
+        "Mov. Massa": 5,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 55196,
+        "adensamento": 202.0,
+        "capital": true
+      }
+    },
+    "1302702": {
+      "ivm": 18.5,
+      "calha": "Madeira",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 7,
+        "Incêndio/QAr": 4,
+        "Erosão": 4,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1250,
+        "adensamento": 1.2,
+        "capital": false
+      }
+    },
+    "1302801": {
+      "ivm": 19.5,
+      "calha": "Médio Solimões",
+      "pctTI": 10.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1302900": {
+      "ivm": 17.0,
+      "calha": "Baixo Amazonas",
+      "pctTI": 10.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 7,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1400,
+        "adensamento": 1.7,
+        "capital": false
+      }
+    },
+    "1303007": {
+      "ivm": 19.0,
+      "calha": "Baixo Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1000,
+        "adensamento": 0.6,
+        "capital": false
+      }
+    },
+    "1303106": {
+      "ivm": 18.5,
+      "calha": "Madeira",
+      "pctTI": 10.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1303205": {
+      "ivm": 18.5,
+      "calha": "Rio Negro",
+      "pctTI": 15.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 850,
+        "adensamento": 0.8,
+        "capital": false
+      }
+    },
+    "1303304": {
+      "ivm": 18.5,
+      "calha": "Madeira",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1303403": {
+      "ivm": 14.0,
+      "calha": "Baixo Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 5,
+        "Erosão": 5,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 3800,
+        "adensamento": 1.6,
+        "capital": false
+      }
+    },
+    "1303502": {
+      "ivm": 19.5,
+      "calha": "Purus",
+      "pctTI": 12.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1303536": {
+      "ivm": 14.5,
+      "calha": "Médio Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 1,
+        "Inundação": 3,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1303569": {
+      "ivm": 15.0,
+      "calha": "Médio Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1303601": {
+      "ivm": 20.5,
+      "calha": "Rio Negro",
+      "pctTI": 80.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1303700": {
+      "ivm": 19.5,
+      "calha": "Alto Solimões",
+      "pctTI": 22.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 900,
+        "adensamento": 1.0,
+        "capital": false
+      }
+    },
+    "1303809": {
+      "ivm": 21.0,
+      "calha": "Rio Negro",
+      "pctTI": 48.0,
+      "agr": {
+        "Estiagem": 7,
+        "Inundação": 0,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 3100,
+        "adensamento": 0.5,
+        "capital": false
+      }
+    },
+    "1303908": {
+      "ivm": 20.0,
+      "calha": "Alto Solimões",
+      "pctTI": 37.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 1000,
+        "adensamento": 1.2,
+        "capital": false
+      }
+    },
+    "1303957": {
+      "ivm": 17.5,
+      "calha": "Baixo Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1304005": {
+      "ivm": 16.5,
+      "calha": "Médio Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1304062": {
+      "ivm": 20.0,
+      "calha": "Alto Solimões",
+      "pctTI": 29.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": {
+        "popR3R4": 4400,
+        "adensamento": 22.7,
+        "capital": false
+      }
+    },
+    "1304104": {
+      "ivm": 19.5,
+      "calha": "Purus",
+      "pctTI": 8.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1304203": {
+      "ivm": 15.0,
+      "calha": "Médio Solimões",
+      "pctTI": 7.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 2
+      },
+      "setores": {
+        "popR3R4": 2700,
+        "adensamento": 3.4,
+        "capital": false
+      }
+    },
+    "1304237": {
+      "ivm": 19.5,
+      "calha": "Alto Solimões",
+      "pctTI": 25.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1304260": {
+      "ivm": 19.0,
+      "calha": "Médio Solimões",
+      "pctTI": 12.0,
+      "agr": {
+        "Estiagem": 5,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1304302": {
+      "ivm": 16.5,
+      "calha": "Baixo Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 4,
+        "Inundação": 5,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    },
+    "1304401": {
+      "ivm": 16.5,
+      "calha": "Médio Amazonas",
+      "pctTI": 0.0,
+      "agr": {
+        "Estiagem": 3,
+        "Inundação": 8,
+        "Incêndio/QAr": 2,
+        "Erosão": 0,
+        "Mov. Massa": 0,
+        "Chuvas": 0
+      },
+      "setores": null
+    }
+  }
+}

@@ -25,7 +25,7 @@ const MESH_PATH = join(process.cwd(), "public/geo/amazonas-municipios.json");
 const SOURCE_PURPLEAIR =
   "PurpleAir · pm2.5_24hour, só sensores externos (location_type=0), média municipal — não soma. Header x-api-key. Horários em America/Manaus (UTC-4)";
 const SOURCE_SELVA =
-  "App SELVA · fallback da leitura atual. O incêndio no IVE usa PurpleAir pm2.5_24hour, externos, média municipal";
+  "App SELVA · leitura municipal que pinta Moderada, Ruim, Muito Ruim e Péssima. Boa não colore o mapa.";
 
 type Memo = { at: number; data: AirQualityPayload };
 let memo: Memo | null = null;
@@ -397,7 +397,7 @@ function buildFromPacket(
     const pm25Hour = pm25HourFromRow(row, fields);
     const pm25Cf1 = pm25Cf1FromRow(row, fields);
     const pm25Atm = pm25AtmFromRow(row, fields);
-    const pm25 = pm25Day ?? pm25Hour ?? pm25Cf1 ?? pm25Atm;
+    const pm25 = pm25Day ?? pm25Hour ?? numField(row, fields, ["pm2.5"]) ?? pm25Cf1 ?? pm25Atm;
     if (pm25 == null) continue;
     const hit = municipioOf(lat, lon);
     if (!hit) continue;
@@ -505,37 +505,40 @@ export async function getAirQualityPayload(): Promise<AirQualityPayload> {
   if (!inflight) {
     inflight = (async () => {
       try {
-        const key = purpleAirKey();
-        let purpleError: string | null = key
-          ? null
-          : "Sem PURPLEAIR_API_KEY. Gere uma chave de leitura em https://develop.purpleair.com/";
-        if (key) {
+        try {
+          const packet = await fetchSelvaPacket();
+          const data = buildFromPacket(packet, null, SOURCE_SELVA);
+          if (!data.sensors.length) {
+            throw new Error(data.error ?? "App SELVA sem leitura no Amazonas.");
+          }
+          memo = { at: Date.now(), data };
+          return data;
+        } catch (selvaErr) {
+          const selvaMessage = selvaErr instanceof Error ? selvaErr.message : "Falha no App SELVA.";
+          const key = purpleAirKey();
+          if (!key) {
+            if (memo) {
+              return { ...memo.data, cache: "HIT" as const, error: `Usando última leitura: ${selvaMessage}` };
+            }
+            return emptyPayload(selvaMessage);
+          }
           try {
             const packet = await fetchPurpleAirPacket(key);
-            const data = buildFromPacket(packet, null, SOURCE_PURPLEAIR);
+            const data = buildFromPacket(
+              packet,
+              `${selvaMessage}. Usando PurpleAir (pm2.5_24hour).`,
+              SOURCE_PURPLEAIR,
+            );
             memo = { at: Date.now(), data };
             return data;
           } catch (err) {
-            purpleError = err instanceof Error ? err.message : "Falha no PurpleAir.";
+            const purpleError = err instanceof Error ? err.message : "Falha no PurpleAir.";
+            const combined = `${selvaMessage} · ${purpleError}`;
+            if (memo) {
+              return { ...memo.data, cache: "HIT" as const, error: `Usando última leitura: ${combined}` };
+            }
+            return emptyPayload(combined);
           }
-        }
-        try {
-          const packet = await fetchSelvaPacket();
-          const data = buildFromPacket(
-            packet,
-            purpleError
-              ? `${purpleError}. Usando SELVA (leitura atual, não o pm2.5_24hour da PurpleAir).`
-              : null,
-            SOURCE_SELVA,
-          );
-          memo = { at: Date.now(), data };
-          return data;
-        } catch (err) {
-          const message =
-            err instanceof Error ? err.message : "Falha ao consultar a qualidade do ar.";
-          const combined = purpleError ? `${purpleError} · ${message}` : message;
-          if (memo) return { ...memo.data, cache: "HIT" as const, error: `Usando última leitura: ${combined}` };
-          return emptyPayload(combined);
         }
       } finally {
         inflight = null;

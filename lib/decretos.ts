@@ -1,42 +1,32 @@
-import raw from "@/data/decretos.json";
-import { normalizeMunicipio } from "@/lib/hydrology";
-import type { IveId } from "@/lib/vulnerabilidade";
+import estiagemJson from "@/data/decretos-estiagem.json";
+import inundacaoJson from "@/data/decretos-inundacao.json";
 
-type DecretoAnos = Partial<Record<IveId, number>>;
-
-type DecretosFile = {
-  fonte: string;
-  referencia: number;
-  corte_anos: number;
-  bonus_recente: number;
-  bonus_antigo: number;
-  padrao: DecretoAnos;
-  municipios: Record<string, DecretoAnos>;
+export type DecretoRec = {
+  total: number;
+  anos: number[];
+  ultimo: number;
 };
 
-const FILE = raw as DecretosFile;
+const estiagem = estiagemJson as Record<string, DecretoRec>;
+const inundacao = inundacaoJson as Record<string, DecretoRec>;
 
-const BY_NOME = new Map(
-  Object.entries(FILE.municipios).map(([nome, anos]) => [normalizeMunicipio(nome), anos] as const),
-);
-
-export const DECRETO_FONTE = FILE.fonte;
-export const DECRETO_REFERENCIA = FILE.referencia;
-export const DECRETO_BONUS_RECENTE = FILE.bonus_recente;
-export const DECRETO_BONUS_ANTIGO = FILE.bonus_antigo;
-
-export function decretoAnoDo(nome: string, ive: IveId): number | null {
-  const row = BY_NOME.get(normalizeMunicipio(nome));
-  const ano = row?.[ive] ?? FILE.padrao[ive];
-  return typeof ano === "number" ? ano : null;
+export function decretosEstiagem(codigo: string): DecretoRec | null {
+  return estiagem[codigo] ?? null;
 }
 
-export function bonusDecreto(ano: number | null | undefined): number {
-  if (ano == null) return 0;
-  return DECRETO_REFERENCIA - ano <= FILE.corte_anos ? DECRETO_BONUS_RECENTE : DECRETO_BONUS_ANTIGO;
+export function decretosInundacao(codigo: string): DecretoRec | null {
+  return inundacao[codigo] ?? null;
 }
 
-export function bonusDecretoDo(nome: string, ive: IveId): { pontos: number; ano: number | null } {
-  const ano = decretoAnoDo(nome, ive);
-  return { pontos: bonusDecreto(ano), ano };
+function mix(from: [number, number, number], to: [number, number, number], t: number) {
+  const c = from.map((channel, i) => Math.round(channel + (to[i] - channel) * t));
+  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+}
+
+/** Mais decretos, cor mais forte. Zero fica cinza. */
+export function decretoFill(total: number, max: number, tema: "estiagem" | "inundacao"): string {
+  if (total <= 0 || max <= 0) return "#e5e7eb";
+  const t = Math.max(0.18, Math.min(1, total / max));
+  if (tema === "estiagem") return mix([254, 226, 226], [127, 29, 29], t);
+  return mix([219, 234, 254], [30, 58, 138], t);
 }

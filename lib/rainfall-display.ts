@@ -27,6 +27,16 @@ export function formatWindowsCompact(rain: RainfallWindows | null | undefined): 
   return `${formatMmShort(rain.mm1h)} · ${formatMmShort(rain.mm6h)} · ${formatMmShort(rain.mm24h)}`;
 }
 
+/** Azul mais escuro conforme o acumulado cresce. Sem chuva fica neutro. */
+export function rainHeatColor(mm: number | null | undefined): string {
+  if (mm == null || !Number.isFinite(mm) || mm <= 0.1) return "#e8eef5";
+  if (mm < 5) return "#c5ddf6";
+  if (mm < 12.5) return "#7eb6ea";
+  if (mm < 25) return "#3b82d6";
+  if (mm < 50) return "#1d4ed8";
+  return "#1e3a8a";
+}
+
 export function rainBand(mm: number | null | undefined): RainBand {
   if (mm == null || !Number.isFinite(mm)) return "sem_leitura";
   if (mm <= 0) return "sem_chuva";

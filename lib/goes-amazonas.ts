@@ -160,9 +160,6 @@ function svgPaths(
     .join("");
 }
 
-// ==========================================
-// ÚNICA ALTERAÇÃO: Linhas 100% Pretas
-// ==========================================
 function municipalBordersSvg(
   rings: Ring[],
   project: Projector,
@@ -172,14 +169,35 @@ function municipalBordersSvg(
 ) {
   const d = svgPaths(rings, project, crop);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    <g fill="none" stroke-linejoin="round" stroke-linecap="round">
-      <!-- Camada 1: Contorno externo do estado (Preto Grosso) -->
-      <path d="${d}" stroke="#000000" stroke-width="4"/>
-      
-      <!-- Camada 2: Divisas internas dos municípios (Preto Fino) -->
-      <path d="${d}" stroke="#000000" stroke-width="1.5"/>
-    </g>
+    <path d="${d}" fill="none" stroke="#111111" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
   </svg>`;
+}
+
+/** Moldura branca do JPEG CPTEC. O .jgw nasce na grade, não no pixel (0,0) da imagem. */
+function contentInset(width: number, height: number, raw: Buffer, channels: number) {
+  const lum = (x: number, y: number) => {
+    const i = (y * width + x) * channels;
+    return (raw[i] + raw[i + 1] + raw[i + 2]) / 3;
+  };
+  const cx = Math.floor(width / 2);
+  const cy = Math.floor(height / 2);
+  let dy = 0;
+  const yLimit = Math.floor(height * 0.12);
+  for (let y = 0; y < yLimit; y++) {
+    if (lum(cx, y) < 245) {
+      dy = y;
+      break;
+    }
+  }
+  let dx = 0;
+  const xLimit = Math.floor(width * 0.08);
+  for (let x = 0; x < xLimit; x++) {
+    if (lum(x, cy) < 245) {
+      dx = x;
+      break;
+    }
+  }
+  return { dx, dy };
 }
 
 async function projectorFor(
@@ -189,8 +207,13 @@ async function projectorFor(
   world?: GoesWorld | null,
 ): Promise<{ project: Projector; bounds: Plot }> {
   if (world) {
+    const raw = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { dx, dy } = contentInset(raw.info.width, raw.info.height, raw.data, raw.info.channels);
     return {
-      project: (lon, lat) => projectWorld(lon, lat, world),
+      project: (lon, lat) => {
+        const [x, y] = projectWorld(lon, lat, world);
+        return [x + dx, y + dy] as const;
+      },
       bounds: { left: 0, top: 0, right: width, bottom: height },
     };
   }
@@ -213,20 +236,12 @@ export async function cropGoesToAmazonas(input: Buffer, world?: GoesWorld | null
   const [xWest, yNorth] = project(AMAZONAS_GOES_EXTENT.west, AMAZONAS_GOES_EXTENT.north);
   const [xEast, ySouth] = project(AMAZONAS_GOES_EXTENT.east, AMAZONAS_GOES_EXTENT.south);
 
-  const pad = 10;
+  const pad = 12;
 
-  let x0 = Math.max(0, Math.floor(Math.min(xWest, xEast)) - pad);
-  let x1 = Math.min(width, Math.ceil(Math.max(xWest, xEast)) + pad);
-  let y0 = Math.max(0, Math.floor(Math.min(yNorth, ySouth)) - pad);
-  let y1 = Math.min(height, Math.ceil(Math.max(yNorth, ySouth)) + pad);
-
-  const zoomX = Math.round((x1 - x0) * 0.15); 
-  const zoomY = Math.round((y1 - y0) * 0.15);
-  
-  x0 = Math.max(0, x0 - zoomX);
-  x1 = Math.min(width, x1 + zoomX);
-  y0 = Math.max(0, y0 - zoomY);
-  y1 = Math.min(height, y1 + zoomY);
+  const x0 = Math.max(0, Math.floor(Math.min(xWest, xEast)) - pad);
+  const x1 = Math.min(width, Math.ceil(Math.max(xWest, xEast)) + pad);
+  const y0 = Math.max(0, Math.floor(Math.min(yNorth, ySouth)) - pad);
+  const y1 = Math.min(height, Math.ceil(Math.max(yNorth, ySouth)) + pad);
 
   const cw = x1 - x0;
   const ch = y1 - y0;

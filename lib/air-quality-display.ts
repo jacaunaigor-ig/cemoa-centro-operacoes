@@ -59,13 +59,13 @@ export function airApoio(rec: AirQualityMunicipio | null | undefined): AirApoio 
   if (!rec || rec.pm25 == null || !rec.level || rec.level === "BOA") return null;
   return {
     level: rec.level,
-    motivo: `MP2,5 ${formatUg(rec.pm25)} (média 24 h) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}. Sugestão de monitoramento; só o operador classifica.`,
+    motivo: `MP2,5 ${formatUg(rec.pm25)} — qualidade ${AIR_LABELS[rec.level].toLowerCase()}. O mapa usa essa faixa quando o operador ainda não classificou.`,
   };
 }
 
-const AIR_MONITOR_FONTE = "PurpleAir";
+const AIR_PAINT = new Set<AirLevel>(["MODERADO", "RUIM", "MUITO_RUIM", "PESSIMA"]);
 
-/** Classifica o município na escala da legenda a partir da média de 24 h (pm2.5_24hour). O operador ainda pode sobrepor. */
+/** Pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor de alerta. O operador prevalece. */
 export function applyAirClassification<
   T extends {
     id: string;
@@ -77,16 +77,18 @@ export function applyAirClassification<
   },
 >(rows: T[], air: AirQualityPayload | null | undefined): T[] {
   if (!air) return rows;
+  const fonte = /selva/i.test(air.source) ? "App SELVA" : "PurpleAir";
   return rows.map((m) => {
     if (m.fonte === "admin") return m;
     const rec = air.byId[m.id] ?? air.byNome[m.nome];
     if (!rec || rec.pm25 == null) return m;
     const level = rec.level ?? airLevelFromPm25(rec.pm25);
+    if (!AIR_PAINT.has(level)) return m;
     return {
       ...m,
       risco: level,
       fonte: "monitor" as const,
-      classifiedBy: AIR_MONITOR_FONTE,
+      classifiedBy: fonte,
       classifiedAt: rec.observedAt ?? m.classifiedAt ?? null,
     };
   });
