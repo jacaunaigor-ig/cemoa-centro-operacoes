@@ -77,7 +77,7 @@ Para habilitar login institucional com contas Google ou Google Workspace:
 ```bash
 GOOGLE_CLIENT_ID=seu-id-de-cliente.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=seu-segredo-de-cliente-google
-CEMOA_GOOGLE_EMAILS=operador1@gmail.com,operador2@gmail.com
+CEMOA_GOOGLE_EMAILS=operador1@exemplo.com,operador2@exemplo.com
 ```
 
 - `CEMOA_GOOGLE_EMAILS`: lista opcional de e-mails autorizados para acesso imediato sem cadastro prévio.

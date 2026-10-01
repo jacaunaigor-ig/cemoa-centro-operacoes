@@ -1,8 +1,8 @@
 # Operação do Centro de Monitoramento
 
-Este documento detalha o fluxo operacional, os modos de visualização, a rotina de plantão e as ferramentas de edição cartográfica do CEMOA.
+Este documento detalha o fluxo operacional, os modos de visualização, a rotina de plantão e as ferramentas de edição cartográfica do CEMOA. O sistema integra quatro módulos operacionais: Painel de Alertas, Boletim Hidrológico, Meteorologia e Gestão de Risco.
 
-## Postos de trabalho: Desktop e Mobile
+## Postos de Trabalho: Desktop e Mobile
 
 A interface se adapta à largura da tela do operador:
 
@@ -21,7 +21,7 @@ Para retornar ao posto de trabalho convencional com lista e controles operaciona
 
 ## Rotina de Plantão e Fila Operacional
 
-O Painel de Alertas inicia nos níveis basais para chuva, alagamento, movimento de massa e incêndio (nível Baixo ou Boa, sem manchas ativas de polígono). O Boletim Hidrológico inicializa carregando o cenário de risco vigente do relatório hidrológico.
+O Painel de Alertas inicia nos níveis basais para chuva, alagamento, movimento de massa e incêndio (nível Baixo ou Boa, sem manchas ativas de polígono). O Boletim Hidrológico inicializa carregando o cenário de risco vigente do arquivo de hidrologia (`data/hydrology.json`).
 
 Classificações atribuídas pelo operador permanecem ativas até que haja nova classificação manual ou que se utilize a opção **Restaurar monitoramento**. O término do prazo de validade (2 a 6 horas) ou as consultas periódicas de rede não revertem o município para o nível baixo automaticamente.
 
@@ -44,9 +44,9 @@ Cada alerta ativo conta com cronômetro regressivo baseado nos prazos normativos
 - **Severo**: 2 horas
 - **Extremo**: 1 hora
 
-No Desktop, um aviso sonoro opcional é acionado no cabeçalho quando um alerta expira ou quando o aviso meteorológico atinge o término de vigência. O controle de áudio persiste em `localStorage` (`cemoa_plantao_sound`). Na versão mobile, os alertas sonoros permanecem inativos.
+No Desktop, um aviso sonoro opcional no cabeçalho toca quando um alerta expira ou quando o aviso meteorológico de 12 h atinge o término de vigência. O controle de áudio persiste em `localStorage` (`cemoa_plantao_sound`). Na versão mobile, os alertas sonoros permanecem inativos.
 
-As notificações em tela (toasts) são limitadas a uma mensagem por vez para ações de gravação, encerramento de edição e mensagens de erro.
+As notificações em tela (toasts) são apresentadas de forma concisa e limitadas a ações de gravação, encerramento de edição e mensagens de erro.
 
 ### Frequência de Consultas (Polling)
 
@@ -61,10 +61,10 @@ A renderização dos 62 polígonos municipais no mapa só é refeita quando ocor
 
 ## Aviso Meteorológico
 
-O fluxo de avisos meteorológicos possui duas camadas operacionais na aba **Meteorologia**:
+O fluxo de avisos meteorológicos possui duas camadas operacionais, centralizadas na aba **Meteorologia** (`/meteorologia`):
 
-- **Plantão 12 h**: acompanha os turnos operacionais (diurno de 07:00 às 19:00 e noturno de 19:00 às 07:00, horário de Manaus). Faltando 1 hora para o encerramento do turno, o cartão do plantão assume sinalização amarela. Faltando 15 minutos ou expirado, o cartão indica a necessidade de emissão. A emissão é realizada no próprio cartão por operador autenticado.
-- **Aviso 4 h**: composição cartográfica com código do aviso, cenário previsto, calhas atingidas, evolução potencial e período de validade. As janelas operacionais seguem os blocos de 02–06, 06–10, 10–14, 14–18, 18–22 e 22–02 (horário de Manaus). O gerador utiliza a imagem de infravermelho realçado do satélite GOES-19 (CPTEC/INPE), recorta o polígono estadual do Amazonas, insere limites municipais e exporta o arquivo PNG institucional em formato retrato.
+- **Plantão 12 h**: acompanha os turnos operacionais (diurno de 07:00 às 19:00 e noturno de 19:00 às 07:00, horário de Manaus). Faltando 1 hora para o encerramento do turno, o cartão do plantão assume sinalização amarela. Faltando 15 minutos ou expirado, o cartão indica a necessidade de emissão. A emissão é realizada no próprio cartão do plantão (`MeteoAvisoDutyCard`) por operador autenticado.
+- **Aviso 4 h**: composição cartográfica com código do aviso, cenário previsto, calhas atingidas, evolução potencial e período de validade. As janelas operacionais seguem os blocos de 02–06, 06–10, 10–14, 14–18, 18–22 e 22–02 (horário de Manaus). O botão **Montar aviso** fica posicionado junto ao cartão do plantão na aba Meteorologia (`AvisoGraficoButton`). O gerador utiliza a imagem de infravermelho realçado do satélite GOES-19 (CPTEC/INPE), recorta o polígono estadual do Amazonas, insere limites municipais e exporta o arquivo PNG institucional em formato retrato.
 
 ## Ferramentas de Edição do Operador
 
@@ -93,7 +93,7 @@ O acesso e as permissões operacionais do sistema são organizados por perfis ge
 
 | Perfil | Descrição das Atribuições |
 | --- | --- |
-| Meteorologista | Monitoramento pluviométrico, classificação de eventos de chuva e emissão de avisos meteorológicos. |
+| Meteorologista plantonista | Monitoramento pluviométrico, classificação de eventos de chuva e emissão de avisos meteorológicos. |
 | Geólogo | Análise de setores de encosta, deslizamento, estabilidade de margens e riscos geológicos. |
 | Chefe do Centro | Coordenação geral da sala de situação, gestão da equipe de plantão e emissão de posicionamentos oficiais. |
 | Operacional | Monitoramento integrado, suporte aos boletins e atualização de dados de campo. |

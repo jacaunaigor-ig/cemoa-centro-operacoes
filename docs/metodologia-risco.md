@@ -1,6 +1,6 @@
-# Índice de Vulnerabilidade e Risco
+# Metodologia de Risco (IRE / IRG)
 
-A metodologia de cálculo de vulnerabilidade e priorização de risco do CEMOA estrutura os índices municipais na aba **Gestão de Risco** (`/risco`). A metodologia do protótipo analítico original foi implementada em TypeScript (`lib/metodologia.ts`) e é disponibilizada via endpoint `/api/risco` (`lib/metodologia-build.ts`).
+A metodologia de priorização e cálculo de risco do CEMOA estrutura os índices municipais na aba **Gestão de Risco** (`/risco`). A formulação analítica foi portada para TypeScript (`lib/metodologia.ts`) e é servida via endpoint `/api/risco` (`lib/metodologia-build.ts`).
 
 ## Componentes da Metodologia
 
@@ -35,7 +35,7 @@ O valor resultante de cada IRE é limitado ao teto de 60 pontos.
   - Estiagem, Inundação e Incêndio/QAr: valor base 8
   - Erosão: valor base 6
   - Movimento de Massa e Chuvas: valor base 5
-  - *Ameaça Capital (Manaus)*: Incêndio/QAr = 15, Chuvas = 15, Mov. Massa = 12.
+  - Ameaça Capital (Manaus): Incêndio/QAr = 15, Chuvas = 15, Mov. Massa = 12
 - **Bônus PIMF**: municípios prioritários do Plano Integrado de Manejo do Fogo recebem acréscimo de +8 pontos na ameaça para o evento Incêndio/QAr.
 - **Fator de Sensibilidade (FS)**:
   - Estiagem, Inundação, Incêndio/QAr e Erosão: 1,1
@@ -75,3 +75,10 @@ A confirmação da prioridade P1 exige que o município apresente no mínimo 2 e
 Em eventos súbitos, a atribuição de P1 depende de alerta ativo emitido pelo operador no painel. Municípios que atingem pontuação de P1 sem alerta correspondente do operador são rebaixados operacionalmente para a prioridade P2 (nível Alto).
 
 O IRG e os índices da metodologia servem para ordenamento e priorização analítica de risco, não alterando automaticamente as cores dos produtos no Painel de Alertas ou no Boletim Hidrológico.
+
+## Dados de Origem
+
+- População total e proporção rural: IBGE Censo Demográfico 2022 (`data/demografia.json`).
+- Pessoas em área de risco: maior valor entre o mapeamento R3/R4 original e o levantamento SGB/CPRM e Casa Civil NT 1/2023 (`data/risco-movimento.json`).
+- Parâmetros estruturais: IVM, proporção de terras indígenas e matriz de agravos importados da base metodológica do projeto (`data/metodologia-cemoa.json`).
+- Classificação ao vivo: fatores de alerta alimentados em tempo real pela atuação do operador no Painel de Alertas.

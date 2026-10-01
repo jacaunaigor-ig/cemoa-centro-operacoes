@@ -1,6 +1,6 @@
 # Produtos de Alerta
 
-Este documento descreve os tipos de alerta emitidos pelo CEMOA, as escalas de severidade adotadas, os limiares de acionamento por sensores e as camadas de apoio cartográfico.
+Este documento descreve os tipos de alerta emitidos pelo CEMOA, as escalas de severidade adotadas, os limiares de acionamento por sensores, a integração pluviométrica com o CEMADEN e as camadas de apoio cartográfico.
 
 ## Tipos de Alerta e Escalas
 
@@ -14,7 +14,16 @@ O Painel de Alertas monitora cinco tipologias de risco via parâmetro `tipo`:
 | `EROSAO` | Baixo → Extremo | Alerta de erosão de margem (fenômeno de terras caídas) |
 | `INCENDIO` | Boa → Péssima | Incêndio florestal e qualidade do ar com base em MP2,5 |
 
-No Boletim Hidrológico, os cenários monitoram **Estiagem** e **Inundação** nas classes Baixo, Moderado, Alto e Severo.
+No Boletim Hidrológico, os cenários monitoram **Estiagem** e **Inundação** nas classes Baixo, Moderado, Alto e Severo. A data de referência hidrológica inicial vem do arquivo `data/hydrology.json` (campo `referencia`). A atualização dos dados do boletim é realizada por meio da edição de dados no arquivo ou por lançamentos manuais do operador.
+
+## Chuva CEMADEN
+
+Os acumulados da rede do CEMADEN (`/api/rainfall`) são utilizados de duas formas complementares no sistema:
+
+1. **Painel de Alertas (`/`)**: a chuva é apresentada na faixa superior de monitoramento, nos filtros e ordenação da lista lateral e na ficha detalhada do município. A ficha exibe acumulados em 1 h, 6 h, 24 h e 72 h (com nota para 96 h quando disponível) e link para o gráfico oficial do pluviômetro. No mapa de alertas, pulsos visuais indicam municípios que atingiram limiares críticos.
+2. **Aba Meteorologia (`/meteorologia`)**: exibe um mapa coroplético dedicado com degradê em tons de azul, cuja intensidade varia de acordo com o acumulado de precipitação selecionado (1 h, 6 h, 24 h ou 72 h), acompanhado de ranking dos municípios mais chuvosos e opção de exportação cartográfica em PNG.
+
+A rede cobre 95 pluviômetros distribuídos em 58 municípios do Amazonas (sem estações em Barcelos, Santa Isabel do Rio Negro, São Sebastião do Uatumã e Tefé).
 
 ## Qualidade do Ar e Focos de Calor
 
@@ -36,7 +45,7 @@ A escala de qualidade do ar adota a média móvel de 24 horas (`pm2.5_24hour` em
 
 1. **Consulta primária**: a plataforma consulta prioritariamente o App SELVA via endpoint `purpleair`.
 2. **Fallback PurpleAir**: caso a consulta primária falhe e a chave `PURPLEAIR_API_KEY` esteja definida, a requisição é direcionada à API v1 da PurpleAir (`/v1/sensors` para área externa com `location_type=0` e cabeçalho `x-api-key`).
-3. **Tratamento dos dados**: valores nulos são desconsiderados. Leituras superiores a 500 µg/m³ são descartadas como possíveis anomalias de sensor. É calculada a média aritmética municipal simples das estações válidas. A classificação do operador tem precedência operacional sobre os sensores de baixo custo.
+3. **Tratamento dos dados**: valores nulos são desconsiderados. Leituras superiores a 500 µg/m³ são descartadas como possíveis anomalias de sensor. É calculada a média aritmética municipal simples das estações válidas. A classificação manual do operador tem precedência operacional sobre os sensores de baixo custo.
 
 ### Monitoramento de Focos de Calor
 
