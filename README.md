@@ -52,7 +52,7 @@ As variáveis de ambiente necessárias para persistência no Supabase, autentica
 
 - [Operação do Centro](docs/operacao.md): sala de situação, rotina de plantão, ferramentas de edição no mapa e interface desktop versus mobile.
 - [Produtos de Alerta](docs/produtos-de-alerta.md): escalas operacionais, limiares de acionamento, qualidade do ar e camadas de apoio cartográfico.
-- [Índice de Vulnerabilidade e Risco](docs/indice-vulnerabilidade.md): formulação do IVM, IRE por evento, IRG, fatores de escala e pesos.
+- [Metodologia de Risco](docs/metodologia-risco.md): formulação do IVM, IRE por evento, IRG, fatores de escala e pesos.
 - [Rotas de API](docs/apis.md): especificação dos endpoints internos, parâmetros de consulta e integrações com CEMADEN e INMET.
 - [Implantação e Infraestrutura](docs/deploy.md): instruções de deploy no Vercel, banco de dados Supabase e autenticação Google.
 - [Roadmap](docs/roadmap.md): planejamento e evolução técnica das próximas etapas da plataforma.
