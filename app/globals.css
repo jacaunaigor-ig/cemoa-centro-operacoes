@@ -207,10 +207,12 @@ html[data-theme="dark"] .leaflet-control-attribution a {
 }
 
 .meteo-map { height: min(42vh, 380px); }
-.meteo-lista { max-height: min(42vh, 380px); }
+.meteo-lista { max-height: min(32vh, 240px); }
+.meteo-goes-img { max-height: min(70vh, 640px); }
 @media (min-width: 1280px) {
   .meteo-map { height: min(56vh, 560px); }
-  .meteo-lista { max-height: min(56vh, 560px); }
+  .meteo-lista { max-height: min(26vh, 240px); }
+  .meteo-goes-img { max-height: min(28vh, 280px); }
 }
 
 .muni-hover-tip {

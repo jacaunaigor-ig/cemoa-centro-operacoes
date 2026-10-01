@@ -4,7 +4,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
-- **Meteorologia** — aviso meteorológico do plantão, monitoramento pluviométrico do CEMADEN (mapa azul que intensifica com o acumulado) e climatologia MERGE (anomalia e dias secos).
+- **Meteorologia** — aviso meteorológico do plantão, monitoramento pluviométrico do CEMADEN (mapa azul que intensifica com o acumulado), imagem GOES-19 do CPTEC/INPE com limites municipais georreferenciados e clima MERGE.
 - **Gestão de Risco** — metodologia CEMOA (IRE/IRG) dos 62 municípios: fila por prioridade, ficha municipal, pizzas de nível/prioridade/evento, território (Censo 2022 e área), degradê de decretos de estiagem (vermelho) e inundação (azul), e tabela exportável. O índice não pinta o mapa de alertas nem o boletim.
 
 Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**01/09/2026**): o painel hidrometeorológico da Defesa Civil/AM atualiza as cotas ao vivo (sem mudar o grau) e a **telemetria ANA** sobrepõe onde há estação automática e é relida depois das **07:00 (Brasília)**. O painel Fabric/Power BI é relido depois das **07:00 e das 16:00 (Brasília)**. Onde a leitura é **DC-AM/SEMA** e o Fabric ainda não publicou o dia, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento, movimento e **erosão de margem** só recebem grau com o operador (abrem em baixo). Em **Incêndio/Qualidade do ar**, o App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima; Boa fica sem cor e a classificação do operador prevalece. O monitoramento pluviométrico do CEMADEN ficou na aba Meteorologia. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
@@ -62,7 +62,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | --- | --- |
 | `/` | Painel de Alertas |
 | `/boletim` | Boletim Hidrológico |
-| `/meteorologia` | Meteorologia (aviso do plantão, chuva CEMADEN e clima MERGE) |
+| `/meteorologia` | Meteorologia (aviso do plantão, chuva CEMADEN em degradê azul, GOES-19 e clima MERGE) |
 | `/risco` | Gestão de Risco (IRE/IRG, fila, ficha, pizzas, território, decretos e tabela) |
 | `/api/focos` | Focos absolutos INPE AQUA_M-T, Amazônia, Amazonas |
 | `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|EROSAO\|INCENDIO`) |
@@ -90,7 +90,7 @@ Na **Gestão de Risco** (`/risco`) a ficha municipal traz o **Índice de Risco**
 
 ## Índice de Risco — Metodologia CEMOA (IVM · IRE · IRG)
 
-A metodologia fica inteira na aba **Gestão de Risco** (`/risco`): KPIs, fila, ranking, ficha, pizzas, território, decretos e tabela. O mapa de chuva e o clima ficam em **Meteorologia** (`/meteorologia`). Saiu da ficha do alerta e da ficha do boletim.
+A metodologia fica inteira na aba **Gestão de Risco** (`/risco`): KPIs, fila, ranking, ficha, pizzas, território, decretos e tabela. A imagem GOES-19, o mapa de chuva e o clima ficam em **Meteorologia** (`/meteorologia`). Saiu da ficha do alerta e da ficha do boletim.
 
 A metodologia de priorização do app Streamlit original (`cemoa_app`) foi portada para TypeScript (`lib/metodologia.ts`), sem alterar os parâmetros de calibração, e é servida em `/api/risco` (`lib/metodologia-build.ts`). O IRE de cada evento e o IRG são recalculados na hora, município a município:
 
