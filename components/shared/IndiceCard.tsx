@@ -172,9 +172,9 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
       </ul>
 
       <p className="mt-2 text-[10px] text-text-mute">
-        Metodologia CEMOA (cemoa_app) · IRE = ((IVM + ameaça) × FS + agravo) × FE ×
-        FA · IRG = 0,7 × maior IRE + 0,3 × média · FA ao vivo pela classificação do
-        operador.
+        Metodologia CEMOA · IRE = ((IVM + ameaça) × FS × FE × FA) + agravo ·
+        IRG = 0,6 × maior IRE + 0,2 × média + 0,2 × IVM (escalado) · FA ao vivo pela
+        classificação do operador; o agravo (histórico) não é reduzido pelo alerta.
       </p>
     </div>
   );

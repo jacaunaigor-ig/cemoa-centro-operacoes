@@ -86,11 +86,17 @@ export function IndiceSheet({
         prioridade === "todas" ? true : row.prioridade === prioridade,
       )
       .filter((row) => (calha === "todas" ? true : row.calha === calha))
-      .sort(
-        (a, b) =>
+      .sort((a, b) => {
+        if (evento === "Inundação") {
+          const agr =
+            (b.agrPorEvento["Inundação"] ?? 0) - (a.agrPorEvento["Inundação"] ?? 0);
+          if (agr !== 0) return agr;
+        }
+        return (
           scoreOf(b, evento) - scoreOf(a, evento) ||
-          a.nome.localeCompare(b.nome, "pt-BR"),
-      );
+          a.nome.localeCompare(b.nome, "pt-BR")
+        );
+      });
   }, [rows, evento, prioridade, calha]);
 
   return (
