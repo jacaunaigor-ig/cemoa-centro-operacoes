@@ -4,7 +4,6 @@ Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 m
 
 ![Painel de Alertas](docs/img/painel.png)
 
-https://cemoa-centro-operacoes.vercel.app
 
 ## O que faz
 
