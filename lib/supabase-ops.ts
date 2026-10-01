@@ -19,7 +19,7 @@ function cleanedEnvUrl() {
 export function supabaseUrl() {
   const env = cleanedEnvUrl();
   if (!env) return "";
-  // Host antigo no Vercel não resolve DNS; o projeto do centro é este.
+  // Host antigo que não resolve DNS; o projeto do centro é este.
   if (env.toLowerCase().includes("nwjirzgygfnkfwlywpdd")) return CANONICAL_SUPABASE_URL;
   return env;
 }

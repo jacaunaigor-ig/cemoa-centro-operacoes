@@ -52,7 +52,7 @@ export function MeteorologiaWorkbench() {
   const [goes, setGoes] = useState<GoesPayload | null>(null);
   const [goesLoading, setGoesLoading] = useState(false);
   const [goesStamp, setGoesStamp] = useState(0);
-  const [painel, setPainel] = useState<"chuva" | "satelite" | "clima">("chuva");
+  const [painel, setPainel] = useState<"chuva" | "clima">("chuva");
   const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
 
   const loadGoes = useCallback((refresh = false) => {
@@ -181,7 +181,6 @@ export function MeteorologiaWorkbench() {
         <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
           {([
             ["chuva", "Chuva"],
-            ["satelite", "Satélite"],
             ["clima", "Clima"],
           ] as const).map(([id, label]) => (
             <button
@@ -201,41 +200,41 @@ export function MeteorologiaWorkbench() {
         </div>
 
         <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel === "clima" && "hidden")}>
-        <div className={cn("grid content-start gap-2", painel !== "chuva" && "max-lg:hidden")}>
-        <div className="flex flex-wrap gap-1">
-          {JANELAS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={janela === item.id}
-              onClick={() => setJanela(item.id)}
-              className={cn(
-                "min-h-11 min-w-14 flex-1 rounded-lg border px-3 text-[13px] font-bold sm:flex-none",
-                janela === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            disabled={!rain || exportando != null || STATIC_DEPLOY}
-            onClick={() => void exportarChuva("mm1h", "1 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
-          >
-            <ImageDown className="size-3.5" />
-            {exportando === "mm1h" ? "Gerando…" : "PNG 1 h"}
-          </button>
-          <button
-            type="button"
-            disabled={!rain || exportando != null || STATIC_DEPLOY}
-            onClick={() => void exportarChuva("mm24h", "24 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
-          >
-            <ImageDown className="size-3.5" />
-            {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
-          </button>
-        </div>
+          <div className="grid content-start gap-2">
+            <div className="flex flex-wrap gap-1">
+              {JANELAS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={janela === item.id}
+                  onClick={() => setJanela(item.id)}
+                  className={cn(
+                    "min-h-11 min-w-14 flex-1 rounded-lg border px-3 text-[13px] font-bold sm:flex-none",
+                    janela === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={!rain || exportando != null || STATIC_DEPLOY}
+                onClick={() => void exportarChuva("mm1h", "1 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+              >
+                <ImageDown className="size-3.5" />
+                {exportando === "mm1h" ? "Gerando…" : "PNG 1 h"}
+              </button>
+              <button
+                type="button"
+                disabled={!rain || exportando != null || STATIC_DEPLOY}
+                onClick={() => void exportarChuva("mm24h", "24 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+              >
+                <ImageDown className="size-3.5" />
+                {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
+              </button>
+            </div>
             {STATIC_DEPLOY ? (
               <p className="rounded-xl border border-border bg-panel p-4 text-sm text-text-mute">
                 O mapa de chuva fica indisponível na publicação estática.
@@ -251,69 +250,69 @@ export function MeteorologiaWorkbench() {
                 </li>
               ))}
             </ul>
-        </div>
-
-        <div className="grid content-start gap-2">
-          <aside className={cn("meteo-lista flex flex-col rounded-xl border border-border bg-panel", painel !== "chuva" && "max-lg:hidden")}>
-            <div className="border-b border-border px-3 py-2">
-              <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">Acumulado</h3>
-              {foco ? <Foco item={foco} janela={janela} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}
-            </div>
-            <ul className="min-h-0 flex-1 overflow-auto">
-              {rows.map(({ item, mm }) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(item.nome)}
-                    className={cn(
-                      "flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-hover",
-                      selected === item.nome && "bg-hover font-bold",
-                    )}
-                  >
-                    <span className="size-2.5 shrink-0 rounded-sm" style={{ background: rainHeatColor(mm) }} />
-                    <span className="min-w-0 flex-1 truncate">{item.nome}</span>
-                    <span className="font-mono tabular-nums">{formatMm(mm)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </aside>
-
-        <section className={cn("rounded-xl border border-border bg-panel p-3", painel !== "satelite" && "max-lg:hidden")}>
-          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="flex items-center gap-1.5 text-sm font-black">
-                <CloudSun className="size-4 text-brand" />
-                GOES-19
-              </h3>
-              <GoesNotice goes={goes} loading={goesLoading} />
-            </div>
-            <button
-              type="button"
-              onClick={() => loadGoes(true)}
-              disabled={goesLoading || STATIC_DEPLOY}
-              className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
-            >
-              <RefreshCw className={cn("size-3.5", goesLoading && "animate-spin")} />
-              Atualizar
-            </button>
           </div>
-          {STATIC_DEPLOY ? (
-            <p className="text-sm text-text-mute">A imagem GOES fica indisponível na publicação estática.</p>
-          ) : goes?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`${withBase(goes.imageUrl)}?t=${goesStamp || goes.generatedAt}`}
-              alt={goes.product}
-              className="meteo-goes-img h-auto w-full rounded-lg border border-border bg-[#0b1d4a] object-contain"
-            />
-          ) : (
-            <p className="text-sm text-text-mute">
-              {goesLoading ? "Consultando o acervo CPTEC/INPE…" : goes?.error ?? "Sem imagem GOES neste momento."}
-            </p>
-          )}
-        </section>
-        </div>
+
+          <div className="grid content-start gap-2">
+            <aside className="meteo-lista flex flex-col rounded-xl border border-border bg-panel">
+              <div className="border-b border-border px-3 py-2">
+                <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">Acumulado</h3>
+                {foco ? <Foco item={foco} janela={janela} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}
+              </div>
+              <ul className="min-h-0 flex-1 overflow-auto">
+                {rows.map(({ item, mm }) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(item.nome)}
+                      className={cn(
+                        "flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-hover",
+                        selected === item.nome && "bg-hover font-bold",
+                      )}
+                    >
+                      <span className="size-2.5 shrink-0 rounded-sm" style={{ background: rainHeatColor(mm) }} />
+                      <span className="min-w-0 flex-1 truncate">{item.nome}</span>
+                      <span className="font-mono tabular-nums">{formatMm(mm)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+
+            <section className="rounded-xl border border-border bg-panel p-3">
+              <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-1.5 text-sm font-black">
+                    <CloudSun className="size-4 text-brand" />
+                    GOES-19
+                  </h3>
+                  <GoesNotice goes={goes} loading={goesLoading} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => loadGoes(true)}
+                  disabled={goesLoading || STATIC_DEPLOY}
+                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
+                >
+                  <RefreshCw className={cn("size-3.5", goesLoading && "animate-spin")} />
+                  Atualizar
+                </button>
+              </div>
+              {STATIC_DEPLOY ? (
+                <p className="text-sm text-text-mute">A imagem GOES fica indisponível na publicação estática.</p>
+              ) : goes?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`${withBase(goes.imageUrl)}?t=${goesStamp || goes.generatedAt}`}
+                  alt={goes.product}
+                  className="meteo-goes-img h-auto w-full rounded-lg border border-border bg-[#0b1d4a] object-contain"
+                />
+              ) : (
+                <p className="text-sm text-text-mute">
+                  {goesLoading ? "Consultando o acervo CPTEC/INPE…" : goes?.error ?? "Sem imagem GOES neste momento."}
+                </p>
+              )}
+            </section>
+          </div>
         </div>
 
         <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
@@ -352,16 +351,6 @@ export function MeteorologiaWorkbench() {
       </div>
     </AppShell>
   );
-}
-
-const GOES_ATRASO_MS = 30 * 60 * 1000;
-
-function atrasoLabel(ms: number) {
-  const min = Math.max(1, Math.round(ms / 60000));
-  if (min < 60) return `${min} min`;
-  const horas = Math.floor(min / 60);
-  const resto = min % 60;
-  return resto ? `${horas} h ${resto} min` : `${horas} h`;
 }
 
 function MergeCard({ qual, titulo }: { qual: "atual" | "anterior"; titulo: string }) {
@@ -420,6 +409,16 @@ function IndiceCard({ produto, titulo, texto }: { produto: "dd" | "cdd"; titulo:
       <img src={src} alt={`${titulo} — MERGE/CPTEC`} className="h-auto w-full bg-white object-contain" />
     </figure>
   );
+}
+
+const GOES_ATRASO_MS = 30 * 60 * 1000;
+
+function atrasoLabel(ms: number) {
+  const min = Math.max(1, Math.round(ms / 60000));
+  if (min < 60) return `${min} min`;
+  const horas = Math.floor(min / 60);
+  const resto = min % 60;
+  return resto ? `${horas} h ${resto} min` : `${horas} h`;
 }
 
 function GoesNotice({ goes, loading }: { goes: GoesPayload | null; loading: boolean }) {

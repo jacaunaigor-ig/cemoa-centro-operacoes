@@ -1,61 +1,51 @@
 # CEMOA — Centro de Monitoramento
 
-Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 municípios do Amazonas.
+Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 municípios do Amazonas. Integra dados de chuva, rios, qualidade do ar, focos de calor e vulnerabilidade territorial em um painel único, para desktop e celular.
 
-![Painel de Alertas](docs/img/painel.png)
+## Módulos
 
-
-## O que faz
-
-- **Painel de Alertas**: monitoramento e classificação operacional de risco em quatro produtos (chuva, alagamento, movimento de massa e incêndio/qualidade do ar) para os 62 municípios do Amazonas.
-- **Boletim Hidrológico**: acompanhamento de cotas fluviométricas e cenários de estiagem e inundação, com fluxo dos principais rios e limiares de alerta.
-- **Índices de vulnerabilidade e risco**: cálculo municipal de IVM, IRE por tipologia de evento e IRG segundo a metodologia CEMOA.
-- **Interface adaptável**: suporte a postos de trabalho desktop completos e interface operacional compacta para dispositivos móveis.
+| Módulo | Rota | O que faz |
+| --- | --- | --- |
+| Painel de Alertas | `/` | Alertas de chuva intensa, alagamento, movimento de massa, erosão de margem e incêndio/qualidade do ar, com classificação no mapa por clique, lote ou polígono |
+| Boletim Hidrológico | `/boletim` | Estiagem e inundação por município e calha, cotas dos rios, limiares ANA/SGB e projeção |
+| Meteorologia | `/meteorologia` | Aviso meteorológico do plantão, chuva CEMADEN, imagem GOES-19 e análise climática (MERGE/CPTEC) |
+| Gestão de Risco | `/risco` | Índices IVM, IRE e IRG, fila de prioridade, ficha municipal, território (Censo 2022) e decretos |
 
 ## Fontes de dados
 
-- **CEMADEN**: rede de pluviômetros automáticos e acumulados de chuva em 1 h, 6 h, 24 h, 72 h e 96 h.
-- **INMET**: dados de estações meteorológicas automáticas e previsões Prevmet para horizontes de 24 h a 5 dias.
-- **ANA / SGB**: telemetria de estações fluviométricas, limiares hidrológicos e cotas de referência.
-- **INPE**: focos de calor via BDQueimadas (satélite de referência AQUA_M-T) e imagens do satélite GOES-19 pelo CPTEC.
-- **PurpleAir / App SELVA**: monitoramento de material particulado fino (MP2,5) em 24 horas para qualidade do ar.
-- **IBGE (Censo 2022)**: malha geográfica municipal, dados demográficos, setores censitários, populações vulneráveis e comunidades rurais/indígenas.
+CEMADEN, INMET, ANA/SGB, INPE (BDQueimadas e GOES-19/CPTEC), App SELVA, PurpleAir, IBGE (Censo 2022 e localidades) e levantamento SGB/CPRM com Casa Civil (áreas de risco).
 
 ## Tecnologias
 
-- Next.js (App Router)
-- TypeScript
-- Leaflet
-- Tailwind CSS
-- shadcn/ui
-- Supabase
+Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, Leaflet e Supabase (Postgres, Auth e RLS).
 
 ## Como rodar
-
-Clone o repositório e instale as dependências:
 
 ```bash
 git clone https://github.com/jacaunaigor-ig/cemoa-centro-operacoes.git
 cd cemoa-centro-operacoes
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Acesse a aplicação no navegador em [http://127.0.0.1:43127](http://127.0.0.1:43127).
+Abra [http://127.0.0.1:43127](http://127.0.0.1:43127). O horário operacional é o de Manaus (UTC−4).
+
+Sem as chaves do Supabase, o sistema roda em modo local (cookie e memória). Com as chaves, o login usa o Auth do Supabase e as classificações são gravadas no Postgres.
 
 ## Variáveis de ambiente
 
-As variáveis de ambiente necessárias para persistência no Supabase, autenticação e integrações externas estão descritas no arquivo [.env.example](.env.example). Copie o modelo para `.env.local` e preencha conforme o ambiente de implantação.
+Veja `.env.example`. Nunca versione chaves reais.
 
 ## Documentação
 
-- [Operação do Centro](docs/operacao.md): sala de situação, rotina de plantão, ferramentas de edição no mapa e interface desktop versus mobile.
-- [Produtos de Alerta](docs/produtos-de-alerta.md): escalas operacionais, limiares de acionamento, qualidade do ar e camadas de apoio cartográfico.
-- [Metodologia de Risco](docs/metodologia-risco.md): formulação do IVM, IRE por evento, IRG, fatores de escala e pesos.
-- [Rotas de API](docs/apis.md): especificação dos endpoints internos, parâmetros de consulta e integrações com CEMADEN e INMET.
-- [Implantação e Infraestrutura](docs/deploy.md): instruções de deploy no Vercel, banco de dados Supabase e autenticação Google.
-- [Roadmap](docs/roadmap.md): planejamento e evolução técnica das próximas etapas da plataforma.
+- [Operação do plantão](docs/operacao.md)
+- [Produtos de alerta e camadas do mapa](docs/produtos-de-alerta.md)
+- [Metodologia de risco (IVM, IRE, IRG)](docs/metodologia-risco.md)
+- [Rotas da API](docs/apis.md)
+- [Deploy (Supabase e login Google)](docs/deploy.md)
+- [Roadmap](docs/roadmap.md)
 
 ## Licença
 
-Este projeto está licenciado sob a licença [MIT](LICENSE).
+Defina a licença do projeto no arquivo `LICENSE`.

@@ -1,14 +1,13 @@
 # Implantação e Infraestrutura
 
-Este documento orienta a configuração do ambiente de produção na plataforma Vercel, o provisionamento do banco de dados relacional Supabase e a autenticação integrada com Google.
+Este documento orienta a configuração do ambiente de produção, o provisionamento do banco de dados relacional Supabase e a autenticação integrada com Google.
 
-## Implantação no Vercel
+## Implantação e Produção
 
-O deploy da aplicação é realizado conectando o repositório Git ao projeto na Vercel.
+O deploy da aplicação é realizado a partir da compilação padrão do Next.js (`npm run build`).
 
-1. Importe o repositório no dashboard da Vercel.
-2. Defina as variáveis de ambiente necessárias nas configurações do projeto (`Settings → Environment Variables`).
-3. O build padrão do Next.js compila as páginas estáticas e as funções serverless para as rotas da API.
+1. Configure as variáveis de ambiente necessárias no servidor ou serviço de hospedagem.
+2. O build padrão do Next.js compila as páginas estáticas e as funções serverless para as rotas da API.
 
 ## Banco de Dados e Persistência (Supabase)
 
@@ -30,7 +29,7 @@ No Supabase, acesse **Authentication → Users → Add user** para criar os oper
 
 ### 3. Variáveis de Conexão com o Supabase
 
-Configure as seguintes variáveis de ambiente na Vercel:
+Configure as seguintes variáveis de ambiente:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
@@ -42,7 +41,7 @@ SUPABASE_SERVICE_ROLE_KEY=defina-sua-chave-service-role
 
 ## Variáveis de Ambiente da Aplicação
 
-Exemplo de configuração para o arquivo `.env.local` ou variáveis no painel da Vercel:
+Exemplo de configuração para o arquivo `.env.local` ou variáveis de ambiente:
 
 ```bash
 # Sessão e operador administrativo padrão do ambiente

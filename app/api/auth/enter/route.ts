@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Falta CEMOA_SESSION_SECRET no Vercel (Settings → Environment Variables, mínimo 16 caracteres). Sem isso o admin não consegue gravar a sessão.",
+            "Falta CEMOA_SESSION_SECRET nas variáveis de ambiente (mínimo 16 caracteres). Sem isso o admin não consegue gravar a sessão.",
         },
         { status: 503 },
       );
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: hint
-          ? `Não foi possível entrar (${hint}). Confira as chaves do Supabase no Vercel.`
+          ? `Não foi possível entrar (${hint}). Confira as chaves do Supabase nas variáveis de ambiente.`
           : "Não foi possível entrar. Tente de novo.",
       },
       { status: 500 },
