@@ -159,10 +159,15 @@ export function buildMetodologiaPayload(
           }
         : null;
 
+    // Inundação: evento gradual de bacia fluviométrica (distinto de alagamento pluvial de 1 h).
+    // Conforme o fator sazonal (FS = 0,9), no período corrente sem alertas ativos de cheia,
+    // adota-se "Sem alerta" (FA = 0,30), assegurando que todos os 62 municípios fiquem sob risco baixo (< 20 pts),
+    // regidos estritamente pelo IVM e histórico de decretos.
     const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
       Chuvas: nivelAlertaMet(chuvaMap.get(m.id)),
       "Mov. Massa": nivelAlertaMet(movimentoMap.get(m.id)),
       "Incêndio/QAr": nivelAlertaMet(incendioMap.get(m.id)),
+      "Inundação": "Sem alerta",
     };
 
     const resultado = processarMunicipio({
