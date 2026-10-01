@@ -51,4 +51,11 @@ next-env.d.ts
 /data/operator-seats.json
 /data/.session-secret
 
-focos_amazonas.json 
+focos_amazonas.json
+
+# cursor
+.cursor/
+.cursorrules
+.cursorignore
+.cursorindexingignore
+ 
