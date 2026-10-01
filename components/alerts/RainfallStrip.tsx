@@ -64,7 +64,7 @@ export function RainfallStrip({
       </span>
       <div className="min-w-0 flex-1 leading-tight">
         <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-          CEMADEN
+          CEMADEN · ANA
         </p>
         {loading && !rain ? (
           <p className="text-xs text-text-mute">Consultando…</p>

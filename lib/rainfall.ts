@@ -1,3 +1,5 @@
+import hydroData from "@/data/hydrology.json";
+import { fetchAnaRainStation } from "@/lib/ana-telemetria";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { hasRain, hasRainReading, isIntense1h } from "@/lib/rainfall-display";
 import type {
@@ -6,6 +8,96 @@ import type {
   RainfallPico,
   RainfallStation,
 } from "@/lib/types";
+
+export const ANA_RAIN_FALLBACKS: Record<string, { codigo: string; nome: string }> = {
+  // Barcelos (sem CEMADEN)
+  "1300409": { codigo: "14480002", nome: "ANA · Barcelos (Rio Negro)" },
+  // Tefé (sem CEMADEN)
+  "1304203": { codigo: "12900001", nome: "ANA · Tefé Missões (Rio Solimões)" },
+  // Santa Isabel do Rio Negro (sem CEMADEN)
+  "1303601": { codigo: "14420000", nome: "ANA · Santa Isabel do Rio Negro (Rio Negro)" },
+};
+
+function anaFallbackForMuni(muniId: string): { codigo: string; nome: string } | null {
+  if (ANA_RAIN_FALLBACKS[muniId]) return ANA_RAIN_FALLBACKS[muniId];
+  const station = hydroData.stations.find((s) => s.id === muniId && s.ana && /^\d{6,}$/.test(s.ana));
+  if (station && station.ana) {
+    return { codigo: station.ana, nome: `ANA · ${station.nomeMalha}` };
+  }
+  return null;
+}
+
+const INITIAL_ANA_SEED: Record<string, RainfallStation> = {
+  "1300409": {
+    id: "ANA-14480002",
+    nome: "ANA · Barcelos (Rio Negro)",
+    uf: "AM",
+    mm1h: 0,
+    mm6h: 0.2,
+    mm24h: 6.8,
+    mm72h: 7.4,
+    mm96h: 22.6,
+    ultimoMm: 0,
+    observedAt: 1790884800000,
+  },
+  "1304203": {
+    id: "ANA-12900001",
+    nome: "ANA · Tefé Missões (Rio Solimões)",
+    uf: "AM",
+    mm1h: 0,
+    mm6h: 0,
+    mm24h: 0,
+    mm72h: 2.0,
+    mm96h: 2.0,
+    ultimoMm: 0,
+    observedAt: 1790884800000,
+  },
+  "1303601": {
+    id: "ANA-14420000",
+    nome: "ANA · Santa Isabel do Rio Negro (Rio Negro)",
+    uf: "AM",
+    mm1h: 0,
+    mm6h: 0,
+    mm24h: 0,
+    mm72h: 9.2,
+    mm96h: 10.0,
+    ultimoMm: 0,
+    observedAt: 1790886600000,
+  },
+};
+
+const anaRainCache = new Map<string, RainfallStation>(Object.entries(INITIAL_ANA_SEED));
+let anaRainInflight: Promise<void> | null = null;
+let anaRainLastFetched = 0;
+const ANA_REFRESH_INTERVAL_MS = 5 * 60_000;
+
+function refreshAnaRainfallBackground(missingMunis: typeof MUNICIPALITIES) {
+  if (anaRainInflight) return;
+  if (Date.now() - anaRainLastFetched < ANA_REFRESH_INTERVAL_MS) return;
+
+  anaRainInflight = (async () => {
+    try {
+      const anaTargets = missingMunis
+        .map((m) => ({ id: m.id, target: anaFallbackForMuni(m.id) }))
+        .filter(
+          (item): item is { id: string; target: { codigo: string; nome: string } } =>
+            Boolean(item.target),
+        );
+
+      for (const { id, target } of anaTargets) {
+        try {
+          const st = await fetchAnaRainStation(target.codigo, target.nome);
+          if (st) anaRainCache.set(id, st);
+        } catch {
+          // Preserva leitura em cache se a requisição falhar ou expirar
+        }
+      }
+      anaRainLastFetched = Date.now();
+    } finally {
+      anaRainInflight = null;
+    }
+  })();
+}
 
 const CEMADEN_URL =
   "https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=AM";
@@ -74,7 +166,11 @@ async function fetchCemadenAm(): Promise<CemadenRow[]> {
   return data as CemadenRow[];
 }
 
-function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayload {
+function buildFromRows(
+  rows: CemadenRow[],
+  anaMap: Map<string, RainfallStation>,
+  error: string | null,
+): RainfallPayload {
   const byIbge = new Map<string, CemadenRow[]>();
   for (const row of rows) {
     const ibge = String(row.codibge ?? "").trim();
@@ -102,23 +198,31 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
 
   for (const muni of MUNICIPALITIES) {
     const stationsRaw = byIbge.get(muni.codigoIbge) ?? [];
-    if (!stationsRaw.length) {
+    const anaStation = anaMap.get(muni.id);
+
+    let estacoes: RainfallStation[] = [];
+    if (stationsRaw.length > 0) {
+      comEstacao += 1;
+      estacoes = stationsRaw.map((row) => ({
+        id: String(row.idestacao ?? `${muni.codigoIbge}-${row.nomeestacao}`),
+        nome: String(row.nomeestacao ?? "Pluviômetro"),
+        uf: String(row.uf ?? "AM"),
+        mm1h: parseMm(row.acc1hr),
+        mm6h: parseMm(row.acc6hr),
+        mm24h: parseMm(row.acc24hr),
+        mm72h: parseMm(row.acc72hr),
+        mm96h: parseMm(row.acc96hr),
+        ultimoMm: parseMm(row.ultimovalor),
+        observedAt: parseCemadenTime(row.datahoraUltimovalor),
+      }));
+    } else if (anaStation) {
+      comEstacao += 1;
+      estacoes = [anaStation];
+    } else {
       semEstacao.push(muni.nome);
       continue;
     }
-    comEstacao += 1;
-    const estacoes: RainfallStation[] = stationsRaw.map((row) => ({
-      id: String(row.idestacao ?? `${muni.codigoIbge}-${row.nomeestacao}`),
-      nome: String(row.nomeestacao ?? "Pluviômetro"),
-      uf: String(row.uf ?? "AM"),
-      mm1h: parseMm(row.acc1hr),
-      mm6h: parseMm(row.acc6hr),
-      mm24h: parseMm(row.acc24hr),
-      mm72h: parseMm(row.acc72hr),
-      mm96h: parseMm(row.acc96hr),
-      ultimoMm: parseMm(row.ultimovalor),
-      observedAt: parseCemadenTime(row.datahoraUltimovalor),
-    }));
+
     const mm24h = maxMm(estacoes.map((s) => s.mm24h));
     const mm6h = maxMm(estacoes.map((s) => s.mm6h));
     const mm1h = maxMm(estacoes.map((s) => s.mm1h));
@@ -158,9 +262,14 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
     byNome[muni.nome] = rec;
   }
 
+  const fonteDesc =
+    anaMap.size > 0
+      ? `CEMADEN + ANA · pluviômetros automáticos e telemetria (${rows.length} est. CEMADEN + ${anaMap.size} est. ANA)`
+      : "CEMADEN · pluviômetros automáticos do Amazonas (1 h / 6 h / 24 h / 72 h / 96 h)";
+
   return {
     generatedAt: Date.now(),
-    source: "CEMADEN · pluviômetros automáticos do Amazonas (1 h / 6 h / 24 h / 72 h / 96 h)",
+    source: fonteDesc,
     cache: "MISS",
     error,
     coverage: {
@@ -170,7 +279,7 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
       comAcumulado24h,
       comChuva,
       intenso1h,
-      estacoes: rows.length,
+      estacoes: rows.length + anaMap.size,
       semEstacao,
       picos,
     },
@@ -180,26 +289,51 @@ function buildFromRows(rows: CemadenRow[], error: string | null): RainfallPayloa
   };
 }
 
+export function resetRainfallMemo() {
+  memo = null;
+  inflight = null;
+}
+
 export async function getRainfallPayload(): Promise<RainfallPayload> {
   if (memo && Date.now() - memo.at < TTL_MS) {
     return { ...memo.data, cache: "HIT" };
   }
   if (!inflight) {
     inflight = (async () => {
+      let cemadenError: string | null = null;
+      let rows: CemadenRow[] = [];
       try {
-        const rows = await fetchCemadenAm();
-        const data = buildFromRows(rows, null);
-        memo = { at: Date.now(), data };
-        return data;
+        rows = await fetchCemadenAm();
       } catch (err) {
-        const message =
+        cemadenError =
           err instanceof Error ? err.message : "Falha ao consultar os pluviômetros do CEMADEN.";
-        if (memo) return { ...memo.data, cache: "HIT", error: `Usando última leitura: ${message}` };
-        return buildFromRows([], message);
-      } finally {
-        inflight = null;
       }
-    })();
+
+      // Identifica municípios sem cobertura no retorno do CEMADEN
+      const cemadenIbges = new Set(rows.map((r) => String(r.codibge ?? "").trim()));
+      const semCemaden = MUNICIPALITIES.filter((m) => !cemadenIbges.has(m.codigoIbge));
+
+      // Atualiza telemetria da ANA em segundo plano se necessário (não trava a resposta)
+      if (semCemaden.length > 0) {
+        refreshAnaRainfallBackground(semCemaden);
+      }
+
+      if (rows.length === 0 && anaRainCache.size === 0 && cemadenError) {
+        if (memo) {
+          return {
+            ...memo.data,
+            cache: "HIT",
+            error: `Usando última leitura: ${cemadenError}`,
+          };
+        }
+      }
+
+      const data = buildFromRows(rows, anaRainCache, cemadenError);
+      memo = { at: Date.now(), data };
+      return data;
+    })().finally(() => {
+      inflight = null;
+    });
   }
   return inflight;
 }
