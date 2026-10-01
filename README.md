@@ -4,7 +4,7 @@ Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional no
 
 - **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
 - **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
-- **Meteorologia** — aviso meteorológico do plantão, monitoramento pluviométrico do CEMADEN (mapa azul que intensifica com o acumulado) e imagem GOES-19 do CPTEC/INPE com limites municipais georreferenciados.
+- **Meteorologia** — aviso meteorológico do plantão, monitoramento pluviométrico do CEMADEN (mapa azul que intensifica com o acumulado) e climatologia MERGE (anomalia e dias secos).
 - **Gestão de Risco** — metodologia CEMOA (IRE/IRG) dos 62 municípios: fila por prioridade, ficha municipal, pizzas de nível/prioridade/evento, território (Censo 2022 e área), degradê de decretos de estiagem (vermelho) e inundação (azul), e tabela exportável. O índice não pinta o mapa de alertas nem o boletim.
 
 Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**01/09/2026**): o painel hidrometeorológico da Defesa Civil/AM atualiza as cotas ao vivo (sem mudar o grau) e a **telemetria ANA** sobrepõe onde há estação automática e é relida depois das **07:00 (Brasília)**. O painel Fabric/Power BI é relido depois das **07:00 e das 16:00 (Brasília)**. Onde a leitura é **DC-AM/SEMA** e o Fabric ainda não publicou o dia, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento, movimento e **erosão de margem** só recebem grau com o operador (abrem em baixo). Em **Incêndio/Qualidade do ar**, o App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima; Boa fica sem cor e a classificação do operador prevalece. O monitoramento pluviométrico do CEMADEN ficou na aba Meteorologia. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
@@ -62,7 +62,7 @@ Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-op
 | --- | --- |
 | `/` | Painel de Alertas |
 | `/boletim` | Boletim Hidrológico |
-| `/meteorologia` | Meteorologia (aviso do plantão, chuva CEMADEN em degradê azul e GOES-19) |
+| `/meteorologia` | Meteorologia (aviso do plantão, chuva CEMADEN e clima MERGE) |
 | `/risco` | Gestão de Risco (IRE/IRG, fila, ficha, pizzas, território, decretos e tabela) |
 | `/api/focos` | Focos absolutos INPE AQUA_M-T, Amazônia, Amazonas |
 | `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|EROSAO\|INCENDIO`) |
@@ -90,7 +90,7 @@ Na **Gestão de Risco** (`/risco`) a ficha municipal traz o **Índice de Risco**
 
 ## Índice de Risco — Metodologia CEMOA (IVM · IRE · IRG)
 
-A metodologia fica inteira na aba **Gestão de Risco** (`/risco`): KPIs, fila, ranking, ficha, pizzas, território, decretos e tabela. A imagem GOES-19 e o mapa de chuva ficam em **Meteorologia** (`/meteorologia`). Saiu da ficha do alerta e da ficha do boletim.
+A metodologia fica inteira na aba **Gestão de Risco** (`/risco`): KPIs, fila, ranking, ficha, pizzas, território, decretos e tabela. O mapa de chuva e o clima ficam em **Meteorologia** (`/meteorologia`). Saiu da ficha do alerta e da ficha do boletim.
 
 A metodologia de priorização do app Streamlit original (`cemoa_app`) foi portada para TypeScript (`lib/metodologia.ts`), sem alterar os parâmetros de calibração, e é servida em `/api/risco` (`lib/metodologia-build.ts`). O IRE de cada evento e o IRG são recalculados na hora, município a município:
 
@@ -133,93 +133,6 @@ Com a edição ligada, o operador classifica no **clique**, em **lote** ou por *
 - **Lote** — escolha grau e duração, cole os nomes **por extenso** (um por linha ou separados por vírgula) e **Encerrar edição**.
 
 No mobile a edição fica oculta.
-
-### Quadro do Centro de Monitoramento
-
-Papel é identidade. Ninguém fica travado em um produto — geólogo também classifica chuva.
-
-| Pessoa | Papel |
-| --- | --- |
-| Karol, Lenizia, Luan, Gustavo, Adriana | Meteorologistas plantonistas |
-| Thayná, Igor | Geólogos · expediente |
-| Capitão BM Barroso | Chefe do Centro |
-| Demais contas | Operacional do Centro de Monitoramento |
-
-Logins sugeridos: `karol`, `lenizia`, `luan`, `gustavo`, `adriana`, `thayna`, `igor`, `barroso`. Crie a conta em **Equipe** (ícone de pessoas). Quem ainda não cadastrou aparece como “aguardando cadastro”.
-
-Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). O cabeçalho mostra **Posto n/6** com quem está autenticado no momento.
-
-### Primeiro operador
-
-O botão **Admin** abre o login. Com Supabase ligado, use o **e-mail e a senha** da conta em Authentication → Users. Depois ligue **Edição**. Sem Supabase, o primeiro acesso cria um admin local (`data/admins.json`).
-
-Em produção (Vercel), defina o operador do ambiente — o arquivo local **não sobrevive** a um reciclo serverless:
-
-```bash
-CEMOA_SESSION_SECRET=uma-string-longa-aleatoria
-CEMOA_ADMIN_LOGIN=igor
-CEMOA_ADMIN_PASSWORD=senha-forte-aqui
-CEMOA_ADMIN_NAME=Igor
-PURPLEAIR_API_KEY=chave-de-leitura-purpleair
-```
-
-`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface. `PURPLEAIR_API_KEY` é a chave de leitura em [develop.purpleair.com](https://develop.purpleair.com/) — sem ela o incêndio cai no App SELVA (leitura atual). Com a chave, o mapa usa `/v1/sensors?fields=name,pm2.5_24hour,latitude,longitude&location_type=0` e o header `x-api-key`. O IVE usa **pm2.5_24hour**. Horários em America/Manaus (UTC-4).
-
-O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app). O alias `operacoes.vercel.app` não aponta para um deploy — use o endereço completo acima.
-
-### Persistência: Supabase (mesmo projeto do Vercel)
-
-O cadastro em arquivo e as classificações em memória servem para desenvolvimento. Em produção o caminho é **Supabase** (Postgres + Auth + RLS), no **mesmo projeto** já associado ao Vercel:
-
-- os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel; as **manchas** de polígono gravam em `alert_stains`
-- vários operadores veem o mesmo mapa
-- Auth com e-mail/senha da equipe CEMOA
-- políticas RLS: `chefe`, `meteorologista`, `geologo` e `operacional` escrevem; o painel público só lê
-
-O host canônico é `https://xdxmmdwlincochbmwkri.supabase.co`. Se o Vercel ainda tiver o host antigo `nwjirzgygfnkfwlywpdd` (não resolve DNS), o centro troca sozinho para o canônico.
-
-1. No [SQL Editor](https://supabase.com/dashboard/project/xdxmmdwlincochbmwkri/sql) rode `supabase/schema.sql` (uma vez).
-2. A integração Vercel ↔ Supabase deve injetar no deploy:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://xdxmmdwlincochbmwkri.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...   # só no servidor, nunca no browser
-```
-
-O centro também aceita `SUPABASE_URL` e `SUPABASE_ANON_KEY` (nomes que a integração às vezes usa). Com essas variáveis, **Admin** entra pela conta do Auth e grava `alert_overrides` / `hydro_overrides` / avisos no Postgres. Sem elas, continua o modo local (cookie + arquivo).
-
-Como entrar:
-
-1. No Supabase: Authentication → Users → Add user (e-mail + senha). Marque o e-mail como confirmado, ou desligue **Confirm email** em Authentication → Providers → Email.
-2. Rode de novo o `schema.sql` se ainda não rodou o trigger de `profiles`.
-3. No painel: **Admin** → e-mail e senha dessa conta → **Edição**.
-
-Se o rodapé ainda diz “Supabase: aguardando chaves”, as variáveis não estão no ambiente do deploy — faça Redeploy depois de associar o projeto.
-
-### Entrar com Gmail
-
-O login pode usar **Google / Gmail** junto com usuário e senha.
-
-1. Crie um cliente OAuth 2.0 (tipo Web) no [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
-2. URI de redirecionamento: `https://SEU-DOMINIO/api/auth/google/callback` (local: `http://127.0.0.1:43127/api/auth/google/callback`).
-3. Defina:
-
-```bash
-GOOGLE_CLIENT_ID=....apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=....
-CEMOA_GOOGLE_EMAILS=seu.nome@gmail.com
-```
-
-`CEMOA_GOOGLE_EMAILS` (opcional, separados por vírgula) autoriza esses Gmails mesmo sem cadastro prévio. Sem essa lista, o **primeiro** Gmail vira o primeiro operador; os próximos precisam ser cadastrados (nome + Gmail) ou associar a conta pelo botão **Associar meu Gmail**.
-
-Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acrescente `CEMOA_GOOGLE_DOMAIN=suaempresa.com`.
-
-Sem as chaves do Google, o botão aparece desativado e o login por senha continua valendo.
-
-No boletim, a ficha do município mostra só o extremo do modo ativo: **máxima histórica** na inundação e **mínima histórica** na vazante (data e cota do relatório CEMOA). A cota entra na série **por data** (hoje por padrão; dá para lançar um dia antigo quando o município fica semanas sem enviar) e atualiza a ficha, o gráfico e o rótulo Atualizado / Dado de DD/MM. No lote, campo vazio na data escolhida vira **sem leitura**. O painel **Fabric** (monitoramento hidrometeorológico CEMOA) preenche as cotas dos rios; onde o código da estação é numérico, a **ANA** sobrepõe a telemetria do dia da leitura. Sem leitura no dia (horário de Manaus), o KPI **Sem leitura** conta o município. O mapa mostra o grau do relatório CEMOA (estiagem e inundação); cota Fabric/ANA **não reclassifica**.
-
-A ficha de qualquer produto (e a do boletim) diz se o município **tem área mapeada** de movimento de massa / deslizamento. Se tiver, mostra setores, tipo (deslizamento, movimento de massa, erosão de margem) e o **quantitativo de pessoas em área de risco** do levantamento federal (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem mapeamento, a ficha diz isso com clareza.
 
 ## Chuva 1 h / 6 h / 24 h / 72 h (CEMADEN)
 

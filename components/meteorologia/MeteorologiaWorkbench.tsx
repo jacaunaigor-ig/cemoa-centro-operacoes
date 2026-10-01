@@ -1,18 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CloudSun, Droplets, ImageDown, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Droplets, ImageDown } from "lucide-react";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { AppShell } from "@/components/shared/AppShell";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { fetchJson } from "@/lib/client";
-import { startVisiblePoll, useNow } from "@/lib/client-hooks";
+import { startVisiblePoll } from "@/lib/client-hooks";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { formatMm, rainHeatColor } from "@/lib/rainfall-display";
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import type { RainfallMunicipio, RainfallPayload } from "@/lib/types";
-import { cn, formatAmazonDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const POLL_MS = 20_000;
@@ -35,46 +35,13 @@ const ESCALA = [
   { ate: "≥ 50", cor: "#1e3a8a" },
 ];
 
-type GoesPayload = {
-  generatedAt: number;
-  imageAt: number | null;
-  imageUrl: string | null;
-  product: string;
-  credit: string;
-  error?: string;
-};
-
 export function MeteorologiaWorkbench() {
   const [rain, setRain] = useState<RainfallPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [janela, setJanela] = useState<Janela>("mm24h");
   const [selected, setSelected] = useState<string | null>(null);
-  const [goes, setGoes] = useState<GoesPayload | null>(null);
-  const [goesLoading, setGoesLoading] = useState(false);
-  const [goesStamp, setGoesStamp] = useState(0);
-  const [painel, setPainel] = useState<"chuva" | "satelite" | "clima">("chuva");
+  const [painel, setPainel] = useState<"chuva" | "clima">("chuva");
   const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
-
-  const loadGoes = useCallback((refresh = false) => {
-    if (STATIC_DEPLOY) return;
-    setGoesLoading(true);
-    fetchJson<GoesPayload>(refresh ? "/api/satellite/goes?refresh=1" : "/api/satellite/goes")
-      .then((data) => {
-        setGoes(data);
-        setGoesStamp(Date.now());
-      })
-      .catch(() => {
-        setGoes({
-          generatedAt: Date.now(),
-          imageAt: null,
-          imageUrl: null,
-          product: "GOES-19",
-          credit: "CPTEC / INPE",
-          error: "Sem imagem do satélite neste momento.",
-        });
-      })
-      .finally(() => setGoesLoading(false));
-  }, []);
 
   useEffect(() => {
     if (STATIC_DEPLOY) return;
@@ -96,10 +63,6 @@ export function MeteorologiaWorkbench() {
       stop();
     };
   }, []);
-
-  useEffect(() => {
-    loadGoes(false);
-  }, [loadGoes]);
 
   const rows = useMemo(() => {
     const list = Object.values(rain?.byNome ?? {});
@@ -156,14 +119,14 @@ export function MeteorologiaWorkbench() {
   }
 
   return (
-    <AppShell source="CEMADEN · pluviômetros do Amazonas · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
+    <AppShell source="CEMADEN · pluviômetros do Amazonas" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
         <header className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-[10px] font-bold tracking-[0.14em] text-text-mute uppercase">Defesa Civil do Amazonas</p>
             <h2 className="text-lg font-black tracking-tight">Meteorologia</h2>
             <p className="max-w-3xl text-[12px] text-text-mute">
-              Aviso do plantão, chuva CEMADEN e GOES-19. O município fica azul onde chove e a cor escurece conforme o acumulado da janela.
+              Aviso do plantão e monitoramento pluviométrico do CEMADEN. O município fica azul onde chove e a cor escurece conforme o acumulado da janela.
             </p>
           </div>
           <p className="text-[11px] text-text-mute">{error ?? rain?.source ?? "Consultando o CEMADEN…"}</p>
@@ -181,7 +144,6 @@ export function MeteorologiaWorkbench() {
         <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
           {([
             ["chuva", "Chuva"],
-            ["satelite", "Satélite"],
             ["clima", "Clima"],
           ] as const).map(([id, label]) => (
             <button
@@ -201,41 +163,41 @@ export function MeteorologiaWorkbench() {
         </div>
 
         <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel === "clima" && "hidden")}>
-        <div className={cn("grid content-start gap-2", painel !== "chuva" && "max-lg:hidden")}>
-        <div className="flex flex-wrap gap-1">
-          {JANELAS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-pressed={janela === item.id}
-              onClick={() => setJanela(item.id)}
-              className={cn(
-                "min-h-11 min-w-14 flex-1 rounded-lg border px-3 text-[13px] font-bold sm:flex-none",
-                janela === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            disabled={!rain || exportando != null || STATIC_DEPLOY}
-            onClick={() => void exportarChuva("mm1h", "1 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
-          >
-            <ImageDown className="size-3.5" />
-            {exportando === "mm1h" ? "Gerando…" : "PNG 1 h"}
-          </button>
-          <button
-            type="button"
-            disabled={!rain || exportando != null || STATIC_DEPLOY}
-            onClick={() => void exportarChuva("mm24h", "24 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
-          >
-            <ImageDown className="size-3.5" />
-            {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
-          </button>
-        </div>
+          <div className="grid content-start gap-2">
+            <div className="flex flex-wrap gap-1">
+              {JANELAS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={janela === item.id}
+                  onClick={() => setJanela(item.id)}
+                  className={cn(
+                    "min-h-11 min-w-14 flex-1 rounded-lg border px-3 text-[13px] font-bold sm:flex-none",
+                    janela === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={!rain || exportando != null || STATIC_DEPLOY}
+                onClick={() => void exportarChuva("mm1h", "1 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+              >
+                <ImageDown className="size-3.5" />
+                {exportando === "mm1h" ? "Gerando…" : "PNG 1 h"}
+              </button>
+              <button
+                type="button"
+                disabled={!rain || exportando != null || STATIC_DEPLOY}
+                onClick={() => void exportarChuva("mm24h", "24 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+              >
+                <ImageDown className="size-3.5" />
+                {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
+              </button>
+            </div>
             {STATIC_DEPLOY ? (
               <p className="rounded-xl border border-border bg-panel p-4 text-sm text-text-mute">
                 O mapa de chuva fica indisponível na publicação estática.
@@ -251,10 +213,9 @@ export function MeteorologiaWorkbench() {
                 </li>
               ))}
             </ul>
-        </div>
+          </div>
 
-        <div className="grid content-start gap-2">
-          <aside className={cn("meteo-lista flex flex-col rounded-xl border border-border bg-panel", painel !== "chuva" && "max-lg:hidden")}>
+          <aside className="meteo-lista flex flex-col rounded-xl border border-border bg-panel">
             <div className="border-b border-border px-3 py-2">
               <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">Acumulado</h3>
               {foco ? <Foco item={foco} janela={janela} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}
@@ -278,42 +239,6 @@ export function MeteorologiaWorkbench() {
               ))}
             </ul>
           </aside>
-
-        <section className={cn("rounded-xl border border-border bg-panel p-3", painel !== "satelite" && "max-lg:hidden")}>
-          <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="flex items-center gap-1.5 text-sm font-black">
-                <CloudSun className="size-4 text-brand" />
-                GOES-19
-              </h3>
-              <GoesNotice goes={goes} loading={goesLoading} />
-            </div>
-            <button
-              type="button"
-              onClick={() => loadGoes(true)}
-              disabled={goesLoading || STATIC_DEPLOY}
-              className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
-            >
-              <RefreshCw className={cn("size-3.5", goesLoading && "animate-spin")} />
-              Atualizar
-            </button>
-          </div>
-          {STATIC_DEPLOY ? (
-            <p className="text-sm text-text-mute">A imagem GOES fica indisponível na publicação estática.</p>
-          ) : goes?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`${withBase(goes.imageUrl)}?t=${goesStamp || goes.generatedAt}`}
-              alt={goes.product}
-              className="meteo-goes-img h-auto w-full rounded-lg border border-border bg-[#0b1d4a] object-contain"
-            />
-          ) : (
-            <p className="text-sm text-text-mute">
-              {goesLoading ? "Consultando o acervo CPTEC/INPE…" : goes?.error ?? "Sem imagem GOES neste momento."}
-            </p>
-          )}
-        </section>
-        </div>
         </div>
 
         <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
@@ -352,16 +277,6 @@ export function MeteorologiaWorkbench() {
       </div>
     </AppShell>
   );
-}
-
-const GOES_ATRASO_MS = 30 * 60 * 1000;
-
-function atrasoLabel(ms: number) {
-  const min = Math.max(1, Math.round(ms / 60000));
-  if (min < 60) return `${min} min`;
-  const horas = Math.floor(min / 60);
-  const resto = min % 60;
-  return resto ? `${horas} h ${resto} min` : `${horas} h`;
 }
 
 function MergeCard({ qual, titulo }: { qual: "atual" | "anterior"; titulo: string }) {
@@ -419,30 +334,6 @@ function IndiceCard({ produto, titulo, texto }: { produto: "dd" | "cdd"; titulo:
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={`${titulo} — MERGE/CPTEC`} className="h-auto w-full bg-white object-contain" />
     </figure>
-  );
-}
-
-function GoesNotice({ goes, loading }: { goes: GoesPayload | null; loading: boolean }) {
-  const now = useNow();
-  if (loading && !goes?.imageAt) {
-    return <p className="mt-1 text-[12px] text-text-mute">Consultando o acervo CPTEC/INPE…</p>;
-  }
-  if (!goes?.imageAt) {
-    return (
-      <p className="mt-1 text-[12px] font-semibold text-risco-alto" role="status">
-        {goes?.error ?? "Sem hora da imagem. O aviso GOES precisa de uma cena do CPTEC/INPE."}
-      </p>
-    );
-  }
-  const age = (now || Date.now()) - goes.imageAt;
-  const quando = formatAmazonDateTime(goes.imageAt);
-  const atrasada = age >= GOES_ATRASO_MS;
-  return (
-    <p className={cn("mt-1 text-[12px]", atrasada ? "font-semibold text-risco-alto" : "text-text-mute")} role={atrasada ? "status" : undefined}>
-      {atrasada
-        ? `Atraso de ${atrasoLabel(age)}. Imagem de ${quando} (Manaus). O CPTEC publica cerca de 10 em 10 min — atualize antes de montar o aviso.`
-        : `Imagem recente · ${quando} (Manaus). Canal 13, recorte do Amazonas.`}
-    </p>
   );
 }
 

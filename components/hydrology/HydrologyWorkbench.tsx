@@ -38,7 +38,6 @@ import {
   PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
-  formatHydroRef,
   normalizeMunicipio,
   statusAtivo,
   statusMapa,
@@ -496,11 +495,6 @@ export function HydrologyWorkbench() {
         {mapFocus ? null : (
         <DashboardPanel>
         <DashboardRow className={isMobile ? "gap-1.5 px-2 py-1.5" : undefined}>
-          {isMobile ? null : (
-          <p className="shrink-0 font-mono text-xs tabular-nums text-text-mute">
-            {formatHydroRef(data?.referencia)}
-          </p>
-          )}
           <div className={cn("flex flex-wrap items-center gap-2", isMobile ? "w-full" : "ml-auto")}>
             <div
               className="flex rounded-lg border border-border bg-hover p-0.5"
