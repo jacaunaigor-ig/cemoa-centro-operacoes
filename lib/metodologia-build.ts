@@ -15,11 +15,13 @@
 import raw from "@/data/metodologia-cemoa.json";
 import { demografiaDo } from "@/lib/demografia";
 import { buildAlertsPayload } from "@/lib/live-state";
+import { decretosInundacao } from "@/lib/decretos";
 import { pessoasRiscoDo } from "@/lib/mass-risk";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import {
   isPimf,
   METODOLOGIA_VERSAO,
+  agravoInundacao,
   processarMunicipio,
   type MetodologiaEvento,
   type MetodologiaResultado,
@@ -135,6 +137,10 @@ export function buildMetodologiaPayload(
 
   // ---- 2. Processamento dos 62 municípios ---------------------------------
   const rows: MetodologiaRow[] = [];
+  const maxDecretosInundacao = Math.max(
+    1,
+    ...MUNICIPALITIES.map((m) => decretosInundacao(m.id)?.total ?? 0),
+  );
 
   for (const m of MUNICIPALITIES) {
     const params = metodologiaParamsDo(m.id);
@@ -159,10 +165,9 @@ export function buildMetodologiaPayload(
           }
         : null;
 
-    // Inundação: evento gradual de bacia fluviométrica (distinto de alagamento pluvial de 1 h).
-    // Conforme o fator sazonal (FS = 0,9), no período corrente sem alertas ativos de cheia,
-    // adota-se "Sem alerta" (FA = 0,30), assegurando que todos os 62 municípios fiquem sob risco baixo (< 20 pts),
-    // regidos estritamente pelo IVM e histórico de decretos.
+    // Inundação: evento gradual de bacia. Sem alerta de cheia, FA = 0,30
+    // prevalece: o IRE permanece Baixo. O agravo só ordena pelo histórico
+    // de decretos, sem competir com a estiagem no IRG.
     const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
       Chuvas: nivelAlertaMet(chuvaMap.get(m.id)),
       "Mov. Massa": nivelAlertaMet(movimentoMap.get(m.id)),
@@ -170,6 +175,7 @@ export function buildMetodologiaPayload(
       "Inundação": "Sem alerta",
     };
 
+    const decretos = decretosInundacao(m.id)?.total ?? 0;
     const resultado = processarMunicipio({
       codigo: m.id,
       nome: m.nome,
@@ -177,7 +183,10 @@ export function buildMetodologiaPayload(
       ivm: params.ivm,
       pctRural,
       pctTI: params.pctTI,
-      agr: params.agr,
+      agr: {
+        ...params.agr,
+        "Inundação": agravoInundacao(decretos, maxDecretosInundacao),
+      },
       setores,
       alertas: alertasVivos,
     });

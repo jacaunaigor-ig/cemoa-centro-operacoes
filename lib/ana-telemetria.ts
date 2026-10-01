@@ -1,7 +1,7 @@
 import https from "node:https";
 import { ANA_HORAS, leituraDoBoletim } from "@/lib/boletim-horario";
 import { hydroTodayIso, isoFromTimestamp, upsertCotaOnDate } from "@/lib/hydro-series";
-import type { HydroStation } from "@/lib/types";
+import type { HydroStation, RainfallStation } from "@/lib/types";
 
 export type AnaReading = {
   codigo: string;
@@ -105,6 +105,84 @@ export async function fetchAnaStation(codigo: string, now = Date.now()): Promise
     if (now - reading.lidaEm > MAX_AGE_MS) return null;
     return reading;
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Consulta a telemetria da ANA e calcula os acumulados móveis de chuva
+ * (1 h / 6 h / 24 h / 72 h / 96 h), preenchendo lacunas onde o CEMADEN não possui estações.
+ */
+export async function fetchAnaRainStation(
+  codigo: string,
+  nomeEstacao: string,
+  now = Date.now(),
+): Promise<RainfallStation | null> {
+  // 5 dias cobrem com segurança a janela de 96 h
+  const inicio = brDate(now - 5 * 24 * 60 * 60_000);
+  const fim = brDate(now);
+  const path = `/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=${encodeURIComponent(codigo)}&dataInicio=${encodeURIComponent(inicio)}&dataFim=${encodeURIComponent(fim)}`;
+
+  try {
+    const xml = await getXml(path);
+    const blocks = xml.match(/<DadosHidrometereologicos[\s\S]*?<\/DadosHidrometereologicos>/g);
+    if (!blocks || !blocks.length) return null;
+
+    // Deduplica por timestamp único (ordem decrescente)
+    const byTime = new Map<number, number>();
+    for (const b of blocks) {
+      const whenStr = /<DataHora>([^<]*)<\/DataHora>/.exec(b)?.[1];
+      const chuvaStr = /<Chuva>([^<]*)<\/Chuva>/.exec(b)?.[1]?.trim();
+      if (!whenStr || chuvaStr === "" || chuvaStr == null) continue;
+      const chuva = Number(chuvaStr);
+      if (!Number.isFinite(chuva) || chuva < 0) continue;
+      const t = parseWhen(whenStr);
+      if (!t || byTime.has(t)) continue;
+      byTime.set(t, chuva);
+    }
+
+    if (!byTime.size) return null;
+
+    const sortedTimes = [...byTime.keys()].sort((a, b) => b - a);
+    const latestTime = sortedTimes[0];
+
+    // Se mais antigo que 72 horas, estação sem leitura recente
+    if (now - latestTime > 72 * 60 * 60_000) return null;
+
+    let mm1h = 0, mm6h = 0, mm24h = 0, mm72h = 0, mm96h = 0;
+    let count1h = 0, count6h = 0, count24h = 0, count72h = 0, count96h = 0;
+
+    for (const t of sortedTimes) {
+      const ageMs = latestTime - t;
+      const val = byTime.get(t) ?? 0;
+      if (ageMs <= 60 * 60_000) { mm1h += val; count1h++; }
+      if (ageMs <= 6 * 60 * 60_000) { mm6h += val; count6h++; }
+      if (ageMs <= 24 * 60 * 60_000) { mm24h += val; count24h++; }
+      if (ageMs <= 72 * 60 * 60_000) { mm72h += val; count72h++; }
+      if (ageMs <= 96 * 60 * 60_000) { mm96h += val; count96h++; }
+    }
+
+    const ageFromNow = now - latestTime;
+    const isStale1h = ageFromNow > 2 * 60 * 60_000;
+    const isStale6h = ageFromNow > 8 * 60 * 60_000;
+    const isStale24h = ageFromNow > 36 * 60 * 60_000;
+
+    const round1 = (n: number) => Math.round(n * 10) / 10;
+
+    return {
+      id: `ANA-${codigo}`,
+      nome: nomeEstacao,
+      uf: "AM",
+      mm1h: isStale1h || count1h === 0 ? null : round1(mm1h),
+      mm6h: isStale6h || count6h === 0 ? null : round1(mm6h),
+      mm24h: isStale24h || count24h === 0 ? null : round1(mm24h),
+      mm72h: count72h === 0 ? null : round1(mm72h),
+      mm96h: count96h === 0 ? null : round1(mm96h),
+      ultimoMm: round1(byTime.get(latestTime) ?? 0),
+      observedAt: latestTime,
+    };
+  } catch (err) {
+    console.error("[ANA-RAIN-ERROR]", codigo, err);
     return null;
   }
 }

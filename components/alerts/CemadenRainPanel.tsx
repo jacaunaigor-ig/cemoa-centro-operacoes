@@ -31,6 +31,9 @@ export function CemadenRainPanel({
     const bPeak = Math.max(b.mm72h ?? -1, b.mm24h ?? -1, b.mm6h ?? -1, b.mm1h ?? -1);
     return bPeak - aPeak || a.nome.localeCompare(b.nome, "pt-BR");
   });
+  const isAnaOnly = estacoes.length > 0 && estacoes.every((s) => s.id.startsWith("ANA-"));
+  const hasAna = estacoes.some((s) => s.id.startsWith("ANA-"));
+  const fonteLabel = isAnaOnly ? "ANA · Telemetria" : hasAna ? "CEMADEN + ANA" : "CEMADEN";
   const showApoio = tipo === "CHUVA" || tipo === "ALAGAMENTO" || tipo === "MOVIMENTO";
   const hrefAlertas = (next: AlertType) =>
     `/?municipio=${encodeURIComponent(rain.nome)}&bacia=${encodeURIComponent(rain.bacia)}&tipo=${next}`;
@@ -43,7 +46,7 @@ export function CemadenRainPanel({
         </span>
         <div>
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            CEMADEN
+            {fonteLabel}
           </small>
           <p className="text-xs text-text-mute">
             {rain.estacoes.length} est.
@@ -129,6 +132,13 @@ export function CemadenRainPanel({
                     >
                       <ExternalLink className="size-3.5" />
                     </a>
+                  ) : s.id.startsWith("ANA-") ? (
+                    <span
+                      className="inline-flex size-7 items-center justify-center rounded text-[10px] font-bold text-focus"
+                      title={`Telemetria da ANA · Estação ${s.id.replace("ANA-", "")}`}
+                    >
+                      ANA
+                    </span>
                   ) : (
                     <span className="text-text-mute">—</span>
                   )}

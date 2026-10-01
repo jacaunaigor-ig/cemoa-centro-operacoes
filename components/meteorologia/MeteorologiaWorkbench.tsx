@@ -156,7 +156,7 @@ export function MeteorologiaWorkbench() {
   }
 
   return (
-    <AppShell source="CEMADEN · pluviômetros do Amazonas · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
+    <AppShell source="CEMADEN · ANA telemetria · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
         <header className="flex flex-wrap items-end justify-between gap-2">
           <div>

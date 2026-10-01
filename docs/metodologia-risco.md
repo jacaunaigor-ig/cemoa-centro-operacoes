@@ -24,8 +24,10 @@ O IRE quantifica a severidade do risco em seis tipologias de desastres: Estiagem
 A formulação matemática para cada evento segue a expressão:
 
 ```text
-IRE(evento) = ((IVM + Ameaça) × FS + Agravo) × FE × FA
+IRE(evento) = ((IVM + Ameaça) × FS × FE × FA) + Agravo ponderado
 ```
+
+O Fator de Alerta multiplica apenas a dinâmica atual (vulnerabilidade, ameaça, sensibilidade e exposição). O agravo entra como parcela aditiva externa. Na vazante, com FA = 0,30, o IRE de inundação permanece Baixo em todo o estado: o alerta prevalece e a estiagem segue como o desastre gradual predominante. O histórico de decretos só ordena o ranking dentro dessa faixa baixa.
 
 O valor resultante de cada IRE é limitado ao teto de 60 pontos.
 
@@ -42,20 +44,27 @@ O valor resultante de cada IRE é limitado ao teto de 60 pontos.
   - Inundação: 0,9 (fator sazonal)
   - Chuvas: 1,0
   - Movimento de Massa: 0,9
-- **Agravo por Evento (0 a 9)**: histórico e criticidade do município cadastrados na base metodológica (`metodologia-cemoa.json`). No caso de estiagem, soma-se o Bônus Contextual (BC) calculado pela proporção de população rural e de terras indígenas (teto de 9).
+- **Agravo por Evento**: histórico e criticidade. Nos eventos que não são inundação, permanece a nota de 0 a 9 da base metodológica (`metodologia-cemoa.json`); na estiagem soma-se o Bônus Contextual (BC) de ruralidade e terras indígenas (teto de 9). Em inundação, o agravo ponderado escala o total de decretos para no máximo 11 pontos (proporção em relação ao município com mais decretos). Na vazante (FA = 0,30) o IRE permanece na faixa Baixo (< 20): o fator de alerta prevalece e a estiagem segue como o desastre gradual predominante. O histórico só ordena o ranking — quem decreta mais fica acima de quem decreta menos.
 - **Fator de Exposição (FE)**: modela a concentração de população em áreas de risco R3 e R4, densidade demográfica, adensamento urbano e características de ruralidade/terras indígenas.
 - **Fator de Alerta (FA)**: fator dinâmico baseado na classificação do operador no painel operacional:
   - Eventos graduais estáticos (Estiagem, Erosão): valor fixo 1,0.
-  - Inundação (evento gradual de bacia, distinto de alagamento pluvial): considera FA da situação de enchente/cheia — na ausência de alerta de inundação (como no período de vazante/estiagem), adota Sem alerta = 0,30, mantendo os 62 municípios sob risco baixo (< 20 pontos), regidos pelo IVM e pelo histórico de decretos. Havendo alerta de cheia, aplica Moderado = 0,70, Alto = 1,00 ou Severo = 1,30.
+  - Inundação (evento gradual de bacia, distinto de alagamento pluvial): considera FA da situação de enchente/cheia — na ausência de alerta de inundação (como no período de vazante/estiagem), adota Sem alerta = 0,30 sobre a dinâmica atual. O agravo ponderado continua somado integralmente. Havendo alerta de cheia, aplica Moderado = 0,70, Alto = 1,00 ou Severo = 1,30.
   - Eventos súbitos (Chuva, Movimento de Massa, Incêndio): Sem alerta = 0,30; Moderado = 0,70; Alto / Ruim = 1,00; Severo / Muito Ruim = 1,30; Extremo / Péssima = 1,60. *Nota*: Inundação (cheia lenta dos rios) é conceitualmente distinta de Alagamento (súbito, com relação direta com o volume de chuvas em 1 h).
 
 ### 3. Índice de Risco Global (IRG)
 
-O IRG consolida os seis índices setoriais em um indicador ponderado único:
+O IRG consolida a dinâmica dos eventos setoriais e a vulnerabilidade intrínseca municipal em um indicador ponderado único tripartite (teto de 60 pontos):
 
 ```text
-IRG = 0,7 × maior(IRE) + 0,3 × média(IRE)
+IRG = 0,60 × maior(IRE) + 0,20 × média(IRE) + 0,20 × IVM_escalado
 ```
+
+Onde:
+- **`maior(IRE)`**: a tipologia crítica que mais pressiona o município (60% do índice).
+- **`média(IRE)`**: a exposição média aos seis desastres monitorados (20% do índice).
+- **`IVM_escalado`**: o Índice de Vulnerabilidade Municipal projetado na escala de 0 a 60 pontos (`(IVM / 21) × 60`), onde IVM 21 (vulnerabilidade máxima estadual) contribui com 60 pontos e IVM 8 (vulnerabilidade baixa) com 22,86 pontos (20% do índice).
+
+Essa ponderação confere protagonismo à vulnerabilidade intrínseca das comunidades do interior (Classes D e C), impedindo que pressões pontuais puramente urbanas mascarem a fragilidade socioeconômica territorial.
 
 ## Classes e Níveis de Prioridade do IRG
 
