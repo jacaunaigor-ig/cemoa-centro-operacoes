@@ -1,49 +1,39 @@
 # CEMOA — Centro de Monitoramento
 
-Painel integrado da Defesa Civil do Amazonas, com o mesmo recorte operacional nos dois produtos:
+Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 municípios do Amazonas.
 
-- **Painel de Alertas** — quatro produtos emitidos pelo CEMOA, KPIs clicáveis, lista dos 62 municípios por bacia, classificação no mapa (clique, lote e mancha por polígono), camadas de apoio ao alerta (sedes, pluviômetros CEMADEN, **sensores PurpleAir**, comunidades rurais e indígenas), ticker e ficha de alerta (**chuva CEMADEN 1/6/24/72 h**, **temperatura atual/máx/mín e previsão 24/48/72 h e 5 dias do INMET**, **MP2,5 PurpleAir no produto de incêndio**, Censo 2022 com crianças 0–14 e idosos 60+, **se o município tem área mapeada de movimento de massa/deslizamento e quantas pessoas estão em área de risco**). A cota do boletim não entra nesta ficha — o atalho **Cota no boletim** troca de produto.
-- **Boletim Hidrológico** — estiagem e inundação (Baixo, Moderado, Alto, Severo), KPIs, calhas, polígonos de risco, as mesmas camadas de apoio, fluxo animado dos rios principais (Solimões–Amazonas, Negro, Madeira, Purus, Juruá, Japurá e Içá, no traçado real dentro do estado) e ficha hidrológica (gráfico, limiares ANA/SGB e projeção linear). A chuva CEMADEN não entra nesta ficha — o atalho **Chuva no painel de alertas** troca de produto.
-- **Meteorologia** — aviso meteorológico do plantão, monitoramento pluviométrico do CEMADEN (mapa azul que intensifica com o acumulado) e imagem GOES-19 do CPTEC/INPE com limites municipais georreferenciados.
-- **Gestão de Risco** — metodologia CEMOA (IRE/IRG) dos 62 municípios: fila por prioridade, ficha municipal, pizzas de nível/prioridade/evento, território (Censo 2022 e área), degradê de decretos de estiagem (vermelho) e inundação (azul), e tabela exportável. O índice não pinta o mapa de alertas nem o boletim.
+![Painel de Alertas](docs/img/painel.png)
 
-Município, bacia e calha são compartilhados na troca de abas. Os 62 municípios vêm da malha CEMOA. Cotas e o **mapa de risco do boletim** usam o recorte operacional (**01/09/2026**): o painel hidrometeorológico da Defesa Civil/AM atualiza as cotas ao vivo (sem mudar o grau) e a **telemetria ANA** sobrepõe onde há estação automática e é relida depois das **07:00 (Brasília)**. O painel Fabric/Power BI é relido depois das **07:00 e das 16:00 (Brasília)**. Onde a leitura é **DC-AM/SEMA** e o Fabric ainda não publicou o dia, vale o lançamento do boletim. No **Painel de Alertas**, chuva, alagamento, movimento e **erosão de margem** só recebem grau com o operador (abrem em baixo). Em **Incêndio/Qualidade do ar**, o App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima; Boa fica sem cor e a classificação do operador prevalece. O monitoramento pluviométrico do CEMADEN ficou na aba Meteorologia. No boletim, o operador pode ajustar por cima do cenário oficial; **Restaurar monitoramento** devolve o relatório. O centro já está pronto para o **Supabase**: sem as chaves, segue cookie + memória; com URL e chave (as mesmas que o Vercel injeta na integração), o login usa Auth e as classificações gravam no Postgres.
+https://cemoa-centro-operacoes.vercel.app
 
-## Produtos de alerta
+## O que faz
 
-| Tipo (`?tipo=`) | Escala | Observação |
-| --- | --- | --- |
-| `CHUVA` (padrão) | Baixo → Extremo | Risco de chuva intensa |
-| `ALAGAMENTO` | Baixo → Extremo | Risco de alagamento |
-| `MOVIMENTO` | Baixo → Extremo | Deslizamento e movimento de massa; só eleva onde há setor mapeado |
-| `EROSAO` | Baixo → Extremo | Alerta de erosão de margem |
-| `INCENDIO` | Boa → Péssima | Incêndio/Qualidade do ar (MP2,5 µg/m³). Moderada ou pior pinta o mapa. O botão Focos de calor troca para o degradê vermelho dos focos absolutos AQUA_M-T |
+- **Painel de Alertas**: monitoramento e classificação operacional de risco em quatro produtos (chuva, alagamento, movimento de massa e incêndio/qualidade do ar) para os 62 municípios do Amazonas.
+- **Boletim Hidrológico**: acompanhamento de cotas fluviométricas e cenários de estiagem e inundação, com fluxo dos principais rios e limiares de alerta.
+- **Índices de vulnerabilidade e risco**: cálculo municipal de IVM, IRE por tipologia de evento e IRG segundo a metodologia CEMOA.
+- **Interface adaptável**: suporte a postos de trabalho desktop completos e interface operacional compacta para dispositivos móveis.
 
-O PNG e a legenda usam faixas de MP2,5 em **24 h**: Boa **0–15**, Moderada **15–50**, Ruim **50–75**, Muito ruim **75–125**, Péssima **>125** µg/m³. Boa não colore o município.
+## Fontes de dados
 
-No produto **Incêndio/Qualidade do ar** o painel consulta primeiro o App SELVA (`https://www.appselva.com.br/api.php?route=purpleair`) e, se essa leitura falhar, `/api/air-quality` via PurpleAir. O mapa usa a faixa municipal quando ela é Moderada ou pior. Sem leitura degradada e sem classificação do operador o município permanece sem cor de alerta. O fallback PurpleAir usa `GET https://api.purpleair.com/v1/sensors?fields=name,pm2.5_24hour,latitude,longitude&location_type=0` (mapa da área, só externos). Um sensor isolado usa `GET /v1/sensors/{sensor_index}?fields=name,pm2.5_24hour,latitude,longitude` (mais barato em pontos). A chave vai no header `x-api-key`. O campo chave é **`pm2.5_24hour`**. Sensores nulos saem da conta. A **média aritmética** municipal (nunca a soma) ignora valores acima de **500 µg/m³**. O IVE de qualidade do ar usa essa média de 24 h. Se o valor parecer alto demais, conferir `pm2.5_cf_1` e `pm2.5_atm` quando a API enviar. Horários em **America/Manaus (UTC-4)**. A cada ciclo (~60 s no servidor, poll do painel ~20 s) o último valor atualiza o índice. Se o App SELVA falhar e houver `PURPLEAIR_API_KEY`, a faixa vem do `pm2.5_24hour`. Leitura de baixo custo: não substitui estação regulatória.
+- **CEMADEN**: rede de pluviômetros automáticos e acumulados de chuva em 1 h, 6 h, 24 h, 72 h e 96 h.
+- **INMET**: dados de estações meteorológicas automáticas e previsões Prevmet para horizontes de 24 h a 5 dias.
+- **ANA / SGB**: telemetria de estações fluviométricas, limiares hidrológicos e cotas de referência.
+- **INPE**: focos de calor via BDQueimadas (satélite de referência AQUA_M-T) e imagens do satélite GOES-19 pelo CPTEC.
+- **PurpleAir / App SELVA**: monitoramento de material particulado fino (MP2,5) em 24 horas para qualidade do ar.
+- **IBGE (Censo 2022)**: malha geográfica municipal, dados demográficos, setores censitários, populações vulneráveis e comunidades rurais/indígenas.
 
-Os focos de calor do produto vêm do INPE BDQueimadas (arquivos diários, satélite de referência AQUA_M-T, bioma Amazônia, Amazonas), somados nos últimos 15 dias com arquivo. O degradê é o total absoluto por município. O estimado CAMS do SELVA continua fora do recorte.
+## Tecnologias
 
-O botão **Sala de situação** oculta cabeçalho, lista e rodapé — o mapa ocupa a tela com os totais (grau + ação da Portaria) e a faixa de alertas. **Operação** ou **Esc** restaura o posto de trabalho. A escolha fica em `localStorage` (`cemoa_map_focus`).
-
-## Abertura do plantão
-
-O Painel de Alertas nasce limpo nas abas de chuva, alagamento, movimento e incêndio (em **baixo** / **boa**, sem mancha de polígono). O Boletim Hidrológico reabre com o cenário de risco do relatório CEMOA vigente. Depois da abertura, o grau que o operador pintar **permanece** até ele classificar de novo ou usar **Restaurar monitoramento** — o prazo do alerta (2–6 h) não devolve o município ao baixo, e o poll da sessão não apaga a classificação.
-
-Toasts ficam no mínimo: um por vez, curtos, só para gravar lote, desfazer, encerrar edição, emitir aviso ou erro. **Não há pop de agravamento** — a faixa “Alterações” saiu, o ticker não marca Novo/Agravou, e a ficha não fala em tendência de agravamento. Um alerta só conta como novo ou agravado se o operador **subiu** um grau que já existia, e só no plantão de **12 h** corrente (07–19 / 19–07). Sem classificação do operador, chuva, alagamento, movimento e incêndio ficam no nível baixo do produto. Na edição, o poll não substitui o mapa e os toasts abertos fecham, para não tapar o clique.
-
-O centro consulta a rede com a aba visível (alertas ~20 s, boletim ~25 s, aviso ~20 s, qualidade do ar ~60 s) e não redesenha os 62 polígonos a cada poll se o grau não mudou.
-
-## Exportar PNG
-
-O botão **Exportar PNG** gera um mapa cartográfico institucional (5200×3400 px), com norte, escala de 375 km e painel de legenda legível — não é captura da tela do Leaflet. Arquivos:
-
-- `painel_alertas_cemoa_alta_resolucao_YYYY-MM-DD.png`
-- `boletim_hidrologico_estiagem_alta_resolucao_YYYY-MM-DD.png`
-- `boletim_hidrologico_inundacao_alta_resolucao_YYYY-MM-DD.png`
+- Next.js (App Router)
+- TypeScript
+- Leaflet
+- Tailwind CSS
+- shadcn/ui
+- Supabase
 
 ## Como rodar
+
+Clone o repositório e instale as dependências:
 
 ```bash
 git clone https://github.com/jacaunaigor-ig/cemoa-centro-operacoes.git
@@ -52,224 +42,21 @@ npm install
 npm run dev
 ```
 
-Abra [http://127.0.0.1:43127](http://127.0.0.1:43127). O horário operacional é o de Manaus (UTC−4).
+Acesse a aplicação no navegador em [http://127.0.0.1:43127](http://127.0.0.1:43127).
 
-Site publicado (GitHub Pages): [https://jacaunaigor-ig.github.io/cemoa-centro-operacoes/](https://jacaunaigor-ig.github.io/cemoa-centro-operacoes/).
+## Variáveis de ambiente
 
-## Rotas
+As variáveis de ambiente necessárias para persistência no Supabase, autenticação e integrações externas estão descritas no arquivo [.env.example](.env.example). Copie o modelo para `.env.local` e preencha conforme o ambiente de implantação.
 
-| Caminho | Produto |
-| --- | --- |
-| `/` | Painel de Alertas |
-| `/boletim` | Boletim Hidrológico |
-| `/meteorologia` | Meteorologia (aviso do plantão, chuva CEMADEN em degradê azul e GOES-19) |
-| `/risco` | Gestão de Risco (IRE/IRG, fila, ficha, pizzas, território, decretos e tabela) |
-| `/api/focos` | Focos absolutos INPE AQUA_M-T, Amazônia, Amazonas |
-| `/api/alerts` | JSON dos alertas (`?tipo=CHUVA\|ALAGAMENTO\|MOVIMENTO\|EROSAO\|INCENDIO`) |
-| `/api/hydrology` | JSON das estações e cotas |
-| `/api/rainfall` | Acumulados CEMADEN 1 h / 6 h / 24 h / 72 h / 96 h por município e estação |
-| `/api/air-quality` | App SELVA primeiro; PurpleAir `pm2.5_24hour` se o SELVA falhar |
-| `/api/weather` | INMET Prevmet + estação mais próxima (`?ibge=` ou `?municipio=`): T atual, máx/mín, horizontes 24/48/72 h e 5 dias |
-| `/api/risco` | Índice de Risco dos 62 municípios — metodologia CEMOA do app original (IVM, IRE por evento, IRG, prioridades P1–P4, fator de alerta ao vivo). |
-| `/api/clima/merge` | PNG MERGE/CPTEC: anomalia mensal (`?produto=anomalia&qual=atual` ou `anterior`), dias sem precipitação (`?produto=dd`) e dias consecutivos sem precipitação (`?produto=cdd`) |
-| `/api/logs` | Log de erros de mapa/dados no front |
-| `/api/satellite/goes` | Metadados do infravermelho GOES-19 (CPTEC/INPE); `?refresh=1` força nova busca |
-| `/api/satellite/goes/image` | JPEG do último recorte em cache |
+## Documentação
 
-Query strings compartilhadas: `municipio`, `bacia` (bacia de alerta dos 62 municípios) e `calha` (calha fluviométrica do boletim). Os dois recortes não são o mesmo mapa — Japurá no painel não vira Médio Solimões no boletim; Baixo Solimões no boletim não vira Médio Solimões no painel. No painel também: `risco` (`ATIVOS`, `AGRAVADOS` ou o nível), `tipo`, `chuva` (filtro CEMADEN) e `ar` (filtro PurpleAir no incêndio). No boletim: `modo`, `status`.
+- [Operação do Centro](docs/operacao.md): sala de situação, rotina de plantão, ferramentas de edição no mapa e interface desktop versus mobile.
+- [Produtos de Alerta](docs/produtos-de-alerta.md): escalas operacionais, limiares de acionamento, qualidade do ar e camadas de apoio cartográfico.
+- [Índice de Vulnerabilidade e Risco](docs/indice-vulnerabilidade.md): formulação do IVM, IRE por evento, IRG, fatores de escala e pesos.
+- [Rotas de API](docs/apis.md): especificação dos endpoints internos, parâmetros de consulta e integrações com CEMADEN e INMET.
+- [Implantação e Infraestrutura](docs/deploy.md): instruções de deploy no Vercel, banco de dados Supabase e autenticação Google.
+- [Roadmap](docs/roadmap.md): planejamento e evolução técnica das próximas etapas da plataforma.
 
-No Painel de Alertas a lista ordena região e município pela gravidade, os chips **Ativos** / **Com agravamento** e as bacias com alerta filtram o recorte, a busca acha o município pelo nome e a ficha abre um briefing automático (nível, **tempo (chuva, temperatura e previsão)** e cota). O rodapé traz CEMADEN, INMET, CPTEC/INPE, App SELVA, PurpleAir e o horário da última atualização.
+## Licença
 
-A ficha do alerta junta três blocos de clima (não alteram o grau):
-
-- **Chuva · CEMADEN** — acumulados **1 h, 6 h, 24 h e 72 h**. A célula **7 dias** fica em — : o CEMADEN fecha no máximo em **96 h** (mostrado em nota quando há leitura) e a série de 7 dias do INMET Tempo não devolve dados neste recorte.
-- **Temperatura · INMET** — **atual** da estação automática mais próxima (`estacao/proxima/{IBGE}`, campo `TEM_INS`, horário tratado como UTC e convertido para Manaus), **máxima** e **mínima** da previsão do dia (Prevmet), com a observação da estação como reserva.
-- **Previsão · INMET** — horizontes **24 h, 48 h, 72 h e 5 dias** (resumo + T máx) a partir de `apiprevmet3.inmet.gov.br/previsao/{IBGE}`.
-
-Na **Gestão de Risco** (`/risco`) a ficha municipal traz o **Índice de Risco** da metodologia CEMOA (IVM + IRE por evento + IRG), a chuva CEMADEN e a previsão INMET. Ele não altera o grau do produto.
-
-## Índice de Risco — Metodologia CEMOA (IVM · IRE · IRG)
-
-A metodologia fica inteira na aba **Gestão de Risco** (`/risco`): KPIs, fila, ranking, ficha, pizzas, território, decretos e tabela. A imagem GOES-19 e o mapa de chuva ficam em **Meteorologia** (`/meteorologia`). Saiu da ficha do alerta e da ficha do boletim.
-
-A metodologia de priorização do app Streamlit original (`cemoa_app`) foi portada para TypeScript (`lib/metodologia.ts`), sem alterar os parâmetros de calibração, e é servida em `/api/risco` (`lib/metodologia-build.ts`). O IRE de cada evento e o IRG são recalculados na hora, município a município:
-
-- **IRE (evento)** = `((IVM + ameaça) × FS + agravo) × FE × FA`, teto 60. Eventos: Estiagem, Inundação, Incêndio/QAr, Erosão, Mov. Massa e Chuvas.
-- **IRG** = `0,7 × maior IRE + 0,3 × média`. Níveis P1 (Crítico ≥ 50 / Extremo ≥ 58), P2 (Alto ≥ 40), P3 (Elevado ≥ 30), P4 (Moderado ≥ 20 / Baixo). P1 só é confirmado com alerta do operador em evento súbito; sem alerta, rebaixa para P2.
-- **Dados mais atuais do Centro**: população e % rural do **Censo 2022** (`demografia.json`); pessoas em área de risco pelo **maior valor** entre os setores R3R4 do app original e o levantamento **SGB/CPRM + Casa Civil NT 1/2023** (`risco-movimento.json`, 39 municípios contra 30 do recorte antigo).
-- **Importados do app original** (`data/metodologia-cemoa.json`): IVM, % de terras indígenas, agravo por evento (0–9) e setores R3R4 (população, adensamento, flag de capital).
-- **Fator de alerta (FA)** ao vivo: classificação do operador nos produtos CHUVA, MOVIMENTO e INCENDIO — BAIXO/BOA = sem alerta (0,30), Moderado 0,70, Alto/RUIM 1,00, Severo/MUITO_RUIM 1,30, Extremo/PESSIMA 1,60. Eventos graduais (Estiagem, Inundação, Erosão) têm FA = 1.
-
-O índice **não altera** o grau dos produtos. PurpleAir **não** entra no IRE de incêndio — só a classificação do operador (fator de alerta). Paridade numérica com o app original validada nos 62 municípios (diferenças máximas de ±0,01 por arredondamento de ponto flutuante, sem mudança de nível ou prioridade).
-
-O XML do **CPTEC/INPE** também publica previsão municipal, mas exige um código interno diferente do IBGE; **CENSIPAM** não tem API pública de previsão de tempo; **Climatempo** é comercial (chave). A aba Clima de Meteorologia mostra a anomalia mensal do MERGE (CPTEC/INPE), o número de dias sem precipitação e o número de dias consecutivos sem precipitação, com exportação PNG desses dois índices.
-
-## Desktop, mobile e operador
-
-O posto segue a largura da tela: no **telefone** (largura &lt; 768 px) o layout mobile; no computador, o Desktop completo. Não há botão para forçar o mobile no posto de trabalho. Em telas a partir de 1024 px o Desktop mostra lista e mapa lado a lado. No telefone: **CEMOA + status operacional** no topo, **4–5 indicadores** (os graus do produto) e o **mapa ocupando o restante**. O botão **Amazonas** devolve o estado inteiro: fecha a ficha, limpa filtro de grau/bacia/calha e ajusta o recorte com os 62 municípios no grau **daquele produto**. O **Índice de Risco (IRE/IRG)** fica na aba Gestão de Risco. Os nomes dos municípios ficam em **Mapa → Mostrar nomes**. Toque no polígono para abrir a ficha. O rodapé, a fila do plantão e o chrome de operador ficam no Desktop. O botão **Escuro / Claro** persiste o tema em `localStorage` (`cemoa_theme`); se ainda não houver escolha, o painel segue a preferência do sistema. **Sala de situação** (Desktop) deixa mapa, totais e faixa de alertas; **Operação** ou **Esc** restaura lista, plantão e dashboard (`localStorage` `cemoa_map_focus`). No desktop a legenda e os KPIs trazem a ação de cada grau (Monitoramento, Atenção, Preparação, Ação iminente, Ação imediata). O ícone **Níveis de risco** (só no Desktop) abre o texto do art. 12 da Portaria MIDR nº 2.458/2026 — corpo, ação e rodapé de cada grau — e a classificação própria de qualidade do ar (MP2,5, que não segue o art. 12). No mobile o ícone não aparece: a legenda do mapa já traz o grau. **Ocultar** some com a legenda do mapa em qualquer posto (sala, mobile ou edição); o chip **Legenda** devolve. A escolha fica em `localStorage` (`cemoa_legend_hidden`). Ao ligar o polígono, a legenda some sozinha para não tapar os vértices.
-
-Cada alerta ativo tem um **cronômetro de validade** (HH:MM:SS): Moderado 6 h, Alto 4 h, Severo 2 h (Portaria MIDR nº 2.458/2026), Extremo 1 h. O prazo aparece no resumo do topo, na lista, no ticker e na ficha do município.
-
-A **fila do plantão** (lista da esquerda) junta o que **sugere** ação neste produto: **Vencido**, **Renovar** (prazo < 30 min ou chuva/cota pedindo elevar) e **Emitir** (limiar cruzado sem alerta ativo). Em todos os produtos a ação do operador é soberana — sensores e cotas **não classificam** o município. Em movimento de massa, só entra quem tem setor mapeado. Em alagamento, cota de inundação Moderado/Alto também entra na fila. Em incêndio, o MP2,5 de 24 h só sugere.
-
-No desktop, um sino no cabeçalho toca **quando o alerta vence** (e quando o Aviso Meteorológico de 12 h vence). Nenhum produto muda de cor sozinho. O sino liga/desliga o som (`localStorage` `cemoa_plantao_sound`). No mobile o centro permanece mudo.
-
-O **Aviso Meteorológico** tem duas camadas:
-
-- **Plantão 12 h** — turno do meteorologista, **07–19** (diurno) e **19–07** (noturno). O cronômetro vale até o fim daquele plantão. Faltando **1 hora**, o cartão do plantão fica amarelo; faltando **15 minutos** ou vencido, o pulso e o pedido de emissão ficam **só nesse cartão** — o mapa e o boletim não ganham faixa. Quem está autenticado emite pelo cartão. Na sala de situação o mapa permanece livre; o sino avisa o vencimento.
-- **Aviso 4 h** — arte oficial (código, cenário, calhas abrangidas, potencial evolução e validade). Janelas **02–06, 06–10, 10–14, 14–18, 18–22 e 22–02**, horário de Manaus. O compositor puxa o infravermelho **realçado** GOES-19 (sistemas convectivos) do acervo **CPTEC/INPE**, recorta no **contorno do Amazonas**, desenha os **limites municipais** e gera o PNG retrato. Sem imagem nova, o aviso ainda pode ser montado e o painel avisa com honestidade. O cartão do aviso e o ícone **Montar aviso** ficam na aba **Meteorologia**.
-
-**Operador** só no Desktop. O fluxo agora é separado:
-
-1. **Entrar** (ou **Criar operador** na primeira vez) — autentica. Até **6 operadores** podem estar logados ao mesmo tempo; o sétimo vê quem já está no posto. A mesma conta em outro computador assume o lugar e encerra a sessão antiga.
-2. **Edição** — liga/desliga as ferramentas do mapa sem sair da conta.
-3. **Sair** — encerra a sessão e libera a vaga no posto.
-
-Com a edição ligada, o operador classifica no **clique**, em **lote** ou por **mancha** (polígono), pode **Apagar polígono** (clique na mancha ou **Apagar todas**) e **Desfazer** (Ctrl+Z). Cada classificação registra quem, quando e a **duração** (2 h, 4 h, 6 h, 8 h, 10 h, 24 h ou 7 dias). O polígono existe só no Painel de Alertas — no boletim a edição continua no clique e no lote.
-
-- **Clique** — escolha o grau e a duração e toque nos municípios. O grau aparece na hora; a ficha não abre. **Encerrar edição** (ou Esc) fecha a sessão.
-- **Polígono (mancha)** — clique para marcar vértices e **Fechar mancha** (ou duplo clique). Só a área desenhada recebe a cor do grau; o município não é classificado por inteiro. Em Barcelos, Tapauá, Jutaí e outros de grande extensão, um risco local fica na mancha. **Esc** cancela o desenho.
-- **Apagar polígono** — com uma mancha, o botão apaga na hora. Com várias, entra no modo de apagar: clique a mancha no mapa ou use **Apagar todas**. **Desfazer** (Ctrl+Z) devolve a mancha. **Esc** cancela o modo.
-- **Lote** — escolha grau e duração, cole os nomes **por extenso** (um por linha ou separados por vírgula) e **Encerrar edição**.
-
-No mobile a edição fica oculta.
-
-### Quadro do Centro de Monitoramento
-
-Papel é identidade. Ninguém fica travado em um produto — geólogo também classifica chuva.
-
-| Pessoa | Papel |
-| --- | --- |
-| Karol, Lenizia, Luan, Gustavo, Adriana | Meteorologistas plantonistas |
-| Thayná, Igor | Geólogos · expediente |
-| Capitão BM Barroso | Chefe do Centro |
-| Demais contas | Operacional do Centro de Monitoramento |
-
-Logins sugeridos: `karol`, `lenizia`, `luan`, `gustavo`, `adriana`, `thayna`, `igor`, `barroso`. Crie a conta em **Equipe** (ícone de pessoas). Quem ainda não cadastrou aparece como “aguardando cadastro”.
-
-Senhas são hasheadas com scrypt. A sessão vai em cookie HTTP-only (`cemoa_sess`, 8 h, SameSite=Lax). O cabeçalho mostra **Posto n/6** com quem está autenticado no momento.
-
-### Primeiro operador
-
-O botão **Admin** abre o login. Com Supabase ligado, use o **e-mail e a senha** da conta em Authentication → Users. Depois ligue **Edição**. Sem Supabase, o primeiro acesso cria um admin local (`data/admins.json`).
-
-Em produção (Vercel), defina o operador do ambiente — o arquivo local **não sobrevive** a um reciclo serverless:
-
-```bash
-CEMOA_SESSION_SECRET=uma-string-longa-aleatoria
-CEMOA_ADMIN_LOGIN=igor
-CEMOA_ADMIN_PASSWORD=senha-forte-aqui
-CEMOA_ADMIN_NAME=Igor
-PURPLEAIR_API_KEY=chave-de-leitura-purpleair
-```
-
-`CEMOA_SESSION_SECRET` (mínimo 16 caracteres) assina o cookie de sessão (`cemoa_sess`, 8 h). Se faltar, o servidor assina com a `SUPABASE_SERVICE_ROLE_KEY` já definida no Vercel. O usuário do ambiente não se apaga pela interface. `PURPLEAIR_API_KEY` é a chave de leitura em [develop.purpleair.com](https://develop.purpleair.com/) — sem ela o incêndio cai no App SELVA (leitura atual). Com a chave, o mapa usa `/v1/sensors?fields=name,pm2.5_24hour,latitude,longitude&location_type=0` e o header `x-api-key`. O IVE usa **pm2.5_24hour**. Horários em America/Manaus (UTC-4).
-
-O site publicado é [https://cemoa-centro-operacoes.vercel.app](https://cemoa-centro-operacoes.vercel.app). O alias `operacoes.vercel.app` não aponta para um deploy — use o endereço completo acima.
-
-### Persistência: Supabase (mesmo projeto do Vercel)
-
-O cadastro em arquivo e as classificações em memória servem para desenvolvimento. Em produção o caminho é **Supabase** (Postgres + Auth + RLS), no **mesmo projeto** já associado ao Vercel:
-
-- os 62 municípios e as classificações do operador ficam no banco, não no disco da Vercel; as **manchas** de polígono gravam em `alert_stains`
-- vários operadores veem o mesmo mapa
-- Auth com e-mail/senha da equipe CEMOA
-- políticas RLS: `chefe`, `meteorologista`, `geologo` e `operacional` escrevem; o painel público só lê
-
-O host canônico é `https://xdxmmdwlincochbmwkri.supabase.co`. Se o Vercel ainda tiver o host antigo `nwjirzgygfnkfwlywpdd` (não resolve DNS), o centro troca sozinho para o canônico.
-
-1. No [SQL Editor](https://supabase.com/dashboard/project/xdxmmdwlincochbmwkri/sql) rode `supabase/schema.sql` (uma vez).
-2. A integração Vercel ↔ Supabase deve injetar no deploy:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://xdxmmdwlincochbmwkri.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...   # só no servidor, nunca no browser
-```
-
-O centro também aceita `SUPABASE_URL` e `SUPABASE_ANON_KEY` (nomes que a integração às vezes usa). Com essas variáveis, **Admin** entra pela conta do Auth e grava `alert_overrides` / `hydro_overrides` / avisos no Postgres. Sem elas, continua o modo local (cookie + arquivo).
-
-Como entrar:
-
-1. No Supabase: Authentication → Users → Add user (e-mail + senha). Marque o e-mail como confirmado, ou desligue **Confirm email** em Authentication → Providers → Email.
-2. Rode de novo o `schema.sql` se ainda não rodou o trigger de `profiles`.
-3. No painel: **Admin** → e-mail e senha dessa conta → **Edição**.
-
-Se o rodapé ainda diz “Supabase: aguardando chaves”, as variáveis não estão no ambiente do deploy — faça Redeploy depois de associar o projeto.
-
-### Entrar com Gmail
-
-O login pode usar **Google / Gmail** junto com usuário e senha.
-
-1. Crie um cliente OAuth 2.0 (tipo Web) no [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
-2. URI de redirecionamento: `https://SEU-DOMINIO/api/auth/google/callback` (local: `http://127.0.0.1:43127/api/auth/google/callback`).
-3. Defina:
-
-```bash
-GOOGLE_CLIENT_ID=....apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=....
-CEMOA_GOOGLE_EMAILS=seu.nome@gmail.com
-```
-
-`CEMOA_GOOGLE_EMAILS` (opcional, separados por vírgula) autoriza esses Gmails mesmo sem cadastro prévio. Sem essa lista, o **primeiro** Gmail vira o primeiro operador; os próximos precisam ser cadastrados (nome + Gmail) ou associar a conta pelo botão **Associar meu Gmail**.
-
-Contas `@gmail.com` e `@googlemail.com` são aceitas. Para Google Workspace, acrescente `CEMOA_GOOGLE_DOMAIN=suaempresa.com`.
-
-Sem as chaves do Google, o botão aparece desativado e o login por senha continua valendo.
-
-No boletim, a ficha do município mostra só o extremo do modo ativo: **máxima histórica** na inundação e **mínima histórica** na vazante (data e cota do relatório CEMOA). A cota entra na série **por data** (hoje por padrão; dá para lançar um dia antigo quando o município fica semanas sem enviar) e atualiza a ficha, o gráfico e o rótulo Atualizado / Dado de DD/MM. No lote, campo vazio na data escolhida vira **sem leitura**. O painel **Fabric** (monitoramento hidrometeorológico CEMOA) preenche as cotas dos rios; onde o código da estação é numérico, a **ANA** sobrepõe a telemetria do dia da leitura. Sem leitura no dia (horário de Manaus), o KPI **Sem leitura** conta o município. O mapa mostra o grau do relatório CEMOA (estiagem e inundação); cota Fabric/ANA **não reclassifica**.
-
-A ficha de qualquer produto (e a do boletim) diz se o município **tem área mapeada** de movimento de massa / deslizamento. Se tiver, mostra setores, tipo (deslizamento, movimento de massa, erosão de margem) e o **quantitativo de pessoas em área de risco** do levantamento federal (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem mapeamento, a ficha diz isso com clareza.
-
-## Chuva 1 h / 6 h / 24 h / 72 h (CEMADEN)
-
-O painel consulta a API pública do **CEMADEN** (`getJson2.php?uf=AM`): 95 pluviômetros automáticos em **58 dos 62** municípios. Sem estação nesta rede: Barcelos, Santa Isabel do Rio Negro, São Sebastião do Uatumã e Tefé.
-
-A chuva CEMADEN fica no **Painel de Alertas** (faixa do topo, lista e ficha). O Boletim Hidrológico não mistura esses acumulados — a ficha de lá é só cota e limiar.
-
-Cada município no painel mostra o **maior valor** entre os pontos da sede nas janelas **1 h**, **6 h** e **24 h**, em gráfico de barras (faixa geral e detalhe das estações). A ficha do alerta traz também **72 h** (e nota de **96 h** quando o CEMADEN publicou). A tabela das estações lista 1/6/24/72 h e abre o gráfico oficial:
-
-`https://resources.cemaden.gov.br/graficos/interativo/grafico_CEMADEN.php?idpcd={id}&uf=AM`
-
-No mapa, um pulso marca o município no limiar do produto: **≥ 20 mm/h** em chuva e alagamento, **≥ 50 mm/24 h** em movimento de massa (camada de chuva, não é classificação). O ranking à esquerda e a fila do plantão sugerem emitir ou elevar — só o operador classifica o grau.
-
-Traço (—) significa que o pluviômetro existe mas o CEMADEN ainda não fechou aquela janela (comum na estiagem, sobretudo em 1 h e 6 h).
-
-## Camadas de apoio no mapa
-
-O mapa nasce limpo: só as sedes (62 pontos pequenos), desligáveis no menu **Mapa**. As demais camadas só entram se o operador ligar, e só no produto em que fazem sentido.
-
-| Camada | Onde | Padrão | Fonte |
-| --- | --- | --- | --- |
-| Sedes municipais | Painel e Boletim | Ligada (pin pequeno; pode ocultar) | IBGE Localidades 2022 |
-| Pluviômetros CEMADEN | Chuva intensa, Alagamento e Movimento de massa | Desligada; ícone de 7 px | CEMADEN + encaixe no IBGE |
-| Comunidades rurais / indígenas | Painel e Boletim | Desligada; agrupadas no zoom amplo | IBGE 2022 |
-
-Áreas de risco **não** entram no mapa. Na ficha do produto **Movimento de massa** aparece se o município tem setor mapeado, quantos setores e, quando o levantamento federal publicou, quantas pessoas moram em área de risco geo-hidrológico (Casa Civil NT 1/2023 · SGB-CPRM/Cemaden · Censo 2022). Sem anel no mapa.
-
-O CEMADEN **não publica a coordenada do sensor**. Quando o nome da estação bate com uma localidade do mesmo município, o ponto vai para lá; senão fica na sede, com aviso no tooltip. Várias estações na mesma sede são espalhadas em círculo curto para não se sobrepor.
-
-A classificação de alerta **não** é alterada pela chuva. Limiares de apoio:
-
-| Produto | Recorte | Moderado | Alto | Severo |
-| --- | --- | --- | --- | --- |
-| Chuva intensa | Estado | 10 mm/1 h ou 20 mm/6 h | 20 mm/1 h ou 40 mm/6 h | 40 mm/1 h ou 60 mm/6 h (extremo: 60 mm/1 h ou 90 mm/6 h) |
-| Alagamento | Estado (exceto Manaus) | 20–40 mm/h | 40–70 mm/h | >70 mm/h |
-| Alagamento | Manaus | — | — | >20 mm/h (severo) |
-| Movimento de massa | Estado (exceto Manaus) | 50–85 mm/24 h | 85–140 mm/24 h | >140 mm/24 h |
-| Movimento de massa | Manaus | — | — | >30 mm/24 h (severo) |
-
-Rota: `GET /api/rainfall` (cache de 2 min no servidor). Filtros: **Com leitura**, **Com chuva** e o limiar do produto (`?chuva=COM_LEITURA` / `COM_CHUVA` / `INTENSO`: ≥ 20 mm/h na chuva/alagamento, ≥ 50 mm/24 h no movimento de massa).
-
-A API horária do INMET Tempo (estações automáticas A101 Manaus, A128 Barcelos etc.) existe, mas neste recorte o endpoint de série diária/horária não devolveu dados para montar acumulado de **7 dias**. A temperatura **atual** na ficha usa `estacao/proxima`; a previsão usa o Prevmet (`/api/weather`).
-
-## Empilhar
-
-Next.js (App Router), TypeScript, Tailwind CSS, componentes no padrão shadcn/ui, Leaflet. Mapa-base via proxy local de tiles OpenStreetMap (`/tiles/osm/...`) — sem Carto.
-
-## Próximas melhorias (não neste recorte)
-
-- Botão **Abrir plantão** no posto do operador, em vez de epoch no código, para zerar o quadro no início de cada dia.
-- Lista virtualizada se a fila e os 62 municípios pesarem em hardware fraco da sala.
-- Prefetch do GeoJSON da malha no idle, para o primeiro polígono não esperar o recorte.
-- Um único poll compartilhado entre painel e boletim quando as duas abas existirem na mesma sessão.
+Este projeto está licenciado sob a licença [MIT](LICENSE).
