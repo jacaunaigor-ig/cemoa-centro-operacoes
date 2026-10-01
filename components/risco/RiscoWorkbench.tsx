@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Droplets, Radio, ShieldAlert } from "lucide-react";
+import { Droplets, FileText, ImageDown, ListOrdered, Radio, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { IndiceCard } from "@/components/shared/IndiceCard";
 import { IndiceSheet } from "@/components/shared/IndiceSheet";
@@ -14,12 +14,21 @@ import { startVisiblePoll } from "@/lib/client-hooks";
 import { demografiaDo, formatHab } from "@/lib/demografia";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import { buildMetodologiaPayload, type MetodologiaPayload, type MetodologiaRow } from "@/lib/metodologia-build";
-import { CLASSES_IVM, EVENTOS_ORDEM, MET_NIVEIS, type MetPrioridade } from "@/lib/metodologia";
+import { CLASSES_IVM, EVENTOS_ORDEM, MET_NIVEIS, nivelDe, type MetPrioridade } from "@/lib/metodologia";
+import {
+  ESCALA_DEGRADE_RISCO,
+  RISCO_INDICADORES,
+  riscoDegrade,
+  valorIndicador,
+  type IndicadorRiscoId,
+} from "@/lib/metodologia-display";
+import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
 import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { decretoFill, decretosEstiagem, decretosInundacao } from "@/lib/decretos";
 import { STATIC_DEPLOY } from "@/lib/site";
 import type { RainfallMunicipio, RainfallPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const POLL_MS = 20_000;
 const AREA = new Map(MUNICIPALITIES.map((item) => [item.id, item.areaKm2]));
@@ -50,7 +59,7 @@ export function RiscoWorkbench() {
   const params = useSearchParams();
   const selectedNome = params.get("municipio");
 
-  const [payload, setPayload] = useState<MetodologiaPayload | null>(null);
+  const [payload, setPayload] = useState<MetodologiaPayload | null>(() => buildMetodologiaPayload());
   const [rain, setRain] = useState<RainfallPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>("operacao");
@@ -61,6 +70,15 @@ export function RiscoWorkbench() {
   const [classe, setClasse] = useState("todas");
   const [sortKey, setSortKey] = useState<SortKey>("irg");
   const [sortDesc, setSortDesc] = useState(true);
+  const [indicador, setIndicador] = useState<IndicadorRiscoId>("irg");
+  const [painelLateral, setPainelLateral] = useState<"ranking" | "ficha">(selectedNome ? "ficha" : "ranking");
+  const [exportando, setExportando] = useState(false);
+
+  useEffect(() => {
+    if (selectedNome) {
+      setPainelLateral("ficha");
+    }
+  }, [selectedNome]);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +154,112 @@ export function RiscoWorkbench() {
 
   function toggleRecorte(next: Recorte) {
     setRecorte((current) => (current === next ? "todos" : next));
+  }
+
+  const fills = useMemo(() => {
+    const next: Record<string, string> = {};
+    for (const row of rows) {
+      const val = valorIndicador(row, indicador);
+      next[row.nome] = riscoDegrade(val);
+    }
+    return next;
+  }, [rows, indicador]);
+
+  const titles = useMemo(() => {
+    const next: Record<string, string> = {};
+    const meta = RISCO_INDICADORES.find((i) => i.id === indicador) ?? RISCO_INDICADORES[0];
+    for (const row of rows) {
+      const val = valorIndicador(row, indicador);
+      const niv = nivelDe(val);
+      next[row.nome] = `${row.nome} · ${meta.label}: ${fmt(val)} pts (${niv.id} · ${niv.nome})`;
+    }
+    return next;
+  }, [rows, indicador]);
+
+  const contagensFaixa = useMemo(() => {
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    for (const row of rows) {
+      const val = valorIndicador(row, indicador);
+      const niv = nivelDe(val);
+      counts[niv.n] = (counts[niv.n] ?? 0) + 1;
+    }
+    return counts;
+  }, [rows, indicador]);
+
+  const statsIndicador = useMemo(() => {
+    if (!rows.length) return { media: 0, maxVal: 0, maxNome: "—", minVal: 0, minNome: "—" };
+    let sum = 0;
+    let max = -Infinity;
+    let maxNome = "";
+    let min = Infinity;
+    let minNome = "";
+    for (const r of rows) {
+      const v = valorIndicador(r, indicador);
+      sum += v;
+      if (v > max) {
+        max = v;
+        maxNome = r.nome;
+      }
+      if (v < min) {
+        min = v;
+        minNome = r.nome;
+      }
+    }
+    return {
+      media: sum / rows.length,
+      maxVal: max,
+      maxNome,
+      minVal: min,
+      minNome,
+    };
+  }, [rows, indicador]);
+
+  async function exportarRiscoPng(id: IndicadorRiscoId) {
+    if (!rows.length) return;
+    const meta = RISCO_INDICADORES.find((i) => i.id === id) ?? RISCO_INDICADORES[0];
+    setExportando(true);
+    try {
+      const municipios = rows
+        .map((r) => {
+          const val = valorIndicador(r, id);
+          return {
+            nome: r.nome,
+            valor: `${fmt(val)} pts`,
+            color: riscoDegrade(val),
+            val,
+          };
+        })
+        .sort((a, b) => b.val - a.val || a.nome.localeCompare(b.nome, "pt-BR"))
+        .map(({ nome, valor, color }) => ({ nome, valor, color }));
+
+      await exportInstitutionalPng({
+        title: "Gestão de Risco",
+        productLegend: `${meta.titulo} · Metodologia CEMOA (0 a 60)`,
+        filename: pngFilename(id === "irg" ? "metodologia_irg" : `metodologia_ire_${id.toLowerCase().replace(/[^a-z0-9]/g, "_")}`),
+        colorFor: (nome) => fills[nome] ?? "#e8eef5",
+        legendTitle: `Níveis de Risco (${meta.label})`,
+        legendItems: MET_NIVEIS.map((n) => ({
+          key: n.nome,
+          title: n.nome,
+          text: `Piso ${n.piso.toFixed(0)} pts`,
+          color: n.cor,
+          count: rows.filter((r) => nivelDe(valorIndicador(r, id)).n === n.n).length,
+        })),
+        municipios,
+        footerSources: "Metodologia CEMOA · cemoa_app · Censo 2022 · Defesa Civil do Amazonas",
+        extraNote: {
+          title: id === "irg" ? "Fórmula do IRG" : `Fórmula do ${meta.label}`,
+          text: id === "irg"
+            ? "IRG = 0,7 × maior IRE + 0,3 × média dos IREs. Níveis P1 (Crítico/Extremo ≥ 50), P2 (Alto ≥ 40), P3 (Elevado ≥ 30) e P4 (Moderado ≥ 20 / Baixo)."
+            : `IRE (${id}) = ((IVM + ameaça) × FS + agravo) × FE × FA, com teto de 60 pontos. Fator de alerta (FA) ao vivo pela classificação do operador.`,
+        },
+      });
+      toast.success(`PNG de ${meta.label} gerado com sucesso.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao gerar PNG.");
+    } finally {
+      setExportando(false);
+    }
   }
 
   return (
@@ -260,20 +384,149 @@ export function RiscoWorkbench() {
         </div>
 
         {aba === "operacao" ? (
-          <div className="grid min-h-[28rem] gap-2 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)]">
-            <IndiceSheet
-              className="max-h-[72vh] min-h-[22rem]"
-              rows={filtered}
-              selectedId={selected?.codigo}
-              hideScopeFilters
-              loading={loading}
-              onPick={pick}
-            />
-            <Ficha
-              row={selected}
-              rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
-              onClear={() => setQuery({ municipio: null })}
-            />
+          <div className="grid gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-panel p-2">
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="mr-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+                  Degradê:
+                </span>
+                {RISCO_INDICADORES.map((ind) => (
+                  <button
+                    key={ind.id}
+                    type="button"
+                    aria-pressed={indicador === ind.id}
+                    onClick={() => setIndicador(ind.id)}
+                    className={cn(
+                      "min-h-9 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-colors sm:text-xs",
+                      indicador === ind.id
+                        ? "border-brand bg-brand text-white shadow-sm"
+                        : "border-border bg-hover/60 text-text hover:bg-hover",
+                    )}
+                  >
+                    {ind.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={exportando || STATIC_DEPLOY || !rows.length}
+                onClick={() => void exportarRiscoPng(indicador)}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border bg-hover/70 px-3 py-1 text-[11px] font-bold text-text transition-colors hover:bg-hover disabled:opacity-50 sm:text-xs"
+                title={`Gerar PNG institucional em alta resolução (${RISCO_INDICADORES.find((i) => i.id === indicador)?.label})`}
+              >
+                <ImageDown className="size-3.5 text-brand" />
+                {exportando ? "Gerando PNG…" : `Gerar PNG ${RISCO_INDICADORES.find((i) => i.id === indicador)?.label}`}
+              </button>
+            </div>
+
+            <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_26rem] xl:items-start">
+              <div className="grid content-start gap-2">
+                {STATIC_DEPLOY ? (
+                  <p className="rounded-xl border border-border bg-panel p-4 text-sm text-text-mute">
+                    O mapa de risco fica indisponível na publicação estática.
+                  </p>
+                ) : (
+                  <MunicipioChoropleth
+                    fills={fills}
+                    titles={titles}
+                    selected={selected?.nome}
+                    onSelect={(nome) => {
+                      const r = rows.find((item) => item.nome === nome);
+                      if (r) {
+                        pick(r);
+                        setPainelLateral("ficha");
+                      }
+                    }}
+                  />
+                )}
+
+                <div className="rounded-xl border border-border bg-panel p-2.5">
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                    <span className="font-bold text-text">
+                      Escala de Degradê · {RISCO_INDICADORES.find((i) => i.id === indicador)?.label} (0 a 60 pts)
+                    </span>
+                    <span className="font-mono text-text-mute">
+                      Média: {fmt(statsIndicador.media)} pts · Pico: {statsIndicador.maxNome} ({fmt(statsIndicador.maxVal)} pts)
+                    </span>
+                  </div>
+
+                  <div
+                    className="h-2.5 w-full rounded-full border border-border/60"
+                    style={{
+                      background:
+                        "linear-gradient(to right, #22c55e 0%, #facc15 33.3%, #f59e0b 50%, #d7410f 66.7%, #e11d48 83.3%, #7c3aed 96.7%, #4c1d95 100%)",
+                    }}
+                  />
+
+                  <ul className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-text-mute">
+                    {ESCALA_DEGRADE_RISCO.map((item) => {
+                      const niv = MET_NIVEIS.find((n) => n.nome === item.label);
+                      const qtd = niv ? contagensFaixa[niv.n] ?? 0 : 0;
+                      return (
+                        <li key={item.ate} className="flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-sm border border-border" style={{ background: item.cor }} />
+                          <span className="font-semibold text-text">{item.label}</span>
+                          <span className="font-mono tabular-nums text-text-mute">({qtd})</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="grid content-start gap-2">
+                <div className="flex rounded-xl border border-border bg-panel p-1">
+                  <button
+                    type="button"
+                    onClick={() => setPainelLateral("ranking")}
+                    className={cn(
+                      "flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-bold transition-colors",
+                      painelLateral === "ranking" ? "bg-brand text-white shadow-sm" : "text-text-mute hover:text-text",
+                    )}
+                  >
+                    <ListOrdered className="size-3.5" />
+                    Ranking ({filtered.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPainelLateral("ficha")}
+                    className={cn(
+                      "flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-bold transition-colors",
+                      painelLateral === "ficha" ? "bg-brand text-white shadow-sm" : "text-text-mute hover:text-text",
+                    )}
+                  >
+                    <FileText className="size-3.5" />
+                    {selected ? `Ficha · ${selected.nome}` : "Ficha municipal"}
+                  </button>
+                </div>
+
+                {painelLateral === "ranking" ? (
+                  <IndiceSheet
+                    className="max-h-[68vh] min-h-[22rem]"
+                    rows={filtered}
+                    selectedId={selected?.codigo}
+                    hideScopeFilters
+                    loading={loading}
+                    evento={indicador}
+                    onEventoChange={(ev) => setIndicador(ev as IndicadorRiscoId)}
+                    onPick={(row) => {
+                      pick(row);
+                      setPainelLateral("ficha");
+                    }}
+                  />
+                ) : (
+                  <Ficha
+                    row={selected}
+                    rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
+                    onClear={() => {
+                      setQuery({ municipio: null });
+                      setPainelLateral("ranking");
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         ) : null}
 

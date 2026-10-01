@@ -12,7 +12,7 @@ import {
 import type { MetodologiaRow } from "@/lib/metodologia-build";
 import { cn } from "@/lib/utils";
 
-type FiltroEvento = "irg" | MetodologiaEvento;
+export type FiltroEvento = "irg" | MetodologiaEvento;
 
 const EVENTO_FILTERS: Array<{ id: FiltroEvento; label: string }> = [
   { id: "irg", label: "IRG (geral)" },
@@ -50,6 +50,8 @@ export function IndiceSheet({
   hideScopeFilters = false,
   loading = false,
   className,
+  evento: eventoProp,
+  onEventoChange,
 }: {
   rows: MetodologiaRow[];
   onPick: (row: MetodologiaRow) => void;
@@ -58,8 +60,15 @@ export function IndiceSheet({
   hideScopeFilters?: boolean;
   loading?: boolean;
   className?: string;
+  evento?: FiltroEvento;
+  onEventoChange?: (evento: FiltroEvento) => void;
 }) {
-  const [evento, setEvento] = useState<FiltroEvento>("irg");
+  const [localEvento, setLocalEvento] = useState<FiltroEvento>("irg");
+  const evento = eventoProp !== undefined ? eventoProp : localEvento;
+  const setEvento = (next: FiltroEvento) => {
+    setLocalEvento(next);
+    onEventoChange?.(next);
+  };
   const [prioridade, setPrioridade] = useState<"todas" | MetPrioridade>("todas");
   const [calha, setCalha] = useState("todas");
 

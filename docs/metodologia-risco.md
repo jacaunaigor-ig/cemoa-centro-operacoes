@@ -38,14 +38,16 @@ O valor resultante de cada IRE é limitado ao teto de 60 pontos.
   - Ameaça Capital (Manaus): Incêndio/QAr = 15, Chuvas = 15, Mov. Massa = 12
 - **Bônus PIMF**: municípios prioritários do Plano Integrado de Manejo do Fogo recebem acréscimo de +8 pontos na ameaça para o evento Incêndio/QAr.
 - **Fator de Sensibilidade (FS)**:
-  - Estiagem, Inundação, Incêndio/QAr e Erosão: 1,1
+  - Estiagem, Incêndio/QAr e Erosão: 1,1
+  - Inundação: 0,9 (fator sazonal)
   - Chuvas: 1,0
   - Movimento de Massa: 0,9
 - **Agravo por Evento (0 a 9)**: histórico e criticidade do município cadastrados na base metodológica (`metodologia-cemoa.json`). No caso de estiagem, soma-se o Bônus Contextual (BC) calculado pela proporção de população rural e de terras indígenas (teto de 9).
 - **Fator de Exposição (FE)**: modela a concentração de população em áreas de risco R3 e R4, densidade demográfica, adensamento urbano e características de ruralidade/terras indígenas.
 - **Fator de Alerta (FA)**: fator dinâmico baseado na classificação do operador no painel operacional:
-  - Eventos graduais (Estiagem, Inundação, Erosão): valor fixo 1,0.
-  - Eventos súbitos (Chuva, Movimento de Massa, Incêndio): Sem alerta = 0,30; Moderado = 0,70; Alto / Ruim = 1,00; Severo / Muito Ruim = 1,30; Extremo / Péssima = 1,60.
+  - Eventos graduais estáticos (Estiagem, Erosão): valor fixo 1,0.
+  - Inundação (evento gradual de bacia, distinto de alagamento pluvial): considera FA da situação de enchente/cheia — na ausência de alerta de inundação (como no período de vazante/estiagem), adota Sem alerta = 0,30, mantendo os 62 municípios sob risco baixo (< 20 pontos), regidos pelo IVM e pelo histórico de decretos. Havendo alerta de cheia, aplica Moderado = 0,70, Alto = 1,00 ou Severo = 1,30.
+  - Eventos súbitos (Chuva, Movimento de Massa, Incêndio): Sem alerta = 0,30; Moderado = 0,70; Alto / Ruim = 1,00; Severo / Muito Ruim = 1,30; Extremo / Péssima = 1,60. *Nota*: Inundação (cheia lenta dos rios) é conceitualmente distinta de Alagamento (súbito, com relação direta com o volume de chuvas em 1 h).
 
 ### 3. Índice de Risco Global (IRG)
 
@@ -75,6 +77,14 @@ A confirmação da prioridade P1 exige que o município apresente no mínimo 2 e
 Em eventos súbitos, a atribuição de P1 depende de alerta ativo emitido pelo operador no painel. Municípios que atingem pontuação de P1 sem alerta correspondente do operador são rebaixados operacionalmente para a prioridade P2 (nível Alto).
 
 O IRG e os índices da metodologia servem para ordenamento e priorização analítica de risco, não alterando automaticamente as cores dos produtos no Painel de Alertas ou no Boletim Hidrológico.
+
+## Visualização Cartográfica e Exportação (PNG)
+
+A tela inicial de Gestão de Risco traz um mapa temático em degradê contínuo cobrindo os 62 municípios do estado:
+
+- **Seletores de Indicador**: permite alternar instantaneamente entre o **IRG (Geral)** e cada um dos seis **IREs setoriais** (Estiagem, Inundação, Incêndio/QAr, Erosão, Movimento de Massa e Chuvas).
+- **Degradê Contínuo**: interpolação suave seguindo a escala cromática oficial da metodologia CEMOA (do verde ao roxo/extremo), com escala visual de 0 a 60 pontos e contagem de municípios por nível.
+- **Exportação Institucional em Alta Resolução**: botão dedicado para gerar PNG cartográfico oficial (com cabeçalho institucional, legenda de níveis, ranking completo e notas metodológicas).
 
 ## Dados de Origem
 

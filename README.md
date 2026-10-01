@@ -9,7 +9,7 @@ Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 m
 | Painel de Alertas | `/` | Alertas de chuva intensa, alagamento, movimento de massa, erosão de margem e incêndio/qualidade do ar, com classificação no mapa por clique, lote ou polígono |
 | Boletim Hidrológico | `/boletim` | Estiagem e inundação por município e calha, cotas dos rios, limiares ANA/SGB e projeção |
 | Meteorologia | `/meteorologia` | Aviso meteorológico do plantão, chuva CEMADEN, imagem GOES-19 e análise climática (MERGE/CPTEC) |
-| Gestão de Risco | `/risco` | Índices IVM, IRE e IRG, fila de prioridade, ficha municipal, território (Censo 2022) e decretos |
+| Gestão de Risco | `/risco` | Mapa em degradê do IRG e IREs com exportação em PNG, índices IVM, IRE e IRG, ranking, ficha municipal, território (Censo 2022) e decretos |
 
 ## Fontes de dados
 

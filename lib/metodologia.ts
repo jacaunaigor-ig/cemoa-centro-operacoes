@@ -64,7 +64,7 @@ export const EVENTOS_SUBITOS: readonly MetodologiaEvento[] = [
 
 export const FS: Record<MetodologiaEvento, number> = {
   Estiagem: 1.1,
-  "Inundação": 1.1,
+  "Inundação": 0.9,
   "Incêndio/QAr": 1.1,
   "Erosão": 1.1,
   "Mov. Massa": 0.9,
@@ -217,7 +217,7 @@ export function getFatorAlerta(
   evento: MetodologiaEvento,
   nivel: NivelAlertaMet | null | undefined,
 ): number {
-  if (!EVENTOS_SUBITOS.includes(evento)) return 1.0;
+  if (!EVENTOS_SUBITOS.includes(evento) && evento !== "Inundação") return 1.0;
   if (!nivel || nivel === "Sem alerta") return FATOR_ALERTA["Sem alerta"];
   return FATOR_ALERTA[nivel] ?? 0.3;
 }
