@@ -298,8 +298,8 @@ export function AppShell({
               title="Sincronizado"
               body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} ${
                 supabaseConfigured
-                  ? "Supabase ligado: classificações e cotas gravam no Postgres do mesmo projeto associado ao Vercel."
-                  : "Supabase aguardando chaves: o centro está pronto — cole URL e chave no Vercel (ou em .env.local). Até lá, cookie + memória."
+                  ? "Supabase ligado: classificações e cotas gravam no Postgres."
+                  : "Supabase aguardando chaves: o centro está pronto — configure URL e chave (em .env.local ou variáveis de ambiente). Até lá, cookie + memória."
               }`}
             >
               <button

@@ -146,7 +146,7 @@ export async function signInSupabase(
   } catch (err) {
     const hint = err instanceof Error ? err.message : "erro de rede";
     return {
-      error: `Não foi possível falar com o Supabase (${hint}). Confira URL e chaves no Vercel.`,
+      error: `Não foi possível falar com o Supabase (${hint}). Confira URL e chaves do Supabase nas variáveis de ambiente.`,
       status: 502,
     };
   }
