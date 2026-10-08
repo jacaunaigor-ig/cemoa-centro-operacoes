@@ -48,4 +48,4 @@ Corte de 8 de outubro de 2026. O Centro já opera os cinco produtos de alerta, o
 | Alertas | Grau no mapa = pior evidência ao vivo, salvo se o operador elevou. Fila só com vencido, renovar e emitir. |
 | Boletim | Depois das 16 h, a cota do dia vigente está marcada. Sem leitura de hoje não herda a cor de ontem sem aviso. |
 | Meteorologia | Mapa + acumulado + GOES abaixo. Cena com hora de Manaus. Cinza = sem pluviômetro. |
-| Risco / apresentação | PNG IRG/IRE só top 10. Apresentar: três números, um mapa, três nomes. |
+| Risco | PNG IRG/IRE só top 10. |

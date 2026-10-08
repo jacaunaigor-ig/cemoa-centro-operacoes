@@ -225,7 +225,7 @@ export function MeteorologiaWorkbench() {
         <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
           {([
             ["chuva", "Chuva"],
-            ["clima", "Estiagem"],
+            ["clima", "Clima"],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -427,7 +427,7 @@ export function MeteorologiaWorkbench() {
 
         <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
           <div>
-            <h3 className="text-sm font-black">Estiagem · MERGE</h3>
+            <h3 className="text-sm font-black">Clima · MERGE</h3>
             <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
               Contexto de estiagem, sem classificar chuva nem alerta. Vermelho é déficit em relação à climatologia; azul é excesso.
               Fonte:{" "}

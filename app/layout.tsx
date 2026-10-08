@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { OpsModeProvider } from "@/components/shared/OpsMode";
-import { ApresentacaoHost } from "@/components/apresentacao/ApresentacaoHost";
 import { ThemeToaster } from "@/components/shared/ThemeToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -51,9 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <OpsModeProvider>
           <TooltipProvider>
-            <Suspense fallback={children}>
-              <ApresentacaoHost>{children}</ApresentacaoHost>
-            </Suspense>
+            <Suspense fallback={children}>{children}</Suspense>
           </TooltipProvider>
           <ThemeToaster />
         </OpsModeProvider>
