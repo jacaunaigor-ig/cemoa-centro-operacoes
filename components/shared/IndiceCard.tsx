@@ -3,8 +3,7 @@ import {
   BONUS_PIMF,
   CLASSES_IVM,
   EVENTOS_ORDEM,
-  EVENTOS_SUBITOS,
-  FATOR_ALERTA,
+  getFatorAlerta,
   nivelDe,
   TETO_IRG,
   type MetodologiaEvento,
@@ -17,6 +16,7 @@ const EVENTO_LABEL: Record<MetodologiaEvento, string> = {
   Estiagem: "Estiagem",
   "Inundação": "Inundação",
   "Incêndio/QAr": "Incêndio / Q. do ar",
+  "Ondas de calor": "Ondas de calor",
   "Erosão": "Erosão",
   "Mov. Massa": "Mov. de massa",
   Chuvas: "Chuvas",
@@ -133,7 +133,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
           const fe = rec.fePorEvento[ev];
           const agr = rec.agrPorEvento[ev];
           const alerta = rec.alertasVivos[ev];
-          const subito = EVENTOS_SUBITOS.includes(ev);
+          const fa = getFatorAlerta(ev, alerta);
           return (
             <li key={ev}>
               <p className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[11px] text-text-dim">
@@ -159,12 +159,10 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
               <p className="mt-0.5 flex flex-wrap gap-x-2 text-[9px] font-bold text-text-mute">
                 {agr > 0 ? <span>Agravo +{agr}</span> : null}
                 {fe !== 1 ? <span>FE ×{fmt(fe)}</span> : null}
-                {subito ? (
-                  <span>
-                    FA ×{FATOR_ALERTA[alerta ?? "Sem alerta"]}
-                    {alerta && alerta !== "Sem alerta" ? ` (${alerta})` : " (sem alerta)"}
-                  </span>
-                ) : null}
+                <span>
+                  FA ×{fmt(fa)}
+                  {alerta && alerta !== "Sem alerta" ? ` (${alerta})` : " (sem alerta)"}
+                </span>
               </p>
             </li>
           );
@@ -173,8 +171,8 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
 
       <p className="mt-2 text-[10px] text-text-mute">
         Metodologia CEMOA · IRE = ((IVM + ameaça) × FS × FE × FA) + agravo ·
-        IRG = 0,6 × maior IRE + 0,2 × média + 0,2 × IVM (escalado) · FA ao vivo pela
-        classificação do operador; o agravo (histórico) não é reduzido pelo alerta.
+        IRG = 0,6 × maior IRE + 0,2 × média + 0,2 × IVM (escalado) · FA ao vivo pelo
+        boletim de estiagem e pelos alertas do painel; o agravo (histórico) não é reduzido pelo alerta.
       </p>
     </div>
   );

@@ -6,16 +6,18 @@
 //   - dados mais atualizados do Centro (Censo 2022, SGB/CPRM, alertas ao vivo)
 //   - parâmetros importados do app original (IVM, %TI, agravo, setores R3R4)
 //
-// O fator de alerta (FA) dos eventos súbitos vem da classificação do
-// operador nos produtos CHUVA, MOVIMENTO e INCENDIO:
-//   BAIXO/BOA → "Sem alerta" (0,30) · MODERADO → 0,70 · ALTO/RUIM → 1,00 ·
+// O fator de alerta (FA) vem do boletim de estiagem e dos produtos do
+// painel (chuva, alagamento, movimento, erosão, incêndio e ondas de calor):
+//   BAIXO/BOA/NORMAL → "Sem alerta" (0,30) · MODERADO → 0,70 · ALTO/RUIM → 1,00 ·
 //   SEVERO/MUITO_RUIM → 1,30 · EXTREMO/PESSIMA → 1,60
+// Erosão sem classificação do operador permanece em FA 1.
 // -----------------------------------------------------------------------------
 
 import raw from "@/data/metodologia-cemoa.json";
 import { demografiaDo } from "@/lib/demografia";
 import { buildAlertsPayload } from "@/lib/live-state";
 import { decretosInundacao } from "@/lib/decretos";
+import { catalogStations } from "@/lib/hydrology";
 import { pessoasRiscoDo } from "@/lib/mass-risk";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import {
@@ -31,7 +33,20 @@ import {
 } from "@/lib/metodologia";
 import type { AlertLevel } from "@/lib/types";
 
-const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · classificação do operador ao vivo`;
+const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · boletim de estiagem e alertas ao vivo`;
+
+const ORDEM_ALERTA: NivelAlertaMet[] = ["Sem alerta", "Moderado", "Alto", "Severo", "Extremo"];
+
+function piorNivel(a: NivelAlertaMet, b: NivelAlertaMet): NivelAlertaMet {
+  return ORDEM_ALERTA.indexOf(b) > ORDEM_ALERTA.indexOf(a) ? b : a;
+}
+
+function nivelHidro(status: string | undefined): NivelAlertaMet {
+  if (status === "MODERADO") return "Moderado";
+  if (status === "ALTO") return "Alto";
+  if (status === "SEVERO") return "Severo";
+  return "Sem alerta";
+}
 
 // =============================================================================
 // Arquivo de parâmetros importado do cemoa_app
@@ -123,17 +138,25 @@ export function nivelAlertaMet(level: AlertLevel | undefined): NivelAlertaMet {
 
 export function buildMetodologiaPayload(
   now = Date.now(),
+  calorById?: Record<string, AlertLevel | undefined> | null,
 ): MetodologiaPayload {
-  // ---- 1. Alertas ao vivo por produto (classificação do operador) ---------
+  // ---- 1. Alertas ao vivo por produto e grau do boletim de estiagem -------
   const chuvaMap = new Map(
     buildAlertsPayload(now, "CHUVA").municipios.map((r) => [r.id, r.risco]),
+  );
+  const alagamentoMap = new Map(
+    buildAlertsPayload(now, "ALAGAMENTO").municipios.map((r) => [r.id, r.risco]),
   );
   const movimentoMap = new Map(
     buildAlertsPayload(now, "MOVIMENTO").municipios.map((r) => [r.id, r.risco]),
   );
+  const erosaoMap = new Map(
+    buildAlertsPayload(now, "EROSAO").municipios.map((r) => [r.id, r.risco]),
+  );
   const incendioMap = new Map(
     buildAlertsPayload(now, "INCENDIO").municipios.map((r) => [r.id, r.risco]),
   );
+  const hidroMap = new Map(catalogStations().map((s) => [s.id, s.statusVazante]));
 
   // ---- 2. Processamento dos 62 municípios ---------------------------------
   const rows: MetodologiaRow[] = [];
@@ -169,9 +192,12 @@ export function buildMetodologiaPayload(
     // prevalece: o IRE permanece Baixo. O agravo só ordena pelo histórico
     // de decretos, sem competir com a estiagem no IRG.
     const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
-      Chuvas: nivelAlertaMet(chuvaMap.get(m.id)),
+      Estiagem: nivelHidro(hidroMap.get(m.id)),
+      Chuvas: piorNivel(nivelAlertaMet(chuvaMap.get(m.id)), nivelAlertaMet(alagamentoMap.get(m.id))),
       "Mov. Massa": nivelAlertaMet(movimentoMap.get(m.id)),
+      "Erosão": nivelAlertaMet(erosaoMap.get(m.id)),
       "Incêndio/QAr": nivelAlertaMet(incendioMap.get(m.id)),
+      "Ondas de calor": nivelAlertaMet(calorById?.[m.id]),
       "Inundação": "Sem alerta",
     };
 

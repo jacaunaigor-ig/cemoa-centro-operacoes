@@ -8,6 +8,7 @@ import type {
   HydroTendencia,
 } from "@/lib/types";
 import raw from "@/data/hydrology.json";
+import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
 import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
 export const CALHAS = [
@@ -161,6 +162,13 @@ const FILE = raw as RawFile;
 
 export const HYDRO_DIAS = FILE.dias;
 export const HYDRO_REFERENCIA = FILE.referencia;
+
+/** Depois das 16 h de Manaus o boletim do dia vigente substitui a data do snapshot. */
+export function hydroBoletimDiaIso(now = Date.now()) {
+  const clock = relogioDoFuso(now, FUSO_MANAUS);
+  if (clock.hour >= ANA_HORAS[0]) return hydroTodayIso(now);
+  return FILE.referencia;
+}
 
 export function formatHydroRef(ref: string | null | undefined) {
   if (!ref) return "—";
@@ -386,16 +394,31 @@ export function contarStatus(stations: HydroStation[], modo: HydroMode) {
   let severo = 0;
   let comLeitura = 0;
   let semLeitura = 0;
+  let cotaHoje = 0;
+  let serieAntiga = 0;
   for (const e of stations) {
     if (e.semLeitura) semLeitura += 1;
     else comLeitura += 1;
+    const sit = situacaoLeitura(e);
+    if (sit.atual) cotaHoje += 1;
+    else if (sit.temLeitura && !sit.semEstacao) serieAntiga += 1;
     const st = statusAtivo(e, modo);
     if (st === "SEVERO") severo += 1;
     else if (st === "ALTO") alto += 1;
     else if (st === "MODERADO") moderado += 1;
     else baixo += 1;
   }
-  return { total: stations.length, baixo, moderado, alto, severo, comLeitura, semLeitura };
+  return {
+    total: stations.length,
+    baixo,
+    moderado,
+    alto,
+    severo,
+    comLeitura,
+    semLeitura,
+    cotaHoje,
+    serieAntiga,
+  };
 }
 
 export function catalogAnaCodes(): string[] {

@@ -21,20 +21,7 @@
     "Negro",
     "Purus"
   ],
-  "mudancas24h": [
-    {
-      "municipio": "Tapauá",
-      "modo": "enchente",
-      "de": "MODERADO",
-      "para": "BAIXO"
-    },
-    {
-      "municipio": "Humaitá",
-      "modo": "enchente",
-      "de": "MODERADO",
-      "para": "BAIXO"
-    }
-  ],
+  "mudancas24h": [],
   "rios": [
     {
       "id": "solimoes",
@@ -146,7 +133,7 @@
       "variacao": -0.06,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -7.542833,
       "lng": -72.576706,
@@ -155,12 +142,12 @@
       "baciaChuva": "Juruá",
       "rio": "Rio Juruá",
       "limitesVazante": {
-        "alto": 4.0,
-        "moderado": 6.0
+        "alto": 4,
+        "moderado": 6
       },
       "limitesEnchente": {
-        "alto": 13.0,
-        "moderado": 11.0
+        "alto": 13,
+        "moderado": 11
       },
       "maximaHistorica": {
         "data": "13/05/2009",
@@ -185,10 +172,10 @@
         null
       ],
       "cota": 3.25,
-      "variacao": 0.0,
+      "variacao": 0,
       "tendencia": "PARADO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -7.051434,
       "lng": -71.692764,
@@ -201,8 +188,8 @@
         "moderado": null
       },
       "limitesEnchente": {
-        "alto": 13.0,
-        "moderado": 12.0
+        "alto": 13,
+        "moderado": 12
       },
       "maximaHistorica": {
         "data": "18/04/1986",
@@ -230,7 +217,7 @@
       "variacao": -0.04,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -7.43278,
       "lng": -70.022781,
@@ -243,8 +230,8 @@
         "moderado": null
       },
       "limitesEnchente": {
-        "alto": 15.0,
-        "moderado": 13.0
+        "alto": 15,
+        "moderado": 13
       },
       "maximaHistorica": {
         "data": "25/02/2021",
@@ -272,7 +259,7 @@
       "variacao": -0.06,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -6.43852,
       "lng": -68.2437,
@@ -281,12 +268,12 @@
       "baciaChuva": "Juruá",
       "rio": "Rio Juruá",
       "limitesVazante": {
-        "alto": 8.0,
-        "moderado": 12.0
+        "alto": 8,
+        "moderado": 12
       },
       "limitesEnchente": {
         "alto": 19.5,
-        "moderado": 18.0
+        "moderado": 18
       },
       "maximaHistorica": {
         "data": "07/04/2015",
@@ -314,7 +301,7 @@
       "variacao": -0.04,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -6.65677,
       "lng": -69.8662,
@@ -323,12 +310,12 @@
       "baciaChuva": "Juruá",
       "rio": "Rio Juruá",
       "limitesVazante": {
-        "alto": 4.0,
-        "moderado": 5.0
+        "alto": 4,
+        "moderado": 5
       },
       "limitesEnchente": {
-        "alto": 16.0,
-        "moderado": 15.0
+        "alto": 16,
+        "moderado": 15
       },
       "maximaHistorica": {
         "data": "08/03/2021",
@@ -356,7 +343,7 @@
       "variacao": null,
       "tendencia": "SL",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -4.88161,
       "lng": -66.9086,
@@ -365,8 +352,8 @@
       "baciaChuva": "Juruá",
       "rio": "Rio Juruá",
       "limitesVazante": {
-        "alto": 18.0,
-        "moderado": 20.0
+        "alto": 18,
+        "moderado": 20
       },
       "limitesEnchente": {
         "alto": null,
@@ -392,7 +379,7 @@
       "variacao": null,
       "tendencia": "SL",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -3.473342,
       "lng": -66.06456,
@@ -428,7 +415,7 @@
       "variacao": null,
       "tendencia": "SL",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -8.74314,
       "lng": -67.399307,
@@ -437,11 +424,11 @@
       "baciaChuva": "Purus",
       "rio": "Rio Purus",
       "limitesVazante": {
-        "alto": 5.0,
-        "moderado": 6.0
+        "alto": 5,
+        "moderado": 6
       },
       "limitesEnchente": {
-        "alto": 18.0,
+        "alto": 18,
         "moderado": 16.5
       },
       "maximaHistorica": {
@@ -470,7 +457,7 @@
       "variacao": -0.03,
       "tendencia": "PARADO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -7.71638,
       "lng": -67.002502,
@@ -483,12 +470,12 @@
         "moderado": null
       },
       "limitesEnchente": {
-        "alto": 22.0,
+        "alto": 22,
         "moderado": 21.5
       },
       "maximaHistorica": {
         "data": "28/03/1997",
-        "cota": 25.0
+        "cota": 25
       },
       "minimaHistorica": {
         "data": "16/09/1967",
@@ -512,7 +499,7 @@
       "variacao": -0.05,
       "tendencia": "BAIXANDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -7.260879,
       "lng": -64.799728,
@@ -521,11 +508,11 @@
       "baciaChuva": "Purus",
       "rio": "Rio Purus",
       "limitesVazante": {
-        "alto": 6.0,
-        "moderado": 10.0
+        "alto": 6,
+        "moderado": 10
       },
       "limitesEnchente": {
-        "alto": 19.0,
+        "alto": 19,
         "moderado": 17.43
       },
       "maximaHistorica": {
@@ -553,9 +540,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -6.52582,
       "lng": -64.3953,
       "id": "1300904",
@@ -567,8 +554,8 @@
         "moderado": null
       },
       "limitesEnchente": {
-        "alto": 23.0,
-        "moderado": 22.0
+        "alto": 23,
+        "moderado": 22
       },
       "maximaHistorica": {
         "data": "17/04/1997",
@@ -595,9 +582,9 @@
       "cota": 13.68,
       "variacao": -0.12,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -5.627966,
       "lng": -63.187866,
       "id": "1304104",
@@ -631,9 +618,9 @@
       "cota": 15.92,
       "variacao": -0.27,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -3.89874,
       "lng": -61.3616,
       "id": "1300631",
@@ -641,12 +628,12 @@
       "baciaChuva": "Purus",
       "rio": "Rio Purus",
       "limitesVazante": {
-        "alto": 12.0,
-        "moderado": 13.0
+        "alto": 12,
+        "moderado": 13
       },
       "limitesEnchente": {
         "alto": 19.5,
-        "moderado": 17.0
+        "moderado": 17
       },
       "maximaHistorica": {
         "data": "24/06/2015",
@@ -673,9 +660,9 @@
       "cota": 12.56,
       "variacao": -0.37,
       "tendencia": "BAIXANDO",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
-      "status_vazante": "MODERADO",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -7.51171,
       "lng": -63.0327,
       "id": "1301704",
@@ -683,12 +670,12 @@
       "baciaChuva": "Madeira",
       "rio": "Rio Madeira",
       "limitesVazante": {
-        "alto": 10.0,
-        "moderado": 12.0
+        "alto": 10,
+        "moderado": 12
       },
       "limitesEnchente": {
-        "alto": 23.0,
-        "moderado": 21.0
+        "alto": 23,
+        "moderado": 21
       },
       "maximaHistorica": {
         "data": "09/04/2014",
@@ -696,7 +683,7 @@
       },
       "minimaHistorica": {
         "data": "16/10/2024",
-        "cota": 8.0
+        "cota": 8
       }
     },
     {
@@ -715,9 +702,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
-      "status_vazante": "MODERADO",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -7.19409,
       "lng": -59.896,
       "id": "1300144",
@@ -751,9 +738,9 @@
       "cota": 14.9,
       "variacao": null,
       "tendencia": "SL",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
-      "status_vazante": "MODERADO",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -5.813035,
       "lng": -61.299702,
       "id": "1302702",
@@ -761,12 +748,12 @@
       "baciaChuva": "Madeira",
       "rio": "Rio Madeira",
       "limitesVazante": {
-        "alto": 13.0,
-        "moderado": 15.0
+        "alto": 13,
+        "moderado": 15
       },
       "limitesEnchente": {
-        "alto": 26.0,
-        "moderado": 25.0
+        "alto": 26,
+        "moderado": 25
       },
       "maximaHistorica": {
         "data": "19/04/2014",
@@ -793,9 +780,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
-      "status_vazante": "MODERADO",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -5.127325,
       "lng": -60.373543,
       "id": "1303304",
@@ -832,9 +819,9 @@
       "cota": 13.92,
       "variacao": -0.05,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "ALTO",
+      "status_vazante": "MODERADO",
       "lat": -4.388344,
       "lng": -59.594814,
       "id": "1300805",
@@ -847,7 +834,7 @@
       },
       "limitesEnchente": {
         "alto": 19.5,
-        "moderado": 18.0
+        "moderado": 18
       },
       "maximaHistorica": {
         "data": "22/04/2014",
@@ -874,9 +861,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -3.888215,
       "lng": -59.093483,
       "id": "1303106",
@@ -884,12 +871,12 @@
       "baciaChuva": "Médio Amazonas",
       "rio": "Rio Amazonas",
       "limitesVazante": {
-        "alto": 10.0,
-        "moderado": 12.0
+        "alto": 10,
+        "moderado": 12
       },
       "limitesEnchente": {
-        "alto": 18.0,
-        "moderado": 17.0
+        "alto": 18,
+        "moderado": 17
       },
       "maximaHistorica": {
         "data": "05/05/2009",
@@ -917,7 +904,7 @@
       "variacao": null,
       "tendencia": "SL",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -4.364241,
       "lng": -70.192024,
@@ -959,7 +946,7 @@
       "variacao": null,
       "tendencia": "SL",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -4.223479,
       "lng": -70.01306,
@@ -995,7 +982,7 @@
       "variacao": 0.12,
       "tendencia": "SUBINDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -4.2416,
       "lng": -69.9383,
@@ -1004,12 +991,12 @@
       "baciaChuva": "Alto Solimões",
       "rio": "Rio Solimões",
       "limitesVazante": {
-        "alto": 5.0,
-        "moderado": 6.0
+        "alto": 5,
+        "moderado": 6
       },
       "limitesEnchente": {
-        "alto": 12.0,
-        "moderado": 11.0
+        "alto": 12,
+        "moderado": 11
       },
       "maximaHistorica": {
         "data": "28/05/1999",
@@ -1037,7 +1024,7 @@
       "variacao": 0.04,
       "tendencia": "SUBINDO",
       "status": "ALTO",
-      "status_enchente": "NORMAL",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -3.463116,
       "lng": -68.957565,
@@ -1078,8 +1065,8 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -3.37455,
       "lng": -68.2005,
@@ -1114,8 +1101,8 @@
       "cota": 4.5,
       "variacao": -0.14,
       "tendencia": "BAIXANDO",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -3.100451,
       "lng": -67.946846,
@@ -1156,8 +1143,8 @@
       "cota": 7.21,
       "variacao": -0.12,
       "tendencia": "BAIXANDO",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -2.86582,
       "lng": -67.7919,
@@ -1192,9 +1179,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.74379,
       "lng": -66.769493,
       "id": "1302306",
@@ -1228,9 +1215,9 @@
       "cota": 14.57,
       "variacao": 0.01,
       "tendencia": "PARADO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.52342,
       "lng": -66.0942,
       "id": "1301605",
@@ -1238,12 +1225,12 @@
       "baciaChuva": "Alto Solimões",
       "rio": "Rio Solimões",
       "limitesVazante": {
-        "alto": 11.0,
-        "moderado": 13.0
+        "alto": 11,
+        "moderado": 13
       },
       "limitesEnchente": {
-        "alto": 21.0,
-        "moderado": 19.0
+        "alto": 21,
+        "moderado": 19
       },
       "maximaHistorica": {
         "data": "07/07/1989",
@@ -1271,7 +1258,7 @@
       "variacao": -0.07,
       "tendencia": "BAIXANDO",
       "status": "NORMAL",
-      "status_enchente": "MODERADO",
+      "status_enchente": "NORMAL",
       "status_vazante": "NORMAL",
       "lat": -1.88237,
       "lng": -66.9291,
@@ -1280,12 +1267,12 @@
       "baciaChuva": "Japurá",
       "rio": "Rio Japurá",
       "limitesVazante": {
-        "alto": 7.0,
-        "moderado": 9.0
+        "alto": 7,
+        "moderado": 9
       },
       "limitesEnchente": {
-        "alto": 12.0,
-        "moderado": 11.0
+        "alto": 12,
+        "moderado": 11
       },
       "maximaHistorica": {
         "data": "07/07/1989",
@@ -1303,7 +1290,7 @@
       "cotas": [
         12.22,
         12.1,
-        12.0,
+        12,
         11.9,
         11.79,
         11.67,
@@ -1322,12 +1309,12 @@
       "baciaChuva": "Japurá",
       "rio": "Rio Japurá",
       "limitesVazante": {
-        "alto": 6.0,
-        "moderado": 8.0
+        "alto": 6,
+        "moderado": 8
       },
       "limitesEnchente": {
-        "alto": 14.0,
-        "moderado": 11.0
+        "alto": 14,
+        "moderado": 11
       },
       "maximaHistorica": {
         "data": "18/06/2015",
@@ -1354,9 +1341,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.99609,
       "lng": -65.1133,
       "id": "1304260",
@@ -1390,9 +1377,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.22727,
       "lng": -64.8007,
       "id": "1300029",
@@ -1432,9 +1419,9 @@
       "cota": 13.3,
       "variacao": -0.17,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.346037,
       "lng": -64.707474,
       "id": "1304203",
@@ -1442,8 +1429,8 @@
       "baciaChuva": "Médio Solimões",
       "rio": "Rio Solimões",
       "limitesVazante": {
-        "alto": 9.0,
-        "moderado": 10.0
+        "alto": 9,
+        "moderado": 10
       },
       "limitesEnchente": {
         "alto": null,
@@ -1468,9 +1455,9 @@
       "cota": 12.5,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -4.09412,
       "lng": -63.1441,
       "id": "1301209",
@@ -1510,9 +1497,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.83053,
       "lng": -62.0658,
       "id": "1301308",
@@ -1552,9 +1539,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.74603,
       "lng": -61.6575,
       "id": "1300102",
@@ -1588,9 +1575,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.56697,
       "lng": -61.3963,
       "id": "1300086",
@@ -1627,9 +1614,9 @@
       "cota": 9.7,
       "variacao": -0.13,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.31537,
       "lng": -61.2206,
       "id": "1300839",
@@ -1663,9 +1650,9 @@
       "cota": 14.95,
       "variacao": -0.14,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.29972,
       "lng": -60.62056,
       "id": "1302504",
@@ -1673,12 +1660,12 @@
       "baciaChuva": "Médio Solimões",
       "rio": "Rio Solimões",
       "limitesVazante": {
-        "alto": 7.0,
-        "moderado": 9.0
+        "alto": 7,
+        "moderado": 9
       },
       "limitesEnchente": {
-        "alto": 18.0,
-        "moderado": 17.0
+        "alto": 18,
+        "moderado": 17
       },
       "maximaHistorica": {
         "data": "17/06/2021",
@@ -1705,9 +1692,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
+      "status": "MODERADO",
       "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status_vazante": "MODERADO",
       "lat": -3.27479,
       "lng": -60.19,
       "id": "1301852",
@@ -1741,9 +1728,9 @@
       "cota": 10.13,
       "variacao": -0.16,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.44078,
       "lng": -60.4612,
       "id": "1302553",
@@ -1780,9 +1767,9 @@
       "cota": 15.27,
       "variacao": -0.14,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.76803,
       "lng": -60.369,
       "id": "1301100",
@@ -1795,7 +1782,7 @@
       },
       "limitesEnchente": {
         "alto": 14.5,
-        "moderado": 13.0
+        "moderado": 13
       },
       "maximaHistorica": null,
       "minimaHistorica": {
@@ -1819,9 +1806,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.196561,
       "lng": -59.82655,
       "id": "1301159",
@@ -1834,7 +1821,7 @@
       },
       "limitesEnchente": {
         "alto": 14.5,
-        "moderado": 13.0
+        "moderado": 13
       },
       "maximaHistorica": {
         "data": "06/06/2021",
@@ -1861,9 +1848,9 @@
       "cota": 9.95,
       "variacao": -0.11,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.13861,
       "lng": -58.4449,
       "id": "1301902",
@@ -1871,12 +1858,12 @@
       "baciaChuva": "Médio Amazonas",
       "rio": "Rio Amazonas",
       "limitesVazante": {
-        "alto": 3.0,
-        "moderado": 4.0
+        "alto": 3,
+        "moderado": 4
       },
       "limitesEnchente": {
-        "alto": 14.0,
-        "moderado": 13.0
+        "alto": 14,
+        "moderado": 13
       },
       "maximaHistorica": {
         "data": "20/05/2021",
@@ -1903,9 +1890,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.02981,
       "lng": -60.0234,
       "id": "1303536",
@@ -1939,9 +1926,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.69872,
       "lng": -59.7007,
       "id": "1303569",
@@ -1978,9 +1965,9 @@
       "cota": 8.33,
       "variacao": -0.12,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.837867,
       "lng": -58.209599,
       "id": "1304005",
@@ -2014,9 +2001,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.58574,
       "lng": -59.1256,
       "id": "1300300",
@@ -2053,9 +2040,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -3.12841,
       "lng": -58.1496,
       "id": "1304401",
@@ -2089,9 +2076,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "MODERADO",
       "lat": -2.74081,
       "lng": -58.0293,
       "id": "1302009",
@@ -2125,9 +2112,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -2.79886,
       "lng": -57.0679,
       "id": "1300508",
@@ -2161,9 +2148,9 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -2.969025,
       "lng": -57.589161,
       "id": "1300680",
@@ -2197,9 +2184,9 @@
       "cota": 12.42,
       "variacao": -0.08,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -2.20793,
       "lng": -56.7112,
       "id": "1303007",
@@ -2233,9 +2220,9 @@
       "cota": 22.1,
       "variacao": -0.11,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -2.52936,
       "lng": -57.7538,
       "id": "1304302",
@@ -2269,9 +2256,9 @@
       "cota": 9.3,
       "variacao": -0.2,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -2.57185,
       "lng": -57.868343,
       "id": "1303957",
@@ -2305,9 +2292,9 @@
       "cota": 5.15,
       "variacao": -0.1,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -2.63741,
       "lng": -56.729,
       "id": "1303403",
@@ -2315,12 +2302,12 @@
       "baciaChuva": "Médio Amazonas",
       "rio": "Rio Amazonas",
       "limitesVazante": {
-        "alto": 3.0,
+        "alto": 3,
         "moderado": 4.5
       },
       "limitesEnchente": {
-        "alto": 8.0,
-        "moderado": 7.0
+        "alto": 8,
+        "moderado": 7
       },
       "maximaHistorica": {
         "data": "21/05/2021",
@@ -2347,9 +2334,9 @@
       "cota": 17.88,
       "variacao": -0.08,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
+      "status_vazante": "ALTO",
       "lat": -3.38173,
       "lng": -57.7152,
       "id": "1302900",
@@ -2383,8 +2370,8 @@
       "cota": 8.88,
       "variacao": 0.04,
       "tendencia": "SUBINDO",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -0.11909,
       "lng": -67.084,
@@ -2393,12 +2380,12 @@
       "baciaChuva": "Rio Negro",
       "rio": "Rio Negro",
       "limitesVazante": {
-        "alto": 7.0,
-        "moderado": 8.0
+        "alto": 7,
+        "moderado": 8
       },
       "limitesEnchente": {
-        "alto": 11.0,
-        "moderado": 9.0
+        "alto": 11,
+        "moderado": 9
       },
       "maximaHistorica": {
         "data": "11/06/2021",
@@ -2425,8 +2412,8 @@
       "cota": null,
       "variacao": null,
       "tendencia": "SL",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
       "status_vazante": "ALTO",
       "lat": -0.414172,
       "lng": -65.019936,
@@ -2440,7 +2427,7 @@
       },
       "limitesEnchente": {
         "alto": 7.5,
-        "moderado": 6.0
+        "moderado": 6
       },
       "maximaHistorica": {
         "data": "02/06/1976",
@@ -2460,15 +2447,15 @@
         5.16,
         5.08,
         5.06,
-        5.0,
+        5,
         4.9,
         null
       ],
       "cota": 4.9,
       "variacao": -0.1,
       "tendencia": "BAIXANDO",
-      "status": "MODERADO",
-      "status_enchente": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "MODERADO",
       "status_vazante": "ALTO",
       "lat": -0.975502,
       "lng": -62.924599,
@@ -2477,12 +2464,12 @@
       "baciaChuva": "Rio Negro",
       "rio": "Rio Negro",
       "limitesVazante": {
-        "alto": 2.0,
-        "moderado": 4.0
+        "alto": 2,
+        "moderado": 4
       },
       "limitesEnchente": {
-        "alto": 8.0,
-        "moderado": 7.0
+        "alto": 8,
+        "moderado": 7
       },
       "maximaHistorica": {
         "data": "22/06/2022",
@@ -2509,9 +2496,9 @@
       "cota": 13.53,
       "variacao": -0.15,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "ALTO",
+      "status_enchente": "ALTO",
+      "status_vazante": "ALTO",
       "lat": -2.618657,
       "lng": -60.949726,
       "id": "1303205",
@@ -2523,8 +2510,8 @@
         "moderado": null
       },
       "limitesEnchente": {
-        "alto": 19.0,
-        "moderado": 17.0
+        "alto": 19,
+        "moderado": 17
       },
       "maximaHistorica": {
         "data": "29/10/2015",
@@ -2551,9 +2538,9 @@
       "cota": 24.09,
       "variacao": -0.1,
       "tendencia": "BAIXANDO",
-      "status": "NORMAL",
-      "status_enchente": "NORMAL",
-      "status_vazante": "NORMAL",
+      "status": "MODERADO",
+      "status_enchente": "ALTO",
+      "status_vazante": "MODERADO",
       "lat": -3.11866,
       "lng": -60.0212,
       "id": "1302603",
@@ -2561,12 +2548,12 @@
       "baciaChuva": "Rio Negro",
       "rio": "Rio Negro",
       "limitesVazante": {
-        "alto": 16.0,
-        "moderado": 18.0
+        "alto": 16,
+        "moderado": 18
       },
       "limitesEnchente": {
-        "alto": 27.0,
-        "moderado": 26.0
+        "alto": 27,
+        "moderado": 26
       },
       "maximaHistorica": {
         "data": "16/06/2021",

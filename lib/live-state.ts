@@ -14,9 +14,10 @@ import {
   CALHAS,
   HYDRO_FONTE,
   HYDRO_MUDANCAS,
-  HYDRO_REFERENCIA,
   HYDRO_RIOS,
   catalogStations,
+  formatHydroRef,
+  hydroBoletimDiaIso,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
 import { meteoShiftAt } from "@/lib/meteo-aviso";
@@ -70,6 +71,16 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
       PESSIMA: `Qualidade do ar péssima em ${nome} (MP2,5 >150,4 µg/m³ em tempo real). Ação imediata de proteção da saúde.`,
     };
     return copy[risco] ?? copy.BOA;
+  }
+  if (tipo === "CALOR") {
+    const copy: Record<string, string> = {
+      MODERADO: `Onda de calor moderada em ${nome}. A máxima prevista fica acima da climatologia da Amazônia.`,
+      ALTO: `Onda de calor alta em ${nome}. Temperatura máxima anômala em relação à climatologia.`,
+      SEVERO: `Onda de calor severa em ${nome}. Preparar proteção da população ao ar livre.`,
+      EXTREMO: `Onda de calor extrema em ${nome}. Ação imediata de proteção da saúde.`,
+      BAIXO: `Temperatura prevista em ${nome} dentro da climatologia.`,
+    };
+    return copy[risco] ?? copy.BAIXO;
   }
   if (tipo === "EROSAO") {
     const copy: Record<string, string> = {
@@ -216,9 +227,9 @@ export function buildHydrologyPayload(
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
   const partes = [
-    `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    `${HYDRO_FONTE} · boletim ${formatHydroRef(hydroBoletimDiaIso(now))}`,
     "ANA às 16:00 (Manaus), cota ~07:00 do dia vigente",
-    "Power BI / Fabric às 07:00 e 16:00 (Brasília)",
+    "Power BI / Fabric: cota mais próxima de 07:00 de Manaus (consulta 07 h e 16 h Brasília)",
   ];
   if (atualizadasFabric > 0) {
     partes.push(
@@ -233,7 +244,7 @@ export function buildHydrologyPayload(
   return {
     generatedAt: now,
     source: partes.join(" · "),
-    referencia: HYDRO_REFERENCIA,
+    referencia: hydroBoletimDiaIso(now),
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],
     mudancas24h: HYDRO_MUDANCAS,

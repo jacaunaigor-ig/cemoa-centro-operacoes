@@ -116,6 +116,34 @@ export async function upsertRemoteAlertOverrides(
   });
 }
 
+export type ClassificationAuditRow = {
+  at: string;
+  tipo: string;
+  municipio_id: string;
+  municipio?: string | null;
+  previous_level?: string | null;
+  level: string;
+  issued_by?: string | null;
+  source?: string | null;
+};
+
+export async function fetchClassificationAudit(opts?: {
+  municipioId?: string;
+  tipo?: string;
+  limit?: number;
+}): Promise<ClassificationAuditRow[]> {
+  const limit = Math.min(80, Math.max(1, opts?.limit ?? 20));
+  const parts = [
+    "select=at,tipo,municipio_id,municipio,previous_level,level,issued_by,source",
+    "order=at.desc",
+    `limit=${limit}`,
+  ];
+  if (opts?.municipioId) parts.push(`municipio_id=eq.${encodeURIComponent(opts.municipioId)}`);
+  if (opts?.tipo) parts.push(`tipo=eq.${encodeURIComponent(opts.tipo)}`);
+  const rows = await rest<ClassificationAuditRow[]>(`classification_audit?${parts.join("&")}`);
+  return rows ?? [];
+}
+
 export async function appendClassificationAudit(
   rows: Array<{
     tipo: string;

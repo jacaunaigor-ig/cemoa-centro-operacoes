@@ -50,6 +50,10 @@ next-env.d.ts
 
 focos_amazonas.json
 
+# cópia aninhada e artefato Windows — ficam fora do Git
+/cemoa-centro-operacoes/
+nul
+
 # cursor
 .cursor/
 .cursorrules
