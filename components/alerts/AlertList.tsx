@@ -308,7 +308,7 @@ export function AlertList({
                           className="flex w-full items-center justify-between gap-2 text-left"
                         >
                           <span className="min-w-0">
-                            <span className="block truncate font-bold">{m.nome}</span>
+                            <span className="block font-bold break-words">{m.nome}</span>
                             {tipo === "MOVIMENTO" ? <MassLine id={m.id} /> : null}
                           </span>
                           <span className="flex shrink-0 items-center gap-1.5">
@@ -322,7 +322,7 @@ export function AlertList({
                         </button>
                         {tipo === "INCENDIO" ? (
                           !isMobile ? (
-                            <p className="line-clamp-2 text-[11px] leading-snug text-text-dim">
+                            <p className="text-[11px] leading-snug break-words text-text-dim">
                               {briefing.headline}
                             </p>
                           ) : null
@@ -338,7 +338,7 @@ export function AlertList({
                           </p>
                         ) : null}
                         <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
-                          <span className="min-w-0 truncate">
+                          <span className="min-w-0 break-words">
                             {m.fonte === "admin"
                               ? m.classifiedBy
                                 ? `Classificado por ${m.classifiedBy} · `

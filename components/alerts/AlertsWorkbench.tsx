@@ -108,6 +108,7 @@ import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLege
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 import { ensureOpsBoardReset } from "@/lib/ops-board";
+import { appendClassificacaoTrilha } from "@/lib/classificacao-trilha";
 const POLL_MS = 20_000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
@@ -439,6 +440,18 @@ export function AlertsWorkbench() {
         }
         if (tipoAlvo === tipo) setData(localAlerts(tipoAlvo));
         rememberHistory();
+        appendClassificacaoTrilha(
+          Object.entries(updates).map(([id, level]) => ({
+            at: Date.now(),
+            tipo: tipoAlvo,
+            municipioId: id,
+            municipio: data?.municipios.find((m) => m.id === id)?.nome ?? id,
+            previous: previous[id] ?? null,
+            level,
+            issuedBy: session?.name ?? "operador",
+            source: opts?.source ?? "clique",
+          })),
+        );
         return { ok: true };
       }
       const res = await fetch("/api/alerts/overrides", {
@@ -473,6 +486,18 @@ export function AlertsWorkbench() {
         setData((prev) => takeIncomingAlerts(prev, next));
       }
       rememberHistory();
+      appendClassificacaoTrilha(
+        Object.entries(updates).map(([id, level]) => ({
+          at: Date.now(),
+          tipo: tipoAlvo,
+          municipioId: id,
+          municipio: data?.municipios.find((m) => m.id === id)?.nome ?? id,
+          previous: previous[id] ?? null,
+          level,
+          issuedBy: session?.name ?? "operador",
+          source: opts?.source ?? "clique",
+        })),
+      );
       return { ok: true };
     },
     [tipo, data, session],
@@ -870,14 +895,6 @@ export function AlertsWorkbench() {
     return list;
   }, [data, activeFilter, geo, selected, tipo]);
 
-  const focoFills = useMemo(() => {
-    if (tipo !== "INCENDIO" || !focosMapa || !focosRef) return null;
-    const max = Math.max(1, ...Object.values(focosRef.byId));
-    const next: Record<string, string> = {};
-    for (const item of catalog) next[item.nome] = focoFill(focosRef.byId[item.id] ?? 0, max);
-    return next;
-  }, [tipo, focosMapa, focosRef, catalog]);
-
   const focoLabels = useMemo(() => {
     if (tipo !== "INCENDIO" || !focosMapa || !focosRef) return null;
     const next: Record<string, string> = {};
@@ -963,6 +980,17 @@ export function AlertsWorkbench() {
     const top = list[0];
     return { municipio: top.municipio, risco: top.risco, expiresAt: top.expiresAt };
   }, [data, geo, tipo]);
+  const criticos = useMemo(() => {
+    return catalog
+      .filter((m) => isAlertActive(tipo, m.risco))
+      .sort(
+        (a, b) =>
+          levelRank(tipo, b.risco) - levelRank(tipo, a.risco) ||
+          a.nome.localeCompare(b.nome, "pt-BR"),
+      )
+      .slice(0, 3);
+  }, [catalog, tipo]);
+
   const plantaoCounts = useMemo(
     () =>
       countPlantao(
@@ -1644,7 +1672,7 @@ export function AlertsWorkbench() {
                         onClick={() => void toggleFocosMapa()}
                         icon={<Flame className="size-3.5" />}
                       >
-                        {focosMapa ? "Qualidade do ar" : "Focos de calor"}
+                        {focosMapa ? "Ocultar focos INPE" : "Focos INPE"}
                       </MapToolButton>
                     ) : null}
                     <MapOverlayToggles vis={overlays} product={tipo} onChange={setOverlays} />
@@ -1696,6 +1724,38 @@ export function AlertsWorkbench() {
                   Sem dados para desenhar o mapa. Nova tentativa automática em alguns segundos.
                 </div>
               ) : null}
+              {mapFocus ? (
+                <div className="pointer-events-auto absolute left-2 top-2 z-[1100] max-w-[min(100%,22rem)] rounded-lg border border-border bg-panel/92 p-2 shadow-[var(--shadow-card)] backdrop-blur-md">
+                  <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
+                    Três críticos
+                  </p>
+                  {criticos.length ? (
+                    <ol className="mt-1 grid gap-1">
+                      {criticos.map((m, i) => (
+                        <li key={m.id}>
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left hover:bg-hover"
+                            onClick={() => setQuery({ municipio: m.nome, risco: null })}
+                          >
+                            <span className="font-mono text-[10px] text-text-mute">{i + 1}</span>
+                            <span
+                              className="size-2.5 shrink-0 rounded-full"
+                              style={{ background: LEVEL_COLORS[m.risco] }}
+                            />
+                            <span className="min-w-0 flex-1 truncate text-[12px] font-bold">{m.nome}</span>
+                            <span className="shrink-0 text-[10px] font-bold">
+                              {LEVEL_LABELS[m.risco] ?? m.risco}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-text-mute">Nenhum município em grau ativo.</p>
+                  )}
+                </div>
+              ) : null}
               {ready && data ? (
                 <AlertsMap
                   key={`${OSM_BASEMAP_ID}-${tipo}`}
@@ -1732,8 +1792,10 @@ export function AlertsWorkbench() {
                   pluvio={pluvio}
                   airSensors={airPoints}
                   pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
-                  fillByNome={focoFills}
+                  fillByNome={null}
                   labelByNome={focoLabels}
+                  showFocosCalor={tipo === "INCENDIO" && focosMapa}
+                  focosCalor={focosRef?.pontos ?? []}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
@@ -1765,7 +1827,7 @@ export function AlertsWorkbench() {
                       "pointer-events-auto absolute z-[1200]",
                       isMobile
                         ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
-                        : "right-2 top-12 w-[min(calc(100%-1rem),32rem)] sm:top-2",
+                        : "top-2 right-2 bottom-2 flex w-[min(calc(100%-1rem),32rem)] min-h-0 flex-col",
                     )}
                   >
                   <AlertDetail
@@ -1831,8 +1893,8 @@ export function AlertsWorkbench() {
                   <>
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
                     {focosMapa
-                      ? `Focos absolutos AQUA_M-T, bioma Amazônia${focosRef ? ` · ${focosRef.periodo.inicio} a ${focosRef.periodo.fim} · ${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Cinza é zero. A classificação do operador continua na lista.`
-                      : "App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor. A classificação do operador prevalece."}
+                      ? `Camada INPE (AQUA_M-T, Amazônia)${focosRef ? ` · ${focosRef.periodo.inicio} a ${focosRef.periodo.fim} · ${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Os pontos não pintam o grau — o mapa segue o MP2,5.`
+                      : "App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor. Sem monitor não pinta. A classificação do operador prevalece."}
                   </p>
                   {focosMapa && focosRef ? (
                     <ul className="mt-1 space-y-0.5">
@@ -1845,7 +1907,6 @@ export function AlertsWorkbench() {
                       ))}
                     </ul>
                   ) : null}
-                  {!focosMapa ? (
                   <button
                     type="button"
                     className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
@@ -1862,7 +1923,6 @@ export function AlertsWorkbench() {
                     MP2,5 ≥ 35,5 µg/m³
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
-                  ) : null}
                   </>
                 ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
                   <div className="mt-2 border-t border-border/70 pt-2">

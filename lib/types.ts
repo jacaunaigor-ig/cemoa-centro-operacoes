@@ -143,6 +143,8 @@ export type HydroStation = {
   editadoPorOperador?: boolean;
   cotaFonte?: "snapshot" | "ANA" | "fabric" | "operador";
   cotaLidaEm?: number | null;
+  cotaAnaLidaEm?: number | null;
+  cotaFabricLidaEm?: number | null;
   maximaHistorica?: HydroExtremo | null;
   minimaHistorica?: HydroExtremo | null;
 };
@@ -267,7 +269,7 @@ export type AirQualityMunicipio = {
   id: string;
   nome: string;
   bacia: string;
-  /** Média municipal do MP2,5 em tempo real (atual / 10 min / 1 h — não usa 24 h). */
+  /** Pior sensor do município, MP2,5 em tempo real (10 min / atual / 1 h — não usa 24 h). */
   pm25: number | null;
   pm25Hour: number | null;
   pm25Day: number | null;

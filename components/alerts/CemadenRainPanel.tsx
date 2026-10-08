@@ -76,7 +76,7 @@ export function CemadenRainPanel({
         </p>
       )}
 
-      <div className="mt-2 max-h-48 overflow-auto">
+      <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-[11px]">
           <thead className="sticky top-0 bg-bg/95 text-[10px] font-semibold tracking-wide text-text-mute uppercase">
             <tr>
@@ -93,7 +93,7 @@ export function CemadenRainPanel({
           <tbody>
             {estacoes.map((s) => (
               <tr key={s.id} className="border-t border-border/70 hover:bg-hover">
-                <td className="max-w-[8.5rem] truncate py-1.5 pr-2 font-semibold text-text" title={s.nome}>
+                <td className="max-w-[12rem] py-1.5 pr-2 font-semibold break-words text-text">
                   {s.nome}
                 </td>
                 <td

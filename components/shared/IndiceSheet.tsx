@@ -218,12 +218,12 @@ export function IndiceSheet({
                 />
                 <span className="min-w-0 flex-1">
                   <strong className="flex min-w-0 items-center gap-1 text-[12px] text-text">
-                    <span className="truncate">{row.nome}</span>
+                    <span className="break-words">{row.nome}</span>
                     {row.pmif ? (
                       <PmifBadge bonus={evento === "Incêndio/QAr"} />
                     ) : null}
                   </strong>
-                  <span className="block truncate text-[10px] text-text-mute">
+                  <span className="block text-[10px] leading-snug break-words text-text-mute">
                     {nivelOf(row, evento)} · {row.calha} · IVM {row.ivm} ({row.classe})
                     {evento === "Incêndio/QAr" && row.pmif
                       ? ` · PIMF +${BONUS_PIMF}`

@@ -504,6 +504,7 @@ export function RiscoWorkbench() {
                     className={cn(
                       "flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-bold transition-colors",
                       painelLateral === "ficha" ? "bg-brand text-white shadow-sm" : "text-text-mute hover:text-text",
+                      "min-w-0 text-center leading-tight break-words",
                     )}
                   >
                     <FileText className="size-3.5" />
@@ -638,7 +639,7 @@ function Ficha({
             {formatHab(row.pop)} hab. · {row.bacia}
             {row.rio ? ` · ${row.rio}` : ""}
           </p>
-          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] sm:grid-cols-3">
+          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] break-words sm:grid-cols-3">
             <Stat k="Área" v={`${fmt(area)} km²`} />
             <Stat k="Densidade" v={`${fmt(densidade)} hab/km²`} />
             <Stat k="Rural" v={demo ? `${demo.pctRural.toLocaleString("pt-BR")}%` : "—"} />
@@ -728,7 +729,7 @@ function Analise({ rows }: { rows: MetodologiaRow[] }) {
         <ul className="grid gap-1.5">
           {top.map((row) => (
             <li key={row.codigo} className="grid grid-cols-[9rem_1fr_3rem] items-center gap-2 text-[12px]">
-              <span className="truncate font-semibold">{row.nome}</span>
+              <span className="font-semibold break-words">{row.nome}</span>
               <span className="h-2 overflow-hidden rounded-full bg-border">
                 <span className="block h-full rounded-full" style={{ width: `${(row.irg / maxIr) * 100}%`, background: row.cor }} />
               </span>
@@ -879,7 +880,7 @@ function Decretos({ rows, onPick }: { rows: MetodologiaRow[]; onPick: (row: Meto
                 className={cn("flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-hover", selected === item.row.nome && "bg-hover font-bold")}
               >
                 <span className="size-2.5 shrink-0 rounded-sm" style={{ background: decretoFill(item.total, max, tema) }} />
-                <span className="min-w-0 flex-1 truncate">{item.row.nome}</span>
+                <span className="min-w-0 flex-1 break-words">{item.row.nome}</span>
                 <span className="font-mono tabular-nums">{item.total}</span>
               </button>
             </li>
@@ -1115,7 +1116,7 @@ function Territorio({ rows, onPick }: { rows: MetodologiaRow[]; onPick: (row: Me
             {spec.label}
           </h3>
           <ul>
-            {serie.slice(0, 12).map((item) => (
+            {serie.map((item) => (
               <li key={item.row.codigo}>
                 <button
                   type="button"
@@ -1129,7 +1130,7 @@ function Territorio({ rows, onPick }: { rows: MetodologiaRow[]; onPick: (row: Me
                   )}
                 >
                   <span className="size-2.5 shrink-0 rounded-sm" style={{ background: tintaTerritorio(item.valor, max, spec.from, spec.to) }} />
-                  <span className="min-w-0 flex-1 truncate">{item.row.nome}</span>
+                  <span className="min-w-0 flex-1 break-words">{item.row.nome}</span>
                   <span className="font-mono tabular-nums">{fmtTema(item.valor, tema)}</span>
                 </button>
               </li>

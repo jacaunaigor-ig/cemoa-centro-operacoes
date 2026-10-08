@@ -280,7 +280,7 @@ function StationRow({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-sm font-bold">{s.municipio}</span>
+            <span className="text-sm font-bold break-words">{s.municipio}</span>
             <span
               className="font-mono text-lg font-black leading-none tabular-nums"
               style={{ color }}

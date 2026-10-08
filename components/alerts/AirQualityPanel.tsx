@@ -101,7 +101,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         </a>
       </p>
 
-      <div className="mt-2 max-h-48 overflow-auto">
+      <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[280px] text-left text-[11px]">
           <thead className="sticky top-0 bg-bg/95 text-[10px] font-semibold tracking-wide text-text-mute uppercase">
             <tr>
@@ -116,9 +116,9 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
           <tbody>
             {sensors.map((s) => (
               <tr key={s.sensorIndex} className="border-t border-border/70 hover:bg-hover">
-                <td className="max-w-[9.5rem] py-1.5 pr-2" title={s.name}>
-                  <span className="block truncate font-semibold text-text">{s.name}</span>
-                  <span className="block truncate text-[10px] text-text-mute">
+                <td className="max-w-[14rem] py-1.5 pr-2">
+                  <span className="block font-semibold break-words text-text">{s.name}</span>
+                  <span className="block text-[10px] leading-snug break-words text-text-mute">
                     {AIR_NETWORK_LABELS[s.network]}
                     {s.indoor ? " · interno" : " · externo"}
                     {s.kmSede != null ? ` · ${s.kmSede.toLocaleString("pt-BR")} km` : ""}

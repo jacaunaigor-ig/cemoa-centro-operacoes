@@ -648,7 +648,7 @@ export function HydrologyWorkbench() {
               compact
               label="Com leitura"
               value={loading ? "—" : String(kpis.comLeitura)}
-              sub={pct(kpis.comLeitura)}
+              sub={`${kpis.cotaHoje} hoje · ${pct(kpis.comLeitura)}`}
               accent="#3b82f6"
               icon={<Waves className="size-3.5" />}
               active={status === "COM_LEITURA"}
@@ -659,7 +659,7 @@ export function HydrologyWorkbench() {
               compact
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
-              sub={`${pct(kpis.semLeitura)} · sem cota hoje`}
+              sub={`${pct(kpis.semLeitura)} · ${kpis.serieAntiga} série antiga`}
               accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}
@@ -1027,8 +1027,8 @@ export function HydrologyWorkbench() {
                   className={cn(
                     "pointer-events-auto absolute z-[1200] flex flex-col overflow-hidden rounded-xl shadow-lg",
                     isMobile
-                      ? "inset-x-1.5 bottom-1.5 top-10 max-h-[calc(100%-2.75rem)]"
-                      : "inset-x-2 bottom-2 top-auto max-h-[min(48vh,28rem)]",
+                      ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
+                      : "top-2 right-2 bottom-2 flex w-[min(calc(100%-1rem),32rem)] min-h-0 flex-col",
                   )}
                 >
                   <HydroDetail
