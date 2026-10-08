@@ -3,6 +3,7 @@ import { formatCountdown, remainingMs } from "@/lib/alert-validity";
 import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, rotuloSituacao, situacaoLeitura, statusAtivo } from "@/lib/hydrology";
 import { formatMm, INTENSE_MM_PER_H, isIntense1h, rainApoio } from "@/lib/rainfall-display";
+import type { HeatWaveRow } from "@/lib/heat-wave";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainfallMunicipio } from "@/lib/types";
 import { formatAmazonTime } from "@/lib/utils";
 import { formatTempC } from "@/lib/weather-forecast";
@@ -19,6 +20,7 @@ export function buildAlertBriefing({
   rain,
   hydro,
   air,
+  heat,
 }: {
   nome: string;
   risco: AlertLevel | string;
@@ -28,6 +30,7 @@ export function buildAlertBriefing({
   rain?: RainfallMunicipio | null;
   hydro?: HydroStation | null;
   air?: AirQualityMunicipio | null;
+  heat?: HeatWaveRow | null;
 }): AlertBriefing {
   const nivel = levelLabel(risco);
   const parts: string[] =
@@ -37,9 +40,17 @@ export function buildAlertBriefing({
             ? `${nome}: qualidade do ar ${nivel} (MP2,5 ao vivo ${formatUg(air.pm25)}).`
             : `${nome}: qualidade do ar ${nivel}${air === null ? " — sem monitor PurpleAir neste município" : ""}.`,
         ]
-      : [`${nome}: alerta ${nivel}${isAlertActive(tipo, risco) ? "" : " em monitoramento"}.`];
+      : tipo === "CALOR"
+        ? [
+            heat?.semEstacao
+              ? `${nome}: sem estação INMET. Onda de calor não classificada.`
+              : heat?.anomalia != null && heat.tempMax != null
+                ? `${nome}: onda de calor ${nivel}. Máxima prevista ${heat.tempMax.toLocaleString("pt-BR")} °C, ${heat.anomalia.toLocaleString("pt-BR")} °C acima da climatologia (${heat.clima.toLocaleString("pt-BR")} °C).`
+                : `${nome}: onda de calor ${nivel}${heat ? "" : " — sem previsão INMET"}.`,
+          ]
+        : [`${nome}: alerta ${nivel}${isAlertActive(tipo, risco) ? "" : " em monitoramento"}.`];
 
-  if (tipo !== "INCENDIO" && rain) {
+  if (tipo !== "INCENDIO" && tipo !== "CALOR" && rain) {
     if (rain.mm6h != null) parts.push(`Acumulado de ${formatMm(rain.mm6h)} nas últimas 6 h`);
     else if (rain.mm1h != null) parts.push(`${formatMm(rain.mm1h)} na última hora`);
     else if (rain.mm24h != null) parts.push(`${formatMm(rain.mm24h)} nas últimas 24 h`);
@@ -56,9 +67,9 @@ export function buildAlertBriefing({
     if (apoio && apoio.level !== "BAIXO") {
       risks.push(apoio.motivo);
     }
-  } else if (tipo !== "INCENDIO" && rain && isIntense1h(rain.mm1h)) {
+  } else if (tipo !== "INCENDIO" && tipo !== "CALOR" && rain && isIntense1h(rain.mm1h)) {
     risks.push(`Chuva intensa na última hora (${formatMm(rain.mm1h)} ≥ ${INTENSE_MM_PER_H} mm)`);
-  } else if (tipo !== "INCENDIO" && rain && (rain.mm6h ?? 0) >= 50) {
+  } else if (tipo !== "INCENDIO" && tipo !== "CALOR" && rain && (rain.mm6h ?? 0) >= 50) {
     risks.push(`Acumulado alto em 6 h (${formatMm(rain.mm6h)})`);
   }
   if (hydro && !hydro.semLeitura && hydro.cota != null) {
@@ -81,8 +92,11 @@ export function buildAlertBriefing({
   if (tipo === "EROSAO" && isAlertActive(tipo, risco)) {
     risks.push("Risco de erosão de margem e solapamento de barranco");
   }
+  if (tipo === "CALOR" && isAlertActive(tipo, risco)) {
+    risks.push("Temperatura anômala em relação à climatologia");
+  }
 
-  if (tipo !== "INCENDIO" && rain === null) {
+  if (tipo !== "INCENDIO" && tipo !== "CALOR" && rain === null) {
     parts.push("Sem pluviômetro CEMADEN neste município");
   }
 
@@ -99,6 +113,7 @@ export function buildFichaLinha({
   rain,
   hydro,
   air,
+  heat,
   expiresAt,
   tempC,
   now = Date.now(),
@@ -108,6 +123,7 @@ export function buildFichaLinha({
   rain?: RainfallMunicipio | null;
   hydro?: HydroStation | null;
   air?: AirQualityMunicipio | null;
+  heat?: HeatWaveRow | null;
   expiresAt?: number | null;
   tempC?: number | null;
   now?: number;
@@ -115,6 +131,14 @@ export function buildFichaLinha({
   const bits: string[] = [levelLabel(risco)];
   if (tipo === "INCENDIO") {
     bits.push(air && air.pm25 != null ? `MP2,5 ${formatUg(air.pm25)}` : "sem monitor");
+  } else if (tipo === "CALOR") {
+    bits.push(
+      heat?.semEstacao
+        ? "sem estação INMET"
+        : heat?.tempMax != null
+          ? `${heat.tempMax.toLocaleString("pt-BR")} °C · Δ ${heat.anomalia == null ? "—" : heat.anomalia.toLocaleString("pt-BR")} °C`
+          : "sem previsão",
+    );
   } else if (rain && rain.estacoes.length > 0) {
     const mm = rain.mm1h ?? rain.mm6h ?? rain.mm24h;
     bits.push(formatMm(mm));

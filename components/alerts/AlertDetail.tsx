@@ -14,6 +14,8 @@ import { cn, formatRelative } from "@/lib/utils";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
+import { HeatWavePanel } from "@/components/alerts/HeatWavePanel";
+import type { HeatWaveRow } from "@/lib/heat-wave";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 import { ClassificacaoTrail } from "@/components/alerts/ClassificacaoTrail";
 import { useWeatherForecast, WeatherForecastPanel } from "@/components/alerts/WeatherForecastPanel";
@@ -32,6 +34,7 @@ export function AlertDetail({
   hydro,
   rain,
   air,
+  heat,
   productLabel,
   tipo,
   overlay,
@@ -50,6 +53,7 @@ export function AlertDetail({
   hydro: HydroStation | null;
   rain?: RainfallMunicipio | null;
   air?: AirQualityMunicipio | null;
+  heat?: HeatWaveRow | null;
   productLabel: string;
   tipo?: AlertType;
   overlay?: boolean;
@@ -67,6 +71,7 @@ export function AlertDetail({
     rain: rain === undefined ? undefined : rain,
     hydro,
     air: air === undefined ? undefined : air,
+    heat: heat === undefined ? undefined : heat,
   });
   const fichaLinha = buildFichaLinha({
     risco,
@@ -74,6 +79,7 @@ export function AlertDetail({
     rain: rain ?? null,
     hydro,
     air: air ?? null,
+    heat: heat ?? null,
     expiresAt: alert?.expiresAt ?? expiresAt,
     tempC: weather.data?.station?.tempNow ?? null,
   });
@@ -161,7 +167,15 @@ export function AlertDetail({
         </p>
       ) : null}
 
-      {tipo === "INCENDIO" ? (
+      {tipo === "CALOR" ? (
+        heat === undefined ? null : heat ? (
+          <HeatWavePanel rec={heat} />
+        ) : (
+          <p className="mt-3 text-[11px] text-text-mute">
+            Sem previsão INMET para comparar com a climatologia.
+          </p>
+        )
+      ) : tipo === "INCENDIO" ? (
         air === undefined ? null : air ? (
           <AirQualityPanel rec={air} />
         ) : (

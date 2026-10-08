@@ -72,6 +72,16 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
     };
     return copy[risco] ?? copy.BOA;
   }
+  if (tipo === "CALOR") {
+    const copy: Record<string, string> = {
+      MODERADO: `Onda de calor moderada em ${nome}. A máxima prevista fica acima da climatologia da Amazônia.`,
+      ALTO: `Onda de calor alta em ${nome}. Temperatura máxima anômala em relação à climatologia.`,
+      SEVERO: `Onda de calor severa em ${nome}. Preparar proteção da população ao ar livre.`,
+      EXTREMO: `Onda de calor extrema em ${nome}. Ação imediata de proteção da saúde.`,
+      BAIXO: `Temperatura prevista em ${nome} dentro da climatologia.`,
+    };
+    return copy[risco] ?? copy.BAIXO;
+  }
   if (tipo === "EROSAO") {
     const copy: Record<string, string> = {
       MODERADO: `Erosão de margem em evolução em ${nome}. Acompanhar barrancos e acessos ribeirinhos.`,

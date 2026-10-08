@@ -7,6 +7,7 @@ export const RISCO_INDICADORES = [
   { id: "Estiagem", label: "IRE Estiagem", titulo: "IRE · Estiagem" },
   { id: "Inundação", label: "IRE Inundação", titulo: "IRE · Inundação" },
   { id: "Incêndio/QAr", label: "IRE Incêndio/QAr", titulo: "IRE · Incêndio e Qualidade do Ar" },
+  { id: "Ondas de calor", label: "IRE Ondas de calor", titulo: "IRE · Ondas de calor" },
   { id: "Erosão", label: "IRE Erosão", titulo: "IRE · Erosão de Margem" },
   { id: "Mov. Massa", label: "IRE Mov. Massa", titulo: "IRE · Movimento de Massa" },
   { id: "Chuvas", label: "IRE Chuvas", titulo: "IRE · Chuvas Intensas" },
