@@ -31,16 +31,16 @@ export const AIR_COLORS: Record<AirLevel, string> = {
   PESSIMA: "#8f3f97",
 };
 
-/** Faixas padrão de qualidade do ar (MP2,5 µg/m³ em 24 h). */
+/** Faixas PurpleAir / App SELVA (US AQI sobre µg/m³ bruto, tempo real). */
 export const AIR_PM25 = {
-  boaMax: 15,
-  moderadoMin: 15,
-  moderadoMax: 50,
-  ruimMin: 50,
-  ruimMax: 75,
-  muitoRuimMin: 75,
-  muitoRuimMax: 125,
-  pessimaMin: 125,
+  boaMax: 12,
+  moderadoMin: 12.1,
+  moderadoMax: 35.4,
+  ruimMin: 35.5,
+  ruimMax: 55.4,
+  muitoRuimMin: 55.5,
+  muitoRuimMax: 150.4,
+  pessimaMin: 150.5,
 } as const;
 
 export const AIR_LABELS: Record<AirLevel, string> = {
@@ -52,11 +52,11 @@ export const AIR_LABELS: Record<AirLevel, string> = {
 };
 
 export const AIR_RANGES: Record<AirLevel, string> = {
-  BOA: "0–15 µg/m³",
-  MODERADO: "15–50 µg/m³",
-  RUIM: "50–75 µg/m³",
-  MUITO_RUIM: "75–125 µg/m³",
-  PESSIMA: ">125 µg/m³",
+  BOA: "0–12 µg/m³",
+  MODERADO: "12,1–35,4 µg/m³",
+  RUIM: "35,5–55,4 µg/m³",
+  MUITO_RUIM: "55,5–150,4 µg/m³",
+  PESSIMA: ">150,4 µg/m³",
 };
 
 export type AlertProduct = {
@@ -160,8 +160,8 @@ export function defaultPaintLevel(tipo: AlertType) {
 }
 
 /**
- * Faixas de 24 h do produto INCÊNDIO (µg/m³): Boa 0–15, Moderada 15–50,
- * Ruim 50–75, Muito ruim 75–125, Péssima >125. Moderada ou pior pinta o mapa.
+ * Faixas do produto INCÊNDIO iguais ao App SELVA / PurpleAir (US AQI em µg/m³):
+ * Boa 0–12, Moderada 12,1–35,4, Ruim 35,5–55,4, Muito ruim 55,5–150,4, Péssima >150,4.
  */
 export function airLevelFromPm25(pm25: number): AirLevel {
   if (!Number.isFinite(pm25) || pm25 <= AIR_PM25.boaMax) return "BOA";
@@ -302,27 +302,27 @@ export const PNG_AIR_ITEMS: Array<{
 }> = [
   {
     key: "BOA",
-    title: "Boa · 0–15",
-    text: "MP2,5 média de 24 h na faixa Boa. Só o operador classifica o município.",
+    title: "Boa · 0–12",
+    text: "MP2,5 ao vivo na faixa Boa. Sem cor de alerta até Moderada ou pior.",
   },
   {
     key: "MODERADO",
-    title: "Moderada · 15–50",
-    text: "MP2,5 média de 24 h na faixa Moderada. Sensores apoiam o plantão.",
+    title: "Moderada · 12,1–35,4",
+    text: "MP2,5 ao vivo na faixa Moderada. A plataforma pinta o município.",
   },
   {
     key: "RUIM",
-    title: "Ruim · 50–75",
-    text: "MP2,5 média de 24 h na faixa Ruim. Sensores apoiam o plantão.",
+    title: "Ruim · 35,5–55,4",
+    text: "MP2,5 ao vivo na faixa Ruim. A plataforma pinta o município.",
   },
   {
     key: "MUITO_RUIM",
-    title: "Muito ruim · 75–125",
-    text: "MP2,5 média de 24 h na faixa Muito ruim. Sensores apoiam o plantão.",
+    title: "Muito ruim · 55,5–150,4",
+    text: "MP2,5 ao vivo na faixa Muito ruim. A plataforma pinta o município.",
   },
   {
     key: "PESSIMA",
-    title: "Péssima · >125",
-    text: "MP2,5 média de 24 h acima de 125 µg/m³. Sensores apoiam o plantão.",
+    title: "Péssima · >150,4",
+    text: "MP2,5 ao vivo acima de 150,4 µg/m³. A plataforma pinta o município.",
   },
 ];

@@ -245,7 +245,7 @@ export type AirQualitySensor = {
   name: string;
   lat: number;
   lon: number;
-  /** Campo chave: média de 24 h (pm2.5_24hour). */
+  /** MP2,5 em tempo real para classificar (atual / 10 min / 1 h — não usa 24 h). */
   pm25: number;
   pm25Hour: number | null;
   pm25Day: number | null;
@@ -267,7 +267,7 @@ export type AirQualityMunicipio = {
   id: string;
   nome: string;
   bacia: string;
-  /** Média aritmética municipal de pm2.5_24hour (sensores externos válidos). */
+  /** Média municipal do MP2,5 em tempo real (atual / 10 min / 1 h — não usa 24 h). */
   pm25: number | null;
   pm25Hour: number | null;
   pm25Day: number | null;

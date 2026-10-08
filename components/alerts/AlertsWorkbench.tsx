@@ -83,6 +83,7 @@ import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
 import { focoFill, type FocosReferencia } from "@/lib/focos-display";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayload } from "@/lib/types";
 import {
+  applyRainClassification,
   hasRain,
   hasRainReading,
   parseRainFilter,
@@ -782,6 +783,18 @@ export function AlertsWorkbench() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+        const typingTarget = event.target;
+        const typing =
+          typingTarget instanceof Element &&
+          (typingTarget.tagName === "INPUT" ||
+            typingTarget.tagName === "TEXTAREA" ||
+            typingTarget.tagName === "SELECT" ||
+            (typingTarget instanceof HTMLElement && typingTarget.isContentEditable));
+        if (!typing && admin && (event.key === "l" || event.key === "L") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+          event.preventDefault();
+          setEditorOpen(true);
+          return;
+        }
         if (event.key === "Escape") {
         if (sessionReviewRef.current) return;
         if (editorOpen) return;
@@ -801,13 +814,6 @@ export function AlertsWorkbench() {
         if (selected) setQuery({ municipio: null });
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
-        const target = event.target;
-        const typing =
-          target instanceof Element &&
-          (target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA" ||
-            target.tagName === "SELECT" ||
-            (target instanceof HTMLElement && target.isContentEditable));
         if (typing || !admin || classifying) return;
         if (!undoStack.length) return;
         event.preventDefault();
@@ -821,9 +827,9 @@ export function AlertsWorkbench() {
 
   const catalog = useMemo(() => {
     const rows = data?.municipios ?? [];
-    if (tipo !== "INCENDIO") return rows;
-    return applyAirClassification(rows, air);
-  }, [data, tipo, air]);
+    if (tipo === "INCENDIO") return applyAirClassification(rows, air);
+    return applyRainClassification(rows, rain, tipo);
+  }, [data, tipo, air, rain]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -924,6 +930,18 @@ export function AlertsWorkbench() {
     counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(0)}%` : "0%";
 
   const overrideCount = catalog.filter((m) => m.fonte === "admin").length;
+  const autoCount = catalog.filter(
+    (m) => m.fonte === "monitor" && isAlertActive(tipo, m.risco),
+  ).length;
+  const autoHint =
+    autoCount > 0 ? ` · ${autoCount} município(s)` : "";
+  const paintHint = paintArmed
+    ? `Grau ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}. A confirmação aparece ao encerrar a edição.`
+    : tipo === "INCENDIO"
+      ? `O mapa segue o MP2,5 em tempo real do App SELVA${autoHint}. Clique, lote (L) ou polígono altera o grau.`
+      : tipo === "CHUVA" || tipo === "EROSAO"
+        ? "Só o operador classifica este produto. Clique, lote (L) ou polígono define o grau."
+        : `Limiares classificam sozinhos${autoHint}. Clique, lote (L) ou polígono altera o grau.`;
   const ready = Boolean(data && data.tipo === tipo);
   const loading = !ready && !error;
   const selectedRow = catalog.find((m) => m.nome === selected) ?? null;
@@ -1270,8 +1288,10 @@ export function AlertsWorkbench() {
       setUndoStack([]);
       toast.success(
         tipo === "INCENDIO"
+          ? "Classificações do operador removidas. O mapa volta ao App SELVA em tempo real."
+          : tipo === "CHUVA" || tipo === "EROSAO"
           ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
-          : "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.",
+          : "Classificações do operador removidas. O mapa volta aos limiares automáticos.",
       );
       return;
     }
@@ -1302,8 +1322,10 @@ export function AlertsWorkbench() {
     setUndoStack([]);
     toast.success(
       tipo === "INCENDIO"
-        ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
-        : "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação.",
+        ? "Classificações do operador removidas. O mapa volta ao App SELVA em tempo real."
+        : tipo === "CHUVA" || tipo === "EROSAO"
+          ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
+          : "Classificações do operador removidas. O mapa volta aos limiares automáticos.",
     );
   }
 
@@ -1331,7 +1353,7 @@ export function AlertsWorkbench() {
         tipo === "INCENDIO"
           ? {
               title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "Concentração de material particulado fino (MP2,5) em µg/m³, média de 24 h (pm2.5_24hour) dos sensores externos. Faixas: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125, Péssima >125. Só o operador classifica o município; os sensores apoiam o plantão.",
+              text: "MP2,5 em µg/m³ em tempo real (pior sensor; 10 min, atual ou 1 h — não usa média de 24 h) via App SELVA / PurpleAir. Faixas US AQI: Boa 0–12, Moderada 12,1–35,4, Ruim 35,5–55,4, Muito ruim 55,5–150,4, Péssima >150,4. A plataforma pinta Moderada ou pior; o operador pode alterar depois.",
             }
           : undefined,
     });
@@ -1866,13 +1888,7 @@ export function AlertsWorkbench() {
               overrideCount={overrideCount}
               sessionCount={clickSessionCount}
               stainCount={(data?.stains ?? []).length}
-              paintHint={
-                paintArmed
-                  ? `Grau ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}. A confirmação aparece ao encerrar a edição.`
-                  : tipo === "INCENDIO"
-                    ? "Só o operador classifica o grau. MP2,5 em 24 h sugere; clique, lote ou polígono pinta o município."
-                    : "Só o operador classifica o grau. Polígono aplica o grau na mancha; chuva e cota só sugerem."
-              }
+              paintHint={paintHint}
               onDraw={() => {
                 setDrawMode((v) => {
                   const next = !v;

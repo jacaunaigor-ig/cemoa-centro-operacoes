@@ -165,11 +165,18 @@ function RainApoioCard({
     <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Apoio · sugestão
+          {tipo === "CHUVA" ? "Apoio · sugestão" : "Automático · limiar"}
         </span>
         <RiskBadge level={apoio.level} />
       </div>
-      <p className="mt-1 text-xs leading-snug text-text-dim" title="Sugestão de grau. Só o operador classifica.">
+      <p
+        className="mt-1 text-xs leading-snug text-text-dim"
+        title={
+          tipo === "CHUVA"
+            ? "Sugestão de grau. Só o operador classifica chuva intensa."
+            : "Grau automático pelo limiar. O operador pode alterar."
+        }
+      >
         {apoio.motivo}
       </p>
       {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (

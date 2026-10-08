@@ -69,7 +69,16 @@ const INITIAL_ANA_SEED: Record<string, RainfallStation> = {
 const anaRainCache = new Map<string, RainfallStation>(Object.entries(INITIAL_ANA_SEED));
 let anaRainInflight: Promise<void> | null = null;
 let anaRainLastFetched = 0;
-const ANA_REFRESH_INTERVAL_MS = 5 * 60_000;
+const ANA_REFRESH_INTERVAL_MS = 15 * 60_000;
+const ANA_DEAD_REPROBE_MS = 6 * 60 * 60_000;
+const anaRainHealth = new Map<string, { ok: boolean; at: number }>();
+
+function shouldPollAnaRain(codigo: string, now: number) {
+  const health = anaRainHealth.get(codigo);
+  if (!health) return true;
+  if (health.ok) return true;
+  return now - health.at >= ANA_DEAD_REPROBE_MS;
+}
 
 function refreshAnaRainfallBackground(missingMunis: typeof MUNICIPALITIES) {
   if (anaRainInflight) return;
@@ -77,19 +86,22 @@ function refreshAnaRainfallBackground(missingMunis: typeof MUNICIPALITIES) {
 
   anaRainInflight = (async () => {
     try {
+      const now = Date.now();
       const anaTargets = missingMunis
         .map((m) => ({ id: m.id, target: anaFallbackForMuni(m.id) }))
         .filter(
           (item): item is { id: string; target: { codigo: string; nome: string } } =>
             Boolean(item.target),
-        );
+        )
+        .filter((item) => shouldPollAnaRain(item.target.codigo, now));
 
       for (const { id, target } of anaTargets) {
         try {
           const st = await fetchAnaRainStation(target.codigo, target.nome);
+          anaRainHealth.set(target.codigo, { ok: Boolean(st), at: Date.now() });
           if (st) anaRainCache.set(id, st);
         } catch {
-          // Preserva leitura em cache se a requisição falhar ou expirar
+          anaRainHealth.set(target.codigo, { ok: false, at: Date.now() });
         }
       }
       anaRainLastFetched = Date.now();

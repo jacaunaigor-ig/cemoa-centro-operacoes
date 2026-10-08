@@ -235,6 +235,7 @@ export function RiscoWorkbench() {
             ? b.agrInundacao - a.agrInundacao || b.val - a.val || a.nome.localeCompare(b.nome, "pt-BR")
             : b.val - a.val || a.nome.localeCompare(b.nome, "pt-BR"),
         )
+        .slice(0, 10)
         .map(({ nome, valor, color }) => ({ nome, valor, color }));
 
       await exportInstitutionalPng({
@@ -254,11 +255,13 @@ export function RiscoWorkbench() {
         footerSources: "Metodologia CEMOA · cemoa_app · Censo 2022 · Defesa Civil do Amazonas",
         extraNote: {
           title: id === "irg" ? "Fórmula do IRG" : `Fórmula do ${meta.label}`,
-          text: id === "irg"
+          text: `${
+            id === "irg"
             ? "IRG = 0,6 × maior IRE + 0,2 × média dos IREs + 0,2 × IVM (escalado 0–60). Níveis P1 (Crítico/Extremo ≥ 50), P2 (Alto ≥ 40), P3 (Elevado ≥ 30) e P4 (Moderado ≥ 20 / Baixo)."
             : id === "Inundação"
               ? "IRE Inundação = ((IVM + ameaça) × FS × FE × FA) + agravo dos decretos (teto 11). Na vazante o FA = 0,30 prevalece: todos permanecem Baixo; o histórico só ordena o ranking."
-              : `IRE (${id}) = ((IVM + ameaça) × FS × FE × FA) + agravo, com teto de 60 pontos. O FA reduz só a dinâmica atual; o histórico (agravo) permanece somado.`,
+              : `IRE (${id}) = ((IVM + ameaça) × FS × FE × FA) + agravo, com teto de 60 pontos. O FA reduz só a dinâmica atual; o histórico (agravo) permanece somado.`
+          } Ranking lateral: os 10 primeiros municípios deste indicador.`,
         },
       });
       toast.success(`PNG de ${meta.label} gerado com sucesso.`);

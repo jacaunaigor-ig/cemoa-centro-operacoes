@@ -63,11 +63,11 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   }
   if (tipo === "INCENDIO") {
     const copy: Record<string, string> = {
-      BOA: `Qualidade do ar boa em ${nome} (MP2,5 0–15 µg/m³ em 24 h).`,
-      MODERADO: `Qualidade do ar moderada em ${nome} (MP2,5 15–50 µg/m³ em 24 h), com reflexo de queima em área não protegida.`,
-      RUIM: `Qualidade do ar ruim em ${nome} (MP2,5 50–75 µg/m³ em 24 h). Incêndio florestal com impacto na população.`,
-      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (MP2,5 75–125 µg/m³ em 24 h). Restringir exposição ao ar livre.`,
-      PESSIMA: `Qualidade do ar péssima em ${nome} (MP2,5 >125 µg/m³ em 24 h). Ação imediata de proteção da saúde.`,
+      BOA: `Qualidade do ar boa em ${nome} (MP2,5 0–12 µg/m³ em tempo real).`,
+      MODERADO: `Qualidade do ar moderada em ${nome} (MP2,5 12,1–35,4 µg/m³ em tempo real), com reflexo de queima em área não protegida.`,
+      RUIM: `Qualidade do ar ruim em ${nome} (MP2,5 35,5–55,4 µg/m³ em tempo real). Incêndio florestal com impacto na população.`,
+      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (MP2,5 55,5–150,4 µg/m³ em tempo real). Restringir exposição ao ar livre.`,
+      PESSIMA: `Qualidade do ar péssima em ${nome} (MP2,5 >150,4 µg/m³ em tempo real). Ação imediata de proteção da saúde.`,
     };
     return copy[risco] ?? copy.BOA;
   }
@@ -91,7 +91,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
-/** Sem classificação do operador, o município fica no nível baixo do produto. Incêndio/Qualidade do ar recebe a faixa do App SELVA por cima, exceto Boa. */
+/** Sem classificação do operador, o município fica no nível baixo do produto. No cliente, chuva/alagamento/movimento recebem o limiar e incêndio recebe o App SELVA. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",
@@ -217,8 +217,8 @@ export function buildHydrologyPayload(
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
   const partes = [
     `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
-    "ANA às 07:00 (Brasília)",
-    "Fabric às 07:00 e 16:00 (Brasília)",
+    "ANA às 16:00 (Manaus), cota ~07:00 do dia vigente",
+    "Power BI / Fabric às 07:00 e 16:00 (Brasília)",
   ];
   if (atualizadasFabric > 0) {
     partes.push(
