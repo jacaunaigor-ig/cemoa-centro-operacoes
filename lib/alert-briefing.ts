@@ -1,8 +1,11 @@
 import { AIR_LABELS, isAlertActive, levelLabel, riskActionFor, type AlertType } from "@/lib/alert-types";
+import { formatCountdown, remainingMs } from "@/lib/alert-validity";
 import { formatUg } from "@/lib/air-quality-display";
-import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
+import { HYDRO_STATUS_LABELS, rotuloSituacao, situacaoLeitura, statusAtivo } from "@/lib/hydrology";
 import { formatMm, INTENSE_MM_PER_H, isIntense1h, rainApoio } from "@/lib/rainfall-display";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainfallMunicipio } from "@/lib/types";
+import { formatAmazonTime } from "@/lib/utils";
+import { formatTempC } from "@/lib/weather-forecast";
 
 export type AlertBriefing = {
   headline: string;
@@ -31,7 +34,7 @@ export function buildAlertBriefing({
     tipo === "INCENDIO"
       ? [
           air && air.pm25 != null
-            ? `${nome}: qualidade do ar ${nivel} (MP2,5 24 h ${formatUg(air.pm25)}).`
+            ? `${nome}: qualidade do ar ${nivel} (MP2,5 ao vivo ${formatUg(air.pm25)}).`
             : `${nome}: qualidade do ar ${nivel}${air === null ? " — sem monitor PurpleAir neste município" : ""}.`,
         ]
       : [`${nome}: alerta ${nivel}${isAlertActive(tipo, risco) ? "" : " em monitoramento"}.`];
@@ -87,4 +90,61 @@ export function buildAlertBriefing({
     headline: parts.join(" "),
     risks,
   };
+}
+
+/** Uma linha para a ficha: grau · sensor/mm · cota · validade. */
+export function buildFichaLinha({
+  risco,
+  tipo,
+  rain,
+  hydro,
+  air,
+  expiresAt,
+  tempC,
+  now = Date.now(),
+}: {
+  risco: AlertLevel | string;
+  tipo: AlertType;
+  rain?: RainfallMunicipio | null;
+  hydro?: HydroStation | null;
+  air?: AirQualityMunicipio | null;
+  expiresAt?: number | null;
+  tempC?: number | null;
+  now?: number;
+}): string {
+  const bits: string[] = [levelLabel(risco)];
+  if (tipo === "INCENDIO") {
+    bits.push(air && air.pm25 != null ? `MP2,5 ${formatUg(air.pm25)}` : "sem monitor");
+  } else if (rain && rain.estacoes.length > 0) {
+    const mm = rain.mm1h ?? rain.mm6h ?? rain.mm24h;
+    bits.push(formatMm(mm));
+  } else {
+    bits.push("sem pluviômetro");
+  }
+  if (tempC != null) bits.push(formatTempC(tempC));
+  if (hydro && !hydro.semLeitura && hydro.cota != null) {
+    const sit = situacaoLeitura(hydro);
+    bits.push(`${hydro.cota.toFixed(2)} m${sit.atual ? " hoje" : ""}`);
+  }
+  const left = remainingMs(expiresAt, now);
+  if (left != null) bits.push(left > 0 ? formatCountdown(left) : "vencido");
+  return bits.join(" · ");
+}
+
+function horaCurta(ts: number | null | undefined) {
+  if (!ts) return null;
+  return formatAmazonTime(ts).slice(0, 5);
+}
+
+export function buildHydroFichaLinha(station: HydroStation): string {
+  const rec = rotuloSituacao(station);
+  const cota =
+    station.semLeitura || station.cota == null ? "sem cota" : `${station.cota.toFixed(2)} m`;
+  const bits = [rec.texto, cota, station.rio];
+  const ana = horaCurta(station.cotaAnaLidaEm);
+  const pbi = horaCurta(station.cotaFabricLidaEm);
+  if (ana && pbi && ana !== pbi) bits.push(`ANA ${ana} · PBI ${pbi}`);
+  else if (ana) bits.push(`ANA ${ana}`);
+  else if (pbi) bits.push(`PBI ${pbi}`);
+  return bits.join(" · ");
 }

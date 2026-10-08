@@ -1,5 +1,6 @@
 import type { AlertType } from "@/lib/alert-types";
-import type { RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
+import { temAreaMapeada } from "@/lib/mass-risk";
+import type { AlertLevel, RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
 import {
   classifyMonitorRain,
   formatBandFloor,
@@ -144,7 +145,7 @@ function ifHit(
   return cond ? { level, motivo } : null;
 }
 
-/** Apoio operacional — não altera o grau. */
+/** Limiares operacionais — a plataforma classifica sozinha; o operador pode alterar depois. */
 export function rainApoio(
   tipo: AlertType | undefined,
   rain: RainfallWindows | null | undefined,
@@ -270,6 +271,34 @@ export function rainScore(tipo: AlertType | undefined, rain: RainfallWindows): n
   if (tipo === "MOVIMENTO") return (rain.mm24h ?? 0) * 2 + (rain.mm6h ?? 0);
   if (tipo === "ALAGAMENTO") return (rain.mm1h ?? 0) * 4 + (rain.mm6h ?? 0) + (rain.mm24h ?? 0) * 0.15;
   return (rain.mm1h ?? 0) * 5 + (rain.mm6h ?? 0) + (rain.mm24h ?? 0) * 0.25;
+}
+
+/** Pinta ALAGAMENTO e MOVIMENTO ao atingir o limiar. Chuva intensa fica só com o operador. */
+export function applyRainClassification<
+  T extends {
+    id: string;
+    nome: string;
+    risco: AlertLevel;
+    fonte: "admin" | "monitor";
+    classifiedBy?: string | null;
+    classifiedAt?: number | null;
+  },
+>(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType): T[] {
+  if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
+  return rows.map((m) => {
+    if (m.fonte === "admin") return m;
+    const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
+    const apoio = rainApoio(tipo, rec, { nome: m.nome, id: m.id });
+    if (!apoio || apoio.level === "BAIXO") return m;
+    if (tipo === "MOVIMENTO" && !temAreaMapeada(m.id)) return m;
+    return {
+      ...m,
+      risco: apoio.level,
+      fonte: "monitor" as const,
+      classifiedBy: "Limiares CEMADEN/ANA",
+      classifiedAt: rain.generatedAt ?? m.classifiedAt ?? null,
+    };
+  });
 }
 
 export function rainRankAction(current: string, suggested: RiskLevel | null): RainRankAction {

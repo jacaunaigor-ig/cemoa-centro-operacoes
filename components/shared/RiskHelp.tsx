@@ -185,12 +185,14 @@ export function RiskHelpButton({
 
                 <div className="mx-4 mb-5 rounded-xl border border-border bg-hover p-3.5">
                   <p className="text-[11px] font-semibold tracking-[0.08em] text-text-mute uppercase">
-                    Qualidade do ar — 24 h
+                    Qualidade do ar — tempo real
                   </p>
                   <p className="mt-1 text-xs text-text-dim">
-                    No produto Incêndio florestal as faixas de MP2,5 em 24 h são: Boa 0–15, Moderada
-                    15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. Só o operador
-                    classifica o município; os sensores aparecem como apoio de monitoramento.
+                    No produto Incêndio/Qualidade do ar as faixas de MP2,5 seguem o App SELVA /
+                    PurpleAir (pior sensor, 10 min / atual / 1 h — não a média de 24 h): Boa 0–12,
+                    Moderada 12,1–35,4, Ruim 35,5–55,4, Muito ruim 55,5–150,4 e Péssima
+                    &gt;150,4 µg/m³. O App SELVA pinta Moderada ou pior; o operador pode alterar
+                    depois.
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {AIR_CHIPS.map(([key, label, color]) => (

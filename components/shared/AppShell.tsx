@@ -11,6 +11,7 @@ import {
   LogOut,
   Moon,
   Pencil,
+  Presentation,
   Radio,
   Shield,
   ShieldAlert,
@@ -22,6 +23,7 @@ import { seatNames } from "@/lib/operator-seats-shared";
 import { useNow, usePauseMotionWhenHidden } from "@/lib/client-hooks";
 import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
+import { useApresentacao } from "@/components/apresentacao/ApresentacaoHost";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
@@ -65,6 +67,7 @@ export function AppShell({
     openAdmins,
     logout,
   } = useOpsMode();
+  const apresentacao = useApresentacao();
   usePauseMotionWhenHidden();
 
   const shared = new URLSearchParams();
@@ -216,8 +219,34 @@ export function AppShell({
             {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Escuro"}</span>
           </button>
+          {apresentacao && !isMobile ? (
+            <button
+              type="button"
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-black tracking-wide uppercase transition-colors",
+                apresentacao.active
+                  ? "border-amber-400/70 bg-amber-400 text-[#07182a]"
+                  : "border-border bg-panel-2 text-text-mute hover:text-text",
+              )}
+              onClick={() => (apresentacao.active ? apresentacao.exit() : apresentacao.start())}
+              aria-pressed={apresentacao.active}
+              title="Modo apresentação para o chefe ou sala de reunião. Setas passam os slides."
+            >
+              <Presentation className="size-3.5" />
+              {apresentacao.active ? "Sair" : "Apresentar"}
+            </button>
+          ) : null}
+          {!isMobile ? (
+            <a
+              href="/cemoa-apresentacao.pptx"
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute hover:text-text"
+              title="Baixar PowerPoint interativo da apresentação"
+            >
+              PPTX
+            </a>
+          ) : null}
           {!isMobile ? <PlantaoSoundButton labeled /> : null}
-          {!isMobile && session ? (
+          {!isMobile && session && !apresentacao?.active ? (
             <span
               className="hidden max-w-[18rem] truncate rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute xl:inline"
               title={`Até ${maxSeats} operadores no posto ao mesmo tempo`}
@@ -226,7 +255,7 @@ export function AppShell({
               {seats.length ? ` · ${seatNames(seats)}` : ""}
             </span>
           ) : null}
-          {!isMobile ? (
+          {!isMobile && !apresentacao?.active ? (
             <div className="flex items-center gap-1.5">
               {session ? (
                 <>
@@ -323,11 +352,12 @@ export function AppShell({
         </div>
       </header>
       )}
-      {admin && !mapFocus && !pathname.startsWith("/risco") && !pathname.startsWith("/meteorologia") ? (
+      {admin && !mapFocus && !apresentacao?.active && !pathname.startsWith("/risco") && !pathname.startsWith("/meteorologia") ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
-          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva, cota e qualidade do ar são
-          sugestão; só o operador classifica o grau. Clique, lote
+          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva intensa e erosão são do
+          operador; alagamento, movimento de massa e qualidade do ar classificam pelos limiares
+          (o operador pode alterar). Clique, lote (L)
           {pathname.startsWith("/boletim") ? "" : " ou mancha no polígono"}. Encerrar ao
           terminar. Desfazer (Ctrl+Z).
         </div>
@@ -342,7 +372,7 @@ export function AppShell({
       >
         {children}
       </div>
-      {mapFocus || isMobile ? null : (
+      {mapFocus || isMobile || apresentacao?.active ? null : (
       <OpsFooter
         source={source}
         updatedAt={updatedAt}

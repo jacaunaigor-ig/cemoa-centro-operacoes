@@ -76,7 +76,7 @@ export function CemadenRainPanel({
         </p>
       )}
 
-      <div className="mt-2 max-h-48 overflow-auto">
+      <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-[11px]">
           <thead className="sticky top-0 bg-bg/95 text-[10px] font-semibold tracking-wide text-text-mute uppercase">
             <tr>
@@ -93,7 +93,7 @@ export function CemadenRainPanel({
           <tbody>
             {estacoes.map((s) => (
               <tr key={s.id} className="border-t border-border/70 hover:bg-hover">
-                <td className="max-w-[8.5rem] truncate py-1.5 pr-2 font-semibold text-text" title={s.nome}>
+                <td className="max-w-[12rem] py-1.5 pr-2 font-semibold break-words text-text">
                   {s.nome}
                 </td>
                 <td
@@ -165,11 +165,18 @@ function RainApoioCard({
     <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Apoio · sugestão
+          {tipo === "CHUVA" ? "Apoio · sugestão" : "Automático · limiar"}
         </span>
         <RiskBadge level={apoio.level} />
       </div>
-      <p className="mt-1 text-xs leading-snug text-text-dim" title="Sugestão de grau. Só o operador classifica.">
+      <p
+        className="mt-1 text-xs leading-snug text-text-dim"
+        title={
+          tipo === "CHUVA"
+            ? "Sugestão de grau. Só o operador classifica chuva intensa."
+            : "Grau automático pelo limiar. O operador pode alterar."
+        }
+      >
         {apoio.motivo}
       </p>
       {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (

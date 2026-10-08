@@ -6,7 +6,7 @@ import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 import { Button } from "@/components/ui/button";
 import { RiskBadge } from "@/components/shared/RiskBadge";
 import { classificationByline, type AlertType } from "@/lib/alert-types";
-import { buildAlertBriefing } from "@/lib/alert-briefing";
+import { buildAlertBriefing, buildFichaLinha } from "@/lib/alert-briefing";
 import { formatUg } from "@/lib/air-quality-display";
 import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
@@ -15,7 +15,8 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
-import { WeatherForecastPanel } from "@/components/alerts/WeatherForecastPanel";
+import { ClassificacaoTrail } from "@/components/alerts/ClassificacaoTrail";
+import { useWeatherForecast, WeatherForecastPanel } from "@/components/alerts/WeatherForecastPanel";
 
 export function AlertDetail({
   municipioId,
@@ -55,6 +56,7 @@ export function AlertDetail({
   onClose: () => void;
 }) {
   const { isMobile } = useOpsMode();
+  const weather = useWeatherForecast(municipioId);
   const calha = hydro?.calha ?? null;
   const briefing = buildAlertBriefing({
     nome,
@@ -66,18 +68,25 @@ export function AlertDetail({
     hydro,
     air: air === undefined ? undefined : air,
   });
+  const fichaLinha = buildFichaLinha({
+    risco,
+    tipo: tipo ?? "CHUVA",
+    rain: rain ?? null,
+    hydro,
+    air: air ?? null,
+    expiresAt: alert?.expiresAt ?? expiresAt,
+    tempC: weather.data?.station?.tempNow ?? null,
+  });
 
   return (
     <section
       className={cn(
         overlay
           ? cn(
-              "overflow-y-auto overscroll-contain rounded-xl border border-border bg-panel p-3 shadow-[var(--shadow-card)] backdrop-blur-md",
-              isMobile
-                ? "flex min-h-0 max-h-full flex-1 flex-col pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-                : "max-h-[min(78vh,640px)]",
+              "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-border bg-panel p-3 shadow-[var(--shadow-card)] backdrop-blur-md",
+              isMobile && "pb-[max(0.75rem,env(safe-area-inset-bottom))]",
             )
-          : "max-h-[min(52vh,520px)] overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
+          : "min-h-0 max-h-full overflow-y-auto border-t border-border bg-panel/95 px-4 py-3",
       )}
     >
       <div className={cn("flex items-start justify-between gap-3", isMobile && overlay && "sticky top-0 z-10 -mx-3 -mt-3 bg-panel/95 px-3 pt-3 pb-2 backdrop-blur-md")}>
@@ -112,7 +121,8 @@ export function AlertDetail({
         />
       </div>
 
-      <p className="mt-3 rounded-lg border border-border bg-bg/40 px-3 py-2 text-[13px] leading-snug text-text">
+      <p className="mt-2 font-mono text-[11px] leading-snug break-words text-text-dim">{fichaLinha}</p>
+      <p className="mt-2 rounded-lg border border-border bg-bg/40 px-3 py-2 text-[13px] leading-snug text-text">
         {briefing.headline}
       </p>
       {briefing.risks.length ? (
@@ -129,7 +139,7 @@ export function AlertDetail({
       ) : null}
 
       {municipioId ? (
-        <WeatherForecastPanel ibge={municipioId} nome={nome} rain={rain} />
+        <WeatherForecastPanel ibge={municipioId} nome={nome} rain={rain} forecast={weather} />
       ) : null}
 
       {tipo === "INCENDIO" ? (
@@ -156,7 +166,7 @@ export function AlertDetail({
           <AirQualityPanel rec={air} />
         ) : (
           <p className="mt-3 text-[11px] text-text-mute">
-            Sem monitor PurpleAir externo neste município (MP2,5 24 h, dentro do polígono CEMOA).
+            Sem monitor PurpleAir externo neste município (MP2,5 ao vivo, dentro do polígono CEMOA).
           </p>
         )
       ) : rain === undefined ? null : rain ? (
@@ -167,6 +177,9 @@ export function AlertDetail({
         </p>
       )}
 
+      {municipioId && tipo ? (
+        <ClassificacaoTrail municipioId={municipioId} municipio={nome} tipo={tipo} />
+      ) : null}
       {municipioId ? <FichaTerritorio municipioId={municipioId} tipo={tipo} /> : null}
 
       <Link

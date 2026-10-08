@@ -27,7 +27,8 @@ const JANELAS = [
 type Janela = (typeof JANELAS)[number]["id"];
 
 const ESCALA = [
-  { ate: "sem chuva", cor: "#e8eef5" },
+  { ate: "sem estação", cor: "#9aa3b2" },
+  { ate: "0 mm", cor: "#e8eef5" },
   { ate: "< 5 mm", cor: "#c5ddf6" },
   { ate: "< 12,5", cor: "#7eb6ea" },
   { ate: "< 25", cor: "#3b82d6" },
@@ -39,9 +40,16 @@ type GoesPayload = {
   generatedAt: number;
   imageAt: number | null;
   imageUrl: string | null;
+  sourceUrl?: string | null;
   product: string;
   credit: string;
   error?: string;
+};
+
+type GoesFrame = {
+  stamp: string;
+  imageAt: number;
+  imageUrl: string;
 };
 
 export function MeteorologiaWorkbench() {
@@ -52,28 +60,41 @@ export function MeteorologiaWorkbench() {
   const [goes, setGoes] = useState<GoesPayload | null>(null);
   const [goesLoading, setGoesLoading] = useState(false);
   const [goesStamp, setGoesStamp] = useState(0);
+  const [goesFrames, setGoesFrames] = useState<GoesFrame[]>([]);
+  const [goesFrameIdx, setGoesFrameIdx] = useState(-1);
+  const [goesPlaying, setGoesPlaying] = useState(false);
   const [painel, setPainel] = useState<"chuva" | "clima">("chuva");
   const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
 
-  const loadGoes = useCallback((refresh = false) => {
+  const loadGoes = useCallback(async (refresh = false) => {
     if (STATIC_DEPLOY) return;
     setGoesLoading(true);
-    fetchJson<GoesPayload>(refresh ? "/api/satellite/goes?refresh=1" : "/api/satellite/goes")
-      .then((data) => {
-        setGoes(data);
-        setGoesStamp(Date.now());
-      })
-      .catch(() => {
-        setGoes({
-          generatedAt: Date.now(),
-          imageAt: null,
-          imageUrl: null,
-          product: "GOES-19",
-          credit: "CPTEC / INPE",
-          error: "Sem imagem do satélite neste momento.",
-        });
-      })
-      .finally(() => setGoesLoading(false));
+    try {
+      const data = await fetchJson<GoesPayload>(
+        refresh ? "/api/satellite/goes?refresh=1" : "/api/satellite/goes",
+      );
+      setGoes(data);
+      setGoesStamp(Date.now());
+      setGoesFrameIdx(-1);
+      try {
+        const listed = await fetchJson<{ frames?: GoesFrame[] }>("/api/satellite/goes/frames");
+        setGoesFrames(listed.frames ?? []);
+      } catch {
+        setGoesFrames([]);
+      }
+    } catch {
+      setGoes({
+        generatedAt: Date.now(),
+        imageAt: null,
+        imageUrl: null,
+        sourceUrl: null,
+        product: "GOES-19",
+        credit: "CPTEC / INPE",
+        error: "Sem imagem do satélite neste momento.",
+      });
+    } finally {
+      setGoesLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -98,14 +119,31 @@ export function MeteorologiaWorkbench() {
   }, []);
 
   useEffect(() => {
-    loadGoes(false);
+    if (STATIC_DEPLOY) return;
+    return startVisiblePoll(() => loadGoes(false), 10 * 60_000);
   }, [loadGoes]);
+
+  useEffect(() => {
+    if (!goesPlaying || goesFrames.length < 2) return;
+    const id = window.setInterval(() => {
+      setGoesFrameIdx((i) => {
+        const start = i < 0 ? 0 : i;
+        return (start + 1) % goesFrames.length;
+      });
+    }, 900);
+    return () => window.clearInterval(id);
+  }, [goesPlaying, goesFrames.length]);
 
   const rows = useMemo(() => {
     const list = Object.values(rain?.byNome ?? {});
     return list
       .map((item) => ({ item, mm: item[janela] }))
-      .sort((a, b) => (b.mm ?? -1) - (a.mm ?? -1));
+      .sort((a, b) => {
+        const aEst = a.item.estacoes.length > 0 ? 1 : 0;
+        const bEst = b.item.estacoes.length > 0 ? 1 : 0;
+        if (aEst !== bEst) return bEst - aEst;
+        return (b.mm ?? -1) - (a.mm ?? -1) || a.item.nome.localeCompare(b.item.nome, "pt-BR");
+      });
   }, [rain, janela]);
 
   const comChuva = rows.filter((row) => (row.mm ?? 0) > 0.1).length;
@@ -113,15 +151,21 @@ export function MeteorologiaWorkbench() {
 
   const fills = useMemo(() => {
     const next: Record<string, string> = {};
-    for (const row of rows) next[row.item.nome] = rainHeatColor(row.mm);
+    for (const rec of Object.values(rain?.byNome ?? {})) {
+      next[rec.nome] = rainHeatColor(rec[janela], { temEstacao: rec.estacoes.length > 0 });
+    }
     return next;
-  }, [rows]);
+  }, [rain, janela]);
 
   const titles = useMemo(() => {
     const next: Record<string, string> = {};
-    for (const row of rows) next[row.item.nome] = `${row.item.nome} · ${formatMm(row.mm)}`;
+    for (const rec of Object.values(rain?.byNome ?? {})) {
+      next[rec.nome] = rec.estacoes.length
+        ? `${rec.nome} · ${formatMm(rec[janela])}`
+        : `${rec.nome} · sem pluviômetro`;
+    }
     return next;
-  }, [rows]);
+  }, [rain, janela]);
 
   const foco = selected ? rain?.byNome[selected] : null;
 
@@ -181,7 +225,7 @@ export function MeteorologiaWorkbench() {
         <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
           {([
             ["chuva", "Chuva"],
-            ["clima", "Clima"],
+            ["clima", "Estiagem"],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -253,7 +297,7 @@ export function MeteorologiaWorkbench() {
           </div>
 
           <div className="grid content-start gap-2">
-            <aside className="meteo-lista flex flex-col rounded-xl border border-border bg-panel">
+            <aside className="meteo-lista flex max-h-[min(70vh,40rem)] flex-col rounded-xl border border-border bg-panel">
               <div className="border-b border-border px-3 py-2">
                 <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">Acumulado</h3>
                 {foco ? <Foco item={foco} janela={janela} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}
@@ -269,9 +313,18 @@ export function MeteorologiaWorkbench() {
                         selected === item.nome && "bg-hover font-bold",
                       )}
                     >
-                      <span className="size-2.5 shrink-0 rounded-sm" style={{ background: rainHeatColor(mm) }} />
-                      <span className="min-w-0 flex-1 truncate">{item.nome}</span>
-                      <span className="font-mono tabular-nums">{formatMm(mm)}</span>
+                      <span
+                        className="size-2.5 shrink-0 rounded-sm"
+                        style={{ background: rainHeatColor(mm, { temEstacao: item.estacoes.length > 0 }) }}
+                      />
+                      <span className="min-w-0 flex-1 break-words">{item.nome}</span>
+                      <span className="shrink-0 text-right font-mono text-[12px] tabular-nums">
+                        {item.estacoes.length
+                          ? mm == null
+                            ? "sem leitura"
+                            : formatMm(mm)
+                          : "sem estação"}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -283,32 +336,89 @@ export function MeteorologiaWorkbench() {
                 <div className="min-w-0">
                   <h3 className="flex items-center gap-1.5 text-sm font-black">
                     <CloudSun className="size-4 text-brand" />
-                    GOES-19
+                    GOES-19 · infravermelho CH13
                   </h3>
                   <GoesNotice goes={goes} loading={goesLoading} />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => loadGoes(true)}
-                  disabled={goesLoading || STATIC_DEPLOY}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
-                >
-                  <RefreshCw className={cn("size-3.5", goesLoading && "animate-spin")} />
-                  Atualizar
-                </button>
+                <div className="flex flex-wrap gap-1">
+                  {goes?.sourceUrl ? (
+                    <a
+                      href={goes.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-11 items-center rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold text-focus hover:underline"
+                    >
+                      CPTEC
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => loadGoes(true)}
+                    disabled={goesLoading || STATIC_DEPLOY}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 py-1.5 text-[12px] font-bold disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn("size-3.5", goesLoading && "animate-spin")} />
+                    Atualizar
+                  </button>
+                </div>
               </div>
               {STATIC_DEPLOY ? (
                 <p className="text-sm text-text-mute">A imagem GOES fica indisponível na publicação estática.</p>
               ) : goes?.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`${withBase(goes.imageUrl)}?t=${goesStamp || goes.generatedAt}`}
+                  src={
+                    goesFrameIdx >= 0 && goesFrames[goesFrameIdx]
+                      ? withBase(goesFrames[goesFrameIdx].imageUrl)
+                      : `${withBase(goes.imageUrl)}?t=${goesStamp || goes.generatedAt}`
+                  }
                   alt={goes.product}
                   className="meteo-goes-img h-auto w-full rounded-lg border border-border bg-[#0b1d4a] object-contain"
                 />
+                {goesFrames.length > 1 ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-1">
+                    <button
+                      type="button"
+                      className="inline-flex min-h-9 items-center rounded-lg border border-border bg-panel px-2 py-1 text-[11px] font-bold"
+                      onClick={() => setGoesPlaying((v) => !v)}
+                    >
+                      {goesPlaying ? "Pausar 1 h" : "Loop 1 h"}
+                    </button>
+                    {goesFrames.map((frame, i) => (
+                      <button
+                        key={frame.stamp}
+                        type="button"
+                        className={cn(
+                          "min-h-9 rounded-md border px-1.5 font-mono text-[10px] tabular-nums",
+                          i === goesFrameIdx
+                            ? "border-brand bg-brand/15 font-bold"
+                            : "border-border bg-panel",
+                        )}
+                        onClick={() => {
+                          setGoesPlaying(false);
+                          setGoesFrameIdx(i);
+                        }}
+                      >
+                        {formatAmazonDateTime(frame.imageAt).slice(-5)}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="min-h-9 rounded-md border border-border px-1.5 text-[10px] font-bold"
+                      onClick={() => {
+                        setGoesPlaying(false);
+                        setGoesFrameIdx(-1);
+                      }}
+                    >
+                      Vigente
+                    </button>
+                  </div>
+                ) : null}
+                </>
               ) : (
-                <p className="text-sm text-text-mute">
-                  {goesLoading ? "Consultando o acervo CPTEC/INPE…" : goes?.error ?? "Sem imagem GOES neste momento."}
+                <p className="min-h-24 text-sm text-text-mute">
+                  {goesLoading ? "Gerando recorte do Amazonas no acervo CPTEC/INPE…" : goes?.error ?? "Sem imagem GOES neste momento."}
                 </p>
               )}
             </section>
@@ -317,9 +427,9 @@ export function MeteorologiaWorkbench() {
 
         <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
           <div>
-            <h3 className="text-sm font-black">Anomalia de precipitação</h3>
+            <h3 className="text-sm font-black">Estiagem · MERGE</h3>
             <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
-              MERGE do CPTEC/INPE: precipitação do mês comparada à climatologia. Azul é excesso e vermelho é déficit.
+              Contexto de estiagem, sem classificar chuva nem alerta. Vermelho é déficit em relação à climatologia; azul é excesso.
               Fonte:{" "}
               <a className="underline" href="https://data.inpe.br/dados/merge/" target="_blank" rel="noreferrer">
                 data.inpe.br/dados/merge
@@ -454,7 +564,10 @@ function Foco({ item, janela }: { item: RainfallMunicipio; janela: Janela }) {
   ] as const;
   return (
     <div className="mt-1">
-      <strong className="text-[13px]">{item.nome}</strong>
+      <strong className="text-[13px] break-words">{item.nome}</strong>
+      {item.estacoes.length ? null : (
+        <p className="text-[11px] text-text-mute">Sem pluviômetro neste município.</p>
+      )}
       <dl className="mt-1 grid grid-cols-4 gap-1">
         {valores.map(([label, mm]) => (
           <div key={label} className={cn("rounded-md px-1 py-0.5", JANELAS.find((item) => item.id === janela)?.label === label && "bg-hover")}>

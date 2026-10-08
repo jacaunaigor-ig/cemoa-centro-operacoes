@@ -61,7 +61,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
             Índice de Risco · IRE/IRG
           </small>
           <p className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[13px] font-bold text-text">{rec.nome}</span>
+            <span className="text-[13px] font-bold break-words text-text">{rec.nome}</span>
             {rec.pmif ? <PmifBadge bonus /> : null}
           </p>
         </div>
@@ -136,7 +136,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
           const subito = EVENTOS_SUBITOS.includes(ev);
           return (
             <li key={ev}>
-              <p className="flex items-center justify-between gap-2 text-[11px] text-text-dim">
+              <p className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[11px] text-text-dim">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <span
                     className="size-2 shrink-0 rounded-sm"
@@ -144,7 +144,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
                     aria-hidden
                   />
                   <span
-                    className={cn("truncate", critico && "font-bold text-text")}
+                    className={cn("break-words", critico && "font-bold text-text")}
                   >
                     {EVENTO_LABEL[ev]}
                     {critico ? " ●" : ""}

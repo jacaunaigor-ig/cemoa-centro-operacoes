@@ -602,6 +602,10 @@ html.page-hidden .rain-burst::after {
   animation-play-state: paused;
 }
 
+html[data-apresentacao="live"] #conteudo {
+  padding-bottom: 7.25rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .live-dot,
   .aviso-pulse,

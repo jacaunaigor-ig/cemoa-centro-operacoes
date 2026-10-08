@@ -258,14 +258,19 @@ export function HydrologyWorkbench() {
       if (event.key === "Escape") {
         if (selected && !editorOpen) setQuery({ municipio: null });
       }
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+      if (!typing && admin && (event.key === "l" || event.key === "L") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        setEditorOpen(true);
+        return;
+      }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
-        const target = event.target as HTMLElement | null;
-        const typing =
-          target &&
-          (target.tagName === "INPUT" ||
-            target.tagName === "TEXTAREA" ||
-            target.tagName === "SELECT" ||
-            target.isContentEditable);
         if (typing || !admin || classifying) return;
         if (!undoStack.length) return;
         event.preventDefault();
@@ -643,7 +648,7 @@ export function HydrologyWorkbench() {
               compact
               label="Com leitura"
               value={loading ? "—" : String(kpis.comLeitura)}
-              sub={pct(kpis.comLeitura)}
+              sub={`${kpis.cotaHoje} hoje · ${pct(kpis.comLeitura)}`}
               accent="#3b82f6"
               icon={<Waves className="size-3.5" />}
               active={status === "COM_LEITURA"}
@@ -654,7 +659,7 @@ export function HydrologyWorkbench() {
               compact
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
-              sub={`${pct(kpis.semLeitura)} · sem cota hoje`}
+              sub={`${pct(kpis.semLeitura)} · ${kpis.serieAntiga} série antiga`}
               accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}
@@ -1022,8 +1027,8 @@ export function HydrologyWorkbench() {
                   className={cn(
                     "pointer-events-auto absolute z-[1200] flex flex-col overflow-hidden rounded-xl shadow-lg",
                     isMobile
-                      ? "inset-x-1.5 bottom-1.5 top-10 max-h-[calc(100%-2.75rem)]"
-                      : "inset-x-2 bottom-2 top-auto max-h-[min(48vh,28rem)]",
+                      ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
+                      : "top-2 right-2 bottom-2 flex w-[min(calc(100%-1rem),32rem)] min-h-0 flex-col",
                   )}
                 >
                   <HydroDetail
@@ -1079,7 +1084,7 @@ export function HydrologyWorkbench() {
               labels={HYDRO_STATUS_LABELS}
               colors={HYDRO_STATUS_COLORS}
               overrideCount={overrideCount}
-              paintHint="O mapa segue o boletim CEMOA. Clique ou lote ajusta o grau; a cota ANA não altera o grau."
+              paintHint="Clique ou lote (L) classifica o grau. Cole os municípios por extenso, como no painel de alertas. A cota ANA não altera o grau."
               onPaintArmed={setPaintArmed}
               onPaintLevel={(level) => setPaintLevel(level as HydroStatus)}
               onOpenBatch={() => setEditorOpen(true)}
@@ -1111,7 +1116,7 @@ export function HydrologyWorkbench() {
         onClose={() => setEditorOpen(false)}
         onApply={async (updates) => {
           const ok = await persistHydro(updates);
-          if (ok) toast.success("Cotas e status em lote aplicados.");
+          if (ok) toast.success("Classificação em lote aplicada ao mapa.");
         }}
       />
     </AppShell>

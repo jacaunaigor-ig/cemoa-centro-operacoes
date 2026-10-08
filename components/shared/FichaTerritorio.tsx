@@ -7,6 +7,7 @@ import {
   pessoasRiscoDo,
 } from "@/lib/mass-risk";
 import type { AlertType } from "@/lib/alert-types";
+import { sispdecAreasRiscoUrl } from "@/lib/sispdec";
 
 export function FichaTerritorio({
   municipioId,
@@ -32,7 +33,7 @@ export function FichaTerritorio({
             {formatHab(demo.total)}
             <span className="ml-1 text-[11px] font-semibold text-text-mute">habitantes</span>
           </p>
-          <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-text-dim">
+          <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] break-words text-text-dim">
             <p>
               Urbana <strong className="text-text">{formatHab(demo.urbana)}</strong>
             </p>
@@ -109,6 +110,14 @@ export function FichaTerritorio({
             Sem área mapeada de movimento de massa ou deslizamento neste recorte.
           </p>
         )}
+        <a
+          href={sispdecAreasRiscoUrl(municipioId)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 inline-flex text-[12px] font-bold text-focus hover:underline"
+        >
+          Mapa SISPDEC · áreas de risco CPRM deste município
+        </a>
         <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
           {mapped ? MASS_RISK_FONTE : "Ausência de mapeamento não significa ausência de risco residual."}{" "}
           {MASS_PESSOAS_FONTE}.

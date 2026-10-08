@@ -28,7 +28,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         </span>
         <div className="min-w-0">
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            PurpleAir
+            App SELVA / PurpleAir
           </small>
           <p className="text-xs text-text-mute">
             {sensors.length} {sensors.length === 1 ? "monitor" : "monitores"}
@@ -40,26 +40,26 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
+            Ao vivo
+          </small>
+          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25)}</strong>
+        </div>
+        <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
+          <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
+            1 h
+          </small>
+          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Hour)}</strong>
+        </div>
+        <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
+          <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
             24 h
           </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Day ?? rec.pm25)}</strong>
-        </div>
-        <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
-          <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-            CF=1
-          </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Cf1)}</strong>
-        </div>
-        <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
-          <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-            ATM
-          </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Atm)}</strong>
+          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Day)}</strong>
         </div>
       </div>
       <div className="mt-1.5 rounded-md border border-border bg-panel/60 px-2 py-1.5 text-center">
         <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-          Faixa (pm2.5_24hour · 24 h)
+          Faixa (tempo real)
         </small>
         <strong className="text-sm">
           {level ? AIR_LABELS[level] : "—"}
@@ -75,7 +75,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-              Sugestão de monitoramento
+              Classificação automática
             </span>
             <RiskBadge level={apoio.level} />
           </div>
@@ -84,7 +84,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       ) : null}
 
       <p className="mt-2 text-[10px] leading-snug text-text-mute">
-        O App SELVA pinta o município quando a qualidade está Moderada, Ruim, Muito Ruim ou Péssima. Boa permanece sem cor de alerta. A classificação do operador prevalece. Faixas de MP2,5: Boa 0–15, Moderada 15–50, Ruim 50–75, Muito ruim 75–125 e Péssima &gt;125 µg/m³. Horários em Manaus (UTC-4). Leitura de baixo custo, não substitui estação regulatória.
+        O App SELVA pinta o município com o pior sensor em tempo real (10 min / atual / 1 h), sem média de 24 h. Faixas iguais ao PurpleAir (US AQI): Boa 0–12, Moderada 12,1–35,4, Ruim 35,5–55,4, Muito ruim 55,5–150,4 e Péssima &gt;150,4 µg/m³. Boa permanece sem cor. A classificação do operador prevalece. Horários em Manaus (UTC-4). Leitura de baixo custo, não substitui estação regulatória.
       </p>
 
       <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs">
@@ -101,7 +101,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
         </a>
       </p>
 
-      <div className="mt-2 max-h-48 overflow-auto">
+      <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[280px] text-left text-[11px]">
           <thead className="sticky top-0 bg-bg/95 text-[10px] font-semibold tracking-wide text-text-mute uppercase">
             <tr>
@@ -116,9 +116,9 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
           <tbody>
             {sensors.map((s) => (
               <tr key={s.sensorIndex} className="border-t border-border/70 hover:bg-hover">
-                <td className="max-w-[9.5rem] py-1.5 pr-2" title={s.name}>
-                  <span className="block truncate font-semibold text-text">{s.name}</span>
-                  <span className="block truncate text-[10px] text-text-mute">
+                <td className="max-w-[14rem] py-1.5 pr-2">
+                  <span className="block font-semibold break-words text-text">{s.name}</span>
+                  <span className="block text-[10px] leading-snug break-words text-text-mute">
                     {AIR_NETWORK_LABELS[s.network]}
                     {s.indoor ? " · interno" : " · externo"}
                     {s.kmSede != null ? ` · ${s.kmSede.toLocaleString("pt-BR")} km` : ""}

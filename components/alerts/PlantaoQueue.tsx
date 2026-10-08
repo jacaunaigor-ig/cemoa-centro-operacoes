@@ -74,14 +74,14 @@ export function PlantaoQueue({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         tipo === "INCENDIO"
-          ? "MP2,5 em 24 h sugere ação. Só o operador classifica o município."
-          : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não alteram o grau."
+          ? "MP2,5 ao vivo pinta o mapa. Clique no município para revisar ou alterar o grau."
+          : "Limiares já pintam o mapa. A fila mostra vencido, renovação e elevação além do grau atual."
       }
     >
       <div className="flex items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
           <ClipboardList className="size-3" />
-          Sugestão · plantão
+          Fila · plantão
         </p>
         <span className="flex min-w-0 items-center gap-1">
           <p className="truncate text-[10px] text-text-mute">{product}</p>
@@ -94,7 +94,7 @@ export function PlantaoQueue({
           {tipo === "ALAGAMENTO"
             ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo >20 mm/h."
             : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo >30 mm/24 h."}{" "}
-          Não classifica o grau.
+          A plataforma classifica ao atingir o limiar; o operador pode alterar.
         </p>
       ) : null}
 

@@ -31,7 +31,7 @@ O produto **Incêndio / Qualidade do ar** integra leituras de material particula
 
 ### Faixas de Concentração de MP2,5
 
-A escala de qualidade do ar adota a média móvel de 24 horas (`pm2.5_24hour` em µg/m³):
+A escala de qualidade do ar adota o MP2,5 em tempo real (leitura atual, 10 min ou 1 h — não a média de 24 h), em µg/m³:
 
 | Faixa | Concentração (24 h) | Comportamento no Mapa |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ A escala de qualidade do ar adota a média móvel de 24 horas (`pm2.5_24hour` em
 
 1. **Consulta primária**: a plataforma consulta prioritariamente o App SELVA via endpoint `purpleair`.
 2. **Fallback PurpleAir**: caso a consulta primária falhe e a chave `PURPLEAIR_API_KEY` esteja definida, a requisição é direcionada à API v1 da PurpleAir (`/v1/sensors` para área externa com `location_type=0` e cabeçalho `x-api-key`).
-3. **Tratamento dos dados**: valores nulos são desconsiderados. Leituras superiores a 500 µg/m³ são descartadas como possíveis anomalias de sensor. É calculada a média aritmética municipal simples das estações válidas. A classificação manual do operador tem precedência operacional sobre os sensores de baixo custo.
+3. **Tratamento dos dados**: valores nulos são desconsiderados. Leituras superiores a 500 µg/m³ são descartadas como possíveis anomalias de sensor. A classificação municipal usa só a leitura em tempo real (atual / 10 min / 1 h); a média de 24 h fica só como referência na ficha. O operador pode alterar depois e prevalece sobre o sensor.
 
 ### Monitoramento de Focos de Calor
 
@@ -53,7 +53,7 @@ Os focos de calor são obtidos da base diária do INPE BDQueimadas (satélite de
 
 ## Limiares Pluviométricos de Apoio
 
-A classificação do alerta não é alterada automaticamente pelas leituras de chuva. Os pluviômetros do CEMADEN acionam pulsos visuais no mapa e alimentam a fila do plantão com base nos seguintes limiares de referência:
+Chuva intensa é classificada somente pelo operador. A plataforma classifica automaticamente alagamento e movimento de massa ao atingir os limiares abaixo; o operador pode alterar depois. Os pluviômetros do CEMADEN acionam pulsos visuais e alimentam a fila do plantão:
 
 | Produto | Recorte Geográfico | Moderado | Alto | Severo / Extremo |
 | --- | --- | --- | --- | --- |
