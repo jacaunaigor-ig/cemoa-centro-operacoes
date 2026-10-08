@@ -12,8 +12,8 @@ Corte de 8 de outubro de 2026. O Centro já opera os cinco produtos de alerta, o
 | ANA hidrologia | Pronto | Uma consulta às 16 h (Manaus); cota das 07 h do dia vigente |
 | ANA chuva | Pronto | 15 min; só estação com leitura recente |
 | GOES-19 CH13 | Pronto | Acervo DISSM; recorte do Amazonas abaixo do acumulado |
-| Boletim hidrológico | Parcial | Poucas cotas do dia; série de 01/09 ainda no fundo |
-| Cobertura de chuva | Parcial | Municípios sem pluviômetro ainda não se distinguem de 0 mm |
+| Boletim hidrológico | Pronto | Depois das 16 h (Manaus) a data é o dia vigente; o cartão separa cota de hoje e série antiga |
+| Cobertura de chuva | Pronto | Sem estação, sem leitura, 0 mm e chuva ficam distintos na lista e no mapa |
 
 ## P0 — Fechar a entrega do plantão (1–2 semanas)
 
@@ -24,7 +24,7 @@ Corte de 8 de outubro de 2026. O Centro já opera os cinco produtos de alerta, o
 
 ## P1 — Sala de situação (2–4 semanas)
 
-- Prefetch da malha GeoJSON e GET compartilhado entre abas. *(no ar; lista virtualizada ainda não — 62 linhas cabem inteiras)*
+- Prefetch da malha GeoJSON e GET compartilhado entre abas. Os 62 municípios ficam na lista inteira. *(no ar)*
 - Ficha municipal em uma linha: grau, sensor, cota, mm, validade. *(no ar)*
 - Modo apresentar: KPI, mapa e os 3 municípios críticos. *(no ar na sala de situação + slide)*
 - Loop GOES das últimas 6 cenas (1 h) como apoio, sem substituir a cena vigente. *(no ar)*
@@ -39,7 +39,7 @@ Corte de 8 de outubro de 2026. O Centro já opera os cinco produtos de alerta, o
 
 - Trilha de quem classificou, de qual grau para qual, monitor vs operador. Relatório de passagem de turno. *(no ar: ficha + passagem .txt; Supabase se autenticado)*
 - Testes nas faixas de ar e no parser da cota ~07:00. Data de referência do boletim alinhada ao dia vigente após as 16 h. *(no ar: `npm test`)*
-- Supabase como verdade (não só memória). Clone aninhado e `nul` ignorados no Git. Ficha municipal liga o mapa SISPDEC/CPRM do município.
+- Supabase como verdade (não só memória). Clone aninhado e `nul` ignorados no Git. Ficha municipal liga o mapa SISPDEC/CPRM do município. *(no ar — última entrega)*
 
 ## Critério de pronto
 

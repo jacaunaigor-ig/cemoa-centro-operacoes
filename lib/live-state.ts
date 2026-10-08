@@ -14,9 +14,10 @@ import {
   CALHAS,
   HYDRO_FONTE,
   HYDRO_MUDANCAS,
-  HYDRO_REFERENCIA,
   HYDRO_RIOS,
   catalogStations,
+  formatHydroRef,
+  hydroBoletimDiaIso,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
 import { meteoShiftAt } from "@/lib/meteo-aviso";
@@ -216,9 +217,9 @@ export function buildHydrologyPayload(
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
   const partes = [
-    `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    `${HYDRO_FONTE} · boletim ${formatHydroRef(hydroBoletimDiaIso(now))}`,
     "ANA às 16:00 (Manaus), cota ~07:00 do dia vigente",
-    "Power BI / Fabric às 07:00 e 16:00 (Brasília)",
+    "Power BI / Fabric: cota mais próxima de 07:00 de Manaus (consulta 07 h e 16 h Brasília)",
   ];
   if (atualizadasFabric > 0) {
     partes.push(
@@ -233,7 +234,7 @@ export function buildHydrologyPayload(
   return {
     generatedAt: now,
     source: partes.join(" · "),
-    referencia: HYDRO_REFERENCIA,
+    referencia: hydroBoletimDiaIso(now),
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],
     mudancas24h: HYDRO_MUDANCAS,

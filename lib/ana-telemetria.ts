@@ -19,8 +19,8 @@ export type AnaReading = {
 
 const ANA_HOST = "telemetriaws1.ana.gov.br";
 const RAIN_FETCH_MS = 12_000;
-const HYDRO_FETCH_MS = 45_000;
-const CONCURRENCY = 6;
+const HYDRO_FETCH_MS = 16_000;
+const CONCURRENCY = 10;
 const MAX_AGE_MS = 48 * 60 * 60_000;
 const RAIN_ALIVE_MS = 3 * 60 * 60_000;
 
@@ -72,7 +72,7 @@ function parseHidroBlock(block: string): AnaReading | null {
 }
 
 /** Cota das 07:00 de Manaus no dia vigente, ou a mais próxima nesse dia. */
-function parseCotaNearSeven(xml: string, now: number): AnaReading | null {
+export function parseCotaNearSeven(xml: string, now: number): AnaReading | null {
   const blocks = xml.match(/<DadosHidrometereologicos[\s\S]*?<\/DadosHidrometereologicos>/g);
   if (!blocks?.length) return null;
   const bag = relogioDoFuso(now, FUSO_MANAUS);
@@ -113,8 +113,8 @@ function getXml(path: string, timeoutMs: number): Promise<string> {
 }
 
 export async function fetchAnaStation(codigo: string, now = Date.now()): Promise<AnaReading | null> {
-  const inicio = brDate(now - 2 * 24 * 60 * 60_000);
   const fim = brDate(now);
+  const inicio = brDate(now);
   const path = `/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=${encodeURIComponent(codigo)}&dataInicio=${encodeURIComponent(inicio)}&dataFim=${encodeURIComponent(fim)}`;
   try {
     const xml = await getXml(path, HYDRO_FETCH_MS);
@@ -230,6 +230,10 @@ async function refresh(codes: string[]) {
   return byCode;
 }
 
+export function peekAnaFetchedAt(): number | null {
+  return cache?.at ?? null;
+}
+
 export async function getAnaReadings(codes: string[]): Promise<{
   byCode: Map<string, AnaReading>;
   pending: boolean;
@@ -253,6 +257,7 @@ export function applyAnaReading(station: HydroStation, reading: AnaReading | und
   const liveToday = iso === today;
   return {
     ...next,
+    cotaAnaLidaEm: reading.lidaEm,
     cotaFonte: liveToday ? "ANA" : next.cotaFonte,
     cotaLidaEm: liveToday ? reading.lidaEm : next.cotaLidaEm,
   };
