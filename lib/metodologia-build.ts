@@ -6,11 +6,13 @@
 //   - dados mais atualizados do Centro (Censo 2022, SGB/CPRM, alertas ao vivo)
 //   - parâmetros importados do app original (IVM, %TI, agravo, setores R3R4)
 //
-// O fator de alerta (FA) vem do boletim de estiagem e dos produtos do
-// painel (chuva, alagamento, movimento, erosão, incêndio e ondas de calor):
+// O fator de alerta (FA) vem do boletim de vazante e dos produtos do
+// painel (chuva, alagamento, movimento, erosão e incêndio):
 //   BAIXO/BOA/NORMAL → "Sem alerta" (0,30) · MODERADO → 0,70 · ALTO/RUIM → 1,00 ·
 //   SEVERO/MUITO_RUIM → 1,30 · EXTREMO/PESSIMA → 1,60
-// Erosão sem classificação do operador permanece em FA 1.
+// Erosão de margem (terras caídas) acompanha a vazante: a água baixa rápido,
+// o barranco perde o suporte hidráulico e cede. O grau do boletim entra no FA;
+// a classificação do operador só eleva.
 // -----------------------------------------------------------------------------
 
 import raw from "@/data/metodologia-cemoa.json";
@@ -136,10 +138,7 @@ export function nivelAlertaMet(level: AlertLevel | undefined): NivelAlertaMet {
 // Construção
 // =============================================================================
 
-export function buildMetodologiaPayload(
-  now = Date.now(),
-  calorById?: Record<string, AlertLevel | undefined> | null,
-): MetodologiaPayload {
+export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
   // ---- 1. Alertas ao vivo por produto e grau do boletim de estiagem -------
   const chuvaMap = new Map(
     buildAlertsPayload(now, "CHUVA").municipios.map((r) => [r.id, r.risco]),
@@ -195,9 +194,8 @@ export function buildMetodologiaPayload(
       Estiagem: nivelHidro(hidroMap.get(m.id)),
       Chuvas: piorNivel(nivelAlertaMet(chuvaMap.get(m.id)), nivelAlertaMet(alagamentoMap.get(m.id))),
       "Mov. Massa": nivelAlertaMet(movimentoMap.get(m.id)),
-      "Erosão": nivelAlertaMet(erosaoMap.get(m.id)),
+      "Erosão": piorNivel(nivelAlertaMet(erosaoMap.get(m.id)), nivelHidro(hidroMap.get(m.id))),
       "Incêndio/QAr": nivelAlertaMet(incendioMap.get(m.id)),
-      "Ondas de calor": nivelAlertaMet(calorById?.[m.id]),
       "Inundação": "Sem alerta",
     };
 

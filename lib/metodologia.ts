@@ -49,7 +49,6 @@ export const EVENTOS_ORDEM = [
   "Estiagem",
   "Inundação",
   "Incêndio/QAr",
-  "Ondas de calor",
   "Erosão",
   "Mov. Massa",
   "Chuvas",
@@ -59,7 +58,6 @@ export type MetodologiaEvento = (typeof EVENTOS_ORDEM)[number];
 
 export const EVENTOS_SUBITOS: readonly MetodologiaEvento[] = [
   "Incêndio/QAr",
-  "Ondas de calor",
   "Mov. Massa",
   "Chuvas",
 ];
@@ -68,7 +66,6 @@ export const FS: Record<MetodologiaEvento, number> = {
   Estiagem: 1.1,
   "Inundação": 0.9,
   "Incêndio/QAr": 1.1,
-  "Ondas de calor": 1.0,
   "Erosão": 1.1,
   "Mov. Massa": 0.9,
   Chuvas: 1.0,
@@ -78,7 +75,6 @@ export const AMEACA_BASE: Record<MetodologiaEvento, number> = {
   Estiagem: 8,
   "Inundação": 8,
   "Incêndio/QAr": 8,
-  "Ondas de calor": 6,
   "Erosão": 6,
   "Mov. Massa": 5,
   Chuvas: 5,
@@ -88,7 +84,7 @@ export const AMEACA_CAPITAL: Record<
   string,
   Partial<Record<MetodologiaEvento, number>>
 > = {
-  "1302603": { "Incêndio/QAr": 15, Chuvas: 15, "Mov. Massa": 12, "Ondas de calor": 12 },
+  "1302603": { "Incêndio/QAr": 15, Chuvas: 15, "Mov. Massa": 12 },
 };
 
 /** Níveis de alerta no vocabulário da metodologia (fator FA). */
@@ -236,12 +232,10 @@ export function getAmeaca(codigo: string, evento: MetodologiaEvento): number {
 }
 
 export function getFatorAlerta(
-  evento: MetodologiaEvento,
+  _evento: MetodologiaEvento,
   nivel: NivelAlertaMet | null | undefined,
 ): number {
   if (nivel && nivel !== "Sem alerta") return FATOR_ALERTA[nivel] ?? FATOR_ALERTA["Sem alerta"];
-  // Erosão sem classificação do operador permanece neutra.
-  if (evento === "Erosão") return 1;
   return FATOR_ALERTA["Sem alerta"];
 }
 
@@ -280,7 +274,7 @@ export function calcularFe(
   if (evento === "Mov. Massa" || evento === "Chuvas") {
     w1 = 0.3;
     w2 = 0.7;
-  } else if (evento === "Incêndio/QAr" || evento === "Ondas de calor") {
+  } else if (evento === "Incêndio/QAr") {
     w1 = 0.0;
     w2 = 1.2;
   } else if (evento === "Erosão") {

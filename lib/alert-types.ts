@@ -7,7 +7,6 @@ export const ALERT_TYPES = [
   "MOVIMENTO",
   "EROSAO",
   "INCENDIO",
-  "CALOR",
 ] as const;
 
 export type AlertType = (typeof ALERT_TYPES)[number];
@@ -110,7 +109,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     id: "EROSAO",
     label: "Alerta de Erosão de Margem",
     short: "Erosão de margem",
-    subtitle: "Recuo de margem fluvial e solapamento de barranco",
+    subtitle: "Terras caídas na vazante: a água baixa e o barranco perde o suporte",
     legendTitle: "Erosão de margem",
     scale: "risco",
     levels: RISK_LEVELS,
@@ -127,17 +126,6 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     levels: AIR_LEVELS,
     low: "BOA",
     sources: "CEMOA · App SELVA · MP2,5",
-  },
-  CALOR: {
-    id: "CALOR",
-    label: "Ondas de calor",
-    short: "Ondas de calor",
-    subtitle: "Só municípios com estação INMET · máxima prevista acima da climatologia",
-    legendTitle: "Ondas de calor",
-    scale: "risco",
-    levels: RISK_LEVELS,
-    low: "BAIXO",
-    sources: "CEMOA · INMET Prevmet · climatologia",
   },
 };
 

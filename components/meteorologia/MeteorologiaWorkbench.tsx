@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CloudSun, Droplets, ImageDown, RefreshCw } from "lucide-react";
+import { CloudSun, Droplets, ImageDown, RefreshCw, Thermometer } from "lucide-react";
+import { TemperaturaMap } from "@/components/meteorologia/TemperaturaMap";
+import { corTemperatura, type TemperaturaPayload } from "@/lib/inmet-temperatura";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
 import { AppShell } from "@/components/shared/AppShell";
 import { KpiCard } from "@/components/shared/KpiCard";
@@ -63,7 +65,9 @@ export function MeteorologiaWorkbench() {
   const [goesFrames, setGoesFrames] = useState<GoesFrame[]>([]);
   const [goesFrameIdx, setGoesFrameIdx] = useState(-1);
   const [goesPlaying, setGoesPlaying] = useState(false);
-  const [painel, setPainel] = useState<"chuva" | "clima">("chuva");
+  const [painel, setPainel] = useState<"chuva" | "clima" | "temperatura">("chuva");
+  const [temp, setTemp] = useState<TemperaturaPayload | null>(null);
+  const [tempErro, setTempErro] = useState<string | null>(null);
   const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
 
   const loadGoes = useCallback(async (refresh = false) => {
@@ -122,6 +126,27 @@ export function MeteorologiaWorkbench() {
     if (STATIC_DEPLOY) return;
     return startVisiblePoll(() => loadGoes(false), 10 * 60_000);
   }, [loadGoes]);
+
+  useEffect(() => {
+    if (STATIC_DEPLOY || painel !== "temperatura") return;
+    let cancelled = false;
+    async function load() {
+      try {
+        const data = await fetchJson<TemperaturaPayload>("/api/meteorologia/temperatura");
+        if (!cancelled) {
+          setTemp(data);
+          setTempErro(data.error);
+        }
+      } catch (err) {
+        if (!cancelled) setTempErro(err instanceof Error ? err.message : "Falha ao consultar o INMET.");
+      }
+    }
+    const stop = startVisiblePoll(load, 10 * 60_000);
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [painel]);
 
   useEffect(() => {
     if (!goesPlaying || goesFrames.length < 2) return;
@@ -200,14 +225,14 @@ export function MeteorologiaWorkbench() {
   }
 
   return (
-    <AppShell source="CEMADEN · ANA telemetria · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
+    <AppShell source="CEMADEN · ANA telemetria · INMET · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
         <header className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-[10px] font-bold tracking-[0.14em] text-text-mute uppercase">Defesa Civil do Amazonas</p>
             <h2 className="text-lg font-black tracking-tight">Meteorologia</h2>
             <p className="max-w-3xl text-[12px] text-text-mute">
-              Aviso do plantão, chuva CEMADEN e GOES-19. O município fica azul onde chove e a cor escurece conforme o acumulado da janela.
+              Aviso do plantão, chuva CEMADEN, temperatura das estações INMET que estão transmitindo e GOES-19. O município fica azul onde chove e a cor escurece conforme o acumulado da janela.
             </p>
           </div>
           <p className="text-[11px] text-text-mute">{error ?? rain?.source ?? "Consultando o CEMADEN…"}</p>
@@ -225,6 +250,7 @@ export function MeteorologiaWorkbench() {
         <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
           {([
             ["chuva", "Chuva"],
+            ["temperatura", "Temperatura"],
             ["clima", "Clima"],
           ] as const).map(([id, label]) => (
             <button
@@ -243,7 +269,7 @@ export function MeteorologiaWorkbench() {
           ))}
         </div>
 
-        <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel === "clima" && "hidden")}>
+        <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel !== "chuva" && "hidden")}>
           <div className="grid content-start gap-2">
             <div className="flex flex-wrap gap-1">
               {JANELAS.map((item) => (
@@ -425,6 +451,56 @@ export function MeteorologiaWorkbench() {
           </div>
         </div>
 
+        <section className={cn("grid gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]", painel !== "temperatura" && "hidden")}>
+          <div>
+            <h3 className="text-sm font-black">Temperatura · estações operando</h3>
+            <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
+              Temperatura instantânea só onde a estação INMET está transmitindo. Não há classificação de onda de calor para o estado: faltam estações para cobrir todos os municípios.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-text-mute">
+              {[
+                ["< 26 °C", "#38bdf8"],
+                ["< 30", "#22c55e"],
+                ["< 33", "#eab308"],
+                ["< 36", "#f97316"],
+                ["≥ 36", "#ef4444"],
+              ].map(([label, cor]) => (
+                <span key={label} className="inline-flex items-center gap-1">
+                  <span className="size-2.5 rounded-full" style={{ background: cor }} />
+                  {label}
+                </span>
+              ))}
+            </div>
+            <div className="mt-2">
+              {temp ? <TemperaturaMap estacoes={temp.estacoes} /> : (
+                <p className="grid h-80 place-items-center rounded-xl border border-border text-sm text-text-mute">
+                  {tempErro ?? "Consultando as estações do INMET…"}
+                </p>
+              )}
+            </div>
+          </div>
+          <aside className="rounded-xl border border-border bg-panel p-3">
+            <p className="text-[12px] font-bold">
+              Transmitindo · {temp ? temp.estacoes.length : "—"}
+            </p>
+            <p className="mt-1 text-[11px] text-text-mute">
+              {temp
+                ? `${temp.operantes} operantes no cadastro · ${temp.semLeitura} sem temperatura nesta hora`
+                : tempErro ?? "Aguardando o INMET."}
+            </p>
+            <ul className="mt-2 max-h-[min(60vh,560px)] space-y-1 overflow-y-auto">
+              {(temp?.estacoes ?? []).map((est) => (
+                <li key={est.codigo} className="flex items-center gap-2 text-[12px]">
+                  <Thermometer className="size-3.5 shrink-0" style={{ color: corTemperatura(est.temp) }} />
+                  <span className="min-w-0 flex-1 truncate font-semibold">{est.nome}</span>
+                  <span className="font-mono tabular-nums">{est.temp.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} °C</span>
+                  <span className="text-[10px] text-text-mute">{est.hora}</span>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </section>
+
         <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
           <div>
             <h3 className="text-sm font-black">Clima · MERGE</h3>
@@ -572,7 +648,7 @@ function Foco({ item, janela }: { item: RainfallMunicipio; janela: Janela }) {
         {valores.map(([label, mm]) => (
           <div key={label} className={cn("rounded-md px-1 py-0.5", JANELAS.find((item) => item.id === janela)?.label === label && "bg-hover")}>
             <dt className="text-[10px] text-text-mute">{label}</dt>
-            <dd className="font-mono text-[12px] tabular-nums">{formatMm(mm)}</dd>
+            <dd className="font-mono text-[12px] tabular-nums">{mm == null ? "sem leitura" : formatMm(mm)}</dd>
           </div>
         ))}
       </dl>

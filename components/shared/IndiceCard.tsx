@@ -16,7 +16,6 @@ const EVENTO_LABEL: Record<MetodologiaEvento, string> = {
   Estiagem: "Estiagem",
   "Inundação": "Inundação",
   "Incêndio/QAr": "Incêndio / Q. do ar",
-  "Ondas de calor": "Ondas de calor",
   "Erosão": "Erosão",
   "Mov. Massa": "Mov. de massa",
   Chuvas: "Chuvas",
@@ -172,7 +171,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
       <p className="mt-2 text-[10px] text-text-mute">
         Metodologia CEMOA · IRE = ((IVM + ameaça) × FS × FE × FA) + agravo ·
         IRG = 0,6 × maior IRE + 0,2 × média + 0,2 × IVM (escalado) · FA ao vivo pelo
-        boletim de estiagem e pelos alertas do painel; o agravo (histórico) não é reduzido pelo alerta.
+        boletim de vazante (estiagem e terras caídas) e pelos alertas do painel; o agravo (histórico) não é reduzido pelo alerta.
       </p>
     </div>
   );
