@@ -12,7 +12,6 @@ import {
   Maximize2,
   Minimize2,
   Mountain,
-  ThermometerSun,
   Settings2,
   Waves,
 } from "lucide-react";
@@ -110,7 +109,6 @@ import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/P
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
 import { ensureOpsBoardReset } from "@/lib/ops-board";
 import { appendClassificacaoTrilha } from "@/lib/classificacao-trilha";
-import { applyHeatClassification, type HeatWavePayload } from "@/lib/heat-wave";
 const POLL_MS = 20_000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
 const STORAGE_V2 = "cemoa_admin_overrides_v2";
@@ -128,7 +126,6 @@ const PRODUCT_ICONS = {
   MOVIMENTO: Mountain,
   EROSAO: Dam,
   INCENDIO: Flame,
-  CALOR: ThermometerSun,
 } as const;
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
@@ -315,7 +312,6 @@ export function AlertsWorkbench() {
   const [hydro, setHydro] = useState<HydrologyPayload | null>(null);
   const [rain, setRain] = useState<RainfallPayload | null>(null);
   const [air, setAir] = useState<AirQualityPayload | null>(null);
-  const [heat, setHeat] = useState<HeatWavePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
@@ -708,17 +704,15 @@ export function AlertsWorkbench() {
           localPushed.current = true;
           await hydrateLocal();
         }
-        const [payload, hydroPayload, rainPayload, airPayload, heatPayload] = await Promise.all([
+        const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
           fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
           fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
           fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
-          fetchJson<HeatWavePayload>("/api/alerts/heat").catch(() => null),
         ]);
         if (cancelled) return;
         if (rainPayload) setRain(rainPayload);
         if (airPayload) setAir(airPayload);
-        if (heatPayload) setHeat(heatPayload);
         if (hydroPayload) setHydro(hydroPayload);
         if (!editBusy.current || !gotAlerts) {
           setData((prev) => takeIncomingAlerts(gotAlerts ? prev : null, payload));
@@ -750,18 +744,16 @@ export function AlertsWorkbench() {
         setError(null);
         return;
       }
-      const [payload, hydroPayload, rainPayload, airPayload, heatPayload] = await Promise.all([
+      const [payload, hydroPayload, rainPayload, airPayload] = await Promise.all([
         fetchJson<AlertsPayload>(`/api/alerts?tipo=${tipo}`),
         fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
         fetchJson<AirQualityPayload>("/api/air-quality").catch(() => null),
-        fetchJson<HeatWavePayload>("/api/alerts/heat").catch(() => null),
       ]);
       setData((prev) => takeIncomingAlerts(prev, payload));
       if (hydroPayload) setHydro(hydroPayload);
       if (rainPayload) setRain(rainPayload);
       if (airPayload) setAir(airPayload);
-      if (heatPayload) setHeat(heatPayload);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao atualizar alertas";
@@ -861,9 +853,8 @@ export function AlertsWorkbench() {
   const catalog = useMemo(() => {
     const rows = data?.municipios ?? [];
     if (tipo === "INCENDIO") return applyAirClassification(rows, air);
-    if (tipo === "CALOR") return applyHeatClassification(rows, heat);
     return applyRainClassification(rows, rain, tipo);
-  }, [data, tipo, air, rain, heat]);
+  }, [data, tipo, air, rain]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -925,7 +916,7 @@ export function AlertsWorkbench() {
       if (selected && m.nome !== selected) return false;
       if (tipo === "INCENDIO") {
         if (!matchesAirFilter(air?.byNome[m.nome], airFilter)) return false;
-      } else if (tipo !== "CALOR") {
+      } else {
         if (rainFilter === "COM_LEITURA" && !hasRainReading(rain?.byNome[m.nome])) return false;
         if (rainFilter === "COM_CHUVA" && !hasRain(rain?.byNome[m.nome])) return false;
         if (rainFilter === "INTENSO" && !hitsMapBurst(tipo, rain?.byNome[m.nome] ?? {})) return false;
@@ -965,8 +956,6 @@ export function AlertsWorkbench() {
     ? `Grau ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}. A confirmação aparece ao encerrar a edição.`
     : tipo === "INCENDIO"
       ? `O mapa segue o MP2,5 em tempo real do App SELVA${autoHint}. Clique, lote (L) ou polígono altera o grau.`
-      : tipo === "CALOR"
-        ? `O mapa classifica só municípios com estação INMET, pela anomalia da máxima prevista${autoHint}. Clique, lote (L) ou polígono altera o grau.`
       : tipo === "CHUVA" || tipo === "EROSAO"
         ? "Só o operador classifica este produto. Clique, lote (L) ou polígono define o grau."
         : `Limiares classificam sozinhos${autoHint}. Clique, lote (L) ou polígono altera o grau.`;
@@ -1328,8 +1317,6 @@ export function AlertsWorkbench() {
       toast.success(
         tipo === "INCENDIO"
           ? "Classificações do operador removidas. O mapa volta ao App SELVA em tempo real."
-          : tipo === "CALOR"
-            ? "Classificações do operador removidas. O mapa volta à anomalia da previsão."
           : tipo === "CHUVA" || tipo === "EROSAO"
           ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
           : "Classificações do operador removidas. O mapa volta aos limiares automáticos.",
@@ -1364,9 +1351,7 @@ export function AlertsWorkbench() {
     toast.success(
       tipo === "INCENDIO"
         ? "Classificações do operador removidas. O mapa volta ao App SELVA em tempo real."
-        : tipo === "CALOR"
-          ? "Classificações do operador removidas. O mapa volta à anomalia da previsão."
-          : tipo === "CHUVA" || tipo === "EROSAO"
+        : tipo === "CHUVA" || tipo === "EROSAO"
             ? "Classificações do operador removidas. O mapa volta ao monitoramento, sem grau até nova classificação."
             : "Classificações do operador removidas. O mapa volta aos limiares automáticos.",
     );
@@ -1776,15 +1761,6 @@ export function AlertsWorkbench() {
                   key={`${OSM_BASEMAP_ID}-${tipo}`}
                   ref={mapApi}
                   municipios={catalog.map((m) => {
-                    if (tipo === "CALOR") {
-                      return {
-                        ...m,
-                        mm1h: null,
-                        mm6h: null,
-                        mm24h: null,
-                        hasRainStation: false,
-                      };
-                    }
                     if (tipo === "INCENDIO") {
                       const rec = air?.byId[m.id];
                       return {
@@ -1869,7 +1845,6 @@ export function AlertsWorkbench() {
                     hydro={selectedHydro}
                     rain={rain ? rain.byNome[selectedRow.nome] ?? null : undefined}
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
-                    heat={tipo === "CALOR" ? (heat ? heat.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
                     onClose={() => setQuery({ municipio: null })}

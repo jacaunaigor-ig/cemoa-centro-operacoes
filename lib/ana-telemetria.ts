@@ -23,6 +23,8 @@ const HYDRO_FETCH_MS = 16_000;
 const CONCURRENCY = 10;
 const MAX_AGE_MS = 48 * 60 * 60_000;
 const RAIN_ALIVE_MS = 3 * 60 * 60_000;
+/** Tefé, Santa Isabel e Barcelos: a ANA devolve 0 quando a janela não tem chuva medida. */
+const ANA_ZERO_SEM_LEITURA = new Set(["14480002", "12900001", "14420000"]);
 
 type Cache = { at: number; byCode: Map<string, AnaReading> };
 
@@ -185,17 +187,23 @@ export async function fetchAnaRainStation(
     const isStale24h = ageFromNow > 36 * 60 * 60_000;
 
     const round1 = (n: number) => Math.round(n * 10) / 10;
+    const janela = (mm: number, count: number, stale: boolean) => {
+      if (stale || count === 0) return null;
+      if (mm <= 0 && ANA_ZERO_SEM_LEITURA.has(codigo)) return null;
+      return round1(mm);
+    };
+    const ultimo = byTime.get(latestTime) ?? 0;
 
     return {
       id: `ANA-${codigo}`,
       nome: nomeEstacao,
       uf: "AM",
-      mm1h: isStale1h || count1h === 0 ? null : round1(mm1h),
-      mm6h: isStale6h || count6h === 0 ? null : round1(mm6h),
-      mm24h: isStale24h || count24h === 0 ? null : round1(mm24h),
-      mm72h: count72h === 0 ? null : round1(mm72h),
-      mm96h: count96h === 0 ? null : round1(mm96h),
-      ultimoMm: round1(byTime.get(latestTime) ?? 0),
+      mm1h: janela(mm1h, count1h, isStale1h),
+      mm6h: janela(mm6h, count6h, isStale6h),
+      mm24h: janela(mm24h, count24h, isStale24h),
+      mm72h: janela(mm72h, count72h, false),
+      mm96h: janela(mm96h, count96h, false),
+      ultimoMm: ultimo <= 0 && ANA_ZERO_SEM_LEITURA.has(codigo) ? null : round1(ultimo),
       observedAt: latestTime,
     };
   } catch (err) {
