@@ -5,15 +5,18 @@ import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { formatHab } from "@/lib/demografia";
 import {
   CALHAS_LOGISTICA,
+  CLASSES_LOGISTICA,
+  FONTE_AEREA,
   MODAL_LOGISTICO,
   logisticaDo,
+  type ClasseLogistica,
   type ModalLogistico,
 } from "@/lib/logistica-cemoa";
 import type { MetodologiaRow } from "@/lib/metodologia-build";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-type Vista = "calha" | "modal";
+type Vista = "calha" | "modal" | "ranking";
 
 export function LogisticaMapa({
   rows,
@@ -22,9 +25,10 @@ export function LogisticaMapa({
   rows: MetodologiaRow[];
   onPick: (row: MetodologiaRow) => void;
 }) {
-  const [vista, setVista] = useState<Vista>("calha");
+  const [vista, setVista] = useState<Vista>("ranking");
   const [calhaAtiva, setCalhaAtiva] = useState<string | null>(null);
   const [modalAtivo, setModalAtivo] = useState<ModalLogistico | null>(null);
+  const [classeAtiva, setClasseAtiva] = useState<ClasseLogistica | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
   const catalogo = useMemo(
@@ -58,9 +62,17 @@ export function LogisticaMapa({
     });
   }, [catalogo]);
 
+  const porClasse = useMemo(() => {
+    return CLASSES_LOGISTICA.map((classe) => {
+      const itens = catalogo.filter((item) => item.info.classe === classe.id);
+      return { ...classe, itens, pop: itens.reduce((sum, item) => sum + item.row.pop, 0) };
+    });
+  }, [catalogo]);
+
   const visiveis = catalogo.filter((item) => {
     if (vista === "calha" && calhaAtiva && item.info.calha !== calhaAtiva) return false;
     if (vista === "modal" && modalAtivo && item.info.modal !== modalAtivo) return false;
+    if (vista === "ranking" && classeAtiva && item.info.classe !== classeAtiva) return false;
     return true;
   });
 
@@ -69,19 +81,25 @@ export function LogisticaMapa({
     for (const item of catalogo) {
       const fora =
         (vista === "calha" && calhaAtiva && item.info.calha !== calhaAtiva) ||
-        (vista === "modal" && modalAtivo && item.info.modal !== modalAtivo);
-      next[item.row.nome] = fora ? "#e5e7eb" : vista === "calha" ? item.info.corCalha : item.info.corModal;
+        (vista === "modal" && modalAtivo && item.info.modal !== modalAtivo) ||
+        (vista === "ranking" && classeAtiva && item.info.classe !== classeAtiva);
+      const cor =
+        vista === "calha" ? item.info.corCalha : vista === "modal" ? item.info.corModal : item.info.corClasse;
+      next[item.row.nome] = fora ? "#e5e7eb" : cor;
     }
     return next;
-  }, [catalogo, vista, calhaAtiva, modalAtivo]);
+  }, [catalogo, vista, calhaAtiva, modalAtivo, classeAtiva]);
 
   const titles = useMemo(() => {
     const next: Record<string, string> = {};
     for (const item of catalogo) {
-      next[item.row.nome] = `${item.row.nome} · ${item.info.calha} · ${item.info.labelModal}`;
+      next[item.row.nome] =
+        vista === "ranking"
+          ? `${item.info.posto}º ${item.row.nome} · ${item.info.labelClasse} · ${item.info.resumoAereo}`
+          : `${item.row.nome} · ${item.info.calha} · ${item.info.labelModal}`;
     }
     return next;
-  }, [catalogo]);
+  }, [catalogo, vista]);
 
   function escolher(nome: string) {
     setSelected(nome);
@@ -96,6 +114,7 @@ export function LogisticaMapa({
           [
             ["calha", "Calhas"],
             ["modal", "Modal de acesso"],
+            ["ranking", "Ranking"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -141,7 +160,8 @@ export function LogisticaMapa({
                     </button>
                   </li>
                 ))
-              : porModal.map((item) => (
+              : vista === "modal"
+              ? porModal.map((item) => (
                   <li key={item.id}>
                     <button
                       type="button"
@@ -157,13 +177,34 @@ export function LogisticaMapa({
                       <span className="font-mono font-normal text-text-mute">({item.itens.length})</span>
                     </button>
                   </li>
+                ))
+              : porClasse.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      aria-pressed={classeAtiva === item.id}
+                      onClick={() => setClasseAtiva((atual) => (atual === item.id ? null : item.id))}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 font-semibold",
+                        classeAtiva === item.id && "bg-hover",
+                      )}
+                    >
+                      <span className="size-2.5 rounded-sm" style={{ background: item.cor }} />
+                      {item.label}
+                      <span className="font-mono font-normal text-text-mute">({item.itens.length})</span>
+                    </button>
+                  </li>
                 ))}
           </ul>
         </div>
 
         <aside className="max-h-[68vh] overflow-auto rounded-xl border border-border bg-panel">
           <h3 className="border-b border-border px-3 py-2 text-[11px] font-bold tracking-wide text-text-mute uppercase">
-            {vista === "calha" ? (calhaAtiva ?? "Calhas") : (modalAtivo ? MODAL_LOGISTICO[modalAtivo].label : "Modal de acesso")}
+            {vista === "calha"
+              ? (calhaAtiva ?? "Calhas")
+              : vista === "modal"
+                ? (modalAtivo ? MODAL_LOGISTICO[modalAtivo].label : "Modal de acesso")
+                : (classeAtiva ? CLASSES_LOGISTICA.find((item) => item.id === classeAtiva)?.label : "Do melhor ao pior")}
           </h3>
           {vista === "calha" && !calhaAtiva ? (
             <ul>
@@ -189,7 +230,11 @@ export function LogisticaMapa({
             <ul>
               {visiveis
                 .slice()
-                .sort((a, b) => a.row.nome.localeCompare(b.row.nome, "pt-BR"))
+                .sort((a, b) =>
+                  vista === "ranking"
+                    ? a.info.posto - b.info.posto
+                    : a.row.nome.localeCompare(b.row.nome, "pt-BR"),
+                )
                 .map((item) => (
                   <li key={item.row.codigo}>
                     <button
@@ -202,10 +247,22 @@ export function LogisticaMapa({
                     >
                       <span
                         className="size-2.5 shrink-0 rounded-sm"
-                        style={{ background: vista === "calha" ? item.info.corCalha : item.info.corModal }}
+                        style={{
+                          background:
+                            vista === "calha"
+                              ? item.info.corCalha
+                              : vista === "modal"
+                                ? item.info.corModal
+                                : item.info.corClasse,
+                        }}
                       />
+                      {vista === "ranking" ? (
+                        <span className="w-5 shrink-0 font-mono text-[10px] text-text-mute">{item.info.posto}</span>
+                      ) : null}
                       <span className="min-w-0 flex-1 break-words">{item.row.nome}</span>
-                      <span className="text-[10px] text-text-mute">{item.info.labelModal}</span>
+                      <span className="max-w-[9rem] truncate text-[10px] text-text-mute">
+                        {vista === "ranking" ? item.info.resumoAereo : item.info.labelModal}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -215,7 +272,7 @@ export function LogisticaMapa({
       </div>
 
       <p className="text-[11px] text-text-mute">
-        As nove calhas da metodologia CEMOA são os eixos de atendimento do estado. O modal rodoviário reúne os 13 municípios da Região Metropolitana de Manaus (Lei Complementar nº 52/2007, alterada pela nº 64/2009). Nos demais, o acesso predominante é fluvial, pelo rio da própria calha.
+        As nove calhas da metodologia CEMOA são os eixos de atendimento. O avião entra onde a rodovia não chega: o hub é o Eduardo Gomes, em Manaus, e o cadastro da ANAC marca aeródromo público em 21 municípios. Pista privada não é base da defesa civil — o pouso depende do operador. Sem pista cadastrada, o município fica no rio da própria calha. Dentro da mesma classe, a lista segue a ordem alfabética. Fonte: {FONTE_AEREA}. A rodovia reúne os 13 municípios da Região Metropolitana de Manaus (Lei Complementar nº 52/2007, alterada pela nº 64/2009).
       </p>
     </div>
   );

@@ -26,3 +26,27 @@ test("o mapa de logística cobre as nove calhas e os 13 municípios rodoviários
   assert.equal(modalDe("1302603"), "rodoviario");
   assert.equal(modalDe("1304203"), "fluvial");
 });
+
+test("o ranking aéreo coloca Manaus primeiro e o município sem pista por último", () => {
+  const ordem = MUNICIPALITIES.map((muni) => logisticaDo(muni.codigoIbge, "")).sort((a, b) => a.posto - b.posto);
+  assert.equal(ordem.length, 62);
+  assert.equal(new Set(ordem.map((item) => item.posto)).size, 62);
+  assert.equal(ordem[0].posto, 1);
+  assert.equal(ordem[0].classe, "hub");
+  const itacoatiara = ordem.find((item) => item.resumoAereo.includes("SBIC"));
+  const tefe = ordem.find((item) => item.resumoAereo.includes("SBTF"));
+  const jurua = MUNICIPALITIES.find((muni) => muni.nome === "Juruá");
+  const pauini = MUNICIPALITIES.find((muni) => muni.nome === "Pauini");
+  assert.ok(itacoatiara && tefe && jurua && pauini);
+  assert.equal(itacoatiara.classe, "rodovia-publico");
+  assert.equal(tefe.classe, "publico");
+  assert.ok(itacoatiara.posto < tefe.posto);
+  const juruaInfo = logisticaDo(jurua.codigoIbge, "");
+  const pauiniInfo = logisticaDo(pauini.codigoIbge, "");
+  assert.equal(juruaInfo.classe, "privado");
+  assert.equal(pauiniInfo.classe, "fluvial");
+  assert.ok(tefe.posto < juruaInfo.posto);
+  assert.ok(juruaInfo.posto < pauiniInfo.posto);
+  assert.equal(ordem.filter((item) => item.classe === "publico" || item.classe === "hub" || item.classe === "rodovia-publico").length, 21);
+  assert.equal(ordem.filter((item) => item.classe === "fluvial").length, 21);
+});
