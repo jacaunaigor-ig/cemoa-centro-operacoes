@@ -1,3 +1,4 @@
+import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
 import type { HydroStation } from "@/lib/types";
 
 export const HYDRO_TZ = "America/Manaus";
@@ -10,6 +11,14 @@ export function hydroTodayIso(now = Date.now()): string {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(now));
+}
+
+/** Dia do boletim em vigor: hoje a partir das 16 h de Manaus; antes disso, o dia anterior. */
+export function hydroBoletimDiaIso(now = Date.now()): string {
+  const today = hydroTodayIso(now);
+  const clock = relogioDoFuso(now, FUSO_MANAUS);
+  if (clock.hour >= ANA_HORAS[0]) return today;
+  return addDaysIso(today, -1);
 }
 
 export function isoFromTimestamp(ts: number): string {
@@ -129,23 +138,29 @@ export function alignHydroSeries(
 }
 
 export function syncOperationalCota<T extends HydroStation>(station: T): T {
-  const today = hydroTodayIso();
-  const idx = indexOfIso(station, today);
-  const cotaHoje = idx >= 0 ? station.cotas[idx] ?? null : null;
+  let idx = -1;
+  for (let i = station.cotas.length - 1; i >= 0; i--) {
+    const value = station.cotas[i];
+    if (value != null && Number.isFinite(value)) {
+      idx = i;
+      break;
+    }
+  }
+  const cota = idx >= 0 ? Number(station.cotas[idx]) : null;
   const prev = idx > 0 ? station.cotas[idx - 1] : null;
   let variacao = station.variacao;
-  if (cotaHoje != null && prev != null && Number.isFinite(prev)) {
-    variacao = Math.round((cotaHoje - prev) * 100) / 100;
+  if (cota != null && prev != null && Number.isFinite(prev)) {
+    variacao = Math.round((cota - prev) * 100) / 100;
   }
   let tendencia = station.tendencia;
-  if (cotaHoje != null && prev != null && Number.isFinite(prev) && variacao != null) {
+  if (cota != null && prev != null && Number.isFinite(prev) && variacao != null) {
     tendencia =
       variacao > 0.03 ? "SUBINDO" : variacao < -0.03 ? "BAIXANDO" : "PARADO";
   }
   return {
     ...station,
-    cota: cotaHoje,
-    semLeitura: cotaHoje == null,
+    cota,
+    semLeitura: cota == null,
     variacao,
     tendencia,
   };

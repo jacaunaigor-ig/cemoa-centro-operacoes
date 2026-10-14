@@ -43,6 +43,6 @@ test("cota ANA mais próxima de 07:00 de Manaus no dia vigente", () => {
 test("boletim hidrológico usa o dia vigente depois das 16 h de Manaus", () => {
   const before = Date.parse("2026-10-08T15:00:00-04:00");
   const after = Date.parse("2026-10-08T16:00:00-04:00");
-  assert.equal(hydroBoletimDiaIso(before), "2026-09-01");
+  assert.equal(hydroBoletimDiaIso(before), "2026-10-07");
   assert.equal(hydroBoletimDiaIso(after), "2026-10-08");
 });

@@ -216,8 +216,12 @@ export function buildHydrologyPayload(
   const automaticas = stations.filter((s) => /^\d{6,}$/.test(s.estacao)).length;
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
+  const boletim = formatHydroRef(hydroBoletimDiaIso(now));
+  const fonteViva = /\d{2}\/\d{2}\/\d{4}/.test(HYDRO_FONTE)
+    ? HYDRO_FONTE.replace(/\d{2}\/\d{2}\/\d{4}/, boletim)
+    : `${HYDRO_FONTE} · boletim ${boletim}`;
   const partes = [
-    `${HYDRO_FONTE} · boletim ${formatHydroRef(hydroBoletimDiaIso(now))}`,
+    fonteViva,
     "ANA às 16:00 (Manaus), cota ~07:00 do dia vigente",
     "Power BI / Fabric: cota mais próxima de 07:00 de Manaus (consulta 07 h e 16 h Brasília)",
   ];
