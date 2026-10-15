@@ -1,6 +1,6 @@
 import type { AlertType } from "@/lib/alert-types";
 import { temAreaMapeada } from "@/lib/mass-risk";
-import type { AlertLevel, RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
+import type { RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
 import {
   classifyMonitorRain,
   formatBandFloor,
@@ -45,6 +45,19 @@ export function rainBand(mm: number | null | undefined): RainBand {
   if (mm < 30) return "moderada";
   if (mm < 50) return "forte";
   return "intensa";
+}
+
+export function resumoChuvaPng(valores: Array<number | null | undefined>) {
+  let semLeitura = 0;
+  let semChuva = 0;
+  let comChuva = 0;
+  for (const mm of valores) {
+    const band = rainBand(mm);
+    if (band === "sem_leitura") semLeitura += 1;
+    else if (band === "sem_chuva") semChuva += 1;
+    else comChuva += 1;
+  }
+  return { semLeitura, semChuva, comChuva };
 }
 
 export function rainBandLabel(band: RainBand, janela?: "1 h" | "6 h" | "24 h"): string {
@@ -284,7 +297,6 @@ export function applyRainClassification<
     id: string;
     nome: string;
     risco: RiskLevel | string;
-    risco: AlertLevel;
     fonte: "admin" | "monitor";
     classifiedBy?: string | null;
     classifiedAt?: number | null;
@@ -296,13 +308,6 @@ export function applyRainClassification<
     const apoio = rainApoio(tipo, rec, { id: m.id, nome: m.nome });
     if (!apoio || apoio.level === "BAIXO") return m;
     if (riskIndex(apoio.level) <= riskIndex(m.risco)) return m;
->(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType): T[] {
-  if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
-  return rows.map((m) => {
-    if (m.fonte === "admin") return m;
-    const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
-    const apoio = rainApoio(tipo, rec, { nome: m.nome, id: m.id });
-    if (!apoio || apoio.level === "BAIXO") return m;
     if (tipo === "MOVIMENTO" && !temAreaMapeada(m.id)) return m;
     return {
       ...m,
@@ -310,8 +315,6 @@ export function applyRainClassification<
       fonte: "monitor" as const,
       classifiedBy: tipo === "ALAGAMENTO" ? "CEMADEN · 1 h" : "CEMADEN · 24 h",
       classifiedAt: rec?.observedAt ?? rain.generatedAt ?? m.classifiedAt ?? null,
-      classifiedBy: "Limiares CEMADEN/ANA",
-      classifiedAt: rain.generatedAt ?? m.classifiedAt ?? null,
     };
   });
 }

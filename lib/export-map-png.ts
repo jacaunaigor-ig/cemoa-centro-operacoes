@@ -109,6 +109,22 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
+export function carimboPng(now = Date.now()) {
+  const data = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Manaus",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(now));
+  const hora = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Manaus",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(now));
+  return { data, hora: `${hora} · Manaus` };
+}
+
 export function pngFilename(prefix: string) {
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Manaus" }).format(
     new Date(),
@@ -168,18 +184,14 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   ctx.font = "900 24px Arial, sans-serif";
   wrapText(ctx, opts.productLegend.toUpperCase(), 70, 105, 1500, 28, "900 24px Arial, sans-serif");
 
-  const now = new Date();
+  const carimbo = carimboPng();
   ctx.textAlign = "right";
   ctx.fillStyle = "#ffffff";
   ctx.font = "800 20px Arial, sans-serif";
-  ctx.fillText(now.toLocaleDateString("pt-BR"), BASE_W - 55, 55);
+  ctx.fillText(carimbo.data, BASE_W - 55, 55);
   ctx.fillStyle = "#b8cad7";
   ctx.font = "700 16px Arial, sans-serif";
-  ctx.fillText(
-    `${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} (UTC-4)`,
-    BASE_W - 55,
-    85,
-  );
+  ctx.fillText(carimbo.hora, BASE_W - 55, 85);
   ctx.fillText("CEMOA · DEFESA CIVIL DO AMAZONAS", BASE_W - 55, 114);
   ctx.textAlign = "left";
 
