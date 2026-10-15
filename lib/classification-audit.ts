@@ -67,3 +67,22 @@ export function textoAuditoria(row: {
     : "sem classificação de operador";
   return `${quem} alterou de ${antes} para ${nomeDoNivel(row.tipo, row.level)} · ${row.source}.`;
 }
+
+export function linhasDaPassagem(
+  rows: Array<{
+    at: string;
+    tipo: string;
+    municipio_id: string;
+    previous_level: string | null;
+    level: string;
+    issued_by: string | null;
+    source: string;
+  }>,
+  nomeDe: (id: string) => string,
+  horarioDe: (at: string) => string,
+): string[] {
+  return rows.map((row) => {
+    const nome = nomeDe(row.municipio_id).trim() || row.municipio_id;
+    return `${horarioDe(row.at)} · ${nome} · ${textoAuditoria(row)}`;
+  });
+}

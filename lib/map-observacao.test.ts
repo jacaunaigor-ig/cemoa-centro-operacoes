@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { observacaoDoMunicipio } from "./map-observacao.ts";
+import { entraNaContagemDeNivel, observacaoDoMunicipio } from "./map-observacao.ts";
 
 const base = {
   fonte: "monitor" as const,
@@ -44,6 +44,13 @@ test("movimento usa 24 h e chuva usa qualquer janela", () => {
     observacaoDoMunicipio({ ...base, tipo: "CHUVA", mm1h: null, temAlgumaLeitura: true }),
     "com-leitura",
   );
+});
+
+test("sem leitura não entra na contagem de baixo", () => {
+  assert.equal(entraNaContagemDeNivel("BAIXO", "sem-leitura"), false);
+  assert.equal(entraNaContagemDeNivel("BAIXO", "com-leitura"), true);
+  assert.equal(entraNaContagemDeNivel("BAIXO", "classificado"), true);
+  assert.equal(entraNaContagemDeNivel("ALTO", "sem-leitura"), true);
 });
 
 test("consulta ainda não feita não marca ausência", () => {

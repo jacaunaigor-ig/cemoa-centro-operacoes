@@ -406,9 +406,11 @@ export const AlertsMap = forwardRef<
     const semLeitura = !choropleth && m?.observacao === "sem-leitura";
     const semAlertaAr = !choropleth && !semLeitura && stateRef.current.tipo === "INCENDIO" && risco === "BOA";
     const matchLevel =
-      f === "TODOS" || f === "ATIVOS"
-        ? f === "TODOS" || (risco !== "BAIXO" && risco !== "BOA")
-        : risco === f;
+      semLeitura && f === "BAIXO"
+        ? false
+        : f === "TODOS" || f === "ATIVOS"
+          ? f === "TODOS" || (risco !== "BAIXO" && risco !== "BOA")
+          : risco === f;
     const matchBasin = !b || m?.bacia === b;
     const matchCalha = !names || names.length === 0 || names.includes(nome);
     const match = matchLevel && matchBasin && matchCalha;

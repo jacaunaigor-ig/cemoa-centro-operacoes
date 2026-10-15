@@ -35,6 +35,7 @@ import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { massRiskDo, pessoasRiscoDo } from "@/lib/mass-risk";
 import { formatHab } from "@/lib/demografia";
+import { SEM_LEITURA_FILL } from "@/lib/map-observacao";
 
 export function AlertList({
   municipios,
@@ -64,6 +65,7 @@ export function AlertList({
     issuedAt: number | null;
     expiresAt?: number | null;
     classifiedBy?: string | null;
+    observacao?: "classificado" | "com-leitura" | "sem-leitura" | "nao-consultada";
   }>;
   catalog: Array<{
     id: string;
@@ -263,7 +265,8 @@ export function AlertList({
                   const alert = alertByMuni.get(m.nome);
                   const cota = hydroByMuni.get(m.nome);
                   const calhaHref = cota?.calha;
-                  const color = LEVEL_COLORS[m.risco] ?? "#7c8fab";
+                  const semLeitura = m.observacao === "sem-leitura";
+                  const color = semLeitura ? SEM_LEITURA_FILL : (LEVEL_COLORS[m.risco] ?? "#7c8fab");
                   const highlighted = selected === m.nome || hovered === m.nome;
                   const briefing = buildAlertBriefing({
                     nome: m.nome,
@@ -313,11 +316,17 @@ export function AlertList({
                           </span>
                           <span className="flex shrink-0 items-center gap-1.5">
                             <AlertCountdown expiresAt={expiresAt} variant="row" />
-                            <RiskBadge
-                              level={m.risco}
-                              showAction={!isMobile && isAlertActive(tipo, m.risco)}
-                              strong={isAlertActive(tipo, m.risco)}
-                            />
+                            {semLeitura ? (
+                              <span className="rounded-md border border-dashed border-text-mute px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-text-dim uppercase">
+                                Sem leitura
+                              </span>
+                            ) : (
+                              <RiskBadge
+                                level={m.risco}
+                                showAction={!isMobile && isAlertActive(tipo, m.risco)}
+                                strong={isAlertActive(tipo, m.risco)}
+                              />
+                            )}
                           </span>
                         </button>
                         {tipo === "INCENDIO" ? (

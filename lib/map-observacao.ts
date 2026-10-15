@@ -21,3 +21,8 @@ export function observacaoDoMunicipio(input: {
   if (input.tipo === "MOVIMENTO") return input.mm24h == null ? "sem-leitura" : "com-leitura";
   return input.temAlgumaLeitura ? "com-leitura" : "sem-leitura";
 }
+
+/** Ausência na janela do limiar não entra na contagem de Baixo. */
+export function entraNaContagemDeNivel(risco: string, observacao: ObservacaoMapa | undefined) {
+  return !(observacao === "sem-leitura" && risco === "BAIXO");
+}

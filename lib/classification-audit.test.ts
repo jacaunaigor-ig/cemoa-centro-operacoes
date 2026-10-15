@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { linhasDeAuditoria, textoAuditoria } from "./classification-audit.ts";
+import { linhasDaPassagem, linhasDeAuditoria, textoAuditoria } from "./classification-audit.ts";
 
 test("alteração guarda o nível anterior e o novo", () => {
   const rows = linhasDeAuditoria({
@@ -38,6 +38,26 @@ test("remover sem classificação anterior não cria linha", () => {
     source: "limpar",
   });
   assert.equal(rows.length, 0);
+});
+
+test("a linha da passagem nomeia município e horário recebidos", () => {
+  const linhas = linhasDaPassagem(
+    [
+      {
+        at: "2026-10-15T20:00:00.000Z",
+        tipo: "CHUVA",
+        municipio_id: "1302603",
+        previous_level: null,
+        level: "ALTO",
+        issued_by: "Igor",
+        source: "clique",
+      },
+    ],
+    () => "Manaus",
+    () => "15/10/2026, 16:00",
+  );
+  assert.equal(linhas.length, 1);
+  assert.match(linhas[0]!, /15\/10\/2026, 16:00 · Manaus · Igor alterou/);
 });
 
 test("moderado de chuva não usa o rótulo da qualidade do ar", () => {

@@ -126,6 +126,15 @@ export type RemoteClassificationAudit = {
   source: string;
 };
 
+export async function fetchRecentClassificationAudit(
+  limit = 12,
+): Promise<RemoteClassificationAudit[] | null> {
+  const cap = Math.min(30, Math.max(1, limit));
+  return rest<RemoteClassificationAudit[]>(
+    `classification_audit?select=at,tipo,municipio_id,previous_level,level,issued_by,source&order=at.desc&limit=${cap}`,
+  );
+}
+
 export async function fetchClassificationAudit(
   municipioId: string,
   tipo: string,

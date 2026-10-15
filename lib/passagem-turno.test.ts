@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { montarPassagem } from "./passagem-turno.ts";
+import { montarPassagem, montarPassagemVarios } from "./passagem-turno.ts";
 
 const base = {
   horario: "15/10/2026, 15:50",
@@ -46,6 +46,35 @@ test("sem sessão e sem alerta ativo o texto não finge normalidade operacional"
   assert.match(texto, /Nenhum alerta ativo/);
   assert.match(texto, /Vencidos: nenhum/);
   assert.match(texto, /Nada vencido ou por renovar/);
+});
+
+test("sem leitura não entra como baixo na passagem", () => {
+  const texto = montarPassagem({ ...base, semLeitura: 60, niveis: [{ nivel: "Baixo", quantidade: 2 }] });
+  assert.match(texto, /Baixo: 2/);
+  assert.match(texto, /Sem leitura: 60. Não entram na contagem de Baixo/);
+  assert.doesNotMatch(texto, /Baixo: 60/);
+});
+
+test("a passagem de vários produtos não trata falha como risco baixo", () => {
+  const texto = montarPassagemVarios({
+    horario: base.horario,
+    responsavel: null,
+    recorte: "todos os municípios",
+    fontes: base.fontes,
+    produtos: [
+      { disponivel: true, entrada: { ...base, produto: "Alagamento", semLeitura: 60, niveis: [{ nivel: "Baixo", quantidade: 2 }] } },
+      { disponivel: false, produto: "Chuva intensa", motivo: "consulta não retornou" },
+    ],
+    alteracoes: null,
+    alteracoesNota: "sessão de operador não aberta",
+  });
+  assert.match(texto, /reúne os produtos consultados/);
+  assert.match(texto, /Baixo: 2/);
+  assert.match(texto, /Sem leitura: 60/);
+  assert.match(texto, /Chuva intensa/);
+  assert.match(texto, /Consulta indisponível \(consulta não retornou\)/);
+  assert.match(texto, /sessão de operador não aberta/);
+  assert.match(texto, /Histórico não consultado \(sessão de operador não aberta\)/);
 });
 
 test("a fila longa declara o que ficou de fora", () => {
