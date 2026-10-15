@@ -4,6 +4,7 @@ import { addDaysIso, hydroTodayIso, upsertCotaOnDate } from "@/lib/hydro-series"
 import { normalizeMunicipio } from "@/lib/hydrology";
 import type { HydroStation } from "@/lib/types";
 
+/** Relatório público (atualização oficial às 16 h): https://app.powerbi.com/view?r=eyJrIjoiNzQ0OGM0MzQtNzZmNi00NDI5LTlkY2MtZWM0ZTdhYWJlYmFmIiwidCI6IjVlYjQyZWZiLTViYTUtNDVmNy05MDc3LTgyODYyNjU1MzAxMiJ9 */
 const RESOURCE_KEY = "7448c434-76f6-4429-9dcc-ec4e7aabebaf";
 const CLUSTER_HOST = "wabi-brazil-south-b-primary-api.analysis.windows.net";
 const MODEL_ID = 6289874;

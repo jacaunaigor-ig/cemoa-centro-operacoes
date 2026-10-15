@@ -12,7 +12,7 @@ import {
 import type { MetodologiaRow } from "@/lib/metodologia-build";
 import { cn } from "@/lib/utils";
 
-type FiltroEvento = "irg" | MetodologiaEvento;
+export type FiltroEvento = "irg" | MetodologiaEvento;
 
 const EVENTO_FILTERS: Array<{ id: FiltroEvento; label: string }> = [
   { id: "irg", label: "IRG (geral)" },
@@ -50,6 +50,8 @@ export function IndiceSheet({
   hideScopeFilters = false,
   loading = false,
   className,
+  evento: eventoProp,
+  onEventoChange,
 }: {
   rows: MetodologiaRow[];
   onPick: (row: MetodologiaRow) => void;
@@ -58,8 +60,15 @@ export function IndiceSheet({
   hideScopeFilters?: boolean;
   loading?: boolean;
   className?: string;
+  evento?: FiltroEvento;
+  onEventoChange?: (evento: FiltroEvento) => void;
 }) {
-  const [evento, setEvento] = useState<FiltroEvento>("irg");
+  const [localEvento, setLocalEvento] = useState<FiltroEvento>("irg");
+  const evento = eventoProp !== undefined ? eventoProp : localEvento;
+  const setEvento = (next: FiltroEvento) => {
+    setLocalEvento(next);
+    onEventoChange?.(next);
+  };
   const [prioridade, setPrioridade] = useState<"todas" | MetPrioridade>("todas");
   const [calha, setCalha] = useState("todas");
 
@@ -77,11 +86,17 @@ export function IndiceSheet({
         prioridade === "todas" ? true : row.prioridade === prioridade,
       )
       .filter((row) => (calha === "todas" ? true : row.calha === calha))
-      .sort(
-        (a, b) =>
+      .sort((a, b) => {
+        if (evento === "Inundação") {
+          const agr =
+            (b.agrPorEvento["Inundação"] ?? 0) - (a.agrPorEvento["Inundação"] ?? 0);
+          if (agr !== 0) return agr;
+        }
+        return (
           scoreOf(b, evento) - scoreOf(a, evento) ||
-          a.nome.localeCompare(b.nome, "pt-BR"),
-      );
+          a.nome.localeCompare(b.nome, "pt-BR")
+        );
+      });
   }, [rows, evento, prioridade, calha]);
 
   return (
@@ -203,12 +218,12 @@ export function IndiceSheet({
                 />
                 <span className="min-w-0 flex-1">
                   <strong className="flex min-w-0 items-center gap-1 text-[12px] text-text">
-                    <span className="truncate">{row.nome}</span>
+                    <span className="break-words">{row.nome}</span>
                     {row.pmif ? (
                       <PmifBadge bonus={evento === "Incêndio/QAr"} />
                     ) : null}
                   </strong>
-                  <span className="block truncate text-[10px] text-text-mute">
+                  <span className="block text-[10px] leading-snug break-words text-text-mute">
                     {nivelOf(row, evento)} · {row.calha} · IVM {row.ivm} ({row.classe})
                     {evento === "Incêndio/QAr" && row.pmif
                       ? ` · PIMF +${BONUS_PIMF}`

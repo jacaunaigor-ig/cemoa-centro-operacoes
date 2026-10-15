@@ -522,7 +522,7 @@ export const AlertsMap = forwardRef<
                   ? `<br/><strong>${focosN} focos</strong>`
                   : stateRef.current.pointKind === "air"
                   ? m?.hasAirSensor
-                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (24 h)`
+                    ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (ao vivo)`
                     : " · s/ sensor PurpleAir"
                   : m?.hasRainStation
                     ? ` · 1/6/24 h ${formatWindowsCompact({
@@ -612,7 +612,7 @@ export const AlertsMap = forwardRef<
         map,
         territory,
         stateRef.current.overlays,
-        stateRef.current.pointKind === "air" ? "PurpleAir 24 h" : "CEMADEN",
+        stateRef.current.pointKind === "air" ? "PurpleAir ao vivo" : "CEMADEN",
       );
       if (stateRef.current.overlays.pluvio) {
         if (stateRef.current.pointKind === "air") {
@@ -776,7 +776,7 @@ export const AlertsMap = forwardRef<
       map,
       territoryRef.current,
       overlays,
-        pointKind === "air" ? "PurpleAir 24 h" : "CEMADEN",
+        pointKind === "air" ? "PurpleAir ao vivo" : "CEMADEN",
     );
   }, [overlays, pointKind]);
   // Efeito para desenhar/remover os focos de calor

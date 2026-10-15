@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { OpsModeProvider } from "@/components/shared/OpsMode";
 import { ThemeToaster } from "@/components/shared/ThemeToaster";
@@ -49,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <OpsModeProvider>
           <TooltipProvider>
-            {children}
+            <Suspense fallback={children}>{children}</Suspense>
           </TooltipProvider>
           <ThemeToaster />
         </OpsModeProvider>

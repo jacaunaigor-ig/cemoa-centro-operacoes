@@ -78,12 +78,14 @@ export function PlantaoQueue({
           : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO"
             ? "O mapa classifica pelo acumulado. A classificação do centro permanece quando é mais grave."
             : "Sugestão de plantão. Só o operador classifica o grau."
+          ? "MP2,5 ao vivo pinta o mapa. Clique no município para revisar ou alterar o grau."
+          : "Limiares já pintam o mapa. A fila mostra vencido, renovação e elevação além do grau atual."
       }
     >
       <div className="flex items-center justify-between gap-2">
         <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
           <ClipboardList className="size-3" />
-          Sugestão · plantão
+          Fila · plantão
         </p>
         <span className="flex min-w-0 items-center gap-1">
           <p className="truncate text-[10px] text-text-mute">{product}</p>
@@ -97,6 +99,7 @@ export function PlantaoQueue({
             ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo >20 mm/h."
             : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo >30 mm/24 h."}{" "}
           O mapa usa esse limiar.
+          A plataforma classifica ao atingir o limiar; o operador pode alterar.
         </p>
       ) : null}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Activity,
@@ -30,6 +31,7 @@ import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/Plan
 import { OpsFooter } from "@/components/shared/OpsFooter";
 import { situacaoConsulta, textoConsulta } from "@/lib/consulta-rotulo";
 import { STATIC_DEPLOY } from "@/lib/site";
+import { prefetchMunicipalMesh } from "@/lib/stain-clip";
 
 export function AppShell({
   children,
@@ -78,6 +80,9 @@ export function AppShell({
     }),
   );
   const tituloConsulta = syncLabel ?? consulta.titulo;
+  useEffect(() => {
+    prefetchMunicipalMesh();
+  }, []);
 
   const shared = new URLSearchParams();
   for (const key of ["municipio", "bacia", "calha"] as const) {
@@ -310,8 +315,8 @@ export function AppShell({
               title={tituloConsulta}
               body={`${consulta.detalhe} ${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} ${
                 supabaseConfigured
-                  ? "Supabase ligado: classificações e cotas gravam no Postgres do mesmo projeto associado ao Vercel."
-                  : "Supabase aguardando chaves: o centro está pronto — cole URL e chave no Vercel (ou em .env.local). Até lá, cookie + memória."
+                  ? "Supabase ligado: classificações e cotas gravam no Postgres."
+                  : "Supabase aguardando chaves: o centro está pronto — configure URL e chave (em .env.local ou variáveis de ambiente). Até lá, cookie + memória."
               }`}
             >
               <button
@@ -338,8 +343,9 @@ export function AppShell({
       {admin && !mapFocus && !pathname.startsWith("/risco") && !pathname.startsWith("/meteorologia") ? (
         <div className="bg-brand/15 px-3 py-1.5 text-center text-[11px] font-semibold text-brand-2">
           Edição{session ? ` · ${session.name}` : ""}
-          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva, cota e qualidade do ar são
-          sugestão; só o operador classifica o grau. Clique, lote
+          {session?.roleLabel ? ` · ${session.roleLabel}` : ""} — chuva intensa e erosão são do
+          operador; alagamento, movimento de massa e qualidade do ar classificam pelos limiares
+          (o operador pode alterar). Clique, lote (L)
           {pathname.startsWith("/boletim") ? "" : " ou mancha no polígono"}. Encerrar ao
           terminar. Desfazer (Ctrl+Z).
         </div>

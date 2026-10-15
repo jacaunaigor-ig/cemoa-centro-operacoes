@@ -1,6 +1,11 @@
-/** Horários oficiais do boletim, no fuso de Brasília. */
+/** Horários oficiais do boletim hidrológico. */
 export const FUSO_BRASILIA = "America/Sao_Paulo";
-export const ANA_HORAS = [7] as const;
+export const FUSO_MANAUS = "America/Manaus";
+/** ANA hidrologia: uma consulta por dia, às 16 h de Manaus. */
+export const ANA_HORAS = [16] as const;
+/** Cota do dia vigente: 07:00 de Manaus ou a leitura mais próxima. */
+export const ANA_COTA_HORA = 7;
+/** Power BI / Fabric: 07:00 e 16:00 (Brasília). */
 export const FABRIC_HORAS = [7, 16] as const;
 
 function relogio(now: number, timeZone: string) {
@@ -21,7 +26,7 @@ function relogio(now: number, timeZone: string) {
 }
 
 /** Instante UTC em que o relógio do fuso marca ano-mês-dia hora:00. */
-function instante(year: number, month: number, day: number, hour: number, timeZone: string) {
+export function instante(year: number, month: number, day: number, hour: number, timeZone: string) {
   let utc = Date.UTC(year, month - 1, day, hour, 0, 0);
   for (let i = 0; i < 3; i++) {
     const seen = relogio(utc, timeZone);
@@ -30,6 +35,11 @@ function instante(year: number, month: number, day: number, hour: number, timeZo
     utc += want - seenAsUtc;
   }
   return utc;
+}
+
+/** Relógio do fuso (ano/mês/dia/hora). */
+export function relogioDoFuso(now: number, timeZone: string) {
+  return relogio(now, timeZone);
 }
 
 /** Último horário de publicação já aberto (07:00, ou 07:00 e 16:00). */

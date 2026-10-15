@@ -20,24 +20,16 @@ const HORIZON_SLOTS: Array<{ id: WeatherForecast["horizons"][number]["id"]; labe
   { id: "5d", label: "5 dias" },
 ];
 
-export function WeatherForecastPanel({
-  ibge,
-  nome,
-  rain,
-}: {
-  ibge: string;
-  nome: string;
-  rain?: RainfallMunicipio | null;
-}) {
+export function useWeatherForecast(ibge?: string) {
   const [data, setData] = useState<WeatherForecast | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(ibge) && !STATIC_DEPLOY);
 
   useEffect(() => {
     if (!ibge || STATIC_DEPLOY) {
       setLoading(false);
       setData(null);
-      setError(STATIC_DEPLOY ? "Previsão INMET indisponível no modo estático." : null);
+      setError(STATIC_DEPLOY && ibge ? "Previsão INMET indisponível no modo estático." : null);
       return;
     }
     let cancelled = false;
@@ -61,6 +53,23 @@ export function WeatherForecastPanel({
       cancelled = true;
     };
   }, [ibge]);
+
+  return { data, error, loading };
+}
+
+export function WeatherForecastPanel({
+  ibge,
+  nome,
+  rain,
+  forecast,
+}: {
+  ibge: string;
+  nome: string;
+  rain?: RainfallMunicipio | null;
+  forecast?: ReturnType<typeof useWeatherForecast>;
+}) {
+  const local = useWeatherForecast(forecast ? undefined : ibge);
+  const { data, error, loading } = forecast ?? local;
 
   const today = data?.today;
   const now = data?.now;
@@ -158,7 +167,7 @@ export function WeatherForecastPanel({
               <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
                 {h.label}
               </small>
-              <span className="mt-0.5 line-clamp-2 w-full text-[10px] leading-snug text-text" title={h.resumo ?? undefined}>
+              <span className="mt-0.5 w-full text-[10px] leading-snug break-words text-text">
                 {h.resumo ?? "—"}
               </span>
               <strong className="mt-0.5 font-mono text-[11px] tabular-nums">

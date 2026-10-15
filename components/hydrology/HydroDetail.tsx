@@ -22,6 +22,7 @@ import type { HydroMode, HydroStation, HydroStatus } from "@/lib/types";
 import { cotaOnIso, hydroTodayIso } from "@/lib/hydro-series";
 import { cn } from "@/lib/utils";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
+import { buildHydroFichaLinha } from "@/lib/alert-briefing";
 
 export function HydroDetail({
   station,
@@ -50,7 +51,7 @@ export function HydroDetail({
         "overflow-y-auto overscroll-contain bg-panel/95 px-4 py-3",
         compact
           ? "min-h-0 max-h-full flex-1 rounded-xl border border-border pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-          : "max-h-[min(62vh,560px)] border-t border-border",
+          : "min-h-0 max-h-[min(50%,36rem)] shrink-0 border-t border-border",
       )}
     >
       <div className="sticky top-0 z-10 -mx-4 -mt-3 mb-2 flex items-start justify-between gap-3 bg-panel/95 px-4 pt-3 pb-2 backdrop-blur-md">
@@ -68,6 +69,9 @@ export function HydroDetail({
         </Button>
       </div>
 
+      <p className="mt-2 font-mono text-[11px] leading-snug break-words text-text-dim">
+        {buildHydroFichaLinha(station)}
+      </p>
       <p className="mt-2 text-sm font-semibold">{tendenciaTexto(station.tendencia)}</p>
       <FichaTerritorio municipioId={station.id} />
 
@@ -200,8 +204,7 @@ export function HydroDetail({
         />
       </div>
 
-      {compact ? null : (
-        <div className="mt-3 overflow-x-auto">
+      <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="text-[10px] tracking-wide text-text-mute uppercase">
               <tr>
@@ -229,8 +232,7 @@ export function HydroDetail({
               Últimos 14 dias da série. Leituras mais antigas entram no gráfico.
             </p>
           ) : null}
-        </div>
-      )}
+      </div>
 
       <Link
         href={`/?municipio=${encodeURIComponent(station.municipio)}&bacia=${encodeURIComponent(station.bacia)}&calha=${encodeURIComponent(station.calha)}`}
@@ -415,8 +417,8 @@ function Metric({
       <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
         {label}
       </small>
-      <p className="font-mono text-sm font-bold">{value}</p>
-      {hint ? <p className="text-[10px] text-text-mute">{hint}</p> : null}
+      <p className="font-mono text-sm font-bold break-words">{value}</p>
+      {hint ? <p className="text-[10px] leading-snug break-words text-text-mute">{hint}</p> : null}
     </div>
   );
 }

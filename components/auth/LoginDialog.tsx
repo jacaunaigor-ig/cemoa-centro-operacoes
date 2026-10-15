@@ -87,7 +87,7 @@ export function LoginDialog() {
       } catch {
         setError(
           res.status >= 500
-            ? "O servidor falhou ao entrar. No Vercel, defina CEMOA_SESSION_SECRET (mínimo 16 caracteres) e as chaves do Supabase."
+            ? "O servidor falhou ao entrar. Defina CEMOA_SESSION_SECRET (mínimo 16 caracteres) e as chaves do Supabase nas variáveis de ambiente."
             : "Resposta inválida do servidor. Tente de novo.",
         );
         return;

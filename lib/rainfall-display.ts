@@ -1,5 +1,6 @@
 import type { AlertType } from "@/lib/alert-types";
-import type { RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
+import { temAreaMapeada } from "@/lib/mass-risk";
+import type { AlertLevel, RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
 import {
   classifyMonitorRain,
   formatBandFloor,
@@ -144,7 +145,7 @@ function ifHit(
   return cond ? { level, motivo } : null;
 }
 
-/** Apoio operacional — não altera o grau. */
+/** Limiares operacionais — a plataforma classifica sozinha; o operador pode alterar depois. */
 export function rainApoio(
   tipo: AlertType | undefined,
   rain: RainfallWindows | null | undefined,
@@ -277,11 +278,13 @@ export function rainScore(tipo: AlertType | undefined, rain: RainfallWindows): n
  * movimento de massa na de 24 h. A classificação do centro prevalece
  * quando já é igual ou mais grave que o limiar.
  */
+/** Pinta ALAGAMENTO e MOVIMENTO ao atingir o limiar. Chuva intensa fica só com o operador. */
 export function applyRainClassification<
   T extends {
     id: string;
     nome: string;
     risco: RiskLevel | string;
+    risco: AlertLevel;
     fonte: "admin" | "monitor";
     classifiedBy?: string | null;
     classifiedAt?: number | null;
@@ -293,12 +296,22 @@ export function applyRainClassification<
     const apoio = rainApoio(tipo, rec, { id: m.id, nome: m.nome });
     if (!apoio || apoio.level === "BAIXO") return m;
     if (riskIndex(apoio.level) <= riskIndex(m.risco)) return m;
+>(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType): T[] {
+  if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
+  return rows.map((m) => {
+    if (m.fonte === "admin") return m;
+    const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
+    const apoio = rainApoio(tipo, rec, { nome: m.nome, id: m.id });
+    if (!apoio || apoio.level === "BAIXO") return m;
+    if (tipo === "MOVIMENTO" && !temAreaMapeada(m.id)) return m;
     return {
       ...m,
       risco: apoio.level,
       fonte: "monitor" as const,
       classifiedBy: tipo === "ALAGAMENTO" ? "CEMADEN · 1 h" : "CEMADEN · 24 h",
       classifiedAt: rec?.observedAt ?? rain.generatedAt ?? m.classifiedAt ?? null,
+      classifiedBy: "Limiares CEMADEN/ANA",
+      classifiedAt: rain.generatedAt ?? m.classifiedAt ?? null,
     };
   });
 }

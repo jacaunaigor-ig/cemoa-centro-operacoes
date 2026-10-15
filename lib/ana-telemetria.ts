@@ -1,7 +1,14 @@
 import https from "node:https";
-import { ANA_HORAS, leituraDoBoletim } from "@/lib/boletim-horario";
+import {
+  ANA_COTA_HORA,
+  ANA_HORAS,
+  FUSO_MANAUS,
+  instante,
+  leituraDoBoletim,
+  relogioDoFuso,
+} from "@/lib/boletim-horario";
 import { hydroTodayIso, isoFromTimestamp, upsertCotaOnDate } from "@/lib/hydro-series";
-import type { HydroStation } from "@/lib/types";
+import type { HydroStation, RainfallStation } from "@/lib/types";
 
 export type AnaReading = {
   codigo: string;
@@ -11,9 +18,13 @@ export type AnaReading = {
 };
 
 const ANA_HOST = "telemetriaws1.ana.gov.br";
-const FETCH_MS = 8_000;
-const CONCURRENCY = 6;
+const RAIN_FETCH_MS = 12_000;
+const HYDRO_FETCH_MS = 16_000;
+const CONCURRENCY = 10;
 const MAX_AGE_MS = 48 * 60 * 60_000;
+const RAIN_ALIVE_MS = 3 * 60 * 60_000;
+/** Tefé, Santa Isabel e Barcelos: a ANA devolve 0 quando a janela não tem chuva medida. */
+const ANA_ZERO_SEM_LEITURA = new Set(["14480002", "12900001", "14420000"]);
 
 type Cache = { at: number; byCode: Map<string, AnaReading> };
 
@@ -47,30 +58,39 @@ function parseWhen(raw: string) {
   return Number.isFinite(fallback) ? fallback : 0;
 }
 
-function parseLatest(xml: string): AnaReading | null {
+function parseHidroBlock(block: string): AnaReading | null {
+  const codigo = /<CodEstacao>([^<]*)<\/CodEstacao>/.exec(block)?.[1]?.trim();
+  const when = /<DataHora>([^<]*)<\/DataHora>/.exec(block)?.[1];
+  const nivel = Number(/<Nivel>([^<]*)<\/Nivel>/.exec(block)?.[1]);
+  if (!codigo || !when || !Number.isFinite(nivel)) return null;
+  const lidaEm = parseWhen(when);
+  if (!lidaEm) return null;
+  return {
+    codigo,
+    cotaM: nivel > 80 ? nivel / 100 : nivel,
+    nivelCm: nivel > 80 ? nivel : nivel * 100,
+    lidaEm,
+  };
+}
+
+/** Cota das 07:00 de Manaus no dia vigente, ou a mais próxima nesse dia. */
+export function parseCotaNearSeven(xml: string, now: number): AnaReading | null {
   const blocks = xml.match(/<DadosHidrometereologicos[\s\S]*?<\/DadosHidrometereologicos>/g);
   if (!blocks?.length) return null;
+  const bag = relogioDoFuso(now, FUSO_MANAUS);
+  const seven = instante(bag.year, bag.month, bag.day, ANA_COTA_HORA, FUSO_MANAUS);
+  const dayStart = instante(bag.year, bag.month, bag.day, 0, FUSO_MANAUS);
+  const dayEnd = dayStart + 86_400_000;
   let best: AnaReading | null = null;
   for (const block of blocks) {
-    const codigo = /<CodEstacao>([^<]*)<\/CodEstacao>/.exec(block)?.[1]?.trim();
-    const when = /<DataHora>([^<]*)<\/DataHora>/.exec(block)?.[1];
-    const nivel = Number(/<Nivel>([^<]*)<\/Nivel>/.exec(block)?.[1]);
-    if (!codigo || !when || !Number.isFinite(nivel)) continue;
-    const lidaEm = parseWhen(when);
-    const cotaM = nivel > 80 ? nivel / 100 : nivel;
-    if (!best || lidaEm > best.lidaEm) {
-      best = {
-        codigo,
-        cotaM,
-        nivelCm: nivel > 80 ? nivel : nivel * 100,
-        lidaEm,
-      };
-    }
+    const rec = parseHidroBlock(block);
+    if (!rec || rec.lidaEm < dayStart || rec.lidaEm >= dayEnd) continue;
+    if (!best || Math.abs(rec.lidaEm - seven) < Math.abs(best.lidaEm - seven)) best = rec;
   }
   return best;
 }
 
-function getXml(path: string): Promise<string> {
+function getXml(path: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
@@ -79,7 +99,7 @@ function getXml(path: string): Promise<string> {
         path,
         method: "GET",
         family: 4,
-        timeout: FETCH_MS,
+        timeout: timeoutMs,
         headers: { "User-Agent": "CEMOA-Centro-Operacoes/1.0", Accept: "text/xml" },
       },
       (res) => {
@@ -95,16 +115,99 @@ function getXml(path: string): Promise<string> {
 }
 
 export async function fetchAnaStation(codigo: string, now = Date.now()): Promise<AnaReading | null> {
-  const inicio = brDate(now - 2 * 24 * 60 * 60_000);
   const fim = brDate(now);
+  const inicio = brDate(now);
   const path = `/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=${encodeURIComponent(codigo)}&dataInicio=${encodeURIComponent(inicio)}&dataFim=${encodeURIComponent(fim)}`;
   try {
-    const xml = await getXml(path);
-    const reading = parseLatest(xml);
+    const xml = await getXml(path, HYDRO_FETCH_MS);
+    const reading = parseCotaNearSeven(xml, now);
     if (!reading) return null;
     if (now - reading.lidaEm > MAX_AGE_MS) return null;
     return reading;
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Consulta a telemetria da ANA e calcula os acumulados móveis de chuva
+ * (1 h / 6 h / 24 h / 72 h / 96 h), preenchendo lacunas onde o CEMADEN não possui estações.
+ */
+export async function fetchAnaRainStation(
+  codigo: string,
+  nomeEstacao: string,
+  now = Date.now(),
+): Promise<RainfallStation | null> {
+  // 5 dias cobrem com segurança a janela de 96 h
+  const inicio = brDate(now - 5 * 24 * 60 * 60_000);
+  const fim = brDate(now);
+  const path = `/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=${encodeURIComponent(codigo)}&dataInicio=${encodeURIComponent(inicio)}&dataFim=${encodeURIComponent(fim)}`;
+
+  try {
+    const xml = await getXml(path, RAIN_FETCH_MS);
+    const blocks = xml.match(/<DadosHidrometereologicos[\s\S]*?<\/DadosHidrometereologicos>/g);
+    if (!blocks || !blocks.length) return null;
+
+    // Deduplica por timestamp único (ordem decrescente)
+    const byTime = new Map<number, number>();
+    for (const b of blocks) {
+      const whenStr = /<DataHora>([^<]*)<\/DataHora>/.exec(b)?.[1];
+      const chuvaStr = /<Chuva>([^<]*)<\/Chuva>/.exec(b)?.[1]?.trim();
+      if (!whenStr || chuvaStr === "" || chuvaStr == null) continue;
+      const chuva = Number(chuvaStr);
+      if (!Number.isFinite(chuva) || chuva < 0) continue;
+      const t = parseWhen(whenStr);
+      if (!t || byTime.has(t)) continue;
+      byTime.set(t, chuva);
+    }
+
+    if (!byTime.size) return null;
+
+    const sortedTimes = [...byTime.keys()].sort((a, b) => b - a);
+    const latestTime = sortedTimes[0];
+
+    if (now - latestTime > RAIN_ALIVE_MS) return null;
+
+    let mm1h = 0, mm6h = 0, mm24h = 0, mm72h = 0, mm96h = 0;
+    let count1h = 0, count6h = 0, count24h = 0, count72h = 0, count96h = 0;
+
+    for (const t of sortedTimes) {
+      const ageMs = latestTime - t;
+      const val = byTime.get(t) ?? 0;
+      if (ageMs <= 60 * 60_000) { mm1h += val; count1h++; }
+      if (ageMs <= 6 * 60 * 60_000) { mm6h += val; count6h++; }
+      if (ageMs <= 24 * 60 * 60_000) { mm24h += val; count24h++; }
+      if (ageMs <= 72 * 60 * 60_000) { mm72h += val; count72h++; }
+      if (ageMs <= 96 * 60 * 60_000) { mm96h += val; count96h++; }
+    }
+
+    const ageFromNow = now - latestTime;
+    const isStale1h = ageFromNow > 2 * 60 * 60_000;
+    const isStale6h = ageFromNow > 8 * 60 * 60_000;
+    const isStale24h = ageFromNow > 36 * 60 * 60_000;
+
+    const round1 = (n: number) => Math.round(n * 10) / 10;
+    const janela = (mm: number, count: number, stale: boolean) => {
+      if (stale || count === 0) return null;
+      if (mm <= 0 && ANA_ZERO_SEM_LEITURA.has(codigo)) return null;
+      return round1(mm);
+    };
+    const ultimo = byTime.get(latestTime) ?? 0;
+
+    return {
+      id: `ANA-${codigo}`,
+      nome: nomeEstacao,
+      uf: "AM",
+      mm1h: janela(mm1h, count1h, isStale1h),
+      mm6h: janela(mm6h, count6h, isStale6h),
+      mm24h: janela(mm24h, count24h, isStale24h),
+      mm72h: janela(mm72h, count72h, false),
+      mm96h: janela(mm96h, count96h, false),
+      ultimoMm: ultimo <= 0 && ANA_ZERO_SEM_LEITURA.has(codigo) ? null : round1(ultimo),
+      observedAt: latestTime,
+    };
+  } catch (err) {
+    console.error("[ANA-RAIN-ERROR]", codigo, err);
     return null;
   }
 }
@@ -138,6 +241,8 @@ async function refresh(codes: string[]) {
 export function peekAnaCache(): { at: number; registros: number } | null {
   if (!cache) return null;
   return { at: cache.at, registros: cache.byCode.size };
+export function peekAnaFetchedAt(): number | null {
+  return cache?.at ?? null;
 }
 
 export async function getAnaReadings(codes: string[]): Promise<{
@@ -145,7 +250,7 @@ export async function getAnaReadings(codes: string[]): Promise<{
   pending: boolean;
   fetchedAt: number | null;
 }> {
-  if (cache && leituraDoBoletim(cache.at, Date.now(), ANA_HORAS)) {
+  if (cache && leituraDoBoletim(cache.at, Date.now(), ANA_HORAS, FUSO_MANAUS)) {
     return { byCode: cache.byCode, pending: false, fetchedAt: cache.at };
   }
   if (!inflight) inflight = refresh(codes);
@@ -163,6 +268,7 @@ export function applyAnaReading(station: HydroStation, reading: AnaReading | und
   const liveToday = iso === today;
   return {
     ...next,
+    cotaAnaLidaEm: reading.lidaEm,
     cotaFonte: liveToday ? "ANA" : next.cotaFonte,
     cotaLidaEm: liveToday ? reading.lidaEm : next.cotaLidaEm,
   };

@@ -56,7 +56,7 @@ function writeFileSeats(seats: OperatorSeat[]) {
       writeFileSync(tmp, payload, { mode: 0o600 });
       renameSync(tmp, target);
     } catch {
-      /* Vercel / read-only data dir */
+      /* read-only data dir fallback */
     }
   }
 }

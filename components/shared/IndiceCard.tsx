@@ -3,8 +3,7 @@ import {
   BONUS_PIMF,
   CLASSES_IVM,
   EVENTOS_ORDEM,
-  EVENTOS_SUBITOS,
-  FATOR_ALERTA,
+  getFatorAlerta,
   nivelDe,
   TETO_IRG,
   type MetodologiaEvento,
@@ -61,7 +60,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
             Índice de Risco · IRE/IRG
           </small>
           <p className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[13px] font-bold text-text">{rec.nome}</span>
+            <span className="text-[13px] font-bold break-words text-text">{rec.nome}</span>
             {rec.pmif ? <PmifBadge bonus /> : null}
           </p>
         </div>
@@ -133,10 +132,10 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
           const fe = rec.fePorEvento[ev];
           const agr = rec.agrPorEvento[ev];
           const alerta = rec.alertasVivos[ev];
-          const subito = EVENTOS_SUBITOS.includes(ev);
+          const fa = getFatorAlerta(ev, alerta);
           return (
             <li key={ev}>
-              <p className="flex items-center justify-between gap-2 text-[11px] text-text-dim">
+              <p className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-[11px] text-text-dim">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <span
                     className="size-2 shrink-0 rounded-sm"
@@ -144,7 +143,7 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
                     aria-hidden
                   />
                   <span
-                    className={cn("truncate", critico && "font-bold text-text")}
+                    className={cn("break-words", critico && "font-bold text-text")}
                   >
                     {EVENTO_LABEL[ev]}
                     {critico ? " ●" : ""}
@@ -159,12 +158,10 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
               <p className="mt-0.5 flex flex-wrap gap-x-2 text-[9px] font-bold text-text-mute">
                 {agr > 0 ? <span>Agravo +{agr}</span> : null}
                 {fe !== 1 ? <span>FE ×{fmt(fe)}</span> : null}
-                {subito ? (
-                  <span>
-                    FA ×{FATOR_ALERTA[alerta ?? "Sem alerta"]}
-                    {alerta && alerta !== "Sem alerta" ? ` (${alerta})` : " (sem alerta)"}
-                  </span>
-                ) : null}
+                <span>
+                  FA ×{fmt(fa)}
+                  {alerta && alerta !== "Sem alerta" ? ` (${alerta})` : " (sem alerta)"}
+                </span>
               </p>
             </li>
           );
@@ -175,6 +172,9 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
         Metodologia CEMOA (cemoa_app) · IRE = ((IVM + ameaça) × FS + agravo) × FE ×
         FA · IRG = 0,7 × maior IRE + 0,3 × média. FA súbito: pior nível entre o
         operador, o CEMADEN e, no incêndio, SELVA e focos. Sem alerta usa 0,3.
+        Metodologia CEMOA · IRE = ((IVM + ameaça) × FS × FE × FA) + agravo ·
+        IRG = 0,6 × maior IRE + 0,2 × média + 0,2 × IVM (escalado) · FA ao vivo pelo
+        boletim de vazante (estiagem e terras caídas) e pelos alertas do painel; o agravo (histórico) não é reduzido pelo alerta.
       </p>
     </div>
   );

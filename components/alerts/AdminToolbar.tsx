@@ -81,7 +81,7 @@ export function AdminToolbar({
           </Button>
         ) : null}
         <Button type="button" size="sm" variant="secondary" onClick={onOpenBatch}>
-          Classificar em lote
+          Classificar em lote (L)
         </Button>
         {onDraw ? (
           <Button

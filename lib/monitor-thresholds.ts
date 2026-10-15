@@ -23,7 +23,7 @@ export type MonitorProfile = {
   movimento: MonitorBand[];
 };
 
-/** 61 municípios (exceto Manaus): faixas de monitoramento e sugestão de alerta. */
+/** 61 municípios (exceto Manaus): faixas que a plataforma classifica automaticamente. */
 export const ESTADO_MONITOR: MonitorProfile = {
   id: "estado",
   label: "Estado (exceto Manaus)",

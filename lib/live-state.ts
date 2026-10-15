@@ -17,6 +17,7 @@ import {
   HYDRO_MUDANCAS,
   HYDRO_RIOS,
   catalogStations,
+  formatHydroRef,
   hydroBoletimDiaIso,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
@@ -64,21 +65,21 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   }
   if (tipo === "INCENDIO") {
     const copy: Record<string, string> = {
-      BOA: `Qualidade do ar boa em ${nome} (MP2,5 0–15 µg/m³ em 24 h).`,
-      MODERADO: `Qualidade do ar moderada em ${nome} (MP2,5 15–50 µg/m³ em 24 h), com reflexo de queima em área não protegida.`,
-      RUIM: `Qualidade do ar ruim em ${nome} (MP2,5 50–75 µg/m³ em 24 h). Incêndio florestal com impacto na população.`,
-      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (MP2,5 75–125 µg/m³ em 24 h). Restringir exposição ao ar livre.`,
-      PESSIMA: `Qualidade do ar péssima em ${nome} (MP2,5 >125 µg/m³ em 24 h). Ação imediata de proteção da saúde.`,
+      BOA: `Qualidade do ar boa em ${nome} (MP2,5 0–12 µg/m³ em tempo real).`,
+      MODERADO: `Qualidade do ar moderada em ${nome} (MP2,5 12,1–35,4 µg/m³ em tempo real), com reflexo de queima em área não protegida.`,
+      RUIM: `Qualidade do ar ruim em ${nome} (MP2,5 35,5–55,4 µg/m³ em tempo real). Incêndio florestal com impacto na população.`,
+      MUITO_RUIM: `Qualidade do ar muito ruim em ${nome} (MP2,5 55,5–150,4 µg/m³ em tempo real). Restringir exposição ao ar livre.`,
+      PESSIMA: `Qualidade do ar péssima em ${nome} (MP2,5 >150,4 µg/m³ em tempo real). Ação imediata de proteção da saúde.`,
     };
     return copy[risco] ?? copy.BOA;
   }
   if (tipo === "EROSAO") {
     const copy: Record<string, string> = {
-      MODERADO: `Erosão de margem em evolução em ${nome}. Acompanhar barrancos e acessos ribeirinhos.`,
-      ALTO: `Erosão de margem alta em ${nome}. Preparar isolamento de edificações e vias na beira do rio.`,
-      SEVERO: `Erosão de margem severa em ${nome}. Risco de perda de terreno e isolamento de comunidades.`,
-      EXTREMO: `Erosão de margem extrema em ${nome}. Ação imediata de proteção da população ribeirinha.`,
-      BAIXO: `Sem classificação de erosão de margem em ${nome}.`,
+      MODERADO: `Terras caídas em evolução em ${nome}. Na vazante a água baixa e o barranco perde o suporte hidráulico.`,
+      ALTO: `Terras caídas altas em ${nome}. O recuo rápido do rio deixa o barranco sem suporte e ele cede pelo próprio peso.`,
+      SEVERO: `Terras caídas severas em ${nome}. Risco de perda de terreno e isolamento de comunidades ribeirinhas.`,
+      EXTREMO: `Terras caídas extremas em ${nome}. Ação imediata de proteção da população na beira do rio.`,
+      BAIXO: `Sem classificação de terras caídas em ${nome}. O processo acompanha a vazante, quando o rio desce rápido.`,
     };
     return copy[risco] ?? copy.BAIXO;
   }
@@ -93,6 +94,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
 }
 
 /** Sem classificação do operador, o município fica no nível baixo do produto. Qualidade do ar usa só o grau do centro; alagamento e movimento de massa sobem pelo acumulado no painel. */
+/** Sem classificação do operador, o município fica no nível baixo do produto. No cliente, chuva/alagamento/movimento recebem o limiar e incêndio recebe o App SELVA. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",
@@ -225,6 +227,9 @@ export function buildHydrologyPayload(
     fonteViva,
     "ANA às 07:00 (Brasília)",
     "Fabric às 07:00 e 16:00 (Brasília)",
+    `${HYDRO_FONTE} · boletim ${formatHydroRef(hydroBoletimDiaIso(now))}`,
+    "ANA às 16:00 (Manaus), cota ~07:00 do dia vigente",
+    "Power BI / Fabric: cota mais próxima de 07:00 de Manaus (consulta 07 h e 16 h Brasília)",
   ];
   if (atualizadasFabric > 0) {
     partes.push(
@@ -240,6 +245,7 @@ export function buildHydrologyPayload(
     generatedAt: now,
     source: partes.join(" · "),
     referencia: boletimIso,
+    referencia: hydroBoletimDiaIso(now),
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],
     mudancas24h: HYDRO_MUDANCAS,

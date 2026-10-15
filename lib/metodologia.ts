@@ -3,8 +3,8 @@
 // Metodologia CEMOA do app original (cemoa_app, Streamlit) — IRE / IRG —
 // portada para o Centro de Operações sem alterar os parâmetros de calibração.
 //
-//   IRE (evento) = ((IVM + ameaça) × FS + agravo) × FE × FA     (teto 60)
-//   IRG          = 0,7 × maior IRE + 0,3 × média dos IRE
+//   IRE (evento) = ((IVM + ameaça) × FS × FE × FA) + agravo     (teto 60)
+//   IRG          = 0,6 × maior IRE + 0,2 × média dos IRE + 0,2 × IVM (escalado 0-60)
 //
 //   Níveis: P1 (Crítico ≥ 50 / Extremo ≥ 58) · P2 (Alto ≥ 40) ·
 //           P3 (Elevado ≥ 30) · P4 (Moderado ≥ 20 / Baixo)
@@ -64,7 +64,7 @@ export const EVENTOS_SUBITOS: readonly MetodologiaEvento[] = [
 
 export const FS: Record<MetodologiaEvento, number> = {
   Estiagem: 1.1,
-  "Inundação": 1.1,
+  "Inundação": 0.9,
   "Incêndio/QAr": 1.1,
   "Erosão": 1.1,
   "Mov. Massa": 0.9,
@@ -103,9 +103,27 @@ export const FATOR_ALERTA: Record<NivelAlertaMet, number> = {
   Extremo: 1.6,
 };
 
-export const PESO_MAX = 0.7;
-export const PESO_MEDIA = 0.3;
+export const PESO_MAX = 0.6;
+export const PESO_MEDIA = 0.2;
+export const PESO_IVM = 0.2;
+export const IVM_MAX_REFERENCIA = 21;
 export const TETO_IRG = 60;
+
+/**
+ * Agravo de inundação na vazante: o FA (0,30) prevalece e o IRE permanece
+ * na faixa Baixo (< 20). O histórico só ordena o ranking — o município com
+ * mais decretos fica acima, sem inflar o nível de risco enquanto a estiagem
+ * for o desastre gradual predominante.
+ *
+ * O teto de 11 pts no maior total do estado deixa a dinâmica máxima
+ * (IVM 21 + ameaça 8) × FS 0,9 × FA 0,30 ≈ 7,8 abaixo de 20.
+ */
+export const TETO_AGRAVO_INUNDACAO_VAZANTE = 11;
+
+export function agravoInundacao(totalDecretos: number, maxDecretos: number): number {
+  if (totalDecretos <= 0 || maxDecretos <= 0) return 0;
+  return (totalDecretos / maxDecretos) * TETO_AGRAVO_INUNDACAO_VAZANTE;
+}
 
 export const MUNICIPIOS_PIMF = new Set([
   "1300144", "1300409", "1300706", "1300805", "1301001", "1301100", "1301159",
@@ -214,12 +232,11 @@ export function getAmeaca(codigo: string, evento: MetodologiaEvento): number {
 }
 
 export function getFatorAlerta(
-  evento: MetodologiaEvento,
+  _evento: MetodologiaEvento,
   nivel: NivelAlertaMet | null | undefined,
 ): number {
-  if (!EVENTOS_SUBITOS.includes(evento)) return 1.0;
-  if (!nivel || nivel === "Sem alerta") return FATOR_ALERTA["Sem alerta"];
-  return FATOR_ALERTA[nivel] ?? 0.3;
+  if (nivel && nivel !== "Sem alerta") return FATOR_ALERTA[nivel] ?? FATOR_ALERTA["Sem alerta"];
+  return FATOR_ALERTA["Sem alerta"];
 }
 
 /** Fator de exposição (FE): setores R3R4, adensamento, ruralidade/TI. */
@@ -296,7 +313,6 @@ export function processarMunicipio(
     const agrFinal = ev === "Estiagem" ? Math.min(9, agrBase + bc) : agrBase;
     agrPorEvento[ev] = agrFinal;
     const fs = FS[ev];
-    const raw = (ivm + ameaca) * fs + agrFinal;
     const fe = calcularFe(
       codigo,
       pop,
@@ -306,7 +322,10 @@ export function processarMunicipio(
     );
     fePorEvento[ev] = fe;
     const fa = getFatorAlerta(ev, alertas[ev]);
-    ire[ev] = round2(Math.min(raw * fe * fa, TETO_IRG));
+    // Dinâmica atual sofre FE e FA; o agravo ponderado (histórico)
+    // entra fora desses fatores e permanece na entressafra.
+    const dinamica = (ivm + ameaca) * fs * fe * fa;
+    ire[ev] = round2(Math.min(dinamica + agrFinal, TETO_IRG));
   }
 
   const eventoCritico = EVENTOS_ORDEM.reduce((best, ev) =>
@@ -315,9 +334,14 @@ export function processarMunicipio(
   const maiorIRE = ire[eventoCritico];
 
   const valores = EVENTOS_ORDEM.map((ev) => ire[ev]);
+  const maior = Math.max(...valores);
+  const media = valores.reduce((s, v) => s + v, 0) / valores.length;
+  const ivmEscalado = (ivm / IVM_MAX_REFERENCIA) * TETO_IRG;
   const irg = round2(
-    PESO_MAX * Math.max(...valores) +
-      PESO_MEDIA * (valores.reduce((s, v) => s + v, 0) / valores.length),
+    Math.min(
+      PESO_MAX * maior + PESO_MEDIA * media + PESO_IVM * ivmEscalado,
+      TETO_IRG,
+    ),
   );
 
   const info = nivelDe(irg);
@@ -330,11 +354,11 @@ export function processarMunicipio(
   let rebaixadoSemAlerta = false;
 
   if (nivel >= 5) {
-    const temAlerta = EVENTOS_SUBITOS.some(
+    const temAlerta = EVENTOS_ORDEM.some(
       (e) => alertas[e] && alertas[e] !== "Sem alerta",
     );
-    const temExtremo = EVENTOS_SUBITOS.some((e) => alertas[e] === "Extremo");
-    const temSeveroOuExtremo = EVENTOS_SUBITOS.some(
+    const temExtremo = EVENTOS_ORDEM.some((e) => alertas[e] === "Extremo");
+    const temSeveroOuExtremo = EVENTOS_ORDEM.some(
       (e) => alertas[e] === "Severo" || alertas[e] === "Extremo",
     );
 

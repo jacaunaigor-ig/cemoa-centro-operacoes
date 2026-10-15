@@ -84,13 +84,15 @@ export function RainRanking({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         canSuggest
-          ? "Sugestão de grau a partir da chuva. Só o operador classifica — não altera o grau."
+          ? tipo === "CHUVA"
+            ? "Sugestão de grau. Só o operador classifica chuva intensa."
+            : "Grau automático pelos limiares. Clique no município para revisar; o operador pode alterar."
           : undefined
       }
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Sugestão · chuva
+          {tipo === "CHUVA" ? "Apoio · chuva" : "Automático · limiar"}
         </p>
         <p className="text-[11px] text-text-mute">
           {rows.length === 0

@@ -6,22 +6,28 @@
 //   - dados mais atualizados do Centro (Censo 2022, SGB/CPRM, alertas ao vivo)
 //   - parâmetros importados do app original (IVM, %TI, agravo, setores R3R4)
 //
-// O fator de alerta (FA) dos eventos súbitos vem da classificação do
-// operador nos produtos CHUVA, MOVIMENTO e INCENDIO:
-//   BAIXO/BOA → "Sem alerta" (0,30) · MODERADO → 0,70 · ALTO/RUIM → 1,00 ·
+// O fator de alerta (FA) vem do boletim de vazante e dos produtos do
+// painel (chuva, alagamento, movimento, erosão e incêndio):
+//   BAIXO/BOA/NORMAL → "Sem alerta" (0,30) · MODERADO → 0,70 · ALTO/RUIM → 1,00 ·
 //   SEVERO/MUITO_RUIM → 1,30 · EXTREMO/PESSIMA → 1,60
+// Erosão de margem (terras caídas) acompanha a vazante: a água baixa rápido,
+// o barranco perde o suporte hidráulico e cede. O grau do boletim entra no FA;
+// a classificação do operador só eleva.
 // -----------------------------------------------------------------------------
 
 import raw from "@/data/metodologia-cemoa.json";
 import { demografiaDo } from "@/lib/demografia";
 import type { FocosReferencia } from "@/lib/focos-display";
 import { buildAlertsPayload } from "@/lib/live-state";
+import { decretosInundacao } from "@/lib/decretos";
+import { catalogStations } from "@/lib/hydrology";
 import { pessoasRiscoDo } from "@/lib/mass-risk";
 import { classifyMonitorRain } from "@/lib/monitor-thresholds";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import {
   isPimf,
   METODOLOGIA_VERSAO,
+  agravoInundacao,
   processarMunicipio,
   type MetodologiaEvento,
   type MetodologiaResultado,
@@ -32,6 +38,20 @@ import {
 import type { AirQualityPayload, AlertLevel, RainfallPayload } from "@/lib/types";
 
 const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · alagamento no IRE de chuvas · movimento de massa no IRE correspondente · SELVA e focos no IRE de incêndio`;
+const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · boletim de estiagem e alertas ao vivo`;
+
+const ORDEM_ALERTA: NivelAlertaMet[] = ["Sem alerta", "Moderado", "Alto", "Severo", "Extremo"];
+
+function piorNivel(a: NivelAlertaMet, b: NivelAlertaMet): NivelAlertaMet {
+  return ORDEM_ALERTA.indexOf(b) > ORDEM_ALERTA.indexOf(a) ? b : a;
+}
+
+function nivelHidro(status: string | undefined): NivelAlertaMet {
+  if (status === "MODERADO") return "Moderado";
+  if (status === "ALTO") return "Alto";
+  if (status === "SEVERO") return "Severo";
+  return "Sem alerta";
+}
 
 // =============================================================================
 // Arquivo de parâmetros importado do cemoa_app
@@ -151,6 +171,8 @@ export function buildMetodologiaPayload(
   live?: MetodologiaAoVivo,
 ): MetodologiaPayload {
   // ---- 1. Alertas ao vivo por produto (classificação do operador) ---------
+export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
+  // ---- 1. Alertas ao vivo por produto e grau do boletim de estiagem -------
   const chuvaMap = new Map(
     buildAlertsPayload(now, "CHUVA").municipios.map((r) => [r.id, r.risco]),
   );
@@ -160,12 +182,20 @@ export function buildMetodologiaPayload(
   const movimentoMap = new Map(
     buildAlertsPayload(now, "MOVIMENTO").municipios.map((r) => [r.id, r.risco]),
   );
+  const erosaoMap = new Map(
+    buildAlertsPayload(now, "EROSAO").municipios.map((r) => [r.id, r.risco]),
+  );
   const incendioMap = new Map(
     buildAlertsPayload(now, "INCENDIO").municipios.map((r) => [r.id, r.risco]),
   );
+  const hidroMap = new Map(catalogStations().map((s) => [s.id, s.statusVazante]));
 
   // ---- 2. Processamento dos 62 municípios ---------------------------------
   const rows: MetodologiaRow[] = [];
+  const maxDecretosInundacao = Math.max(
+    1,
+    ...MUNICIPALITIES.map((m) => decretosInundacao(m.id)?.total ?? 0),
+  );
 
   for (const m of MUNICIPALITIES) {
     const params = metodologiaParamsDo(m.id);
@@ -208,8 +238,19 @@ export function buildMetodologiaPayload(
         nivelAlertaMet(arRec?.level ?? undefined),
         nivelDeFocos(live?.focos?.byId[m.id]),
       ),
+    // Inundação: evento gradual de bacia. Sem alerta de cheia, FA = 0,30
+    // prevalece: o IRE permanece Baixo. O agravo só ordena pelo histórico
+    // de decretos, sem competir com a estiagem no IRG.
+    const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
+      Estiagem: nivelHidro(hidroMap.get(m.id)),
+      Chuvas: piorNivel(nivelAlertaMet(chuvaMap.get(m.id)), nivelAlertaMet(alagamentoMap.get(m.id))),
+      "Mov. Massa": nivelAlertaMet(movimentoMap.get(m.id)),
+      "Erosão": piorNivel(nivelAlertaMet(erosaoMap.get(m.id)), nivelHidro(hidroMap.get(m.id))),
+      "Incêndio/QAr": nivelAlertaMet(incendioMap.get(m.id)),
+      "Inundação": "Sem alerta",
     };
 
+    const decretos = decretosInundacao(m.id)?.total ?? 0;
     const resultado = processarMunicipio({
       codigo: m.id,
       nome: m.nome,
@@ -217,7 +258,10 @@ export function buildMetodologiaPayload(
       ivm: params.ivm,
       pctRural,
       pctTI: params.pctTI,
-      agr: params.agr,
+      agr: {
+        ...params.agr,
+        "Inundação": agravoInundacao(decretos, maxDecretosInundacao),
+      },
       setores,
       alertas: alertasVivos,
     });

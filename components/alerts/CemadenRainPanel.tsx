@@ -31,6 +31,9 @@ export function CemadenRainPanel({
     const bPeak = Math.max(b.mm72h ?? -1, b.mm24h ?? -1, b.mm6h ?? -1, b.mm1h ?? -1);
     return bPeak - aPeak || a.nome.localeCompare(b.nome, "pt-BR");
   });
+  const isAnaOnly = estacoes.length > 0 && estacoes.every((s) => s.id.startsWith("ANA-"));
+  const hasAna = estacoes.some((s) => s.id.startsWith("ANA-"));
+  const fonteLabel = isAnaOnly ? "ANA · Telemetria" : hasAna ? "CEMADEN + ANA" : "CEMADEN";
   const showApoio = tipo === "CHUVA" || tipo === "ALAGAMENTO" || tipo === "MOVIMENTO";
   const hrefAlertas = (next: AlertType) =>
     `/?municipio=${encodeURIComponent(rain.nome)}&bacia=${encodeURIComponent(rain.bacia)}&tipo=${next}`;
@@ -43,7 +46,7 @@ export function CemadenRainPanel({
         </span>
         <div>
           <small className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-            CEMADEN
+            {fonteLabel}
           </small>
           <p className="text-xs text-text-mute">
             {rain.estacoes.length} est.
@@ -73,7 +76,7 @@ export function CemadenRainPanel({
         </p>
       )}
 
-      <div className="mt-2 max-h-48 overflow-auto">
+      <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-[11px]">
           <thead className="sticky top-0 bg-bg/95 text-[10px] font-semibold tracking-wide text-text-mute uppercase">
             <tr>
@@ -90,7 +93,7 @@ export function CemadenRainPanel({
           <tbody>
             {estacoes.map((s) => (
               <tr key={s.id} className="border-t border-border/70 hover:bg-hover">
-                <td className="max-w-[8.5rem] truncate py-1.5 pr-2 font-semibold text-text" title={s.nome}>
+                <td className="max-w-[12rem] py-1.5 pr-2 font-semibold break-words text-text">
                   {s.nome}
                 </td>
                 <td
@@ -129,6 +132,13 @@ export function CemadenRainPanel({
                     >
                       <ExternalLink className="size-3.5" />
                     </a>
+                  ) : s.id.startsWith("ANA-") ? (
+                    <span
+                      className="inline-flex size-7 items-center justify-center rounded text-[10px] font-bold text-focus"
+                      title={`Telemetria da ANA · Estação ${s.id.replace("ANA-", "")}`}
+                    >
+                      ANA
+                    </span>
                   ) : (
                     <span className="text-text-mute">—</span>
                   )}
@@ -155,11 +165,18 @@ function RainApoioCard({
     <div className="mt-2 rounded-md border border-focus/30 bg-focus/8 px-2 py-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
-          Apoio · sugestão
+          {tipo === "CHUVA" ? "Apoio · sugestão" : "Automático · limiar"}
         </span>
         <RiskBadge level={apoio.level} />
       </div>
-      <p className="mt-1 text-xs leading-snug text-text-dim" title="Sugestão de grau. Só o operador classifica.">
+      <p
+        className="mt-1 text-xs leading-snug text-text-dim"
+        title={
+          tipo === "CHUVA"
+            ? "Sugestão de grau. Só o operador classifica chuva intensa."
+            : "Grau automático pelo limiar. O operador pode alterar."
+        }
+      >
         {apoio.motivo}
       </p>
       {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
