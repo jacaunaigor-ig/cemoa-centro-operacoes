@@ -44,6 +44,7 @@ next-env.d.ts
 /.pages-skip/
 
 # admin credentials (never commit)
+/data/source-failures.json
 /data/admins.json
 /data/operator-seats.json
 /data/.session-secret

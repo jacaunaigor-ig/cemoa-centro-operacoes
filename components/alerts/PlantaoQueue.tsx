@@ -74,6 +74,10 @@ export function PlantaoQueue({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         tipo === "INCENDIO"
+          ? "O ranking segue a classificação do centro. O MP2,5 sugere ação na fila."
+          : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO"
+            ? "O mapa classifica pelo acumulado. A classificação do centro permanece quando é mais grave."
+            : "Sugestão de plantão. Só o operador classifica o grau."
           ? "MP2,5 ao vivo pinta o mapa. Clique no município para revisar ou alterar o grau."
           : "Limiares já pintam o mapa. A fila mostra vencido, renovação e elevação além do grau atual."
       }
@@ -94,6 +98,7 @@ export function PlantaoQueue({
           {tipo === "ALAGAMENTO"
             ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo >20 mm/h."
             : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo >30 mm/24 h."}{" "}
+          O mapa usa esse limiar.
           A plataforma classifica ao atingir o limiar; o operador pode alterar.
         </p>
       ) : null}

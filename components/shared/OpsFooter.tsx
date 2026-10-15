@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { FonteSaude } from "@/lib/source-health";
 import { formatAmazonDateTime } from "@/lib/utils";
 
 const FONTES = [
@@ -25,6 +29,54 @@ export function OpsFooter({
   hydroAt?: number | null;
   supabase?: "ligado" | "aguardando";
 }) {
+  const [fontes, setFontes] = useState<FonteSaude[]>([]);
+  const [falhasNota, setFalhasNota] = useState("Nenhuma falha de fonte registrada neste servidor.");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/status", { cache: "no-store" });
+        if (!res.ok) {
+          if (!cancelled) {
+            setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
+          }
+          return;
+        }
+        const data = (await res.json()) as {
+          fontes?: FonteSaude[];
+          falhas?: Array<{ nome: string; estado: string; em: number; detalhe: string }>;
+          falhasDisponivel?: boolean;
+        };
+        if (cancelled) return;
+        setFontes(data.fontes ?? []);
+        if (data.falhasDisponivel === false) {
+          setFalhasNota("Histórico de falhas indisponível neste servidor. Isso não significa que não houve falha.");
+        } else if (data.falhas?.length) {
+          const ultima = data.falhas[0];
+          setFalhasNota(
+            ultima
+              ? `Última mudança registrada: ${ultima.nome} ${ultima.estado} · ${formatAmazonDateTime(ultima.em)}`
+              : "Nenhuma falha de fonte registrada neste servidor.",
+          );
+        } else {
+          setFalhasNota("Nenhuma falha de fonte registrada neste servidor.");
+        }
+      } catch {
+        if (!cancelled) {
+          setFontes([]);
+          setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
+        }
+      }
+    }
+    void load();
+    const timer = window.setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   const stamps = [
     updatedAt ? `Alertas ${formatAmazonDateTime(updatedAt)}` : null,
     rainAt ? `Chuva ${formatAmazonDateTime(rainAt)}` : null,
@@ -63,6 +115,29 @@ export function OpsFooter({
           Última atualização · {stamps.join(" · ")} · horário de Manaus
         </p>
       ) : null}
+      {fontes.length ? (
+        <ul className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5" aria-label="Integridade das fontes">
+          {fontes.map((fonte) => (
+            <li key={fonte.id} title={fonte.erro ?? fonte.estado}>
+              <span
+                className={
+                  fonte.estado === "operacional"
+                    ? "text-risco-baixo"
+                    : fonte.estado === "atrasada"
+                      ? "text-[#a16207]"
+                      : fonte.estado === "erro"
+                        ? "text-risco-severo"
+                        : "text-text-mute"
+                }
+              >
+                {fonte.nome} {fonte.estado}
+                {fonte.atualizadoEm ? ` · ${formatAmazonDateTime(fonte.atualizadoEm)}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="mt-0.5">{falhasNota}</p>
     </footer>
   );
 }

@@ -8,6 +8,9 @@ import type {
   HydroTendencia,
 } from "@/lib/types";
 import raw from "@/data/hydrology.json";
+import { hydroBoletimDiaIso, hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
+
+export { hydroBoletimDiaIso };
 import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
 import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
@@ -64,7 +67,7 @@ export const HYDRO_LEVELS: HydroStatus[] = ["NORMAL", "MODERADO", "ALTO", "SEVER
 
 export const HYDRO_STATUS_COLORS: Record<HydroStatus | "SL", string> = {
   NORMAL: "#10b981",
-  MODERADO: "#f59e0b",
+  MODERADO: "#ffff00",
   ALTO: "#f97316",
   SEVERO: "#ef4444",
   SL: "#6b7280",
@@ -119,7 +122,7 @@ export const PNG_HYDRO_ITEMS: Array<{
 
 export const HYDRO_PILL_CLASS: Record<HydroStatus | "SL", string> = {
   NORMAL: "bg-risco-baixo/18 text-risco-baixo border-risco-baixo/35",
-  MODERADO: "bg-risco-moderado/18 text-risco-moderado border-risco-moderado/40",
+  MODERADO: "border-[#c6c600] bg-[#ffff00]/40 text-[#6b5a00]",
   ALTO: "bg-risco-alto/18 text-risco-alto border-risco-alto/40",
   SEVERO: "bg-risco-severo/18 text-risco-severo border-risco-severo/40",
   SL: "bg-hover text-text-mute border-border",
@@ -251,11 +254,8 @@ export function situacaoLeitura(station: HydroStation) {
     }
   }
   const temLeitura = idxValido >= 0;
-  const lastIso = labels.length ? hydroDayToIso(String(labels[labels.length - 1] ?? ""), ref) : null;
-  const atual =
-    temLeitura &&
-    idxValido === labels.length - 1 &&
-    (lastIso == null || lastIso === today);
+  const isoValido = temLeitura ? hydroDayToIso(String(labels[idxValido] ?? ""), ref) : null;
+  const atual = isoValido === today || isoValido === hydroBoletimDiaIso();
   return {
     semEstacao: station.semEstacao,
     temLeitura,

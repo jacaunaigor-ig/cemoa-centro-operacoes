@@ -117,13 +117,20 @@ export function setMeteoAviso(next: MeteoAviso | null) {
   return current;
 }
 
-export function issueMeteoAviso(input: { issuedBy: string; note?: string | null; now?: number }): MeteoAviso {
+export function avisoTemOperador(issuedBy: string | null | undefined) {
+  const nome = issuedBy?.trim() ?? "";
+  return Boolean(nome) && nome !== "Plantão CEMOA";
+}
+
+export function issueMeteoAviso(input: { issuedBy: string; note?: string | null; now?: number }): MeteoAviso | null {
+  const issuedBy = input.issuedBy.trim();
+  if (!avisoTemOperador(issuedBy)) return null;
   const issuedAt = input.now ?? Date.now();
   current = {
     id: `aviso-${issuedAt}`,
     issuedAt,
     expiresAt: avisoExpiresAt(issuedAt),
-    issuedBy: input.issuedBy.trim() || "Plantão CEMOA",
+    issuedBy,
     note: input.note?.trim() || null,
   };
   return current;
@@ -144,7 +151,7 @@ export function parseMeteoAviso(raw: unknown): MeteoAviso | null {
       ? row.issuedBy
       : typeof row.issued_by === "string"
         ? row.issued_by
-        : "Plantão CEMOA";
+        : "";
   const note = typeof row.note === "string" && row.note.trim() ? row.note.trim() : null;
   const id = typeof row.id === "string" ? row.id : `aviso-${issuedAt}`;
   return {

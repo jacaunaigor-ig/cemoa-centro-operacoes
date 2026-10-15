@@ -81,7 +81,7 @@ import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
 import { focoFill, type FocosReferencia } from "@/lib/focos-display";
-import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayload } from "@/lib/types";
+import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
   hasRain,
@@ -107,6 +107,11 @@ import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
+import { linhasDaPassagem } from "@/lib/classification-audit";
+import { montarPassagemVarios, type PassagemEntrada } from "@/lib/passagem-turno";
+import { getMunicipality } from "@/lib/municipalities";
+import { entraNaContagemDeNivel, observacaoDoMunicipio, SEM_LEITURA_FILL } from "@/lib/map-observacao";
+import { formatManausStamp } from "@/lib/aviso-grafico";
 import { ensureOpsBoardReset } from "@/lib/ops-board";
 import { appendClassificacaoTrilha } from "@/lib/classificacao-trilha";
 const POLL_MS = 20_000;
@@ -127,6 +132,76 @@ const PRODUCT_ICONS = {
   EROSAO: Dam,
   INCENDIO: Flame,
 } as const;
+
+function entradaPassagem(
+  produto: string,
+  tipoAlvo: AlertType,
+  rows: Array<{
+    id: string;
+    nome: string;
+    bacia: string;
+    risco: string;
+    fonte: "admin" | "monitor";
+    expiresAt?: number | null;
+  }>,
+  rain: RainfallPayload | null,
+  air: AirQualityPayload | null,
+  hydro: HydroStation[],
+): PassagemEntrada {
+  const product = ALERT_PRODUCTS[tipoAlvo];
+  const fila = buildPlantaoQueue({
+    tipo: tipoAlvo,
+    municipios: rows.map((m) => ({
+      id: m.id,
+      nome: m.nome,
+      bacia: m.bacia,
+      risco: m.risco,
+      expiresAt: m.expiresAt ?? null,
+    })),
+    rain,
+    air,
+    hydro,
+  });
+  let sem = 0;
+  const niveis = product.levels.map((level) => {
+    let quantidade = 0;
+    for (const m of rows) {
+      if (m.risco !== level) continue;
+      const rec = rain?.byId[m.id];
+      const observacao = observacaoDoMunicipio({
+        fonte: m.fonte,
+        tipo: tipoAlvo,
+        consultaFeita: Boolean(rain),
+        temEstacao: Boolean(rec),
+        mm1h: rec?.mm1h ?? null,
+        mm24h: rec?.mm24h ?? null,
+        temAlgumaLeitura: hasRainReading(rec),
+      });
+      if (observacao === "sem-leitura") sem += 1;
+      if (entraNaContagemDeNivel(m.risco, observacao)) quantidade += 1;
+    }
+    return { nivel: levelLabel(level), quantidade };
+  });
+  return {
+    horario: "",
+    responsavel: null,
+    produto,
+    recorte: "",
+    fontes: [],
+    niveis,
+    semLeitura: sem,
+    ativos: rows
+      .filter((m) => isAlertActive(tipoAlvo, m.risco))
+      .sort(
+        (a, b) =>
+          levelRank(tipoAlvo, b.risco) - levelRank(tipoAlvo, a.risco) ||
+          a.nome.localeCompare(b.nome, "pt-BR"),
+      )
+      .map((m) => ({ nome: m.nome, detalhe: `${levelLabel(m.risco)} · ${m.bacia}` })),
+    fila: fila.map((item) => ({ acao: item.action, nome: item.nome, detalhe: item.motivo })),
+    classificacoesOperador: rows.filter((m) => m.fonte === "admin").length,
+  };
+}
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
   if (value === "ATIVOS" || value === "AGRAVADOS") return value;
@@ -852,6 +927,12 @@ export function AlertsWorkbench() {
 
   const catalog = useMemo(() => {
     const rows = data?.municipios ?? [];
+    if (tipo === "ALAGAMENTO" || tipo === "MOVIMENTO") {
+      return applyRainClassification(rows, rain, tipo);
+    }
+    if (tipo === "INCENDIO") return applyAirClassification(rows, air);
+    return rows;
+  }, [data, tipo, rain, air]);
     if (tipo === "INCENDIO") return applyAirClassification(rows, air);
     return applyRainClassification(rows, rain, tipo);
   }, [data, tipo, air, rain]);
@@ -902,14 +983,37 @@ export function AlertsWorkbench() {
     return next;
   }, [tipo, focosMapa, focosRef, catalog]);
 
+  const observacaoPorId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof observacaoDoMunicipio>>();
+    for (const m of catalog) {
+      const row = rain?.byId[m.id];
+      map.set(
+        m.id,
+        observacaoDoMunicipio({
+          fonte: m.fonte,
+          tipo,
+          consultaFeita: Boolean(rain),
+          temEstacao: Boolean(row),
+          mm1h: row?.mm1h ?? null,
+          mm24h: row?.mm24h ?? null,
+          temAlgumaLeitura: hasRainReading(row),
+        }),
+      );
+    }
+    return map;
+  }, [catalog, rain, tipo]);
+
   const visibleMunicipios = useMemo(() => {
     const needle = buscaFiltro.trim().toLowerCase();
     return catalog.filter((m) => {
+      const observacao = observacaoPorId.get(m.id);
       if (activeFilter === "AGRAVADOS") {
         if (!mudancaNomes.has(m.nome)) return false;
       } else if (activeFilter === "ATIVOS") {
         if (!isAlertActive(tipo, m.risco)) return false;
       } else if (activeFilter !== "TODOS" && m.risco !== activeFilter) {
+        return false;
+      } else if (activeFilter === "BAIXO" && observacao === "sem-leitura") {
         return false;
       }
       if (!matchMunicipioGeo(m.nome, m.bacia, geo)) return false;
@@ -930,18 +1034,24 @@ export function AlertsWorkbench() {
       }
       return true;
     });
-  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain, airFilter, air, mudancaNomes]);
+  }, [catalog, activeFilter, geo, selected, buscaFiltro, tipo, rainFilter, rain, airFilter, air, mudancaNomes, observacaoPorId]);
 
   const counts = useMemo(() => {
     const acc: Record<string, number> = { TODOS: 0, ATIVOS: 0, AGRAVADOS: mudancas.length };
     for (const level of product.levels) acc[level] = 0;
     for (const m of scopedCatalog) {
-      acc[m.risco] = (acc[m.risco] ?? 0) + 1;
       acc.TODOS += 1;
       if (isAlertActive(tipo, m.risco)) acc.ATIVOS += 1;
+      if (!entraNaContagemDeNivel(m.risco, observacaoPorId.get(m.id))) continue;
+      acc[m.risco] = (acc[m.risco] ?? 0) + 1;
     }
     return acc;
-  }, [scopedCatalog, product.levels, tipo, mudancas.length]);
+  }, [scopedCatalog, product.levels, tipo, mudancas.length, observacaoPorId]);
+
+  const semLeitura = useMemo(
+    () => scopedCatalog.filter((m) => observacaoPorId.get(m.id) === "sem-leitura").length,
+    [scopedCatalog, observacaoPorId],
+  );
 
   const pct = (n: number) =>
     counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(0)}%` : "0%";
@@ -1030,7 +1140,10 @@ export function AlertsWorkbench() {
       {monitorStrip}
       <div className="min-h-0 flex-1">
     <AlertList
-      municipios={visibleMunicipios}
+      municipios={visibleMunicipios.map((m) => ({
+        ...m,
+        observacao: observacaoPorId.get(m.id),
+      }))}
       catalog={catalog}
       alerts={filteredAlerts}
       hydro={hydroStations}
@@ -1390,6 +1503,7 @@ export function AlertsWorkbench() {
   return (
     <AppShell
       cache={data?.cache}
+      consultaFalhou={Boolean(error)}
       source={data?.source}
       updatedAt={data?.generatedAt ?? null}
       rainAt={rain?.generatedAt ?? null}
@@ -1512,6 +1626,102 @@ export function AlertsWorkbench() {
                 ) : null}
               </a>
             ) : null}
+            {ready ? (
+              <button
+                type="button"
+                className="rounded-lg border border-border bg-panel-2 px-2 py-1 text-[10px] font-bold tracking-wide text-text-mute uppercase hover:border-border-strong hover:text-text"
+                title="Copia o resumo dos cinco produtos. Não publica alerta."
+                onClick={() => {
+                  void (async () => {
+                    const produtos = await Promise.all(
+                      ALERT_TYPES.map(async (id) => {
+                        const label = ALERT_PRODUCTS[id].label;
+                        try {
+                          let rows = scopedCatalog;
+                          if (id !== tipo) {
+                            const payload = await fetchJson<AlertsPayload>(`/api/alerts?tipo=${id}`);
+                            let municipios = payload.municipios.filter((m) =>
+                              matchMunicipioGeo(m.nome, m.bacia, geo),
+                            );
+                            if (id === "ALAGAMENTO" || id === "MOVIMENTO") {
+                              municipios = applyRainClassification(municipios, rain, id);
+                            }
+                            if (id === "INCENDIO") municipios = applyAirClassification(municipios, air);
+                            rows = municipios;
+                          }
+                          return {
+                            disponivel: true as const,
+                            entrada: entradaPassagem(label, id, rows, rain, air, hydroStations),
+                          };
+                        } catch {
+                          return {
+                            disponivel: false as const,
+                            produto: label,
+                            motivo: "consulta não retornou",
+                          };
+                        }
+                      }),
+                    );
+                    let alteracoes: string[] | null = null;
+                    let alteracoesNota = "sessão de operador não aberta";
+                    try {
+                      const res = await fetch("/api/alerts/audit?recentes=1", {
+                        credentials: "same-origin",
+                        cache: "no-store",
+                      });
+                      if (res.status !== 401 && res.ok) {
+                        const body = (await res.json()) as {
+                          disponivel?: boolean;
+                          rows?: Array<{
+                            at: string;
+                            tipo: string;
+                            municipio_id: string;
+                            previous_level: string | null;
+                            level: string;
+                            issued_by: string | null;
+                            source: string;
+                          }>;
+                          nota?: string;
+                        };
+                        if (body.disponivel) {
+                          alteracoes = linhasDaPassagem(
+                            body.rows ?? [],
+                            (id) => getMunicipality(id)?.nome ?? id,
+                            (at) => formatManausStamp(Date.parse(at)),
+                          );
+                          alteracoesNota = "";
+                        } else {
+                          alteracoesNota = body.nota ?? "histórico indisponível nesta consulta";
+                        }
+                      }
+                    } catch {
+                      alteracoesNota = "histórico indisponível nesta consulta";
+                    }
+                    const texto = montarPassagemVarios({
+                      horario: formatManausStamp(Date.now()),
+                      responsavel: session?.name ?? null,
+                      recorte: calha || bacia || "todos os municípios",
+                      fontes: [
+                        { nome: "CEMADEN", detalhe: rain ? "consultada nesta tela" : "não consultada nesta tela" },
+                        { nome: "Boletim", detalhe: hydro ? "consultado nesta tela" : "não consultado nesta tela" },
+                        { nome: "SELVA", detalhe: air ? "consultada nesta tela" : "não consultada nesta tela" },
+                      ],
+                      produtos,
+                      alteracoes,
+                      alteracoesNota,
+                    });
+                    try {
+                      await navigator.clipboard.writeText(texto);
+                      toast.success("Passagem copiada. Revise antes de encaminhar.");
+                    } catch {
+                      toast.error("Não foi possível copiar a passagem.");
+                    }
+                  })();
+                }}
+              >
+                Passagem
+              </button>
+            ) : null}
           </SituationBar>
           </DashboardRow>
 
@@ -1535,7 +1745,11 @@ export function AlertsWorkbench() {
                 key={level}
                 label={LEVEL_LABELS[level] ?? level}
                 value={loading ? "—" : String(counts[level] ?? 0)}
-                sub={`${riskActionFor(level)} · ${pct(counts[level] ?? 0)}`}
+                sub={
+                  level === "BAIXO" && semLeitura > 0
+                    ? `${riskActionFor(level)} · ${semLeitura} sem leitura fora`
+                    : `${riskActionFor(level)} · ${pct(counts[level] ?? 0)}`
+                }
                 accent={LEVEL_COLORS[level]}
                 active={activeFilter === level}
                 onClick={() => setQuery({ risco: level, municipio: null })}
@@ -1776,6 +1990,7 @@ export function AlertsWorkbench() {
                       mm6h: row?.mm6h ?? null,
                       mm24h: row?.mm24h ?? null,
                       hasRainStation: Boolean(row),
+                      observacao: observacaoPorId.get(m.id),
                     };
                   })}
                   selected={paintArmed || drawMode || eraseMode ? null : selected}
@@ -1847,6 +2062,7 @@ export function AlertsWorkbench() {
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
+                    auditoria={admin}
                     onClose={() => setQuery({ municipio: null })}
                   />
                 </div>
@@ -1889,6 +2105,15 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                {semLeitura > 0 ? (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-text-mute">
+                    <span
+                      className="size-2.5 rounded-sm border border-dashed border-text-mute"
+                      style={{ background: SEM_LEITURA_FILL }}
+                    />
+                    Sem leitura · {semLeitura}. Não é o verde de Baixo.
+                  </p>
+                ) : null}
                 {tipo === "INCENDIO" ? (
                   <>
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">

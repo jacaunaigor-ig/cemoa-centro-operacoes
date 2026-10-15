@@ -208,10 +208,10 @@ function AvisoGraficoComposer({
     }
     setExporting(true);
     try {
-      const issued = { ...draft, issuedAt: Date.now(), issuedBy: session?.name ?? "Plantão CEMOA" };
-      onIssued(issued);
+      const issued = { ...draft, issuedAt: Date.now() };
+      if (issued.revisao === "operador") onIssued(issued);
       try {
-        if (!STATIC_DEPLOY && session) {
+        if (!STATIC_DEPLOY && issued.revisao === "operador" && session) {
           await fetch("/api/avisos", {
             method: "POST",
             credentials: "same-origin",
@@ -223,7 +223,11 @@ function AvisoGraficoComposer({
         /* plantão 12 h is complementary */
       }
       await exportAvisoPng(issued, imgRef.current);
-      toast.success(`Aviso ${issued.codigo} gerado. Válido até ${formatManausStamp(issued.expiresAt)}.`);
+      toast.success(
+        issued.revisao === "operador"
+          ? `Aviso ${issued.codigo} gerado. Válido até ${formatManausStamp(issued.expiresAt)}.`
+          : "Rascunho baixado. Sem operador, o aviso não foi publicado.",
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível gerar o PNG.");
     } finally {
@@ -238,7 +242,7 @@ function AvisoGraficoComposer({
       wide
       className="max-h-[min(96dvh,980px)] sm:max-w-6xl"
       title={`Aviso Meteorológico · ${AVISO_GRAFICO_HOURS} horas`}
-      description={`Mesmo formato do aviso oficial da Defesa Civil: cenário, calhas e imagem GOES infravermelho do CPTEC/INPE. A validade fecha no fim desta janela de ${AVISO_GRAFICO_HOURS} h (${avisoJanelasTexto()}, Manaus).`}
+      description={`Rascunho no formato do aviso da Defesa Civil. Sem sessão de operador, o PNG não é publicação. A validade fecha no fim desta janela de ${AVISO_GRAFICO_HOURS} h (${avisoJanelasTexto()}, Manaus).`}
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <AvisoPreview aviso={draft} goes={goes} loading={loadingGoes} imgRef={imgRef} />
@@ -283,7 +287,7 @@ function AvisoGraficoComposer({
             </Button>
             <Button type="button" disabled={exporting} onClick={() => void emitAndExport()}>
               <Download className="size-3.5" />
-              {session ? "Emitir e baixar PNG" : "Baixar PNG"}
+              {draft.revisao === "operador" ? "Emitir e baixar PNG" : "Baixar rascunho"}
             </Button>
           </div>
         </div>
@@ -347,6 +351,11 @@ function AvisoPreview({
         <CloudSun className="size-5 text-sky-200" />
       </header>
       <h3 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">AVISO METEOROLÓGICO</h3>
+      <p className="mt-1 text-[11px] font-bold text-amber-200">
+        {aviso.revisao === "operador"
+          ? `Revisado por ${aviso.issuedBy}`
+          : "Rascunho · não publicado · sem revisão de operador"}
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full bg-[#16356e] px-3 py-1 text-[10px] font-bold">Imagem de SATÉLITE</span>
         <span className="rounded-full bg-[#16356e] px-3 py-1 text-[10px] font-bold">

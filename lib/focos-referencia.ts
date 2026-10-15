@@ -156,6 +156,11 @@ async function atualizar(): Promise<FocosReferencia> {
   return memory;
 }
 
+export function peekFocosCache(): { at: number; registros: number; erro: string | null } | null {
+  if (!memory) return null;
+  return { at: memory.generatedAt, registros: memory.total, erro: memory.error ?? null };
+}
+
 export async function getFocosReferencia(): Promise<FocosReferencia> {
   if (memory && Date.now() - memory.generatedAt < CACHE_MS && !memory.error) return memory;
   const disk = await lerDisco();

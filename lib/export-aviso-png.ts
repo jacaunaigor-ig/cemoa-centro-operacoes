@@ -132,6 +132,15 @@ export async function exportAvisoPng(aviso: AvisoGrafico, image: HTMLImageElemen
   pill(ctx, 48, footY, 480, 70, `Imagem: ${formatManausStamp(aviso.imageAt)}`);
   pill(ctx, 552, footY, 480, 70, `Válido até: ${formatManausStamp(aviso.expiresAt)}`);
 
+  ctx.fillStyle = aviso.revisao === "operador" ? "#c9d4ee" : "#f5d90a";
+  ctx.font = "700 22px Inter, system-ui, sans-serif";
+  ctx.fillText(
+    aviso.revisao === "operador"
+      ? `Revisado por ${aviso.issuedBy}`
+      : "RASCUNHO · não publicado · sem revisão de operador",
+    48,
+    H - 68,
+  );
   ctx.fillStyle = "#c9d4ee";
   ctx.font = "600 20px Inter, system-ui, sans-serif";
   ctx.fillText("www.defesacivil.am.gov.br  ·  Defesa Civil Amazonas  ·  @defesacivilamazonas", 48, H - 36);

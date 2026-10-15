@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { listLogs, pushLog } from "@/lib/logs";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,9 @@ function limited(ip: string): boolean {
   return bucket.n > 40;
 }
 
-export function GET() {
+export async function GET(request: Request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
   return NextResponse.json({ logs: listLogs() });
 }
 

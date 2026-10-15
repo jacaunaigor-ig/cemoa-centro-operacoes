@@ -19,6 +19,7 @@ import { formatMm, formatMmShort, formatWindowsCompact } from "@/lib/rainfall-di
 import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
 import type { AlertType } from "@/lib/alert-types";
 import { formatUg } from "@/lib/air-quality-display";
+import { SEM_LEITURA_FILL } from "@/lib/map-observacao";
 import {
   AMAZONAS_CENTER,
   OSM_ATTRIBUTION,
@@ -63,6 +64,7 @@ type Muni = {
   hasRainStation?: boolean;
   pm25?: number | null;
   hasAirSensor?: boolean;
+  observacao?: "classificado" | "com-leitura" | "sem-leitura" | "nao-consultada";
 };
 
 export type AlertsMapHandle = {
@@ -401,11 +403,14 @@ export const AlertsMap = forwardRef<
     const m = list.find((item) => item.nome === nome);
     const risco = m?.risco ?? "BAIXO";
     const choropleth = stateRef.current.fillByNome?.[nome];
-    const semAlertaAr = !choropleth && stateRef.current.tipo === "INCENDIO" && risco === "BOA";
+    const semLeitura = !choropleth && m?.observacao === "sem-leitura";
+    const semAlertaAr = !choropleth && !semLeitura && stateRef.current.tipo === "INCENDIO" && risco === "BOA";
     const matchLevel =
-      f === "TODOS" || f === "ATIVOS"
-        ? f === "TODOS" || (risco !== "BAIXO" && risco !== "BOA")
-        : risco === f;
+      semLeitura && f === "BAIXO"
+        ? false
+        : f === "TODOS" || f === "ATIVOS"
+          ? f === "TODOS" || (risco !== "BAIXO" && risco !== "BOA")
+          : risco === f;
     const matchBasin = !b || m?.bacia === b;
     const matchCalha = !names || names.length === 0 || names.includes(nome);
     const match = matchLevel && matchBasin && matchCalha;
@@ -416,7 +421,8 @@ export const AlertsMap = forwardRef<
       color: muniStroke(isSel, isHov, match),
       weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.1 : 0.7,
       opacity: match || isSel || isHov ? 1 : 0.28,
-      fillColor: choropleth ?? (semAlertaAr ? "#d5dde6" : (LEVEL_COLORS[risco] ?? "#7c8fab")),
+      fillColor: choropleth ?? (semLeitura ? SEM_LEITURA_FILL : semAlertaAr ? "#d5dde6" : (LEVEL_COLORS[risco] ?? "#7c8fab")),
+      dashArray: semLeitura ? "3 3" : undefined,
       fillOpacity: isSel
         ? Math.min(0.95, fill + 0.12)
         : isHov
@@ -538,7 +544,11 @@ export const AlertsMap = forwardRef<
                   map,
                   tip,
                   ev.latlng,
-                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}`,
+                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${
+                    m?.observacao === "sem-leitura"
+                      ? "Sem leitura · não é risco baixo"
+                      : (LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco)
+                  }${airTip}`,
                 );
               }
               onHoverRef.current?.(nome);

@@ -29,13 +29,16 @@ import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
 import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
 import { OpsFooter } from "@/components/shared/OpsFooter";
+import { situacaoConsulta, textoConsulta } from "@/lib/consulta-rotulo";
+import { STATIC_DEPLOY } from "@/lib/site";
 import { prefetchMunicipalMesh } from "@/lib/stain-clip";
 
 export function AppShell({
   children,
-  syncLabel = "Sincronizado",
+  syncLabel,
   source = "CEMOA / INMET / CENSIPAM / CPTEC-INPE",
   cache,
+  consultaFalhou = false,
   updatedAt,
   rainAt,
   airAt,
@@ -45,6 +48,7 @@ export function AppShell({
   syncLabel?: string;
   source?: string;
   cache?: "HIT" | "MISS";
+  consultaFalhou?: boolean;
   updatedAt?: number | null;
   rainAt?: number | null;
   airAt?: number | null;
@@ -68,6 +72,14 @@ export function AppShell({
     logout,
   } = useOpsMode();
   usePauseMotionWhenHidden();
+  const consulta = textoConsulta(
+    situacaoConsulta({
+      estatico: STATIC_DEPLOY,
+      temDado: updatedAt != null,
+      falha: consultaFalhou,
+    }),
+  );
+  const tituloConsulta = syncLabel ?? consulta.titulo;
   useEffect(() => {
     prefetchMunicipalMesh();
   }, []);
@@ -99,7 +111,7 @@ export function AppShell({
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
             <div className="text-right leading-tight">
               <small className="block text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-                Ao vivo
+                {tituloConsulta}
               </small>
               <strong className="inline-flex items-center gap-1 text-xs font-semibold text-live">
                 <span className="live-dot" aria-hidden />
@@ -300,8 +312,8 @@ export function AppShell({
           <HeaderClock compact={false} />
             <InfoTooltip
               label="Sobre a sincronização"
-              title="Sincronizado"
-              body={`${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} ${
+              title={tituloConsulta}
+              body={`${consulta.detalhe} ${source}. Os painéis consultam a API local com cache de 3–4 segundos (HIT/MISS) para reduzir latência. ${cache ? `Última resposta: cache ${cache}.` : ""} ${
                 supabaseConfigured
                   ? "Supabase ligado: classificações e cotas gravam no Postgres."
                   : "Supabase aguardando chaves: o centro está pronto — configure URL e chave (em .env.local ou variáveis de ambiente). Até lá, cookie + memória."
@@ -315,12 +327,12 @@ export function AppShell({
                 <span className="live-dot" aria-hidden />
                 <span>
                   <small className="flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] text-text-mute uppercase">
-                    {syncLabel}
+                    Consulta
                     <Info className="size-3.5 text-text-mute" aria-hidden />
                   </small>
                   <strong className="flex items-center gap-1 text-xs font-semibold text-live">
                     <Activity className="size-3.5" />
-                    Ao vivo
+                    {tituloConsulta}
                   </strong>
                 </span>
               </button>
