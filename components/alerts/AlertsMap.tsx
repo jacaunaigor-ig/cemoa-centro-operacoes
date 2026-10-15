@@ -45,7 +45,7 @@ import type { AirQualitySensor } from "@/lib/types";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
 import { reportClientError } from "@/lib/client";
-import { withBase } from "@/lib/site";
+import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
 import { durationLabel } from "@/lib/alert-duration";
 import "leaflet/dist/leaflet.css";
@@ -477,10 +477,7 @@ export const AlertsMap = forwardRef<
       riversRef.current = rios;
 
       try {
-        const geo = await fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
-          if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
-          return r.json();
-        });
+        const geo = await loadMunicipalMesh();
         if (cancelled) return;
 
         const layer = L.geoJSON(geo, {
@@ -512,12 +509,10 @@ export const AlertsMap = forwardRef<
                     : "";
               const focosN = stateRef.current.labelByNome?.[nome];
               const airTip =
-                focosN != null
-                  ? `<br/><strong>${focosN} focos</strong>`
-                  : stateRef.current.pointKind === "air"
+                stateRef.current.pointKind === "air"
                   ? m?.hasAirSensor
                     ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (ao vivo)`
-                    : " · s/ sensor PurpleAir"
+                    : " · sem monitor"
                   : m?.hasRainStation
                     ? ` · 1/6/24 h ${formatWindowsCompact({
                         mm1h: m.mm1h ?? null,
@@ -531,6 +526,10 @@ export const AlertsMap = forwardRef<
                           : ""
                       }`
                     : "";
+              const focosTip =
+                focosN != null && focosN !== "0"
+                  ? `<br/>${focosN} focos INPE (AQUA)`
+                  : "";
               const map = mapRef.current;
               const tip = hoverTipRef.current;
               if (map && tip) {
@@ -538,7 +537,7 @@ export const AlertsMap = forwardRef<
                   map,
                   tip,
                   ev.latlng,
-                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}`,
+                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}${focosTip}`,
                 );
               }
               onHoverRef.current?.(nome);
@@ -783,48 +782,26 @@ export const AlertsMap = forwardRef<
 
     if (showFocosCalor && focosCalor.length > 0) {
       const layer = L.layerGroup();
-      
       focosCalor.forEach((foco) => {
-        const lat = parseFloat(String(foco.lat));
-        const lon = parseFloat(String(foco.lon));
-        
-        if (!isNaN(lat) && !isNaN(lon)) {
-          // 🔵 CÍRCULO - dados da NASA (sem confiança)
-        const circle = L.circle([lat, lon], {
-  radius: 50, // metros
-  fillColor: '#ff4500',
-  color: '#fff',
-  weight: 1,
-  fillOpacity: 0.5
-});
-          
-          // Popup com informações (apenas o que existe)
-          circle.bindPopup(`
-            <div style="min-width:150px;font-size:13px;">
-              <strong>🔥 Foco de Calor</strong><br/>
-              📅 ${foco.data || 'N/A'}<br/>
-              🛰️ ${foco.satelite || 'N/A'}
-            </div>
-          `);
-          
-          // Tooltip ao passar o mouse
-          circle.bindTooltip(
-            `🔥 ${foco.satelite || 'Foco'}`,
-            { 
-              permanent: false, 
-              direction: 'top',
-              className: 'foco-tooltip'
-            }
-          );
-          
-          layer.addLayer(circle);
-        }
+        const lat = Number(foco.lat);
+        const lon = Number(foco.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const dot = L.circleMarker([lat, lon], {
+          radius: 5,
+          fillColor: "#ea580c",
+          color: "#fff7ed",
+          weight: 1,
+          fillOpacity: 0.85,
+          pane: "overlayPane",
+        });
+        dot.bindTooltip(
+          `Foco INPE · ${foco.satelite || "AQUA"} · ${foco.data || ""}`,
+          { sticky: true, direction: "top" },
+        );
+        layer.addLayer(dot);
       });
-
       layer.addTo(map);
       focosLayerRef.current = layer;
-      
-      console.log(`✅ ${focosCalor.length} focos de calor desenhados`);
     }
   }, [showFocosCalor, focosCalor]);
  

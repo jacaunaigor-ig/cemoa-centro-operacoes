@@ -1,5 +1,5 @@
 import https from "node:https";
-import { FABRIC_HORAS, leituraDoBoletim } from "@/lib/boletim-horario";
+import { ANA_COTA_HORA, FABRIC_HORAS, FUSO_MANAUS, instante, leituraDoBoletim } from "@/lib/boletim-horario";
 import { addDaysIso, hydroTodayIso, upsertCotaOnDate } from "@/lib/hydro-series";
 import { normalizeMunicipio } from "@/lib/hydrology";
 import type { HydroStation } from "@/lib/types";
@@ -215,8 +215,14 @@ function queryPayload(sinceIso: string) {
   };
 }
 
+function seteManaus(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return 0;
+  return instante(y, m, d, ANA_COTA_HORA, FUSO_MANAUS);
+}
+
 function parseRows(rows: Array<Record<string, unknown>>): FabricCota[] {
-  const latest = new Map<string, FabricCota>();
+  const nearestSeven = new Map<string, FabricCota>();
   for (const row of rows) {
     const nome = String(row.G0 ?? "").trim();
     const ts = Number(row.G1);
@@ -224,12 +230,14 @@ function parseRows(rows: Array<Record<string, unknown>>): FabricCota[] {
     if (!nome || !Number.isFinite(ts) || !Number.isFinite(cota)) continue;
     const iso = manausIsoFromMs(ts);
     const key = `${normalizeMunicipio(nome)}|${iso}`;
-    const prev = latest.get(key);
-    if (!prev || ts >= prev.lidaEm) {
-      latest.set(key, { nome, iso, cota: Math.round(cota * 100) / 100, lidaEm: ts });
+    const rec: FabricCota = { nome, iso, cota: Math.round(cota * 100) / 100, lidaEm: ts };
+    const prev = nearestSeven.get(key);
+    const seven = seteManaus(iso);
+    if (!prev || Math.abs(ts - seven) < Math.abs(prev.lidaEm - seven)) {
+      nearestSeven.set(key, rec);
     }
   }
-  return [...latest.values()];
+  return [...nearestSeven.values()];
 }
 
 async function refresh(): Promise<Map<string, FabricCota[]>> {
@@ -251,6 +259,10 @@ async function refresh(): Promise<Map<string, FabricCota[]>> {
     inflight = null;
     return cache?.byNome ?? new Map();
   }
+}
+
+export function peekFabricFetchedAt(): number | null {
+  return cache?.at ?? null;
 }
 
 export async function getFabricCotas(): Promise<{
@@ -286,7 +298,13 @@ export function applyFabricCotas(
   const today = hydroTodayIso();
   const todayRec = [...ordered].reverse().find((r) => r.iso === today);
   if (todayRec) {
-    return { ...next, cotaFonte: "fabric", cotaLidaEm: todayRec.lidaEm };
+    return {
+      ...next,
+      cotaFonte: "fabric",
+      cotaLidaEm: todayRec.lidaEm,
+      cotaFabricLidaEm: todayRec.lidaEm,
+    };
   }
-  return next;
+  const last = ordered[ordered.length - 1];
+  return last ? { ...next, cotaFabricLidaEm: last.lidaEm } : next;
 }

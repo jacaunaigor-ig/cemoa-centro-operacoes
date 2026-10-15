@@ -18,6 +18,7 @@ import { fetchJson } from "@/lib/client";
 import {
   AVISO_CALHAS,
   AVISO_GRAFICO_HOURS,
+  GOES_AVISO_ATRASO_MS,
   AVISO_TEXTO_PADRAO,
   avisoJanelasTexto,
   avisoSlotAt,
@@ -205,6 +206,13 @@ function AvisoGraficoComposer({
     if (!texto.trim()) {
       toast.error("Escreva o texto do cenário.");
       return;
+    }
+    const goesAtrasado =
+      goes?.imageAt != null && Date.now() - goes.imageAt >= GOES_AVISO_ATRASO_MS;
+    if (!goes?.imageUrl) {
+      toast.warning("PNG sai sem cena GOES. Consulte o acervo antes de emitir se o satélite for o recorte.");
+    } else if (goesAtrasado) {
+      toast.warning("Cena GOES com mais de 30 min. O PNG leva a hora da imagem, não o instante da emissão.");
     }
     setExporting(true);
     try {

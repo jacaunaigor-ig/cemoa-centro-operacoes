@@ -232,6 +232,22 @@ function buildFromRows(
       estacoes = [anaStation];
     } else {
       semEstacao.push(muni.nome);
+      const vazio: RainfallMunicipio = {
+        id: muni.id,
+        nome: muni.nome,
+        codigoIbge: muni.codigoIbge,
+        bacia: muni.bacia,
+        mm1h: null,
+        mm6h: null,
+        mm24h: null,
+        mm72h: null,
+        mm96h: null,
+        ultimoMm: null,
+        observedAt: null,
+        estacoes: [],
+      };
+      byId[muni.id] = vazio;
+      byNome[muni.nome] = vazio;
       continue;
     }
 
@@ -299,6 +315,11 @@ function buildFromRows(
     byId,
     byNome,
   };
+}
+
+export function peekRainfallCache(): { generatedAt: number; error: string | null } | null {
+  if (!memo) return null;
+  return { generatedAt: memo.data.generatedAt, error: memo.data.error };
 }
 
 export function resetRainfallMemo() {

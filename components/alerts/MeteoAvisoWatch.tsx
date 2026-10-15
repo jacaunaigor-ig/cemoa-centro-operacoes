@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { CloudSun, Megaphone } from "lucide-react";
+import { ClipboardList, CloudSun, LogIn, LogOut, Megaphone } from "lucide-react";
 import { AvisoGraficoButton } from "@/components/alerts/AvisoGrafico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,16 @@ import {
   type MeteoAviso,
 } from "@/lib/meteo-aviso";
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
-import { cn } from "@/lib/utils";
+import { cn, formatAmazonTime } from "@/lib/utils";
 import { formatCountdown, remainingMs } from "@/lib/alert-validity";
+import { textoPassagemTurno, trilhaDesde } from "@/lib/classificacao-trilha";
+import {
+  abrirPlantaoTurno,
+  encerrarPlantaoTurno,
+  plantaoShiftKey,
+  turnoDoShiftAtual,
+  type PlantaoTurno,
+} from "@/lib/plantao-turno";
 import { playVencimentoChime } from "@/lib/plantao-chime";
 
 function emitSuccessMessage(issuedAt: number) {
@@ -224,8 +232,21 @@ export function MeteoAvisoDutyCard() {
   const now = useNow();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [turno, setTurno] = useState<PlantaoTurno | null>(null);
   const shift = meteoShiftAt(now || Date.now());
   const tone = avisoTone(aviso?.expiresAt, now);
+
+  useEffect(() => {
+    setTurno(turnoDoShiftAtual(now || Date.now()));
+  }, [now, shift.startAt]);
+
+  useEffect(() => {
+    function onStorage(ev: StorageEvent) {
+      if (ev.key === "cemoa_plantao_turno_v1") setTurno(turnoDoShiftAtual());
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   const left = aviso && now ? remainingMs(aviso.expiresAt, now) : null;
   const clock = left != null && left > 0 ? formatCountdown(left) : null;
   const needsImmediate = tone === "expired" || tone === "urgent";
@@ -253,6 +274,9 @@ export function MeteoAvisoDutyCard() {
             ? `Válido até ${until}.`
             : `Validade deste turno: até ${until}.`;
 
+  const turnoAberto = Boolean(turno && turno.shiftKey === plantaoShiftKey(shift) && !turno.closedAt);
+  const turnoEncerrado = Boolean(turno && turno.shiftKey === plantaoShiftKey(shift) && turno.closedAt);
+
   function onDutyAction() {
     if (!session) {
       openLogin();
@@ -260,6 +284,37 @@ export function MeteoAvisoDutyCard() {
     }
     if (needsImmediate) void emit();
     else setOpen(true);
+  }
+
+  function onAbrirTurno() {
+    if (!session) {
+      openLogin();
+      return;
+    }
+    setTurno(abrirPlantaoTurno(session.name || session.login));
+    toast.success(`Plantão ${shift.hours} aberto.`);
+  }
+
+  function onPassagemTurno() {
+    const rows = trilhaDesde(shift.startAt);
+    const titulo = `Passagem de turno CEMOA · ${shift.label} ${shift.hours} · ${formatAmazonTime(shift.startAt).slice(0, 5)}–${until}`;
+    const blob = new Blob([textoPassagemTurno(rows, titulo)], { type: "text/plain;charset=utf-8" });
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = `passagem_turno_${shift.id}.txt`;
+    a.click();
+    URL.revokeObjectURL(href);
+    toast.success("Relatório de passagem deste posto.");
+  }
+
+  function onEncerrarTurno() {
+    if (!session) {
+      openLogin();
+      return;
+    }
+    setTurno(encerrarPlantaoTurno());
+    toast.message(`Plantão ${shift.hours} encerrado.`);
   }
 
   return (
@@ -322,6 +377,30 @@ export function MeteoAvisoDutyCard() {
         </Button>
       </div>
       <AvisoGraficoButton compact={isMobile} className="w-full sm:w-auto" />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="min-w-0 flex-1 text-[11px] text-text-mute">
+          {turnoAberto
+            ? `Aberto às ${formatAmazonTime(turno!.openedAt).slice(0, 5)} · ${turno!.openedBy}`
+            : turnoEncerrado
+              ? `Encerrado às ${formatAmazonTime(turno!.closedAt!).slice(0, 5)}`
+              : "Este turno ainda não foi aberto neste posto."}
+        </p>
+        <Button type="button" size="sm" variant="secondary" onClick={onPassagemTurno}>
+          <ClipboardList className="size-3.5" />
+          Passagem de turno
+        </Button>
+        {turnoAberto ? (
+          <Button type="button" size="sm" variant="secondary" onClick={onEncerrarTurno}>
+            <LogOut className="size-3.5" />
+            Encerrar plantão
+          </Button>
+        ) : (
+          <Button type="button" size="sm" variant="secondary" onClick={onAbrirTurno}>
+            <LogIn className="size-3.5" />
+            Abrir plantão
+          </Button>
+        )}
       </div>
 
       <Modal

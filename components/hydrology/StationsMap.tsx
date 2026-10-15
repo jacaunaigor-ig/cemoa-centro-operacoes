@@ -47,7 +47,7 @@ import {
   type TerritoryVisibility,
 } from "@/lib/map-overlays";
 import { reportClientError } from "@/lib/client";
-import { withBase } from "@/lib/site";
+import { loadMunicipalMesh } from "@/lib/stain-clip";
 import "leaflet/dist/leaflet.css";
 
 export type StationsMapHandle = {
@@ -251,10 +251,7 @@ export const StationsMap = forwardRef<
       riversRef.current = rios;
 
       try {
-        const geo = await fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
-          if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
-          return r.json();
-        });
+        const geo = await loadMunicipalMesh();
         if (cancelled) return;
 
         const layer = L.geoJSON(geo, {
