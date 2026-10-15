@@ -12,6 +12,20 @@ export function hydroTodayIso(now = Date.now()): string {
   }).format(new Date(now));
 }
 
+/** Dia do boletim em vigor: hoje a partir das 16 h de Manaus; antes disso, o dia anterior. */
+export function hydroBoletimDiaIso(now = Date.now()): string {
+  const today = hydroTodayIso(now);
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: HYDRO_TZ,
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(new Date(now)),
+  );
+  if (hour >= 16) return today;
+  return addDaysIso(today, -1);
+}
+
 export function isoFromTimestamp(ts: number): string {
   return hydroTodayIso(ts);
 }
@@ -128,24 +142,24 @@ export function alignHydroSeries(
   };
 }
 
-export function syncOperationalCota<T extends HydroStation>(station: T): T {
-  const today = hydroTodayIso();
-  const idx = indexOfIso(station, today);
-  const cotaHoje = idx >= 0 ? station.cotas[idx] ?? null : null;
+export function syncOperationalCota<T extends HydroStation>(station: T, now = Date.now()): T {
+  const dia = hydroBoletimDiaIso(now);
+  const idx = indexOfIso(station, dia);
+  const cotaDia = idx >= 0 ? station.cotas[idx] ?? null : null;
   const prev = idx > 0 ? station.cotas[idx - 1] : null;
   let variacao = station.variacao;
-  if (cotaHoje != null && prev != null && Number.isFinite(prev)) {
-    variacao = Math.round((cotaHoje - prev) * 100) / 100;
+  if (cotaDia != null && prev != null && Number.isFinite(prev)) {
+    variacao = Math.round((cotaDia - prev) * 100) / 100;
   }
   let tendencia = station.tendencia;
-  if (cotaHoje != null && prev != null && Number.isFinite(prev) && variacao != null) {
+  if (cotaDia != null && prev != null && Number.isFinite(prev) && variacao != null) {
     tendencia =
       variacao > 0.03 ? "SUBINDO" : variacao < -0.03 ? "BAIXANDO" : "PARADO";
   }
   return {
     ...station,
-    cota: cotaHoje,
-    semLeitura: cotaHoje == null,
+    cota: cotaDia,
+    semLeitura: cotaDia == null,
     variacao,
     tendencia,
   };

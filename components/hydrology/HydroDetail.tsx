@@ -11,7 +11,7 @@ import {
   HYDRO_STATUS_LABELS,
   limitesDoModo,
   formatHydroRef,
-  HYDRO_REFERENCIA,
+  hydroBoletimDiaIso,
   rotuloSituacao,
   situacaoLeitura,
   statusAtivo,
@@ -125,7 +125,7 @@ export function HydroDetail({
                 : station.cotaFonte === "fabric"
                   ? "Painel hidrometeorológico CEMOA"
                 : station.fonte === "Defesa Civil AM"
-                  ? `Boletim CEMOA · ${formatHydroRef(HYDRO_REFERENCIA)}`
+                  ? `Boletim CEMOA · ${formatHydroRef(hydroBoletimDiaIso())}`
                   : undefined
           }
         />

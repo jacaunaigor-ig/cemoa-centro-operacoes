@@ -22,6 +22,7 @@ import {
   AVISO_URGENT_MS,
   AVISO_WARN_MS,
   avisoExpiresAt,
+  avisoTemOperador,
   avisoTone,
   formatShiftHours,
   meteoShiftAt,
@@ -165,12 +166,17 @@ export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) 
     setEmitting(true);
     try {
       if (STATIC_DEPLOY) {
+        const nome = session?.name?.trim() ?? "";
+        if (!avisoTemOperador(nome)) {
+          toast.error("Sem operador identificado. O aviso de 12 h não foi emitido.");
+          return;
+        }
         const issuedAt = Date.now();
         const next: MeteoAviso = {
           id: `aviso-${issuedAt}`,
           issuedAt,
           expiresAt: avisoExpiresAt(issuedAt),
-          issuedBy: session?.name || "Plantão CEMOA",
+          issuedBy: nome,
           note: note?.trim() || null,
         };
         writeLocal(next);
@@ -225,7 +231,8 @@ export function MeteoAvisoDutyCard() {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const shift = meteoShiftAt(now || Date.now());
-  const tone = avisoTone(aviso?.expiresAt, now);
+  const semOperador = Boolean(aviso && !avisoTemOperador(aviso.issuedBy));
+  const tone = semOperador ? "idle" : avisoTone(aviso?.expiresAt, now);
   const left = aviso && now ? remainingMs(aviso.expiresAt, now) : null;
   const clock = left != null && left > 0 ? formatCountdown(left) : null;
   const needsImmediate = tone === "expired" || tone === "urgent";
@@ -236,14 +243,16 @@ export function MeteoAvisoDutyCard() {
     hourCycle: "h23",
   }).format(new Date(shift.endAt));
 
-  const headline =
-    tone === "expired"
+  const headline = semOperador
+    ? "Registro sem operador"
+    : tone === "expired"
       ? "Aviso vencido"
       : tone === "idle"
         ? "Sem aviso neste plantão"
         : clock ?? "—";
-  const detail =
-    tone === "expired"
+  const detail = semOperador
+    ? "Não conta como plantão validado."
+    : tone === "expired"
       ? `O plantão ${shift.label.toLowerCase()} segue até ${until}. Emita o próximo aviso.`
       : tone === "urgent"
         ? `Faltam menos de 15 min para ${until}.`
@@ -252,6 +261,7 @@ export function MeteoAvisoDutyCard() {
           : tone === "ok"
             ? `Válido até ${until}.`
             : `Validade deste turno: até ${until}.`;
+  const autor = aviso && avisoTemOperador(aviso.issuedBy) ? `Validado por ${aviso.issuedBy}.` : null;
 
   function onDutyAction() {
     if (!session) {
@@ -302,6 +312,7 @@ export function MeteoAvisoDutyCard() {
             )}
           >
             {detail}
+            {autor ? ` ${autor}` : ""}
           </p>
         </div>
         <Button

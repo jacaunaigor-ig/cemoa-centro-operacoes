@@ -6,6 +6,7 @@ import { peekFabricCache } from "@/lib/fabric-cotas";
 import { peekFocosCache } from "@/lib/focos-referencia";
 import { getGoesMeta } from "@/lib/goes-satellite";
 import { peekRainfallCache } from "@/lib/rainfall";
+import { peekWeatherCache, WEATHER_TTL_MS } from "@/lib/weather-forecast";
 import { anexarFalhas, lerFalhas, novasFalhas } from "@/lib/source-failures";
 import { classificarFonte, type FonteSaude, type FonteSinal } from "@/lib/source-health";
 
@@ -23,6 +24,7 @@ export async function GET() {
   const ana = peekAnaCache();
   const fabric = peekFabricCache();
   const focos = peekFocosCache();
+  const previsao = peekWeatherCache();
   const goes = await getGoesMeta().catch(() => null);
 
   const sinais: FonteSinal[] = [
@@ -70,6 +72,15 @@ export async function GET() {
       erro: null,
       amareloMs: 30 * MIN,
       vermelhoMs: 90 * MIN,
+    },
+    {
+      id: "inmet",
+      nome: "INMET",
+      atualizadoEm: previsao?.at ?? null,
+      registros: previsao?.registros ?? null,
+      erro: null,
+      amareloMs: WEATHER_TTL_MS,
+      vermelhoMs: WEATHER_TTL_MS * 3,
     },
     {
       id: "focos",

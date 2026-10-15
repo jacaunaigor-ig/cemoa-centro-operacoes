@@ -485,6 +485,7 @@ export function HydrologyWorkbench() {
   return (
     <AppShell
       cache={data?.cache}
+      consultaFalhou={Boolean(error)}
       source={data?.source ?? "CEMOA · ANA / SGB / SEMA"}
       updatedAt={data?.generatedAt ?? null}
       hydroAt={data?.generatedAt ?? null}
@@ -660,7 +661,11 @@ export function HydrologyWorkbench() {
               compact
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
-              sub={`${pct(kpis.semLeitura)} · sem cota hoje`}
+              sub={
+                data?.referencia
+                  ? `${pct(kpis.semLeitura)} · sem cota em ${formatHydroRef(data.referencia)}`
+                  : "sem cota do dia do boletim"
+              }
               accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}

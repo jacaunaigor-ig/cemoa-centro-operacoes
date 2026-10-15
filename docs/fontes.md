@@ -11,7 +11,7 @@ Inventário do que o repositório consulta de fato. Horários de exibição usam
 | Fabric / Power BI | painel hidrometeorológico CEMOA já usado em `lib/fabric-cotas.ts` | cota municipal | 20 h / 36 h |
 | GOES-19 | `https://ftp.cptec.inpe.br/goes/goes19/goes19_web/ams_ret_ch13_baixa/` | imagem do canal 13 | 30 min / 90 min |
 | INPE queimadas | CSV diário AQUA_M-T, bioma Amazônia, Amazonas, 15 dias | contagem de focos | 12 h / 30 h |
-| INMET | previsão e temperatura instantânea das estações operantes | temperatura, °C | ainda sem linha no `/api/status` |
+| INMET | `GET https://apiprevmet3.inmet.gov.br/previsao/{ibge}` e estação próxima | previsão e temperatura da estação | atrasada após 30 min (o lote deixa de ser reutilizado); indisponível após 90 min. Sem consulta neste processo, fica indisponível — isso não é queda do INMET |
 | IBGE | arquivos locais de municípios, demografia e malha | território e população, Censo 2022 | arquivo estático, sem relógio de rede |
 | SGB/CPRM | arquivos locais de pessoas em área de risco | exposição | arquivo estático |
 

@@ -152,6 +152,7 @@ export function RiscoWorkbench() {
 
   return (
     <AppShell
+      consultaFalhou={Boolean(error)}
       source="Metodologia CEMOA · IRE/IRG · decretos de estiagem e inundação · CEMADEN · INMET"
       updatedAt={payload?.generatedAt}
       rainAt={rain?.generatedAt}

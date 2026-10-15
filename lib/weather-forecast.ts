@@ -13,7 +13,8 @@ const HORIZON_SPECS = [
   { id: "5d" as const, label: "5 dias", offset: 4 },
 ];
 
-const TTL_MS = 30 * 60_000;
+export const WEATHER_TTL_MS = 30 * 60_000;
+const TTL_MS = WEATHER_TTL_MS;
 const FETCH_MS = 12_000;
 const PERIODS: WeatherPeriod[] = ["manha", "tarde", "noite"];
 
@@ -295,6 +296,15 @@ async function fetchInmet(ibge: string): Promise<unknown> {
 
 async function fetchInmetStation(ibge: string): Promise<unknown> {
   return fetchJson(`${INMET_STATION_URL}/${ibge}`);
+}
+
+export function peekWeatherCache(): { at: number; registros: number } | null {
+  if (!memo.size) return null;
+  let at = 0;
+  for (const row of memo.values()) {
+    if (row.at > at) at = row.at;
+  }
+  return { at, registros: memo.size };
 }
 
 export async function getWeatherForecast(ibgeOrNome: string): Promise<WeatherForecast> {

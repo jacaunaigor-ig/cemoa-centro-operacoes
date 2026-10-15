@@ -12,11 +12,12 @@ import {
 } from "@/lib/alert-types";
 import {
   CALHAS,
+  formatHydroRef,
   HYDRO_FONTE,
   HYDRO_MUDANCAS,
-  HYDRO_REFERENCIA,
   HYDRO_RIOS,
   catalogStations,
+  hydroBoletimDiaIso,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
 import { meteoShiftAt } from "@/lib/meteo-aviso";
@@ -215,8 +216,13 @@ export function buildHydrologyPayload(
   const automaticas = stations.filter((s) => /^\d{6,}$/.test(s.estacao)).length;
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
+  const boletimIso = hydroBoletimDiaIso(now);
+  const boletim = formatHydroRef(boletimIso);
+  const fonteViva = /\d{2}\/\d{2}\/\d{4}/.test(HYDRO_FONTE)
+    ? HYDRO_FONTE.replace(/\d{2}\/\d{2}\/\d{4}/, boletim)
+    : `${HYDRO_FONTE} · boletim ${boletim}`;
   const partes = [
-    `${HYDRO_FONTE} · boletim ${HYDRO_REFERENCIA}`,
+    fonteViva,
     "ANA às 07:00 (Brasília)",
     "Fabric às 07:00 e 16:00 (Brasília)",
   ];
@@ -233,7 +239,7 @@ export function buildHydrologyPayload(
   return {
     generatedAt: now,
     source: partes.join(" · "),
-    referencia: HYDRO_REFERENCIA,
+    referencia: boletimIso,
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],
     mudancas24h: HYDRO_MUDANCAS,

@@ -8,7 +8,9 @@ import type {
   HydroTendencia,
 } from "@/lib/types";
 import raw from "@/data/hydrology.json";
-import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
+import { hydroBoletimDiaIso, hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
+
+export { hydroBoletimDiaIso };
 
 export const CALHAS = [
   "Alto Solimões",
@@ -243,11 +245,8 @@ export function situacaoLeitura(station: HydroStation) {
     }
   }
   const temLeitura = idxValido >= 0;
-  const lastIso = labels.length ? hydroDayToIso(String(labels[labels.length - 1] ?? ""), ref) : null;
-  const atual =
-    temLeitura &&
-    idxValido === labels.length - 1 &&
-    (lastIso == null || lastIso === today);
+  const isoValido = temLeitura ? hydroDayToIso(String(labels[idxValido] ?? ""), ref) : null;
+  const atual = isoValido === today || isoValido === hydroBoletimDiaIso();
   return {
     semEstacao: station.semEstacao,
     temLeitura,

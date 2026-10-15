@@ -1451,6 +1451,7 @@ export function AlertsWorkbench() {
   return (
     <AppShell
       cache={data?.cache}
+      consultaFalhou={Boolean(error)}
       source={data?.source}
       updatedAt={data?.generatedAt ?? null}
       rainAt={rain?.generatedAt ?? null}
