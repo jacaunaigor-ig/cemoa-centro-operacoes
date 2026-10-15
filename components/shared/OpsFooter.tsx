@@ -30,17 +30,43 @@ export function OpsFooter({
   supabase?: "ligado" | "aguardando";
 }) {
   const [fontes, setFontes] = useState<FonteSaude[]>([]);
+  const [falhasNota, setFalhasNota] = useState("Nenhuma falha de fonte registrada neste servidor.");
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
         const res = await fetch("/api/status", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as { fontes?: FonteSaude[] };
-        if (!cancelled) setFontes(data.fontes ?? []);
+        if (!res.ok) {
+          if (!cancelled) {
+            setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
+          }
+          return;
+        }
+        const data = (await res.json()) as {
+          fontes?: FonteSaude[];
+          falhas?: Array<{ nome: string; estado: string; em: number; detalhe: string }>;
+          falhasDisponivel?: boolean;
+        };
+        if (cancelled) return;
+        setFontes(data.fontes ?? []);
+        if (data.falhasDisponivel === false) {
+          setFalhasNota("Histórico de falhas indisponível neste servidor. Isso não significa que não houve falha.");
+        } else if (data.falhas?.length) {
+          const ultima = data.falhas[0];
+          setFalhasNota(
+            ultima
+              ? `Última mudança registrada: ${ultima.nome} ${ultima.estado} · ${formatAmazonDateTime(ultima.em)}`
+              : "Nenhuma falha de fonte registrada neste servidor.",
+          );
+        } else {
+          setFalhasNota("Nenhuma falha de fonte registrada neste servidor.");
+        }
       } catch {
-        if (!cancelled) setFontes([]);
+        if (!cancelled) {
+          setFontes([]);
+          setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
+        }
       }
     }
     void load();
@@ -111,6 +137,7 @@ export function OpsFooter({
           ))}
         </ul>
       ) : null}
+      <p className="mt-0.5">{falhasNota}</p>
     </footer>
   );
 }

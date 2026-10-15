@@ -1,3 +1,4 @@
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { peekAirCache } from "@/lib/air-quality";
 import { peekAnaCache } from "@/lib/ana-telemetria";
@@ -5,12 +6,15 @@ import { peekFabricCache } from "@/lib/fabric-cotas";
 import { peekFocosCache } from "@/lib/focos-referencia";
 import { getGoesMeta } from "@/lib/goes-satellite";
 import { peekRainfallCache } from "@/lib/rainfall";
-import { classificarFonte, type FonteSinal } from "@/lib/source-health";
+import { anexarFalhas, lerFalhas, novasFalhas } from "@/lib/source-failures";
+import { classificarFonte, type FonteSaude, type FonteSinal } from "@/lib/source-health";
 
 export const dynamic = "force-dynamic";
 
 const H = 60 * 60_000;
 const MIN = 60_000;
+const ARQUIVO = path.join(process.cwd(), "data", "source-failures.json");
+let anterior: FonteSaude[] | null = null;
 
 export async function GET() {
   const now = Date.now();
@@ -78,11 +82,20 @@ export async function GET() {
     },
   ];
 
+  const fontes = sinais.map((sinal) => classificarFonte(sinal, now));
+  const novas = novasFalhas(anterior, fontes, now);
+  anterior = fontes;
+  const historico = novas.length ? anexarFalhas(ARQUIVO, novas) : lerFalhas(ARQUIVO);
+
   return NextResponse.json(
     {
       generatedAt: now,
-      fontes: sinais.map((sinal) => classificarFonte(sinal, now)),
-      nota: "Estado do cache deste processo. Sem consulta, a fonte aparece indisponível — isso não significa que o serviço externo caiu.",
+      fontes,
+      falhas: historico.falhas.slice(0, 8),
+      falhasDisponivel: historico.disponivel,
+      nota: historico.disponivel
+        ? "Estado do cache deste processo. Sem consulta, a fonte aparece indisponível — isso não significa que o serviço externo caiu. O histórico guarda só mudanças de estado neste servidor."
+        : "Estado do cache deste processo. O arquivo local de falhas não pôde ser lido; a lista vazia não significa que não houve falha.",
     },
     { headers: { "Cache-Control": "no-store" } },
   );

@@ -17,4 +17,4 @@ Inventário do que o repositório consulta de fato. Horários de exibição usam
 
 Não há, neste repositório, cliente do HidroWeb além da telemetria ANA já citada. SGB entra como base local, não como API ao vivo.
 
-Estados: `operacional`, `atrasada`, `indisponivel`, `erro`. Erro com zero registros não é tratado como condição normal. Histórico de falhas não é persistido: o processo só conhece a última leitura em memória ou o arquivo de cache do GOES e dos focos.
+Estados: `operacional`, `atrasada`, `indisponivel`, `erro`. Erro com zero registros não é tratado como condição normal. A primeira leitura e o cache vazio não entram como falha. Mudança posterior de estado fica em `data/source-failures.json`, só neste servidor. Se o arquivo não puder ser lido, a resposta diz que o histórico está indisponível em vez de listar zero falhas.
