@@ -59,13 +59,13 @@ export function airApoio(rec: AirQualityMunicipio | null | undefined): AirApoio 
   if (!rec || rec.pm25 == null || !rec.level || rec.level === "BOA") return null;
   return {
     level: rec.level,
-    motivo: `MP2,5 ${formatUg(rec.pm25)} — qualidade ${AIR_LABELS[rec.level].toLowerCase()}. O mapa usa essa faixa quando o operador ainda não classificou.`,
+    motivo: `SELVA · pior sensor ${formatUg(rec.pm25)} — qualidade ${AIR_LABELS[rec.level].toLowerCase()}.`,
   };
 }
 
 const AIR_PAINT = new Set<AirLevel>(["MODERADO", "RUIM", "MUITO_RUIM", "PESSIMA"]);
 
-/** Pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor de alerta. O operador prevalece. */
+/** Sobe a faixa com o pior sensor do SELVA. A classificação do centro permanece quando já é mais grave. */
 export function applyAirClassification<
   T extends {
     id: string;
@@ -79,11 +79,11 @@ export function applyAirClassification<
   if (!air) return rows;
   const fonte = /selva/i.test(air.source) ? "App SELVA" : "PurpleAir";
   return rows.map((m) => {
-    if (m.fonte === "admin") return m;
     const rec = air.byId[m.id] ?? air.byNome[m.nome];
     if (!rec || rec.pm25 == null) return m;
     const level = rec.level ?? airLevelFromPm25(rec.pm25);
     if (!AIR_PAINT.has(level)) return m;
+    if (levelRank("INCENDIO", m.risco) >= levelRank("INCENDIO", level)) return m;
     return {
       ...m,
       risco: level,

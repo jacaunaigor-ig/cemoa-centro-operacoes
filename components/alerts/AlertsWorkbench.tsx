@@ -83,6 +83,7 @@ import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
 import { focoFill, type FocosReferencia } from "@/lib/focos-display";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, RainfallPayload } from "@/lib/types";
 import {
+  applyRainClassification,
   hasRain,
   hasRainReading,
   parseRainFilter,
@@ -106,6 +107,9 @@ import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
+import { montarPassagem } from "@/lib/passagem-turno";
+import { observacaoDoMunicipio, SEM_LEITURA_FILL } from "@/lib/map-observacao";
+import { formatManausStamp } from "@/lib/aviso-grafico";
 import { ensureOpsBoardReset } from "@/lib/ops-board";
 const POLL_MS = 20_000;
 const STORAGE_V1 = "cemoa_admin_overrides_v1";
@@ -821,9 +825,12 @@ export function AlertsWorkbench() {
 
   const catalog = useMemo(() => {
     const rows = data?.municipios ?? [];
-    if (tipo !== "INCENDIO") return rows;
-    return applyAirClassification(rows, air);
-  }, [data, tipo, air]);
+    if (tipo === "ALAGAMENTO" || tipo === "MOVIMENTO") {
+      return applyRainClassification(rows, rain, tipo);
+    }
+    if (tipo === "INCENDIO") return applyAirClassification(rows, air);
+    return rows;
+  }, [data, tipo, rain, air]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -919,6 +926,24 @@ export function AlertsWorkbench() {
     }
     return acc;
   }, [scopedCatalog, product.levels, tipo, mudancas.length]);
+
+  const semLeitura = useMemo(() => {
+    if (tipo !== "CHUVA" && tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO") return 0;
+    return scopedCatalog.filter((m) => {
+      const row = rain?.byId[m.id];
+      return (
+        observacaoDoMunicipio({
+          fonte: m.fonte,
+          tipo,
+          consultaFeita: Boolean(rain),
+          temEstacao: Boolean(row),
+          mm1h: row?.mm1h ?? null,
+          mm24h: row?.mm24h ?? null,
+          temAlgumaLeitura: hasRainReading(row),
+        }) === "sem-leitura"
+      );
+    }).length;
+  }, [scopedCatalog, rain, tipo]);
 
   const pct = (n: number) =>
     counts.TODOS ? `${((n / counts.TODOS) * 100).toFixed(0)}%` : "0%";
@@ -1462,6 +1487,69 @@ export function AlertsWorkbench() {
                 ) : null}
               </a>
             ) : null}
+            {ready ? (
+              <button
+                type="button"
+                className="rounded-lg border border-border bg-panel-2 px-2 py-1 text-[10px] font-bold tracking-wide text-text-mute uppercase hover:border-border-strong hover:text-text"
+                title="Copia o resumo deste produto. Não publica alerta."
+                onClick={() => {
+                  const fila = buildPlantaoQueue({
+                    tipo,
+                    municipios: scopedCatalog.map((m) => ({
+                      id: m.id,
+                      nome: m.nome,
+                      bacia: m.bacia,
+                      risco: m.risco,
+                      expiresAt: m.expiresAt ?? null,
+                    })),
+                    rain,
+                    air,
+                    hydro: hydroStations,
+                  });
+                  const ativos = scopedCatalog
+                    .filter((m) => isAlertActive(tipo, m.risco))
+                    .sort(
+                      (a, b) =>
+                        levelRank(tipo, b.risco) - levelRank(tipo, a.risco) ||
+                        a.nome.localeCompare(b.nome, "pt-BR"),
+                    )
+                    .map((m) => ({
+                      nome: m.nome,
+                      detalhe: `${levelLabel(m.risco)} · ${m.bacia}`,
+                    }));
+                  const texto = montarPassagem({
+                    horario: formatManausStamp(Date.now()),
+                    responsavel: session?.name ?? null,
+                    produto: product.label,
+                    recorte: calha || bacia || "todos os municípios deste produto",
+                    niveis: product.levels.map((level) => ({
+                      nivel: levelLabel(level),
+                      quantidade: scopedCatalog.filter((m) => m.risco === level).length,
+                    })),
+                    ativos,
+                    fila: fila.map((item) => ({
+                      acao: item.action,
+                      nome: item.nome,
+                      detalhe: item.motivo,
+                    })),
+                    fontes: [
+                      { nome: "CEMADEN", detalhe: rain ? "consultada nesta tela" : "não consultada nesta tela" },
+                      { nome: "Boletim", detalhe: hydro ? "consultado nesta tela" : "não consultado nesta tela" },
+                      ...(tipo === "INCENDIO"
+                        ? [{ nome: "SELVA", detalhe: air ? "consultada nesta tela" : "não consultada nesta tela" }]
+                        : []),
+                    ],
+                    classificacoesOperador: scopedCatalog.filter((m) => m.fonte === "admin").length,
+                  });
+                  void navigator.clipboard.writeText(texto).then(
+                    () => toast.success("Passagem copiada. Revise antes de encaminhar."),
+                    () => toast.error("Não foi possível copiar a passagem."),
+                  );
+                }}
+              >
+                Passagem
+              </button>
+            ) : null}
           </SituationBar>
           </DashboardRow>
 
@@ -1694,6 +1782,15 @@ export function AlertsWorkbench() {
                       mm6h: row?.mm6h ?? null,
                       mm24h: row?.mm24h ?? null,
                       hasRainStation: Boolean(row),
+                      observacao: observacaoDoMunicipio({
+                        fonte: m.fonte,
+                        tipo,
+                        consultaFeita: Boolean(rain),
+                        temEstacao: Boolean(row),
+                        mm1h: row?.mm1h ?? null,
+                        mm24h: row?.mm24h ?? null,
+                        temAlgumaLeitura: hasRainReading(row),
+                      }),
                     };
                   })}
                   selected={paintArmed || drawMode || eraseMode ? null : selected}
@@ -1763,6 +1860,7 @@ export function AlertsWorkbench() {
                     air={tipo === "INCENDIO" ? (air ? air.byNome[selectedRow.nome] ?? null : undefined) : undefined}
                     productLabel={product.label}
                     tipo={tipo}
+                    auditoria={admin}
                     onClose={() => setQuery({ municipio: null })}
                   />
                 </div>
@@ -1805,6 +1903,15 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                {semLeitura > 0 ? (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-text-mute">
+                    <span
+                      className="size-2.5 rounded-sm border border-dashed border-text-mute"
+                      style={{ background: SEM_LEITURA_FILL }}
+                    />
+                    Sem leitura · {semLeitura}. Não é o verde de Baixo.
+                  </p>
+                ) : null}
                 {tipo === "INCENDIO" ? (
                   <>
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">

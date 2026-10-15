@@ -173,8 +173,8 @@ export function IndiceCard({ rec }: { rec: MetodologiaRow | null | undefined }) 
 
       <p className="mt-2 text-[10px] text-text-mute">
         Metodologia CEMOA (cemoa_app) · IRE = ((IVM + ameaça) × FS + agravo) × FE ×
-        FA · IRG = 0,7 × maior IRE + 0,3 × média · FA ao vivo pela classificação do
-        operador.
+        FA · IRG = 0,7 × maior IRE + 0,3 × média. FA súbito: pior nível entre o
+        operador, o CEMADEN e, no incêndio, SELVA e focos. Sem alerta usa 0,3.
       </p>
     </div>
   );

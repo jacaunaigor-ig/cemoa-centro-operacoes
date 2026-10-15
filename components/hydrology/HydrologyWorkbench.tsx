@@ -551,7 +551,7 @@ export function HydrologyWorkbench() {
                 label="Mod."
                 value={loading ? "—" : String(kpis.moderado)}
                 sub={HYDRO_ACTIONS.MODERADO}
-                accent="#f59e0b"
+                accent={HYDRO_STATUS_COLORS.MODERADO}
                 active={status === "MODERADO"}
                 onClick={() => setQuery({ status: "MODERADO", municipio: null })}
                 loading={loading}
@@ -620,7 +620,7 @@ export function HydrologyWorkbench() {
               label="Moderado"
               value={loading ? "—" : String(kpis.moderado)}
               sub={`${HYDRO_ACTIONS.MODERADO} · ${pct(kpis.moderado)}`}
-              accent="#f59e0b"
+              accent={HYDRO_STATUS_COLORS.MODERADO}
               active={status === "MODERADO"}
               onClick={() => setQuery({ status: "MODERADO", municipio: null })}
               loading={loading}

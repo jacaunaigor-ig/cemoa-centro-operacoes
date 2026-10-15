@@ -252,6 +252,11 @@ async function refresh(): Promise<Map<string, FabricCota[]>> {
   }
 }
 
+export function peekFabricCache(): { at: number; registros: number } | null {
+  if (!cache) return null;
+  return { at: cache.at, registros: cache.byNome.size };
+}
+
 export async function getFabricCotas(): Promise<{
   byNome: Map<string, FabricCota[]>;
   pending: boolean;

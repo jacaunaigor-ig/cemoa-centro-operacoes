@@ -14,6 +14,7 @@ import { cn, formatRelative } from "@/lib/utils";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { CemadenRainPanel } from "@/components/alerts/CemadenRainPanel";
 import { AirQualityPanel } from "@/components/alerts/AirQualityPanel";
+import { ClassificacaoHistorico } from "@/components/alerts/ClassificacaoHistorico";
 import { FichaTerritorio } from "@/components/shared/FichaTerritorio";
 import { WeatherForecastPanel } from "@/components/alerts/WeatherForecastPanel";
 
@@ -34,6 +35,7 @@ export function AlertDetail({
   productLabel,
   tipo,
   overlay,
+  auditoria,
   onClose,
 }: {
   municipioId?: string;
@@ -52,6 +54,7 @@ export function AlertDetail({
   productLabel: string;
   tipo?: AlertType;
   overlay?: boolean;
+  auditoria?: boolean;
   onClose: () => void;
 }) {
   const { isMobile } = useOpsMode();
@@ -166,6 +169,10 @@ export function AlertDetail({
           Sem pluviômetro CEMADEN.
         </p>
       )}
+
+      {municipioId && auditoria && tipo ? (
+        <ClassificacaoHistorico municipioId={municipioId} tipo={tipo} />
+      ) : null}
 
       {municipioId ? <FichaTerritorio municipioId={municipioId} tipo={tipo} /> : null}
 

@@ -25,7 +25,7 @@ const MESH_PATH = join(process.cwd(), "public/geo/amazonas-municipios.json");
 const SOURCE_PURPLEAIR =
   "PurpleAir · pm2.5_24hour, só sensores externos (location_type=0), média municipal — não soma. Header x-api-key. Horários em America/Manaus (UTC-4)";
 const SOURCE_SELVA =
-  "App SELVA · leitura municipal que pinta Moderada, Ruim, Muito Ruim e Péssima. Boa não colore o mapa.";
+  "App SELVA · pior sensor em tempo real (pm2.5). A média municipal não define a faixa.";
 
 type Memo = { at: number; data: AirQualityPayload };
 let memo: Memo | null = null;
@@ -447,7 +447,10 @@ function buildFromPacket(
     const pm25Hour = mean(valid.map((s) => s.pm25Hour).filter((n): n is number => n != null));
     const pm25Cf1 = mean(valid.map((s) => s.pm25Cf1).filter((n): n is number => n != null));
     const pm25Atm = mean(valid.map((s) => s.pm25Atm).filter((n): n is number => n != null));
-    const pm25 = pm25Day ?? mean(valid.map((s) => s.pm25));
+    const instantaneos = valid
+      .map((s) => s.pm25Hour ?? (s.pm25Day == null ? s.pm25 : null))
+      .filter((n): n is number => n != null && Number.isFinite(n));
+    const pm25 = instantaneos.length ? Math.max(...instantaneos) : pm25Day;
     const level = pm25 == null ? null : airLevelFromPm25(pm25);
     const observedAt = Math.max(...list.map((s) => s.lastSeen));
     const rec: AirQualityMunicipio = {
@@ -495,6 +498,15 @@ function buildFromPacket(
     byId,
     byNome,
     sensors,
+  };
+}
+
+export function peekAirCache(): { at: number; registros: number; erro: string | null } | null {
+  if (!memo) return null;
+  return {
+    at: memo.at,
+    registros: memo.data.coverage.sensores,
+    erro: memo.data.error,
   };
 }
 

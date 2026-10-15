@@ -272,6 +272,37 @@ export function rainScore(tipo: AlertType | undefined, rain: RainfallWindows): n
   return (rain.mm1h ?? 0) * 5 + (rain.mm6h ?? 0) + (rain.mm24h ?? 0) * 0.25;
 }
 
+/**
+ * Classifica o município pelo acumulado: alagamento na janela de 1 h,
+ * movimento de massa na de 24 h. A classificação do centro prevalece
+ * quando já é igual ou mais grave que o limiar.
+ */
+export function applyRainClassification<
+  T extends {
+    id: string;
+    nome: string;
+    risco: RiskLevel | string;
+    fonte: "admin" | "monitor";
+    classifiedBy?: string | null;
+    classifiedAt?: number | null;
+  },
+>(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType | undefined): T[] {
+  if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
+  return rows.map((m) => {
+    const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
+    const apoio = rainApoio(tipo, rec, { id: m.id, nome: m.nome });
+    if (!apoio || apoio.level === "BAIXO") return m;
+    if (riskIndex(apoio.level) <= riskIndex(m.risco)) return m;
+    return {
+      ...m,
+      risco: apoio.level,
+      fonte: "monitor" as const,
+      classifiedBy: tipo === "ALAGAMENTO" ? "CEMADEN · 1 h" : "CEMADEN · 24 h",
+      classifiedAt: rec?.observedAt ?? rain.generatedAt ?? m.classifiedAt ?? null,
+    };
+  });
+}
+
 export function rainRankAction(current: string, suggested: RiskLevel | null): RainRankAction {
   if (!suggested || suggested === "BAIXO") return "manter";
   if (riskIndex(suggested) > riskIndex(current)) {

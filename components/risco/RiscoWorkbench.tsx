@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Droplets, Radio, ShieldAlert } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
+import { FichaOrigem, type ConsultaFonte } from "@/components/risco/FichaOrigem";
 import { IndiceCard } from "@/components/shared/IndiceCard";
 import { IndiceSheet } from "@/components/shared/IndiceSheet";
 import { KpiCard } from "@/components/shared/KpiCard";
@@ -18,7 +19,7 @@ import { CLASSES_IVM, EVENTOS_ORDEM, MET_NIVEIS, type MetPrioridade } from "@/li
 import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { decretoFill, decretosEstiagem, decretosInundacao } from "@/lib/decretos";
 import { STATIC_DEPLOY } from "@/lib/site";
-import type { RainfallMunicipio, RainfallPayload } from "@/lib/types";
+import type { HydrologyPayload, RainfallMunicipio, RainfallPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const POLL_MS = 20_000;
@@ -52,6 +53,9 @@ export function RiscoWorkbench() {
 
   const [payload, setPayload] = useState<MetodologiaPayload | null>(null);
   const [rain, setRain] = useState<RainfallPayload | null>(null);
+  const [rainEstado, setRainEstado] = useState<ConsultaFonte>("carregando");
+  const [hydro, setHydro] = useState<HydrologyPayload | null>(null);
+  const [hydroEstado, setHydroEstado] = useState<ConsultaFonte>("carregando");
   const [error, setError] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>("operacao");
   const [recorte, setRecorte] = useState<Recorte>("todos");
@@ -69,21 +73,29 @@ export function RiscoWorkbench() {
         if (STATIC_DEPLOY) {
           if (!cancelled) {
             setPayload(buildMetodologiaPayload());
+            setRainEstado("nao-consultado");
+            setHydroEstado("nao-consultado");
             setError(null);
           }
           return;
         }
-        const [indice, chuva] = await Promise.all([
+        const [indice, chuva, boletim] = await Promise.all([
           fetchJson<MetodologiaPayload>("/api/risco"),
           fetchJson<RainfallPayload>("/api/rainfall").catch(() => null),
+          fetchJson<HydrologyPayload>("/api/hydrology").catch(() => null),
         ]);
         if (cancelled) return;
         setPayload(indice);
-        if (chuva) setRain(chuva);
+        setRain(chuva);
+        setRainEstado(chuva ? "ok" : "falha");
+        setHydro(boletim);
+        setHydroEstado(boletim ? "ok" : "falha");
         setError(null);
       } catch (err) {
         if (cancelled) return;
         setPayload((prev) => prev ?? buildMetodologiaPayload());
+        setRainEstado((prev) => (prev === "ok" ? prev : "falha"));
+        setHydroEstado((prev) => (prev === "ok" ? prev : "falha"));
         setError(err instanceof Error ? err.message : "Falha ao carregar o índice.");
       }
     }
@@ -272,6 +284,14 @@ export function RiscoWorkbench() {
             <Ficha
               row={selected}
               rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
+              rainEstado={rainEstado}
+              rainAt={rain?.generatedAt ?? null}
+              rainError={rain?.error ?? null}
+              hydro={selected ? hydro?.stations.find((item) => item.id === selected.codigo) ?? null : null}
+              hydroEstado={hydroEstado}
+              hydroAt={hydro?.generatedAt ?? null}
+              indiceEm={payload?.generatedAt ?? null}
+              indiceFonte={payload?.source ?? ""}
               onClear={() => setQuery({ municipio: null })}
             />
           </div>
@@ -335,10 +355,26 @@ function FilterSelect({
 function Ficha({
   row,
   rain,
+  rainEstado,
+  rainAt,
+  rainError,
+  hydro,
+  hydroEstado,
+  hydroAt,
+  indiceEm,
+  indiceFonte,
   onClear,
 }: {
   row: MetodologiaRow | null;
   rain?: RainfallMunicipio | null;
+  rainEstado: ConsultaFonte;
+  rainAt: number | null;
+  rainError: string | null;
+  hydro: HydrologyPayload["stations"][number] | null;
+  hydroEstado: ConsultaFonte;
+  hydroAt: number | null;
+  indiceEm: number | null;
+  indiceFonte: string;
   onClear: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -389,6 +425,18 @@ function Ficha({
         </button>
       </div>
       <IndiceCard rec={row} />
+      <FichaOrigem
+        row={row}
+        indiceEm={indiceEm}
+        indiceFonte={indiceFonte}
+        chuva={rain ?? null}
+        chuvaEstado={rain ? "ok" : rainEstado}
+        chuvaEm={rainAt}
+        chuvaErro={rainError}
+        hidro={hydro}
+        hidroEstado={hydro ? "ok" : hydroEstado}
+        hidroEm={hydroAt}
+      />
       <div className="mt-3 flex flex-wrap gap-3">
         <Link
           href={`/?municipio=${encodeURIComponent(row.nome)}&bacia=${encodeURIComponent(row.bacia)}`}

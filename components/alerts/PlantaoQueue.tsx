@@ -74,8 +74,10 @@ export function PlantaoQueue({
       className="rounded-lg border border-border bg-bg/35 p-2"
       title={
         tipo === "INCENDIO"
-          ? "MP2,5 em 24 h sugere ação. Só o operador classifica o município."
-          : "Sugestão de plantão. Só o operador classifica o grau — chuva e cota não alteram o grau."
+          ? "O ranking segue a classificação do centro. O MP2,5 sugere ação na fila."
+          : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO"
+            ? "O mapa classifica pelo acumulado. A classificação do centro permanece quando é mais grave."
+            : "Sugestão de plantão. Só o operador classifica o grau."
       }
     >
       <div className="flex items-center justify-between gap-2">
@@ -94,7 +96,7 @@ export function PlantaoQueue({
           {tipo === "ALAGAMENTO"
             ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo >20 mm/h."
             : "Estado: 50–85 / 85–140 / >140 mm/24 h. Manaus: severo >30 mm/24 h."}{" "}
-          Não classifica o grau.
+          O mapa usa esse limiar.
         </p>
       ) : null}
 

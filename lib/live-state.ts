@@ -91,7 +91,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
-/** Sem classificação do operador, o município fica no nível baixo do produto. Incêndio/Qualidade do ar recebe a faixa do App SELVA por cima, exceto Boa. */
+/** Sem classificação do operador, o município fica no nível baixo do produto. Qualidade do ar usa só o grau do centro; alagamento e movimento de massa sobem pelo acumulado no painel. */
 export function buildAlertsPayload(
   now = Date.now(),
   tipo: AlertType = "CHUVA",

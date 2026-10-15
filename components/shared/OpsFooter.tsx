@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { FonteSaude } from "@/lib/source-health";
 import { formatAmazonDateTime } from "@/lib/utils";
 
 const FONTES = [
@@ -25,6 +29,28 @@ export function OpsFooter({
   hydroAt?: number | null;
   supabase?: "ligado" | "aguardando";
 }) {
+  const [fontes, setFontes] = useState<FonteSaude[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/status", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { fontes?: FonteSaude[] };
+        if (!cancelled) setFontes(data.fontes ?? []);
+      } catch {
+        if (!cancelled) setFontes([]);
+      }
+    }
+    void load();
+    const timer = window.setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   const stamps = [
     updatedAt ? `Alertas ${formatAmazonDateTime(updatedAt)}` : null,
     rainAt ? `Chuva ${formatAmazonDateTime(rainAt)}` : null,
@@ -62,6 +88,28 @@ export function OpsFooter({
         <p className="mt-0.5 font-mono tabular-nums">
           Última atualização · {stamps.join(" · ")} · horário de Manaus
         </p>
+      ) : null}
+      {fontes.length ? (
+        <ul className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5" aria-label="Integridade das fontes">
+          {fontes.map((fonte) => (
+            <li key={fonte.id} title={fonte.erro ?? fonte.estado}>
+              <span
+                className={
+                  fonte.estado === "operacional"
+                    ? "text-risco-baixo"
+                    : fonte.estado === "atrasada"
+                      ? "text-[#a16207]"
+                      : fonte.estado === "erro"
+                        ? "text-risco-severo"
+                        : "text-text-mute"
+                }
+              >
+                {fonte.nome} {fonte.estado}
+                {fonte.atualizadoEm ? ` · ${formatAmazonDateTime(fonte.atualizadoEm)}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </footer>
   );

@@ -135,6 +135,11 @@ async function refresh(codes: string[]) {
   return byCode;
 }
 
+export function peekAnaCache(): { at: number; registros: number } | null {
+  if (!cache) return null;
+  return { at: cache.at, registros: cache.byCode.size };
+}
+
 export async function getAnaReadings(codes: string[]): Promise<{
   byCode: Map<string, AnaReading>;
   pending: boolean;

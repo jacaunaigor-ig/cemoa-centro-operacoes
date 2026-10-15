@@ -7,6 +7,7 @@ import {
   AIR_NETWORK_LABELS,
   airApoio,
   formatUg,
+  pm25ToUsAqi,
   PURPLEAIR_MAP_URL,
   purpleAirSensorUrl,
   SELVA_URL,
@@ -40,9 +41,12 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-            24 h
+            Tempo real
           </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25Day ?? rec.pm25)}</strong>
+          <strong className="font-mono text-sm tabular-nums">
+            {formatUg(rec.pm25)}
+            {rec.pm25 != null ? ` · AQI ${pm25ToUsAqi(rec.pm25)}` : ""}
+          </strong>
         </div>
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
@@ -59,7 +63,7 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       </div>
       <div className="mt-1.5 rounded-md border border-border bg-panel/60 px-2 py-1.5 text-center">
         <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-          Faixa (pm2.5_24hour · 24 h)
+          Faixa · pior sensor agora
         </small>
         <strong className="text-sm">
           {level ? AIR_LABELS[level] : "—"}
