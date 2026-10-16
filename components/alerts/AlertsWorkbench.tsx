@@ -40,6 +40,7 @@ import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides,
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { DEFAULT_ALERT_DURATION_MS, durationLabel, vigenciaMonitorMs } from "@/lib/alert-duration";
+import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import { alertExpiresAt } from "@/lib/alert-validity";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
@@ -372,6 +373,28 @@ export function AlertsWorkbench() {
   const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [showSetores, setShowSetores] = useState(true);
+  const [avisoInmet, setAvisoInmet] = useState(true);
+  const [inmetAvisos, setInmetAvisos] = useState<InmetAvisoMapa[]>([]);
+
+  useEffect(() => {
+    if (tipo !== "CHUVA" || !avisoInmet) return;
+    let cancel = false;
+    async function load() {
+      try {
+        const data = await fetchJson<{ avisos?: InmetAvisoMapa[] }>("/api/inmet-avisos");
+        if (!cancel) setInmetAvisos(data.avisos ?? []);
+      } catch (err) {
+        reportClientError("inmet-avisos", err);
+        if (!cancel) setInmetAvisos([]);
+      }
+    }
+    void load();
+    const timer = window.setInterval(() => void load(), 60 * 60_000);
+    return () => {
+      cancel = true;
+      window.clearInterval(timer);
+    };
+  }, [tipo, avisoInmet]);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
@@ -1901,6 +1924,15 @@ export function AlertsWorkbench() {
                             : "Áreas R3/R4"}
                       </MapToolButton>
                     ) : null}
+                    {tipo === "CHUVA" ? (
+                      <MapToolButton
+                        active={avisoInmet}
+                        onClick={() => setAvisoInmet((v) => !v)}
+                        icon={<CloudRain className="size-3.5" />}
+                      >
+                        {avisoInmet ? "Ocultar aviso INMET" : "Aviso INMET"}
+                      </MapToolButton>
+                    ) : null}
                     {tipo === "INCENDIO" ? (
                       <MapToolButton
                         active={focosMapa}
@@ -2039,6 +2071,8 @@ export function AlertsWorkbench() {
                   drawMode={admin && drawMode}
                   eraseMode={admin && eraseMode}
                   stains={data.stains ?? []}
+                  inmetAvisos={inmetAvisos}
+                  showInmetAvisos={tipo === "CHUVA" && avisoInmet}
                   onSelect={(nome, basinName) => {
                     setHovered(null);
                     setQuery(geoForNome(nome, basinName));
@@ -2129,6 +2163,26 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                {tipo === "CHUVA" && avisoInmet ? (
+                  <ul className="mt-1.5 space-y-0.5 border-t border-border pt-1">
+                    {inmetAvisos.length ? (
+                      inmetAvisos.map((aviso) => (
+                        <li key={aviso.id} className="flex items-start gap-1.5 px-0.5 py-0.5 text-text">
+                          <span
+                            className="mt-0.5 size-2.5 shrink-0 rounded-sm border border-[#a16207]"
+                            style={{ background: aviso.cor }}
+                          />
+                          <span className="leading-snug">
+                            Aviso INMET · {aviso.descricao} · {aviso.severidade}
+                            {aviso.fim ? ` · até ${aviso.fim}` : ""}
+                          </span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="px-0.5 text-text-mute">Sem aviso INMET vigente no Amazonas.</li>
+                    )}
+                  </ul>
+                ) : null}
                 {semLeitura > 0 ? (
                   <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-text-mute">
                     <span

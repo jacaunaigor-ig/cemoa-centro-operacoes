@@ -58,6 +58,7 @@ import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-h
 import { reportClientError } from "@/lib/client";
 import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
+import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import { durationLabel } from "@/lib/alert-duration";
 import "leaflet/dist/leaflet.css";
 
@@ -106,6 +107,8 @@ export const AlertsMap = forwardRef<
     drawMode?: boolean;
     eraseMode?: boolean;
     stains?: AlertStain[];
+    inmetAvisos?: InmetAvisoMapa[];
+    showInmetAvisos?: boolean;
         focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
     showFocosCalor?: boolean;
     showSetores?: boolean;
@@ -141,6 +144,8 @@ export const AlertsMap = forwardRef<
     drawMode = false,
     eraseMode = false,
     stains = [],
+    inmetAvisos = [],
+    showInmetAvisos = false,
     focosCalor = [],
     showFocosCalor = false,
     showSetores = false,
@@ -167,6 +172,11 @@ export const AlertsMap = forwardRef<
   const rainLayerRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
   const stainLayerRef = useRef<GeoJSONType | null>(null);
+  const inmetLayerRef = useRef<GeoJSONType | null>(null);
+  const inmetAvisosRef = useRef(inmetAvisos);
+  const showInmetRef = useRef(showInmetAvisos);
+  inmetAvisosRef.current = inmetAvisos;
+  showInmetRef.current = showInmetAvisos;
   const focosLayerRef = useRef<LayerGroup | null>(null);
   const setoresLayerRef = useRef<GeoJSONType | null>(null);
   const setorBolhasRef = useRef<LayerGroup | null>(null);
@@ -406,6 +416,51 @@ export const AlertsMap = forwardRef<
     stainLayerRef.current = layer;
   }
 
+  function syncInmetAvisos() {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    inmetLayerRef.current?.remove();
+    inmetLayerRef.current = null;
+    const list = showInmetRef.current ? inmetAvisosRef.current : [];
+    if (!list.length) return;
+    if (!map.getPane("inmetAvisoPane")) {
+      const pane = map.createPane("inmetAvisoPane");
+      pane.style.zIndex = "620";
+      pane.style.pointerEvents = "none";
+    }
+    const layer = L.geoJSON(
+      {
+        type: "FeatureCollection",
+        features: list.map((aviso) => ({
+          type: "Feature" as const,
+          properties: {
+            id: aviso.id,
+            descricao: aviso.descricao,
+            severidade: aviso.severidade,
+            cor: aviso.cor,
+          },
+          geometry: aviso.geometry,
+        })),
+      } as GeoJSON.FeatureCollection,
+      {
+        pane: "inmetAvisoPane",
+        interactive: false,
+        style: (feature) => {
+          const fill = String(feature?.properties?.cor ?? "#FFFE00");
+          return {
+            color: "#a16207",
+            fillColor: fill,
+            fillOpacity: 0.42,
+            weight: 1.6,
+            opacity: 0.9,
+          };
+        },
+      },
+    ).addTo(map);
+    inmetLayerRef.current = layer;
+  }
+
   function styleFor(feature?: GeoJSON.Feature): PathOptions {
     const nome = String(feature?.properties?.nome ?? "");
     const {
@@ -640,6 +695,7 @@ export const AlertsMap = forwardRef<
       if (!showRivers) map.removeLayer(rios);
       if (onlyRisk) map.removeLayer(tiles);
       syncStains();
+      syncInmetAvisos();
 
       if (hostRef.current) cancelResize = observeAmazonasResize(hostRef.current, map);
 
@@ -663,6 +719,7 @@ export const AlertsMap = forwardRef<
       rainLayerRef.current = null;
       territoryRef.current = null;
       stainLayerRef.current = null;
+      inmetLayerRef.current = null;
       setoresLayerRef.current = null;
       tilesRef.current = null;
     };
@@ -676,6 +733,7 @@ export const AlertsMap = forwardRef<
     .map((m) => `${m.id}:${m.mm1h}:${m.mm24h}`)
     .join("|") + `|${tipo}`;
   const stainSig = stains.map((s) => `${s.id}:${s.level}`).join("|");
+  const inmetSig = inmetAvisos.map((aviso) => `${aviso.id}:${aviso.cor}`).join("|");
   const calhaSig = (calhaNomes ?? []).join("|");
 
   useEffect(() => {
@@ -737,6 +795,10 @@ export const AlertsMap = forwardRef<
   useEffect(() => {
     syncStains();
   }, [stainSig, drawMode, eraseMode]);
+
+  useEffect(() => {
+    syncInmetAvisos();
+  }, [inmetSig, showInmetAvisos]);
 
   // Hover restyles only the two affected polygons directly — avoids re-styling
   // all ~62 features on every mouseover/mouseout (see full setStyle effect above).
