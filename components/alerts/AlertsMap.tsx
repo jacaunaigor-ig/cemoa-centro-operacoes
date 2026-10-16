@@ -947,22 +947,37 @@ export const AlertsMap = forwardRef<
           `<strong>${mun?.nome ?? ibge}</strong><br>${SETOR_USO_ROTULO[uso]}<br>${grupo.areas} áreas · ${grupo.r4} em R4`,
           { sticky: true, opacity: 0.95 },
         );
-        marker.on("click", () => {
+        marker.on("click", (ev) => {
+          L.DomEvent.stopPropagation(ev);
           if (stateRef.current.drawMode || stateRef.current.eraseMode || !mun) return;
           if (stateRef.current.adminMode) paintFeature(mun.nome);
           else onSelectRef.current(mun.nome, mun.bacia);
-          const doMun = layer.getLayers().filter((lyr) => {
-            const feature = (lyr as { feature?: GeoJSON.Feature }).feature;
-            return feature?.properties?.ibge === ibge;
-          });
-          if (doMun.length) {
-            map.fitBounds(L.featureGroup(doMun).getBounds(), { padding: [28, 28], maxZoom: 14 });
-          }
         });
         bolhas.addLayer(marker);
       }
       setorBolhasRef.current = bolhas;
+      function focarSelecionado() {
+        if (!selectedId) return;
+        const doMun = layer.getLayers().filter((lyr) => {
+          const feature = (lyr as { feature?: GeoJSON.Feature }).feature;
+          return feature?.properties?.ibge === selectedId;
+        });
+        if (!doMun.length) return;
+        const bounds = L.featureGroup(doMun).getBounds();
+        if (!bounds.isValid()) return;
+        const fitZoom = map.getBoundsZoom(bounds, false, L.point(36, 36));
+        const zoom = Math.min(14, Math.max(SETOR_POLIGONO_DESDE_ZOOM, fitZoom || SETOR_POLIGONO_DESDE_ZOOM));
+        map.setView(bounds.getCenter(), zoom, { animate: false });
+      }
+      focarSelecionado();
       syncCamadas();
+      // O cartão de detalhe muda a altura do mapa e o ajuste do Amazonas
+      // desfaz o zoom. Reaplica depois desse ajuste.
+      window.setTimeout(() => {
+        if (cancelled) return;
+        focarSelecionado();
+        syncCamadas();
+      }, 220);
     }
 
     function syncCamadas() {
