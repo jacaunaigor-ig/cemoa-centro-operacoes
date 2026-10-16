@@ -60,7 +60,6 @@ export function airApoio(rec: AirQualityMunicipio | null | undefined): AirApoio 
   return {
     level: rec.level,
     motivo: `SELVA · pior sensor ${formatUg(rec.pm25)} — qualidade ${AIR_LABELS[rec.level].toLowerCase()}.`,
-    motivo: `MP2,5 ${formatUg(rec.pm25)} (tempo real) — qualidade ${AIR_LABELS[rec.level].toLowerCase()}. O mapa segue essa faixa até o operador alterar.`,
   };
 }
 

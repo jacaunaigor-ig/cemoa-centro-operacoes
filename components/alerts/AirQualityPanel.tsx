@@ -47,9 +47,6 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
             {formatUg(rec.pm25)}
             {rec.pm25 != null ? ` · AQI ${pm25ToUsAqi(rec.pm25)}` : ""}
           </strong>
-            Ao vivo
-          </small>
-          <strong className="font-mono text-sm tabular-nums">{formatUg(rec.pm25)}</strong>
         </div>
         <div className="rounded-md border border-border bg-panel/60 px-2 py-1.5">
           <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
@@ -67,7 +64,6 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       <div className="mt-1.5 rounded-md border border-border bg-panel/60 px-2 py-1.5 text-center">
         <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
           Faixa · pior sensor agora
-          Faixa (tempo real)
         </small>
         <strong className="text-sm">
           {level ? AIR_LABELS[level] : "—"}

@@ -20,7 +20,6 @@ export async function GET(): Promise<Response> {
   const { data, cache } = cached("metodologia-risco", 4000, () =>
     buildMetodologiaPayload(Date.now(), { rain, air, focos }),
   );
-  const { data, cache } = cached("metodologia-risco", 4000, () => buildMetodologiaPayload(Date.now()));
 
   const payload = JSON.parse(JSON.stringify({ ...data, cache }));
 

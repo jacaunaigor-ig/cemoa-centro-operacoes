@@ -17,7 +17,6 @@ import {
   HYDRO_MUDANCAS,
   HYDRO_RIOS,
   catalogStations,
-  formatHydroRef,
   hydroBoletimDiaIso,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";

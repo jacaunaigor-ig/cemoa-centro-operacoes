@@ -933,9 +933,6 @@ export function AlertsWorkbench() {
     if (tipo === "INCENDIO") return applyAirClassification(rows, air);
     return rows;
   }, [data, tipo, rain, air]);
-    if (tipo === "INCENDIO") return applyAirClassification(rows, air);
-    return applyRainClassification(rows, rain, tipo);
-  }, [data, tipo, air, rain]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),

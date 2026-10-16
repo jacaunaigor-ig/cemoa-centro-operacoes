@@ -11,8 +11,6 @@ import raw from "@/data/hydrology.json";
 import { hydroBoletimDiaIso, hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
 export { hydroBoletimDiaIso };
-import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
-import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
 export const CALHAS = [
   "Alto Solimões",
@@ -165,13 +163,6 @@ const FILE = raw as RawFile;
 
 export const HYDRO_DIAS = FILE.dias;
 export const HYDRO_REFERENCIA = FILE.referencia;
-
-/** Depois das 16 h de Manaus o boletim do dia vigente substitui a data do snapshot. */
-export function hydroBoletimDiaIso(now = Date.now()) {
-  const clock = relogioDoFuso(now, FUSO_MANAUS);
-  if (clock.hour >= ANA_HORAS[0]) return hydroTodayIso(now);
-  return FILE.referencia;
-}
 
 export function formatHydroRef(ref: string | null | undefined) {
   if (!ref) return "—";
