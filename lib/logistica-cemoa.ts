@@ -50,14 +50,14 @@ export const MODAL_LOGISTICO: Record<
 };
 
 export const CALHAS_LOGISTICA = [
-  { id: "Alto Solimões", cor: "#6d28d9" },
-  { id: "Médio Solimões", cor: "#2563eb" },
-  { id: "Baixo Solimões", cor: "#0891b2" },
+  { id: "Alto Solimões", cor: "#5b21b6" },
+  { id: "Médio Solimões", cor: "#1d4ed8" },
+  { id: "Baixo Solimões", cor: "#0e7490" },
   { id: "Juruá", cor: "#be123c" },
-  { id: "Purus", cor: "#c026d3" },
+  { id: "Purus", cor: "#db2777" },
   { id: "Madeira", cor: "#c2410c" },
   { id: "Rio Negro", cor: "#0f766e" },
-  { id: "Médio Amazonas", cor: "#4d7c0f" },
+  { id: "Médio Amazonas", cor: "#3f6212" },
   { id: "Baixo Amazonas", cor: "#a16207" },
 ] as const;
 
@@ -76,12 +76,12 @@ export function corCalha(calha: string): string {
 export type ClasseLogistica = "hub" | "rodovia-publico" | "rodovia" | "publico" | "privado" | "fluvial";
 
 export const CLASSES_LOGISTICA: Array<{ id: ClasseLogistica; label: string; cor: string }> = [
-  { id: "hub", label: "Hub aéreo e rodoviário", cor: "#166534" },
+  { id: "hub", label: "Hub aéreo e rodoviário", cor: "#052e16" },
   { id: "rodovia-publico", label: "Rodovia e aeródromo público", cor: "#15803d" },
-  { id: "rodovia", label: "Rodovia, sem aeródromo público", cor: "#4ade80" },
-  { id: "publico", label: "Fluvial com aeródromo público", cor: "#0284c7" },
-  { id: "privado", label: "Fluvial com pista privada", cor: "#d97706" },
-  { id: "fluvial", label: "Somente fluvial", cor: "#b91c1c" },
+  { id: "rodovia", label: "Rodovia, sem aeródromo público", cor: "#65a30d" },
+  { id: "publico", label: "Fluvial com aeródromo público", cor: "#0369a1" },
+  { id: "privado", label: "Fluvial com pista privada", cor: "#c2410c" },
+  { id: "fluvial", label: "Somente fluvial", cor: "#be123c" },
 ];
 
 const CLASSE_POR_ID = new Map(CLASSES_LOGISTICA.map((item) => [item.id, item]));

@@ -29,7 +29,7 @@ import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { decretoFill, decretosEstiagem, decretosInundacao } from "@/lib/decretos";
 import { STATIC_DEPLOY } from "@/lib/site";
 import type { HydrologyPayload, RainfallMunicipio, RainfallPayload } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, hexParaRgb } from "@/lib/utils";
 import { toast } from "sonner";
 
 const POLL_MS = 20_000;
@@ -326,7 +326,7 @@ export function RiscoWorkbench() {
             label="N6 Extremo"
             value={loading ? "—" : String(n6)}
             sub="prioridade máxima"
-            accent="#8e44ad"
+            accent="#6d28d9"
             loading={loading}
             active={recorte === "n6"}
             onClick={() => toggleRecorte("n6")}
@@ -335,7 +335,7 @@ export function RiscoWorkbench() {
             label="N5 Crítico"
             value={loading ? "—" : String(n5)}
             sub="mobilização"
-            accent="#e74c3c"
+            accent="#9f1239"
             loading={loading}
             active={recorte === "n5"}
             onClick={() => toggleRecorte("n5")}
@@ -344,7 +344,7 @@ export function RiscoWorkbench() {
             label="P1 confirmado"
             value={loading ? "—" : String(payload?.resumo.p1Confirmados ?? 0)}
             sub="com alerta ativo"
-            accent="#e67e22"
+            accent="#dc2626"
             loading={loading}
             active={recorte === "p1"}
             onClick={() => toggleRecorte("p1")}
@@ -353,7 +353,7 @@ export function RiscoWorkbench() {
             label="Rebaixados"
             value={loading ? "—" : String(payload?.resumo.rebaixadosSemAlerta ?? 0)}
             sub="sem alerta em evento súbito"
-            accent="#f1c40f"
+            accent="#a16207"
             loading={loading}
             active={recorte === "rebaixados"}
             onClick={() => toggleRecorte("rebaixados")}
@@ -479,8 +479,11 @@ export function RiscoWorkbench() {
                   <div
                     className="h-2.5 w-full rounded-full border border-border/60"
                     style={{
-                      background:
-                        "linear-gradient(to right, #22c55e 0%, #facc15 33.3%, #f59e0b 50%, #d7410f 66.7%, #e11d48 83.3%, #7c3aed 96.7%, #4c1d95 100%)",
+                      background: `linear-gradient(to right, ${ESCALA_DEGRADE_RISCO.map((item, i, lista) => {
+                        const start = ((i / lista.length) * 100).toFixed(1);
+                        const end = (((i + 1) / lista.length) * 100).toFixed(1);
+                        return `${item.cor} ${start}%, ${item.cor} ${end}%`;
+                      }).join(", ")})`,
                     }}
                   />
 
@@ -489,9 +492,12 @@ export function RiscoWorkbench() {
                       const niv = MET_NIVEIS.find((n) => n.nome === item.label);
                       const qtd = niv ? contagensFaixa[niv.n] ?? 0 : 0;
                       return (
-                        <li key={item.ate} className="flex items-center gap-1.5">
-                          <span className="size-2.5 rounded-sm border border-border" style={{ background: item.cor }} />
-                          <span className="font-semibold text-text">{item.label}</span>
+                        <li key={item.ate} className="flex items-start gap-1.5">
+                          <span className="mt-0.5 size-3 shrink-0 rounded-sm border border-slate-950/40" style={{ background: item.cor }} />
+                          <span className="grid leading-tight">
+                            <span className="font-semibold text-text">{item.label}</span>
+                            <span className="font-mono text-[10px] text-text">{hexParaRgb(item.cor)}</span>
+                          </span>
                           <span className="font-mono tabular-nums text-text-mute">({qtd})</span>
                         </li>
                       );
@@ -748,7 +754,7 @@ function Analise({ rows }: { rows: MetodologiaRow[] }) {
   }));
   const porPrio = (["P1", "P2", "P3", "P4"] as const).map((id) => ({
     label: id,
-    cor: id === "P1" ? "#e74c3c" : id === "P2" ? "#e67e22" : id === "P3" ? "#f39c12" : "#2ecc71",
+    cor: id === "P1" ? "#9f1239" : id === "P2" ? "#dc2626" : id === "P3" ? "#ea580c" : "#166534",
     qtd: rows.filter((row) => row.prioridade === id).length,
   }));
   const top = [...rows].sort((a, b) => b.irg - a.irg).slice(0, 15);

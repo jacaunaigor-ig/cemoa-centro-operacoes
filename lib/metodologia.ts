@@ -27,12 +27,12 @@
 export const METODOLOGIA_VERSAO = "Metodologia CEMOA · IRE/IRG (cemoa_app)";
 
 export const MET_NIVEIS = [
-  { n: 6, id: "P1", nome: "Extremo", piso: 58.0, cor: "#8e44ad" },
-  { n: 5, id: "P1", nome: "Crítico", piso: 50.0, cor: "#e74c3c" },
-  { n: 4, id: "P2", nome: "Alto", piso: 40.0, cor: "#e67e22" },
-  { n: 3, id: "P3", nome: "Elevado", piso: 30.0, cor: "#f39c12" },
-  { n: 2, id: "P4", nome: "Moderado", piso: 20.0, cor: "#f1c40f" },
-  { n: 1, id: "P4", nome: "Baixo", piso: 0.0, cor: "#2ecc71" },
+  { n: 6, id: "P1", nome: "Extremo", piso: 58.0, cor: "#6d28d9" },
+  { n: 5, id: "P1", nome: "Crítico", piso: 50.0, cor: "#9f1239" },
+  { n: 4, id: "P2", nome: "Alto", piso: 40.0, cor: "#dc2626" },
+  { n: 3, id: "P3", nome: "Elevado", piso: 30.0, cor: "#ea580c" },
+  { n: 2, id: "P4", nome: "Moderado", piso: 20.0, cor: "#a16207" },
+  { n: 1, id: "P4", nome: "Baixo", piso: 0.0, cor: "#166534" },
 ] as const;
 
 export type MetNivel = (typeof MET_NIVEIS)[number];

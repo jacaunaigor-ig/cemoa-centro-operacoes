@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** `#rrggbb` → `rgb(r, g, b)`, para a legenda bater com a cor pintada no mapa. */
+export function hexParaRgb(hex: string): string {
+  const h = hex.trim().replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return hex;
+  const n = Number.parseInt(h, 16);
+  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+}
+
 export function amazonNow(date = new Date()) {
   return new Date(date.toLocaleString("en-US", { timeZone: "America/Manaus" }));
 }

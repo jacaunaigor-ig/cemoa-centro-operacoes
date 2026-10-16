@@ -96,7 +96,8 @@ export const CotaChart = memo(function CotaChart({
     <div className={cn("mx-auto grid w-full max-w-[32rem] gap-2")}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className={cn("w-full", compact ? "h-36" : "h-44")}
+        width="100%"
+        className={cn("block h-auto max-w-full", compact ? "max-h-36" : "max-h-44")}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`Cota observada e projeção linear de 3, 5 e 7 dias em ${station.municipio}`}

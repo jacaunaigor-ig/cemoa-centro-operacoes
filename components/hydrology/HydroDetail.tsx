@@ -48,7 +48,7 @@ export function HydroDetail({
   return (
     <section
       className={cn(
-        "overflow-y-auto overscroll-contain bg-panel/95 px-4 py-3",
+        "min-w-0 max-w-full overflow-y-auto overscroll-contain bg-panel/95 px-4 py-3",
         compact
           ? "min-h-0 max-h-full flex-1 rounded-xl border border-border pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           : "min-h-0 max-h-[min(50%,36rem)] shrink-0 border-t border-border",
@@ -184,7 +184,7 @@ export function HydroDetail({
         </span>
       </div>
 
-      <div className="mt-2 max-w-[32rem]">
+      <div className="mt-2 min-w-0 max-w-full">
         <CotaChart
           station={station}
           status={statusAtivo(station, modo)}
@@ -204,13 +204,13 @@ export function HydroDetail({
         />
       </div>
 
-      <div className="mt-3 overflow-x-auto">
+      <div className="mt-3 min-w-0 max-w-full overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="text-[10px] tracking-wide text-text-mute uppercase">
               <tr>
                 <th className="py-1 pr-2">Dia</th>
-                {station.dias.slice(Math.max(0, station.dias.length - 14)).map((d, i) => (
-                  <th key={`${d}-${i}`} className="py-1 pr-2 font-mono">
+                {station.dias.slice(Math.max(0, station.dias.length - (compact ? 7 : 14))).map((d, i) => (
+                  <th key={`${d}-${i}`} className="py-1 pr-2 font-mono whitespace-nowrap">
                     {d}
                   </th>
                 ))}
@@ -218,18 +218,18 @@ export function HydroDetail({
             </thead>
             <tbody>
               <tr>
-                <td className="py-1 pr-2 text-text-mute">Cota (m)</td>
-                {station.cotas.slice(Math.max(0, station.dias.length - 14)).map((c, i) => (
-                  <td key={`${station.dias[Math.max(0, station.dias.length - 14) + i] ?? i}`} className="py-1 pr-2 font-mono">
+                <td className="py-1 pr-2 whitespace-nowrap text-text-mute">Cota (m)</td>
+                {station.cotas.slice(Math.max(0, station.dias.length - (compact ? 7 : 14))).map((c, i) => (
+                  <td key={`${station.dias[Math.max(0, station.dias.length - (compact ? 7 : 14)) + i] ?? i}`} className="py-1 pr-2 font-mono whitespace-nowrap">
                     {c == null ? "—" : c.toFixed(2)}
                   </td>
                 ))}
               </tr>
             </tbody>
           </table>
-          {station.dias.length > 14 ? (
+          {station.dias.length > (compact ? 7 : 14) ? (
             <p className="mt-1 text-[10px] text-text-mute">
-              Últimos 14 dias da série. Leituras mais antigas entram no gráfico.
+              {compact ? "Últimos 7 dias da série." : "Últimos 14 dias da série."} Leituras mais antigas entram no gráfico.
             </p>
           ) : null}
       </div>

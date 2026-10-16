@@ -14,7 +14,7 @@ import {
 } from "@/lib/logistica-cemoa";
 import type { MetodologiaRow } from "@/lib/metodologia-build";
 import { STATIC_DEPLOY } from "@/lib/site";
-import { cn } from "@/lib/utils";
+import { cn, hexParaRgb } from "@/lib/utils";
 
 type Vista = "calha" | "modal" | "ranking";
 
@@ -154,8 +154,11 @@ export function LogisticaMapa({
                         calhaAtiva === item.id && "bg-hover",
                       )}
                     >
-                      <span className="size-2.5 rounded-sm" style={{ background: item.cor }} />
-                      {item.id}
+                      <span className="size-3 shrink-0 rounded-sm border border-slate-950/40" style={{ background: item.cor }} />
+                      <span className="grid text-left leading-tight">
+                        <span>{item.id}</span>
+                        <span className="font-mono text-[10px] font-normal text-text">{hexParaRgb(item.cor)}</span>
+                      </span>
                       <span className="font-mono font-normal text-text-mute">({item.itens.length})</span>
                     </button>
                   </li>
@@ -172,8 +175,11 @@ export function LogisticaMapa({
                         modalAtivo === item.id && "bg-hover",
                       )}
                     >
-                      <span className="size-2.5 rounded-sm" style={{ background: item.cor }} />
-                      {item.label}
+                      <span className="size-3 shrink-0 rounded-sm border border-slate-950/40" style={{ background: item.cor }} />
+                      <span className="grid text-left leading-tight">
+                        <span>{item.label}</span>
+                        <span className="font-mono text-[10px] font-normal text-text">{hexParaRgb(item.cor)}</span>
+                      </span>
                       <span className="font-mono font-normal text-text-mute">({item.itens.length})</span>
                     </button>
                   </li>
@@ -189,8 +195,11 @@ export function LogisticaMapa({
                         classeAtiva === item.id && "bg-hover",
                       )}
                     >
-                      <span className="size-2.5 rounded-sm" style={{ background: item.cor }} />
-                      {item.label}
+                      <span className="size-3 shrink-0 rounded-sm border border-slate-950/40" style={{ background: item.cor }} />
+                      <span className="grid text-left leading-tight">
+                        <span>{item.label}</span>
+                        <span className="font-mono text-[10px] font-normal text-text">{hexParaRgb(item.cor)}</span>
+                      </span>
                       <span className="font-mono font-normal text-text-mute">({item.itens.length})</span>
                     </button>
                   </li>

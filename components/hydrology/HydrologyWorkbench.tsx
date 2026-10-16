@@ -1036,7 +1036,7 @@ export function HydrologyWorkbench() {
                   className={cn(
                     "pointer-events-auto absolute z-[1200] flex flex-col overflow-hidden rounded-xl shadow-lg",
                     isMobile
-                      ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
+                      ? "inset-x-1.5 bottom-1.5 top-auto flex h-[min(58%,28rem)] max-h-[58%] min-w-0 flex-col"
                       : "top-2 right-2 bottom-2 flex w-[min(calc(100%-1rem),32rem)] min-h-0 flex-col",
                   )}
                 >
