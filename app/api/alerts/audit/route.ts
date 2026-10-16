@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { parseAlertType } from "@/lib/alert-types";
 import { requireAdmin } from "@/lib/auth";
 import { fetchClassificationAudit, fetchRecentClassificationAudit } from "@/lib/supabase-ops";
-import { fetchClassificationAudit } from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
 
@@ -35,13 +34,4 @@ export async function GET(request: Request) {
     });
   }
   return NextResponse.json({ disponivel: true, tipo, rows });
-  const municipioId = url.searchParams.get("municipio")?.trim() || undefined;
-  const tipoRaw = url.searchParams.get("tipo");
-  const tipo = tipoRaw ? parseAlertType(tipoRaw) : undefined;
-  const rows = await fetchClassificationAudit({
-    municipioId,
-    tipo,
-    limit: 40,
-  });
-  return NextResponse.json({ rows });
 }
