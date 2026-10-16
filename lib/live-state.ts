@@ -217,6 +217,7 @@ export function buildHydrologyPayload(
   const automaticas = stations.filter((s) => /^\d{6,}$/.test(s.estacao)).length;
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
+  const boletim = formatHydroRef(hydroBoletimDiaIso(now));
   const boletimIso = hydroBoletimDiaIso(now);
   const boletim = formatHydroRef(boletimIso);
   const fonteViva = /\d{2}\/\d{2}\/\d{4}/.test(HYDRO_FONTE)

@@ -29,12 +29,33 @@ export type StainGeometry =
 
 let meshPromise: Promise<MunicipalMesh> | null = null;
 
+export function prefetchMunicipalMesh() {
+  void loadMunicipalMesh().catch(() => undefined);
+}
+
 export function loadMunicipalMesh() {
   meshPromise ??= fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
     if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
     return r.json() as Promise<MunicipalMesh>;
   });
   return meshPromise;
+}
+
+/** Prefetch ocioso para o primeiro mapa da sessão não esperar a malha. */
+export function prefetchMunicipalMesh() {
+  if (typeof window === "undefined") return;
+  const run = () => {
+    void loadMunicipalMesh().catch(() => {
+      meshPromise = null;
+    });
+  };
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
+  if (typeof ric === "function") ric(run, { timeout: 2500 });
+  else window.setTimeout(run, 400);
 }
 
 function asPairs(ring: Ring): Pair[] {

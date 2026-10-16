@@ -199,13 +199,20 @@ function horaManaus(imageAt: number | null) {
   }).format(imageAt);
 }
 
-async function cropSala(input: Buffer, imageAt: number | null) {
-  const cw = GOES_SALA.x2 - GOES_SALA.x1;
-  const ch = GOES_SALA.y2 - GOES_SALA.y1;
+async function cropSala(input: Buffer, imageAt: number | null, width: number, height: number) {
+  const scaleX = width / 2192;
+  const scaleY = height / 2320;
+  const x1 = Math.max(0, Math.round(GOES_SALA.x1 * scaleX));
+  const y1 = Math.max(0, Math.round(GOES_SALA.y1 * scaleY));
+  const x2 = Math.min(width, Math.round(GOES_SALA.x2 * scaleX));
+  const y2 = Math.min(height, Math.round(GOES_SALA.y2 * scaleY));
+  const cw = x2 - x1;
+  const ch = y2 - y1;
+  if (cw < 80 || ch < 80) throw new Error("recorte GOES menor que o mínimo");
   const outW = 1600;
   const outH = Math.round((ch * outW) / cw);
   const cropped = await sharp(input)
-    .extract({ left: GOES_SALA.x1, top: GOES_SALA.y1, width: cw, height: ch })
+    .extract({ left: x1, top: y1, width: cw, height: ch })
     .resize(outW, outH, { kernel: "lanczos3" })
     .ensureAlpha()
     .png()
@@ -312,7 +319,9 @@ export async function cropGoesToAmazonas(
   const meta = await sharp(input).metadata();
   const width = meta.width ?? 0;
   const height = meta.height ?? 0;
-  if (width >= GOES_SALA.x2 && height >= GOES_SALA.y2) return cropSala(input, imageAt ?? null);
+  if (width >= GOES_SALA.x2 && height >= GOES_SALA.y2) {
+    return cropSala(input, imageAt ?? null, width, height);
+  }
   if (width < 200 || height < 200) return input;
 
   const { project } = await projectorFor(input, width, height, world);

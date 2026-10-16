@@ -1,4 +1,5 @@
-import { withBase } from "@/lib/site";
+import { formatAmazonDateTime } from "@/lib/utils";
+import { loadMunicipalMesh } from "@/lib/stain-clip";
 
 type Ring = number[][];
 type Geom =
@@ -133,10 +134,7 @@ export function pngFilename(prefix: string) {
 }
 
 export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
-  const geo = (await fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
-    if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
-    return r.json();
-  })) as FeatureCollection;
+  const geo = (await loadMunicipalMesh()) as FeatureCollection;
 
   const BASE_W = 2600;
   const BASE_H = 1700;
@@ -429,8 +427,12 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   ctx.fillText("Centro de Monitoramento e Alerta – CEMOA", 160, footY + 88);
   ctx.font = "600 15px Arial, sans-serif";
   ctx.fillStyle = "#9eb5c6";
-  ctx.fillText(opts.footerSources, 160, footY + 124);
-  ctx.fillText("Limites municipais: IBGE · Datum: SIRGAS 2000", 160, footY + 150);
+  ctx.fillText(
+    `${opts.footerSources}  ·  ${formatAmazonDateTime(Date.now())} (Manaus)`,
+    160,
+    footY + 124,
+  );
+  ctx.fillText("Limites municipais: IBGE · Datum: SIRGAS 2000 · validade: instante da exportação", 160, footY + 150);
 
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob((b) => resolve(b), "image/png"),

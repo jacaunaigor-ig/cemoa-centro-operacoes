@@ -148,6 +148,17 @@ export async function fetchClassificationAudit(
   );
 }
 
+export type ClassificationAuditRow = {
+  at: string;
+  tipo: string;
+  municipio_id: string;
+  municipio?: string | null;
+  previous_level?: string | null;
+  level: string;
+  issued_by?: string | null;
+  source?: string | null;
+};
+
 export async function appendClassificationAudit(
   rows: Array<{
     tipo: string;

@@ -44,9 +44,19 @@ import {
 } from "@/lib/map-overlays";
 import type { AirQualitySensor } from "@/lib/types";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
+import {
+  estiloSetor,
+  loadSetoresR3R4,
+  setorEntra,
+  SETOR_CORES,
+  SETOR_POLIGONO_DESDE_ZOOM,
+  SETOR_USO_ROTULO,
+  type SetoresR3R4,
+  type UsoSetor,
+} from "@/lib/setores-r3r4";
 import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
 import { reportClientError } from "@/lib/client";
-import { withBase } from "@/lib/site";
+import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
 import { durationLabel } from "@/lib/alert-duration";
 import "leaflet/dist/leaflet.css";
@@ -98,6 +108,8 @@ export const AlertsMap = forwardRef<
     stains?: AlertStain[];
         focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
     showFocosCalor?: boolean;
+    showSetores?: boolean;
+    setorUso?: UsoSetor;
     fillByNome?: Record<string, string> | null;
     labelByNome?: Record<string, string> | null;
     onSelect: (nome: string, bacia: string) => void;
@@ -131,6 +143,8 @@ export const AlertsMap = forwardRef<
     stains = [],
     focosCalor = [],
     showFocosCalor = false,
+    showSetores = false,
+    setorUso = "movimento",
     fillByNome = null,
     labelByNome = null,
     onSelect,
@@ -153,7 +167,10 @@ export const AlertsMap = forwardRef<
   const rainLayerRef = useRef<LayerGroup | null>(null);
   const territoryRef = useRef<TerritoryLayers | null>(null);
   const stainLayerRef = useRef<GeoJSONType | null>(null);
-   const focosLayerRef = useRef<LayerGroup | null>(null);
+  const focosLayerRef = useRef<LayerGroup | null>(null);
+  const setoresLayerRef = useRef<GeoJSONType | null>(null);
+  const setorBolhasRef = useRef<LayerGroup | null>(null);
+  const setoresDataRef = useRef<SetoresR3R4 | null>(null);
   const hoverTipRef = useRef<Tooltip | null>(null);
   const [meshReady, setMeshReady] = useState(0);
   const layersByNameRef = useRef(new Map<string, Path>());
@@ -483,10 +500,7 @@ export const AlertsMap = forwardRef<
       riversRef.current = rios;
 
       try {
-        const geo = await fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
-          if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
-          return r.json();
-        });
+        const geo = await loadMunicipalMesh();
         if (cancelled) return;
 
         const layer = L.geoJSON(geo, {
@@ -518,12 +532,10 @@ export const AlertsMap = forwardRef<
                     : "";
               const focosN = stateRef.current.labelByNome?.[nome];
               const airTip =
-                focosN != null
-                  ? `<br/><strong>${focosN} focos</strong>`
-                  : stateRef.current.pointKind === "air"
+                stateRef.current.pointKind === "air"
                   ? m?.hasAirSensor
                     ? ` · MP2,5 ${formatUg(m.pm25 ?? null)} (ao vivo)`
-                    : " · s/ sensor PurpleAir"
+                    : " · sem monitor"
                   : m?.hasRainStation
                     ? ` · 1/6/24 h ${formatWindowsCompact({
                         mm1h: m.mm1h ?? null,
@@ -537,6 +549,10 @@ export const AlertsMap = forwardRef<
                           : ""
                       }`
                     : "";
+              const focosTip =
+                focosN != null && focosN !== "0"
+                  ? `<br/>${focosN} focos INPE (AQUA)`
+                  : "";
               const map = mapRef.current;
               const tip = hoverTipRef.current;
               if (map && tip) {
@@ -544,6 +560,7 @@ export const AlertsMap = forwardRef<
                   map,
                   tip,
                   ev.latlng,
+                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}${focosTip}`,
                   `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${
                     m?.observacao === "sem-leitura"
                       ? "Sem leitura · não é risco baixo"
@@ -647,6 +664,7 @@ export const AlertsMap = forwardRef<
       rainLayerRef.current = null;
       territoryRef.current = null;
       stainLayerRef.current = null;
+      setoresLayerRef.current = null;
       tilesRef.current = null;
     };
     // Map is remounted via key={OSM_BASEMAP_ID}. Paint handlers read stateRef.
@@ -793,51 +811,199 @@ export const AlertsMap = forwardRef<
 
     if (showFocosCalor && focosCalor.length > 0) {
       const layer = L.layerGroup();
-      
       focosCalor.forEach((foco) => {
-        const lat = parseFloat(String(foco.lat));
-        const lon = parseFloat(String(foco.lon));
-        
-        if (!isNaN(lat) && !isNaN(lon)) {
-          // 🔵 CÍRCULO - dados da NASA (sem confiança)
-        const circle = L.circle([lat, lon], {
-  radius: 50, // metros
-  fillColor: '#ff4500',
-  color: '#fff',
-  weight: 1,
-  fillOpacity: 0.5
-});
-          
-          // Popup com informações (apenas o que existe)
-          circle.bindPopup(`
-            <div style="min-width:150px;font-size:13px;">
-              <strong>🔥 Foco de Calor</strong><br/>
-              📅 ${foco.data || 'N/A'}<br/>
-              🛰️ ${foco.satelite || 'N/A'}
-            </div>
-          `);
-          
-          // Tooltip ao passar o mouse
-          circle.bindTooltip(
-            `🔥 ${foco.satelite || 'Foco'}`,
-            { 
-              permanent: false, 
-              direction: 'top',
-              className: 'foco-tooltip'
-            }
+        const lat = Number(foco.lat);
+        const lon = Number(foco.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const dot = L.circleMarker([lat, lon], {
+          radius: 5,
+          fillColor: "#ea580c",
+          color: "#fff7ed",
+          weight: 1,
+          fillOpacity: 0.85,
+          pane: "overlayPane",
+        });
+        dot.bindTooltip(
+          `Foco INPE · ${foco.satelite || "AQUA"} · ${foco.data || ""}`,
+          { sticky: true, direction: "top" },
+        );
+        layer.addLayer(dot);
+      });
+      layer.addTo(map);
+      focosLayerRef.current = layer;
+    }
+  }, [showFocosCalor, focosCalor]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L) return;
+    let cancelled = false;
+
+    function clear() {
+      setoresLayerRef.current?.remove();
+      setoresLayerRef.current = null;
+      setorBolhasRef.current?.remove();
+      setorBolhasRef.current = null;
+    }
+
+    if (!showSetores) {
+      clear();
+      return;
+    }
+
+    if (!map.getPane("setoresPane")) {
+      const pane = map.createPane("setoresPane");
+      pane.style.zIndex = "430";
+    }
+    const pane = map.getPane("setoresPane");
+    if (pane) pane.style.pointerEvents = drawMode || eraseMode ? "none" : "auto";
+
+    function draw(data: SetoresR3R4) {
+      clear();
+      const selectedId =
+        stateRef.current.municipios.find((item) => item.nome === stateRef.current.selected)?.id ?? null;
+      const uso = setorUso;
+      const layer = L.geoJSON(data, {
+        pane: "setoresPane",
+        filter: (feature) => setorEntra(feature?.properties?.p, uso),
+        style: (feature) => estiloSetor(feature?.properties?.g, feature?.properties?.ibge, selectedId),
+        onEachFeature(feature, lyr) {
+          const ibge = String(feature.properties?.ibge ?? "");
+          const codigo = String(feature.properties?.s ?? "");
+          const grau = feature.properties?.g === "R4" ? SETOR_CORES.R4.rotulo : SETOR_CORES.R3.rotulo;
+          const mun = stateRef.current.municipios.find((item) => item.id === ibge);
+          lyr.bindTooltip(
+            `<strong>${grau}</strong><br>${SETOR_USO_ROTULO[uso]}<br>${mun?.nome ?? ibge}<br>${codigo}`,
+            { sticky: true, opacity: 0.95 },
           );
-          
-          layer.addLayer(circle);
+          lyr.on("click", () => {
+            if (stateRef.current.drawMode || stateRef.current.eraseMode || !mun) return;
+            if (stateRef.current.adminMode) paintFeature(mun.nome);
+            else onSelectRef.current(mun.nome, mun.bacia);
+          });
+        },
+      });
+      setoresLayerRef.current = layer;
+
+      const grupos = new Map<string, { lat: number; lon: number; n: number; areas: number; r4: number }>();
+      layer.eachLayer((lyr) => {
+        const feature = (lyr as { feature?: GeoJSON.Feature }).feature;
+        const ring = feature?.geometry?.type === "Polygon" ? feature.geometry.coordinates[0] : null;
+        const ibge = String(feature?.properties?.ibge ?? "");
+        if (!ring || ring.length < 2 || !ibge) return;
+        let x = 0;
+        let y = 0;
+        const n = ring.length - 1;
+        for (let i = 0; i < n; i++) {
+          x += ring[i][0];
+          y += ring[i][1];
+        }
+        const atual = grupos.get(ibge) ?? { lat: 0, lon: 0, n: 0, areas: 0, r4: 0 };
+        atual.lat += y;
+        atual.lon += x;
+        atual.n += n;
+        atual.areas += 1;
+        if (feature?.properties?.g === "R4") atual.r4 += 1;
+        grupos.set(ibge, atual);
+      });
+
+      const bolhas = L.layerGroup();
+      for (const [ibge, grupo] of grupos) {
+        if (!grupo.n) continue;
+        const mun = stateRef.current.municipios.find((item) => item.id === ibge);
+        const cor = grupo.r4 > 0 ? SETOR_CORES.R4 : SETOR_CORES.R3;
+        const marker = L.circleMarker([grupo.lat / grupo.n, grupo.lon / grupo.n], {
+          pane: "setoresPane",
+          radius: Math.min(14, 5 + Math.sqrt(grupo.areas)),
+          color: selectedId === ibge ? "#f8fafc" : cor.stroke,
+          weight: selectedId === ibge ? 2.5 : 1.2,
+          fillColor: cor.fill,
+          fillOpacity: 0.92,
+        });
+        marker.bindTooltip(
+          `<strong>${mun?.nome ?? ibge}</strong><br>${SETOR_USO_ROTULO[uso]}<br>${grupo.areas} áreas · ${grupo.r4} em R4`,
+          { sticky: true, opacity: 0.95 },
+        );
+        marker.on("click", (ev) => {
+          L.DomEvent.stopPropagation(ev);
+          if (stateRef.current.drawMode || stateRef.current.eraseMode || !mun) return;
+          if (stateRef.current.adminMode) paintFeature(mun.nome);
+          else onSelectRef.current(mun.nome, mun.bacia);
+        });
+        bolhas.addLayer(marker);
+      }
+      setorBolhasRef.current = bolhas;
+      function focarSelecionado() {
+        if (!selectedId) return;
+        const doMun = layer.getLayers().filter((lyr) => {
+          const feature = (lyr as { feature?: GeoJSON.Feature }).feature;
+          return feature?.properties?.ibge === selectedId;
+        });
+        if (!doMun.length) return;
+        const bounds = L.featureGroup(doMun).getBounds();
+        if (!bounds.isValid()) return;
+        const fitZoom = map.getBoundsZoom(bounds, false, L.point(36, 36));
+        const zoom = Math.min(14, Math.max(SETOR_POLIGONO_DESDE_ZOOM, fitZoom || SETOR_POLIGONO_DESDE_ZOOM));
+        map.setView(bounds.getCenter(), zoom, { animate: false });
+      }
+      focarSelecionado();
+      syncCamadas();
+      // O cartão de detalhe muda a altura do mapa e o ajuste do Amazonas
+      // desfaz o zoom. Reaplica depois desse ajuste.
+      window.setTimeout(() => {
+        if (cancelled) return;
+        focarSelecionado();
+        syncCamadas();
+      }, 220);
+    }
+
+    function syncCamadas() {
+      const perto = map.getZoom() >= SETOR_POLIGONO_DESDE_ZOOM;
+      const polys = setoresLayerRef.current;
+      const bolhas = setorBolhasRef.current;
+      if (polys) {
+        if (perto && !map.hasLayer(polys)) polys.addTo(map);
+        if (!perto && map.hasLayer(polys)) map.removeLayer(polys);
+      }
+      if (bolhas) {
+        if (!perto && !map.hasLayer(bolhas)) bolhas.addTo(map);
+        if (perto && map.hasLayer(bolhas)) map.removeLayer(bolhas);
+      }
+    }
+
+    map.on("zoomend", syncCamadas);
+
+    if (setoresDataRef.current) {
+      draw(setoresDataRef.current);
+      return () => {
+        cancelled = true;
+        map.off("zoomend", syncCamadas);
+      };
+    }
+
+    loadSetoresR3R4()
+      .then((data) => {
+        if (cancelled) return;
+        setoresDataRef.current = data;
+        draw(data);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          onGeoErrorRef.current?.(
+            setorUso === "margem"
+              ? "Não foi possível desenhar as áreas de erosão de margem."
+              : "Não foi possível desenhar as áreas R3/R4.",
+          );
         }
       });
 
-      layer.addTo(map);
-      focosLayerRef.current = layer;
-      
-      console.log(`✅ ${focosCalor.length} focos de calor desenhados`);
-    }
-  }, [showFocosCalor, focosCalor]);
- 
+    return () => {
+      cancelled = true;
+      map.off("zoomend", syncCamadas);
+    };
+  }, [showSetores, setorUso, selected, drawMode, eraseMode, meshReady]);
+
   return (
     <div
       ref={hostRef}

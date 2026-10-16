@@ -28,9 +28,17 @@ export function formatWindowsCompact(rain: RainfallWindows | null | undefined): 
   return `${formatMmShort(rain.mm1h)} · ${formatMmShort(rain.mm6h)} · ${formatMmShort(rain.mm24h)}`;
 }
 
-/** Azul mais escuro conforme o acumulado cresce. Sem chuva fica neutro. */
-export function rainHeatColor(mm: number | null | undefined): string {
-  if (mm == null || !Number.isFinite(mm) || mm <= 0.1) return "#e8eef5";
+const COR_SEM_ESTACAO = "#9aa3b2";
+const COR_ZERO_MM = "#e8eef5";
+
+/** Azul mais escuro conforme o acumulado cresce. Cinza = sem pluviômetro. */
+export function rainHeatColor(
+  mm: number | null | undefined,
+  opts?: { temEstacao?: boolean },
+): string {
+  if (opts && opts.temEstacao === false) return COR_SEM_ESTACAO;
+  if (mm == null || !Number.isFinite(mm)) return COR_SEM_ESTACAO;
+  if (mm <= 0.1) return COR_ZERO_MM;
   if (mm < 5) return "#c5ddf6";
   if (mm < 12.5) return "#7eb6ea";
   if (mm < 25) return "#3b82d6";
@@ -304,6 +312,7 @@ export function applyRainClassification<
 >(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType | undefined): T[] {
   if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
   return rows.map((m) => {
+    if (m.fonte === "admin") return m;
     const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
     const apoio = rainApoio(tipo, rec, { id: m.id, nome: m.nome });
     if (!apoio || apoio.level === "BAIXO") return m;

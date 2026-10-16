@@ -24,6 +24,7 @@ import {
   type IndicadorRiscoId,
 } from "@/lib/metodologia-display";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
+import { LogisticaMapa } from "@/components/risco/LogisticaMapa";
 import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { decretoFill, decretosEstiagem, decretosInundacao } from "@/lib/decretos";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -34,7 +35,7 @@ import { toast } from "sonner";
 const POLL_MS = 20_000;
 const AREA = new Map(MUNICIPALITIES.map((item) => [item.id, item.areaKm2]));
 
-type Aba = "operacao" | "analise" | "territorio" | "decretos" | "dados";
+type Aba = "operacao" | "analise" | "territorio" | "logistica" | "decretos" | "dados";
 type Recorte = "todos" | "n6" | "n5" | "p1" | "rebaixados";
 type SortKey = "irg" | "ivm" | "nivel" | "nome" | "pop";
 
@@ -42,6 +43,7 @@ const ABAS: Array<{ id: Aba; label: string }> = [
   { id: "operacao", label: "Operação" },
   { id: "analise", label: "Análise" },
   { id: "territorio", label: "Território" },
+  { id: "logistica", label: "Logística" },
   { id: "decretos", label: "Decretos" },
   { id: "dados", label: "Dados" },
 ];
@@ -564,6 +566,7 @@ export function RiscoWorkbench() {
 
         {aba === "analise" ? <Analise rows={filtered} /> : null}
         {aba === "territorio" ? <Territorio rows={rows} onPick={pick} /> : null}
+        {aba === "logistica" ? <LogisticaMapa rows={rows} onPick={pick} /> : null}
         {aba === "decretos" ? <Decretos rows={rows} onPick={pick} /> : null}
         {aba === "dados" ? (
           <Dados

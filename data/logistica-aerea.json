@@ -1,0 +1,350 @@
+{
+  "fonte": "ANAC, cadastro de aeródromos de uso público em 01/10/2026 e de uso privativo em 14/10/2026",
+  "nota": "O aeródromo público entra pelo município servido. Cruzeiro do Sul, Porto Velho e Trombetas ficam de fora porque servem Acre, Rondônia e Pará. A pista privada não é base pública: o pouso depende do operador.",
+  "publicos": {
+    "1300144": [
+      {
+        "oaci": "SWYN",
+        "nome": "Apuí",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1300409": [
+      {
+        "oaci": "SWBC",
+        "nome": "Barcelos",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1300706": [
+      {
+        "oaci": "SWNK",
+        "nome": "Novo Campo",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1300805": [
+      {
+        "oaci": "SWBR",
+        "nome": "Borba",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1301001": [
+      {
+        "oaci": "SWCA",
+        "nome": "Carauari",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1301209": [
+      {
+        "oaci": "SWKO",
+        "nome": "Coari",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1301407": [
+      {
+        "oaci": "SWEI",
+        "nome": "Eirunepé",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1301605": [
+      {
+        "oaci": "SWOB",
+        "nome": "Fonte Boa",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1301704": [
+      {
+        "oaci": "SWHT",
+        "nome": "Humaitá",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1301902": [
+      {
+        "oaci": "SBIC",
+        "nome": "Itacoatiara",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1302405": [
+      {
+        "oaci": "SWLB",
+        "nome": "Lábrea",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1302603": [
+      {
+        "oaci": "SBEG",
+        "nome": "Eduardo Gomes",
+        "ifr": false,
+        "noite": false
+      },
+      {
+        "oaci": "SWFN",
+        "nome": "Flores",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1302702": [
+      {
+        "oaci": "SBMY",
+        "nome": "Manicoré",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1302900": [
+      {
+        "oaci": "SWMW",
+        "nome": "Maués",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1303403": [
+      {
+        "oaci": "SWPI",
+        "nome": "Parintins",
+        "ifr": false,
+        "noite": true
+      }
+    ],
+    "1303601": [
+      {
+        "oaci": "SWTP",
+        "nome": "SANTA ISABEL DO RIO NEGRO",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1303700": [
+      {
+        "oaci": "SWII",
+        "nome": "Ipiranga",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1303809": [
+      {
+        "oaci": "SBUA",
+        "nome": "São Gabriel da Cachoeira",
+        "ifr": true,
+        "noite": false
+      }
+    ],
+    "1303908": [
+      {
+        "oaci": "SDCG",
+        "nome": "Senadora Eunice Michiles",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1304062": [
+      {
+        "oaci": "SBTT",
+        "nome": "Tabatinga",
+        "ifr": false,
+        "noite": false
+      }
+    ],
+    "1304203": [
+      {
+        "oaci": "SBTF",
+        "nome": "Prefeito Orlando Marinho",
+        "ifr": true,
+        "noite": true
+      }
+    ]
+  },
+  "privados": {
+    "1300144": {
+      "oaci": "SNLM",
+      "nome": "Pousada Pirá-Açu",
+      "comprimentoM": 1100,
+      "pavimento": false,
+      "quantidade": 2
+    },
+    "1300201": {
+      "oaci": "SWJV",
+      "nome": "Palmeiras do Javari",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1300300": {
+      "oaci": "SJZ5",
+      "nome": "Autazes",
+      "comprimentoM": 1000,
+      "pavimento": false,
+      "quantidade": 2
+    },
+    "1300508": {
+      "oaci": "SJ9A",
+      "nome": "Barreirinha",
+      "comprimentoM": 1100,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1300706": {
+      "oaci": "SD6Y",
+      "nome": "Fazenda Bom Retiro",
+      "comprimentoM": 800,
+      "pavimento": false,
+      "quantidade": 1
+    },
+    "1300805": {
+      "oaci": "SNDJ",
+      "nome": "Pousada Sucunduri",
+      "comprimentoM": 997,
+      "pavimento": false,
+      "quantidade": 2
+    },
+    "1301209": {
+      "oaci": "SBUY",
+      "nome": "Urucu",
+      "comprimentoM": 1320,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1301506": {
+      "oaci": "SNRH",
+      "nome": "João Fonseca",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1301803": {
+      "oaci": "SD8C",
+      "nome": "Governador José B. Lindoso",
+      "comprimentoM": 800,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1301852": {
+      "oaci": "SIZ2",
+      "nome": "Fazenda Santa Fé",
+      "comprimentoM": 800,
+      "pavimento": false,
+      "quantidade": 1
+    },
+    "1301951": {
+      "oaci": "SSSM",
+      "nome": "Matheus Lopes Maia da Silva",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1302108": {
+      "oaci": "SWJP",
+      "nome": "Vila Bittencourt",
+      "comprimentoM": 1500,
+      "pavimento": true,
+      "quantidade": 2
+    },
+    "1302207": {
+      "oaci": "SWIA",
+      "nome": "Antônio Costa da Silva",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1302405": {
+      "oaci": "SI8V",
+      "nome": "FAZENDA MANU",
+      "comprimentoM": 1200,
+      "pavimento": false,
+      "quantidade": 8
+    },
+    "1302504": {
+      "oaci": "SDGT",
+      "nome": "Agrotec",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 2
+    },
+    "1302603": {
+      "oaci": "SJ8B",
+      "nome": "São Joaquim",
+      "comprimentoM": 900,
+      "pavimento": false,
+      "quantidade": 1
+    },
+    "1302702": {
+      "oaci": "SSTM",
+      "nome": "Fazenda Santo Antônio",
+      "comprimentoM": 1000,
+      "pavimento": false,
+      "quantidade": 3
+    },
+    "1302900": {
+      "oaci": "SN2W",
+      "nome": "FAZENDA TEODORO",
+      "comprimentoM": 1000,
+      "pavimento": false,
+      "quantidade": 4
+    },
+    "1303304": {
+      "oaci": "SWNA",
+      "nome": "Novo Aripuanã",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 10
+    },
+    "1303536": {
+      "oaci": "SJVP",
+      "nome": "Vila Pitinga",
+      "comprimentoM": 1600,
+      "pavimento": false,
+      "quantidade": 1
+    },
+    "1303601": {
+      "oaci": "SWMK",
+      "nome": "Maturacá",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 1
+    },
+    "1303809": {
+      "oaci": "SWSQ",
+      "nome": "São Joaquim",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 9
+    },
+    "1304005": {
+      "oaci": "SNK4",
+      "nome": "CORONEL EDUARDO GARCIA",
+      "comprimentoM": 1300,
+      "pavimento": false,
+      "quantidade": 1
+    },
+    "1304104": {
+      "oaci": "SDLR",
+      "nome": "Luiz Ribeiro Maia",
+      "comprimentoM": 1200,
+      "pavimento": true,
+      "quantidade": 1
+    }
+  }
+}

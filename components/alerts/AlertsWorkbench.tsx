@@ -411,6 +411,7 @@ export function AlertsWorkbench() {
   const [focosMapa, setFocosMapa] = useState(false);
   const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
+  const [showSetores, setShowSetores] = useState(true);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
@@ -1877,6 +1878,17 @@ export function AlertsWorkbench() {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
+                    {tipo === "MOVIMENTO" || tipo === "EROSAO" ? (
+                      <MapToolButton active={showSetores} onClick={() => setShowSetores((v) => !v)}>
+                        {tipo === "EROSAO"
+                          ? showSetores
+                            ? "Ocultar margem fluvial"
+                            : "Margem fluvial"
+                          : showSetores
+                            ? "Ocultar áreas R3/R4"
+                            : "Áreas R3/R4"}
+                      </MapToolButton>
+                    ) : null}
                     {tipo === "INCENDIO" ? (
                       <MapToolButton
                         active={focosMapa}
@@ -2007,6 +2019,8 @@ export function AlertsWorkbench() {
                   fillByNome={null}
                   labelByNome={focoLabels}
                   showFocosCalor={tipo === "INCENDIO" && focosMapa}
+                  showSetores={(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores}
+                  setorUso={tipo === "EROSAO" ? "margem" : "movimento"}
                   focosCalor={focosRef?.pontos ?? []}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
@@ -2146,9 +2160,28 @@ export function AlertsWorkbench() {
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
                   </>
-                ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+                ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" || (tipo === "EROSAO" && showSetores) ? (
                   <div className="mt-2 border-t border-border/70 pt-2">
-                    <MonitorThresholdLegend tipo={tipo} />
+                    {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+                      <MonitorThresholdLegend tipo={tipo} />
+                    ) : null}
+                    {(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores ? (
+                      <div className="mt-1.5 space-y-0.5">
+                        <p className="text-[10px] leading-snug text-text-mute">
+                          {tipo === "EROSAO"
+                            ? "Erosão de margem fluvial e terras caídas da CPRM/SGB, nos municípios mapeados do estado. No zoom do estado cada município é um ponto; aproxime para ver o polígono. O polígono não muda o grau do município."
+                            : "Deslizamento, queda e rastejo da CPRM/SGB, nos municípios mapeados do estado. No zoom do estado cada município é um ponto; aproxime para ver o polígono. O polígono não muda o grau do município."}
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-sm" style={{ background: "#f97316" }} />
+                          R3 · Alto
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-sm" style={{ background: "#ef4444" }} />
+                          R4 · Muito alto
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </MapLegendCard>

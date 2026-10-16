@@ -13,7 +13,7 @@ Inventário do que o repositório consulta de fato. Horários de exibição usam
 | INPE queimadas | CSV diário AQUA_M-T, bioma Amazônia, Amazonas, 15 dias | contagem de focos | 12 h / 30 h |
 | INMET | `GET https://apiprevmet3.inmet.gov.br/previsao/{ibge}` e estação próxima | previsão e temperatura da estação | atrasada após 30 min (o lote deixa de ser reutilizado); indisponível após 90 min. Sem consulta neste processo, fica indisponível — isso não é queda do INMET |
 | IBGE | arquivos locais de municípios, demografia e malha | território e população, Censo 2022 | arquivo estático, sem relógio de rede |
-| SGB/CPRM | arquivos locais de pessoas em área de risco | exposição | arquivo estático |
+| SGB/CPRM | `public/geo/setores-r3r4-am.geojson` e `data/risco-movimento.json` | polígonos R3/R4: movimento de massa no mapa de movimento; erosão de margem fluvial e terras caídas no mapa de margem; pessoas na exposição | arquivo estático. O geoportal da SGB não é consultado no plantão |
 
 Não há, neste repositório, cliente do HidroWeb além da telemetria ANA já citada. SGB entra como base local, não como API ao vivo.
 

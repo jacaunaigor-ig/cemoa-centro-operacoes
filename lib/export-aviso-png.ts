@@ -1,5 +1,6 @@
 import {
   formatManausStamp,
+  GOES_AVISO_ATRASO_MS,
   joinCalhas,
   type AvisoGrafico,
 } from "@/lib/aviso-grafico";
@@ -132,6 +133,9 @@ export async function exportAvisoPng(aviso: AvisoGrafico, image: HTMLImageElemen
   pill(ctx, 48, footY, 480, 70, `Imagem: ${formatManausStamp(aviso.imageAt)}`);
   pill(ctx, 552, footY, 480, 70, `Válido até: ${formatManausStamp(aviso.expiresAt)}`);
 
+  const goesAtrasado =
+    aviso.imageAt != null && Date.now() - aviso.imageAt >= GOES_AVISO_ATRASO_MS;
+  ctx.fillStyle = goesAtrasado ? "#ffb4a2" : "#c9d4ee";
   ctx.fillStyle = aviso.revisao === "operador" ? "#c9d4ee" : "#f5d90a";
   ctx.font = "700 22px Inter, system-ui, sans-serif";
   ctx.fillText(
@@ -143,7 +147,13 @@ export async function exportAvisoPng(aviso: AvisoGrafico, image: HTMLImageElemen
   );
   ctx.fillStyle = "#c9d4ee";
   ctx.font = "600 20px Inter, system-ui, sans-serif";
-  ctx.fillText("www.defesacivil.am.gov.br  ·  Defesa Civil Amazonas  ·  @defesacivilamazonas", 48, H - 36);
+  ctx.fillText(
+    goesAtrasado
+      ? "Cena GOES com mais de 30 min — o horário no cartão é o da imagem, não o instante da emissão."
+      : "Fonte: GOES-19 CH13 · CPTEC/INPE  ·  Defesa Civil Amazonas  ·  @defesacivilamazonas",
+    48,
+    H - 36,
+  );
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Falha ao gerar PNG"))), "image/png");
