@@ -10,6 +10,8 @@ import type {
 import raw from "@/data/hydrology.json";
 import { hydroBoletimDiaIso, hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
+export { hydroBoletimDiaIso };
+
 export const CALHAS = [
   "Alto Solimões",
   "Baixo Amazonas",

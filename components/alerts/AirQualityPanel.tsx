@@ -64,7 +64,6 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
       <div className="mt-1.5 rounded-md border border-border bg-panel/60 px-2 py-1.5 text-center">
         <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
           Faixa · pior sensor agora
-          Faixa (tempo real)
         </small>
         <strong className="text-sm">
           {level ? AIR_LABELS[level] : "—"}

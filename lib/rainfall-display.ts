@@ -55,6 +55,19 @@ export function rainBand(mm: number | null | undefined): RainBand {
   return "intensa";
 }
 
+export function resumoChuvaPng(valores: Array<number | null | undefined>) {
+  let semLeitura = 0;
+  let semChuva = 0;
+  let comChuva = 0;
+  for (const mm of valores) {
+    const band = rainBand(mm);
+    if (band === "sem_leitura") semLeitura += 1;
+    else if (band === "sem_chuva") semChuva += 1;
+    else comChuva += 1;
+  }
+  return { semLeitura, semChuva, comChuva };
+}
+
 export function rainBandLabel(band: RainBand, janela?: "1 h" | "6 h" | "24 h"): string {
   if (band === "sem_leitura") return janela ? `Sem acumulado ${janela}` : "Sem acumulado";
   if (band === "sem_chuva") return janela ? `Sem chuva nas ${janela}` : "Sem chuva";

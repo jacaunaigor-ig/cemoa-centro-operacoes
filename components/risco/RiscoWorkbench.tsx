@@ -409,28 +409,6 @@ export function RiscoWorkbench() {
         </div>
 
         {aba === "operacao" ? (
-          <div className="grid min-h-[28rem] gap-2 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)]">
-            <IndiceSheet
-              className="max-h-[72vh] min-h-[22rem]"
-              rows={filtered}
-              selectedId={selected?.codigo}
-              hideScopeFilters
-              loading={loading}
-              onPick={pick}
-            />
-            <Ficha
-              row={selected}
-              rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
-              rainEstado={rainEstado}
-              rainAt={rain?.generatedAt ?? null}
-              rainError={rain?.error ?? null}
-              hydro={selected ? hydro?.stations.find((item) => item.id === selected.codigo) ?? null : null}
-              hydroEstado={hydroEstado}
-              hydroAt={hydro?.generatedAt ?? null}
-              indiceEm={payload?.generatedAt ?? null}
-              indiceFonte={payload?.source ?? ""}
-              onClear={() => setQuery({ municipio: null })}
-            />
           <div className="grid gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-panel p-2">
               <div className="flex flex-wrap items-center gap-1">
@@ -567,6 +545,14 @@ export function RiscoWorkbench() {
                   <Ficha
                     row={selected}
                     rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
+                    rainEstado={rainEstado}
+                    rainAt={rain?.generatedAt ?? null}
+                    rainError={rain?.error ?? null}
+                    hydro={selected ? hydro?.stations.find((item) => item.id === selected.codigo) ?? null : null}
+                    hydroEstado={hydroEstado}
+                    hydroAt={hydro?.generatedAt ?? null}
+                    indiceEm={payload?.generatedAt ?? null}
+                    indiceFonte={payload?.source ?? ""}
                     onClear={() => {
                       setQuery({ municipio: null });
                       setPainelLateral("ranking");

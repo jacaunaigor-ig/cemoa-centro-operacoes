@@ -31,7 +31,7 @@ import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/Plan
 import { OpsFooter } from "@/components/shared/OpsFooter";
 import { situacaoConsulta, textoConsulta } from "@/lib/consulta-rotulo";
 import { STATIC_DEPLOY } from "@/lib/site";
-import { prefetchMunicipalMesh } from "@/lib/stain-clip";
+import { loadMunicipalMesh } from "@/lib/stain-clip";
 
 export function AppShell({
   children,
@@ -81,7 +81,7 @@ export function AppShell({
   );
   const tituloConsulta = syncLabel ?? consulta.titulo;
   useEffect(() => {
-    prefetchMunicipalMesh();
+    void loadMunicipalMesh();
   }, []);
 
   const shared = new URLSearchParams();
