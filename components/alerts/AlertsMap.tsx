@@ -556,16 +556,15 @@ export const AlertsMap = forwardRef<
               const map = mapRef.current;
               const tip = hoverTipRef.current;
               if (map && tip) {
+                const grau =
+                  m?.observacao === "sem-leitura"
+                    ? "Sem leitura · não é risco baixo"
+                    : (LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco);
                 showMapHoverTip(
                   map,
                   tip,
                   ev.latlng,
-                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco}${airTip}${focosTip}`,
-                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${
-                    m?.observacao === "sem-leitura"
-                      ? "Sem leitura · não é risco baixo"
-                      : (LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco)
-                  }${airTip}`,
+                  `<strong>${prefix}${nome}</strong><br/>${m?.bacia ?? ""} · ${grau}${airTip}${focosTip}`,
                 );
               }
               onHoverRef.current?.(nome);
@@ -838,6 +837,8 @@ export const AlertsMap = forwardRef<
     const map = mapRef.current;
     const L = leafletRef.current;
     if (!map || !L) return;
+    const view = map;
+    const leaflet = L;
     let cancelled = false;
 
     function clear() {
@@ -864,7 +865,7 @@ export const AlertsMap = forwardRef<
       const selectedId =
         stateRef.current.municipios.find((item) => item.nome === stateRef.current.selected)?.id ?? null;
       const uso = setorUso;
-      const layer = L.geoJSON(data, {
+      const layer = leaflet.geoJSON(data, {
         pane: "setoresPane",
         filter: (feature) => setorEntra(feature?.properties?.p, uso),
         style: (feature) => estiloSetor(feature?.properties?.g, feature?.properties?.ibge, selectedId),
@@ -908,12 +909,12 @@ export const AlertsMap = forwardRef<
         grupos.set(ibge, atual);
       });
 
-      const bolhas = L.layerGroup();
+      const bolhas = leaflet.layerGroup();
       for (const [ibge, grupo] of grupos) {
         if (!grupo.n) continue;
         const mun = stateRef.current.municipios.find((item) => item.id === ibge);
         const cor = grupo.r4 > 0 ? SETOR_CORES.R4 : SETOR_CORES.R3;
-        const marker = L.circleMarker([grupo.lat / grupo.n, grupo.lon / grupo.n], {
+        const marker = leaflet.circleMarker([grupo.lat / grupo.n, grupo.lon / grupo.n], {
           pane: "setoresPane",
           radius: Math.min(14, 5 + Math.sqrt(grupo.areas)),
           color: selectedId === ibge ? "#f8fafc" : cor.stroke,
@@ -926,7 +927,7 @@ export const AlertsMap = forwardRef<
           { sticky: true, opacity: 0.95 },
         );
         marker.on("click", (ev) => {
-          L.DomEvent.stopPropagation(ev);
+          leaflet.DomEvent.stopPropagation(ev);
           if (stateRef.current.drawMode || stateRef.current.eraseMode || !mun) return;
           if (stateRef.current.adminMode) paintFeature(mun.nome);
           else onSelectRef.current(mun.nome, mun.bacia);
@@ -941,11 +942,11 @@ export const AlertsMap = forwardRef<
           return feature?.properties?.ibge === selectedId;
         });
         if (!doMun.length) return;
-        const bounds = L.featureGroup(doMun).getBounds();
+        const bounds = leaflet.featureGroup(doMun).getBounds();
         if (!bounds.isValid()) return;
-        const fitZoom = map.getBoundsZoom(bounds, false, L.point(36, 36));
+        const fitZoom = view.getBoundsZoom(bounds, false, leaflet.point(36, 36));
         const zoom = Math.min(14, Math.max(SETOR_POLIGONO_DESDE_ZOOM, fitZoom || SETOR_POLIGONO_DESDE_ZOOM));
-        map.setView(bounds.getCenter(), zoom, { animate: false });
+        view.setView(bounds.getCenter(), zoom, { animate: false });
       }
       focarSelecionado();
       syncCamadas();
@@ -959,16 +960,16 @@ export const AlertsMap = forwardRef<
     }
 
     function syncCamadas() {
-      const perto = map.getZoom() >= SETOR_POLIGONO_DESDE_ZOOM;
+      const perto = view.getZoom() >= SETOR_POLIGONO_DESDE_ZOOM;
       const polys = setoresLayerRef.current;
       const bolhas = setorBolhasRef.current;
       if (polys) {
-        if (perto && !map.hasLayer(polys)) polys.addTo(map);
-        if (!perto && map.hasLayer(polys)) map.removeLayer(polys);
+        if (perto && !view.hasLayer(polys)) polys.addTo(view);
+        if (!perto && view.hasLayer(polys)) view.removeLayer(polys);
       }
       if (bolhas) {
-        if (!perto && !map.hasLayer(bolhas)) bolhas.addTo(map);
-        if (perto && map.hasLayer(bolhas)) map.removeLayer(bolhas);
+        if (!perto && !view.hasLayer(bolhas)) bolhas.addTo(view);
+        if (perto && view.hasLayer(bolhas)) view.removeLayer(bolhas);
       }
     }
 

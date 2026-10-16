@@ -152,7 +152,6 @@ export function AirPmBadge({
       className="inline-flex items-center gap-1 font-mono text-[10px] font-bold tabular-nums"
       style={{ color: airUiInk(level) }}
       title={`MP2,5 do pior sensor agora: ${formatUg(rec.pm25)}`}
-      title={`MP2,5 em tempo real: ${formatUg(rec.pm25)}`}
     >
       <Wind className="size-3.5" />
       {formatUgShort(rec.pm25)}

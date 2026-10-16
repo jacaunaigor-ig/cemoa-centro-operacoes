@@ -1,4 +1,5 @@
 ﻿/** Espelho operacional de lib/goes-satellite.ts — acervo DISSM, não o FTP. */
+export {};
 const REPO =
   "https://satelite.cptec.inpe.br/repositoriogoes/goes19/goes19_web/ams_ret_ch13_baixa/";
 const PREFIX = "S11161213_";
