@@ -32,6 +32,7 @@ import { formatMm } from "@/lib/rainfall-display";
 import { RainWindowsPills } from "@/components/alerts/RainfallStrip";
 import { AirPmBadge } from "@/components/alerts/AirQualityStrip";
 import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
+import type { PlantaoItem } from "@/lib/plantao-queue";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { massRiskDo, pessoasRiscoDo } from "@/lib/mass-risk";
 import { formatHab } from "@/lib/demografia";
@@ -55,6 +56,7 @@ export function AlertList({
   onBacia,
   onBusca,
   onLimpar,
+  onEmitir,
 }: {
   municipios: Array<{
     id: string;
@@ -89,6 +91,7 @@ export function AlertList({
   onBacia: (bacia: string | null) => void;
   onBusca: (q: string) => void;
   onLimpar: () => void;
+  onEmitir?: (item: PlantaoItem) => void;
 }) {
   const alertByMuni = useMemo(() => new Map(alerts.map((a) => [a.municipio, a])), [alerts]);
   const hydroByMuni = useMemo(() => {
@@ -232,6 +235,7 @@ export function AlertList({
           hydro={hydro}
           compact
           onSelect={onSelect}
+          onEmitir={onEmitir}
         />
       </div>
       <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">

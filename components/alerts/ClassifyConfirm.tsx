@@ -9,6 +9,7 @@ export function ClassifyConfirm({
   duration,
   names,
   busy,
+  gate = false,
   onCancel,
   onUndo,
   onConfirm,
@@ -18,6 +19,8 @@ export function ClassifyConfirm({
   duration: string;
   names: string[];
   busy?: boolean;
+  /** Pergunta antes de gravar. Sem isso, a sessão de cliques já está no mapa. */
+  gate?: boolean;
   onCancel: () => void;
   onUndo: () => void;
   onConfirm: () => void;
@@ -28,8 +31,12 @@ export function ClassifyConfirm({
     <Modal
       open={open}
       onClose={onCancel}
-      title="Encerrar edição"
-      description="Os cliques desta sessão já estão no mapa. Confirme para fechar o modo, ou desfaça a edição."
+      title={gate ? "Confirmar classificação" : "Encerrar edição"}
+      description={
+        gate
+          ? "A classificação só entra no mapa depois da confirmação."
+          : "Os cliques desta sessão já estão no mapa. Confirme para fechar o modo, ou desfaça a edição."
+      }
     >
       <p className="text-sm text-text">
         {names.length === 1 ? (
@@ -51,11 +58,13 @@ export function ClassifyConfirm({
       ) : null}
       <div className="mt-4 flex flex-wrap justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel} disabled={busy}>
-          Continuar editando
+          {gate ? "Cancelar" : "Continuar editando"}
         </Button>
-        <Button type="button" variant="secondary" onClick={onUndo} disabled={busy}>
-          Desfazer edição
-        </Button>
+        {gate ? null : (
+          <Button type="button" variant="secondary" onClick={onUndo} disabled={busy}>
+            Desfazer edição
+          </Button>
+        )}
         <Button type="button" onClick={onConfirm} disabled={busy}>
           Confirmar
         </Button>

@@ -1,4 +1,5 @@
 import type { AlertType } from "@/lib/alert-types";
+import { MONITOR_VIGENCIA_MS } from "@/lib/alert-duration";
 import { temAreaMapeada } from "@/lib/mass-risk";
 import type { RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
 import {
@@ -231,7 +232,7 @@ export function rainApoio(
     const recorte = classified.profile.id === "manaus" ? "Manaus · severo" : "estado";
     return {
       level: classified.level,
-      motivo: `1 h com ${formatMm(mm)} — ${recorte}, ${LEVEL_MOTIVO[classified.level]} de alagamento (${formatBandRange(classified.band)}).`,
+      motivo: `Alagamento ${termoNivel(classified.level)} — 1 h com ${formatMm(mm)} (${formatBandRange(classified.band)}).`,
     };
   }
 
@@ -256,6 +257,14 @@ export function rainApoio(
     level: classified.level,
     motivo: `24 h com ${formatMm(mm24)} — ${recorte}, ${LEVEL_MOTIVO[classified.level]} de movimento de massa (${formatBandFloor(classified.band)}).`,
   };
+}
+
+function termoNivel(level: RiskLevel): string {
+  if (level === "MODERADO") return "moderado";
+  if (level === "ALTO") return "alto";
+  if (level === "SEVERO") return "severo";
+  if (level === "EXTREMO") return "extremo";
+  return "baixo";
 }
 
 const LEVEL_MOTIVO: Record<RiskLevel, string> = {
@@ -299,7 +308,18 @@ export function rainScore(tipo: AlertType | undefined, rain: RainfallWindows): n
  * movimento de massa na de 24 h. A classificação do centro prevalece
  * quando já é igual ou mais grave que o limiar.
  */
-/** Pinta ALAGAMENTO e MOVIMENTO ao atingir o limiar. Chuva intensa fica só com o operador. */
+type MonitorHold = {
+  risco: string;
+  issuedAt: number;
+  expiresAt: number;
+  classifiedBy: string;
+  classifiedAt: number;
+};
+
+/** Mantém a vigência automática entre atualizações, até expirar ou o operador classificar. */
+const monitorHold = new Map<string, MonitorHold>();
+
+/** Pinta ALAGAMENTO (6 h) e MOVIMENTO (12 h) ao atingir o limiar. Chuva intensa fica só com o operador. */
 export function applyRainClassification<
   T extends {
     id: string;
@@ -308,23 +328,61 @@ export function applyRainClassification<
     fonte: "admin" | "monitor";
     classifiedBy?: string | null;
     classifiedAt?: number | null;
+    issuedAt?: number | null;
+    expiresAt?: number | null;
   },
->(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType | undefined): T[] {
+>(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType | undefined, now = Date.now()): T[] {
   if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
+  const vigencia = tipo === "MOVIMENTO" ? MONITOR_VIGENCIA_MS.MOVIMENTO : MONITOR_VIGENCIA_MS.ALAGAMENTO;
   return rows.map((m) => {
-    if (m.fonte === "admin") return m;
-    const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
-    const apoio = rainApoio(tipo, rec, { id: m.id, nome: m.nome });
-    if (!apoio || apoio.level === "BAIXO") return m;
-    if (riskIndex(apoio.level) <= riskIndex(m.risco)) return m;
-    if (tipo === "MOVIMENTO" && !temAreaMapeada(m.id)) return m;
-    return {
-      ...m,
-      risco: apoio.level,
-      fonte: "monitor" as const,
-      classifiedBy: tipo === "ALAGAMENTO" ? "CEMADEN · 1 h" : "CEMADEN · 24 h",
-      classifiedAt: rec?.observedAt ?? rain.generatedAt ?? m.classifiedAt ?? null,
-    };
+    const key = `${tipo}:${m.id}`;
+    if (m.fonte === "admin") {
+      monitorHold.delete(key);
+      return m;
+    }
+    const apoio = rainApoio(tipo, rain.byId[m.id] ?? rain.byNome[m.nome], { id: m.id, nome: m.nome });
+    const kept = monitorHold.get(key);
+    const podeClassificar =
+      Boolean(apoio && apoio.level !== "BAIXO") &&
+      !(tipo === "MOVIMENTO" && !temAreaMapeada(m.id));
+    const sobe =
+      podeClassificar &&
+      apoio != null &&
+      (!kept || kept.expiresAt <= now || riskIndex(apoio.level) > riskIndex(kept.risco));
+    if (sobe && apoio) {
+      const inicio = now;
+      const classifiedBy = tipo === "ALAGAMENTO" ? "CEMADEN · 1 h" : "CEMADEN · 24 h";
+      const next: MonitorHold = {
+        risco: apoio.level,
+        issuedAt: inicio,
+        expiresAt: inicio + vigencia,
+        classifiedBy,
+        classifiedAt: inicio,
+      };
+      monitorHold.set(key, next);
+      return {
+        ...m,
+        risco: apoio.level as T["risco"],
+        fonte: "monitor" as const,
+        classifiedBy,
+        classifiedAt: inicio,
+        issuedAt: inicio,
+        expiresAt: inicio + vigencia,
+      };
+    }
+    if (kept && kept.expiresAt > now) {
+      return {
+        ...m,
+        risco: kept.risco as T["risco"],
+        fonte: "monitor" as const,
+        classifiedBy: kept.classifiedBy,
+        classifiedAt: kept.classifiedAt,
+        issuedAt: kept.issuedAt,
+        expiresAt: kept.expiresAt,
+      };
+    }
+    monitorHold.delete(key);
+    return m;
   });
 }
 
