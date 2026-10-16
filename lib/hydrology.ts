@@ -8,9 +8,6 @@ import type {
   HydroTendencia,
 } from "@/lib/types";
 import raw from "@/data/hydrology.json";
-import { hydroBoletimDiaIso, hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
-
-export { hydroBoletimDiaIso };
 import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
 import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 

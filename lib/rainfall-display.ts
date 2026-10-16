@@ -1,6 +1,6 @@
 import type { AlertType } from "@/lib/alert-types";
 import { temAreaMapeada } from "@/lib/mass-risk";
-import type { AlertLevel, RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
+import type { RainBand, RainfallPayload, RainfallWindows, RiskLevel } from "@/lib/types";
 import {
   classifyMonitorRain,
   formatBandFloor,
@@ -284,7 +284,6 @@ export function applyRainClassification<
     id: string;
     nome: string;
     risco: RiskLevel | string;
-    risco: AlertLevel;
     fonte: "admin" | "monitor";
     classifiedBy?: string | null;
     classifiedAt?: number | null;
@@ -292,17 +291,11 @@ export function applyRainClassification<
 >(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType | undefined): T[] {
   if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
   return rows.map((m) => {
+    if (m.fonte === "admin") return m;
     const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
     const apoio = rainApoio(tipo, rec, { id: m.id, nome: m.nome });
     if (!apoio || apoio.level === "BAIXO") return m;
     if (riskIndex(apoio.level) <= riskIndex(m.risco)) return m;
->(rows: T[], rain: RainfallPayload | null | undefined, tipo: AlertType): T[] {
-  if (!rain || (tipo !== "ALAGAMENTO" && tipo !== "MOVIMENTO")) return rows;
-  return rows.map((m) => {
-    if (m.fonte === "admin") return m;
-    const rec = rain.byId[m.id] ?? rain.byNome[m.nome];
-    const apoio = rainApoio(tipo, rec, { nome: m.nome, id: m.id });
-    if (!apoio || apoio.level === "BAIXO") return m;
     if (tipo === "MOVIMENTO" && !temAreaMapeada(m.id)) return m;
     return {
       ...m,
@@ -310,8 +303,6 @@ export function applyRainClassification<
       fonte: "monitor" as const,
       classifiedBy: tipo === "ALAGAMENTO" ? "CEMADEN · 1 h" : "CEMADEN · 24 h",
       classifiedAt: rec?.observedAt ?? rain.generatedAt ?? m.classifiedAt ?? null,
-      classifiedBy: "Limiares CEMADEN/ANA",
-      classifiedAt: rain.generatedAt ?? m.classifiedAt ?? null,
     };
   });
 }

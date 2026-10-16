@@ -241,6 +241,8 @@ async function refresh(codes: string[]) {
 export function peekAnaCache(): { at: number; registros: number } | null {
   if (!cache) return null;
   return { at: cache.at, registros: cache.byCode.size };
+}
+
 export function peekAnaFetchedAt(): number | null {
   return cache?.at ?? null;
 }
