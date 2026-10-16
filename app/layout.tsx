@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import { OpsModeProvider } from "@/components/shared/OpsMode";
 import { ThemeToaster } from "@/components/shared/ThemeToaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,10 +42,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
-      </head>
       <body className="h-full overflow-hidden bg-bg text-text max-lg:overflow-auto">
+        <Script id="cemoa-theme" strategy="beforeInteractive">
+          {THEME_BOOT}
+        </Script>
         <a className="skip-link" href="#conteudo">
           Ir para o conteúdo
         </a>
