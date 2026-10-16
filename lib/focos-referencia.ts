@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { FocosReferencia } from "@/lib/focos-display";
+import type { FocoPonto, FocosReferencia } from "@/lib/focos-display";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 
 const BASE =
@@ -17,6 +17,7 @@ type Disk = {
   dias: number;
   total: number;
   byId: Record<string, number>;
+  pontos?: FocoPonto[];
 };
 
 const NOMES = new Map(MUNICIPALITIES.map((item) => [item.id, item.nome]));
@@ -51,14 +52,24 @@ function diasRecentes(n: number) {
   return out;
 }
 
-function contarAqua(csv: string, byId: Map<string, number>) {
+function col(header: string[], ...names: string[]) {
+  for (const name of names) {
+    const i = header.indexOf(name);
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+function contarAqua(csv: string, byId: Map<string, number>, pontos: FocoPonto[] | null, diaIsoLabel: string) {
   const lines = csv.split(/\r?\n/);
   if (lines.length < 2) return 0;
   const header = lines[0].split(",").map((cell) => cell.trim().toLowerCase());
-  const iSat = header.indexOf("satelite");
-  const iEst = header.indexOf("estado");
-  const iBio = header.indexOf("bioma");
-  const iMun = header.indexOf("municipio_id");
+  const iSat = col(header, "satelite", "satélite");
+  const iEst = col(header, "estado");
+  const iBio = col(header, "bioma");
+  const iMun = col(header, "municipio_id", "id_municipio");
+  const iLat = col(header, "lat", "latitude");
+  const iLon = col(header, "lon", "longitude", "long");
   if (iSat < 0 || iMun < 0) return 0;
   let total = 0;
   for (let i = 1; i < lines.length; i++) {
@@ -72,6 +83,13 @@ function contarAqua(csv: string, byId: Map<string, number>) {
     if (!id || !NOMES.has(id)) continue;
     byId.set(id, (byId.get(id) ?? 0) + 1);
     total += 1;
+    if (pontos && iLat >= 0 && iLon >= 0) {
+      const lat = Number(cols[iLat]);
+      const lon = Number(cols[iLon]);
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        pontos.push({ lat, lon, data: diaIsoLabel, satelite: "AQUA_M-T" });
+      }
+    }
   }
   return total;
 }
@@ -99,6 +117,7 @@ function montar(disk: Disk): FocosReferencia {
     total: disk.total,
     byId: disk.byId,
     ranking,
+    pontos: disk.pontos ?? [],
     error: disk.dias
       ? undefined
       : "O INPE não devolveu os arquivos diários do satélite de referência.",
@@ -123,8 +142,10 @@ async function gravarDisco(disk: Disk) {
 
 async function atualizar(): Promise<FocosReferencia> {
   const byId = new Map<string, number>();
+  const pontos: FocoPonto[] = [];
   const ok: string[] = [];
   const dias = diasRecentes(DIAS);
+  const overlayDias = new Set(dias.slice(0, 2));
   const fila = [...dias];
   async function worker() {
     for (;;) {
@@ -133,7 +154,7 @@ async function atualizar(): Promise<FocosReferencia> {
       try {
         const csv = await baixarDia(dia);
         if (!csv) continue;
-        contarAqua(csv, byId);
+        contarAqua(csv, byId, overlayDias.has(dia) ? pontos : null, diaIso(dia));
         ok.push(dia);
       } catch {
         // um dia faltando não zera a série
@@ -149,6 +170,7 @@ async function atualizar(): Promise<FocosReferencia> {
     dias: ok.length,
     total: [...byId.values()].reduce((sum, n) => sum + n, 0),
     byId: Object.fromEntries(byId),
+    pontos,
   };
   if (disk.dias > 0) await gravarDisco(disk);
   memory = montar(disk);

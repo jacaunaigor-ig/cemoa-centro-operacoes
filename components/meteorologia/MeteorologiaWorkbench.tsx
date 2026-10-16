@@ -11,7 +11,8 @@ import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { fetchJson } from "@/lib/client";
 import { startVisiblePoll, useNow } from "@/lib/client-hooks";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
-import { formatMm, rainHeatColor } from "@/lib/rainfall-display";
+import { SEM_LEITURA_FILL } from "@/lib/map-observacao";
+import { formatMm, rainBand, rainHeatColor, resumoChuvaPng } from "@/lib/rainfall-display";
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import type { RainfallMunicipio, RainfallPayload } from "@/lib/types";
 import { cn, formatAmazonDateTime } from "@/lib/utils";
@@ -197,11 +198,18 @@ export function MeteorologiaWorkbench() {
   async function exportarChuva(id: "mm1h" | "mm24h", rotulo: string) {
     if (!rain) throw new Error("Ainda não há leitura do CEMADEN.");
     const porNome = new Map<string, { valor: string; color: string; mm: number }>();
+    const semChuva = new Set<string>();
     for (const item of Object.values(rain.byNome)) {
       const mm = item[id];
-      if (mm == null || !Number.isFinite(mm) || mm <= 0) continue;
+      const faixa = rainBand(mm);
+      if (faixa === "sem_leitura") continue;
+      if (faixa === "sem_chuva") {
+        semChuva.add(item.nome);
+        continue;
+      }
       porNome.set(item.nome, { valor: formatMm(mm), color: rainHeatColor(mm), mm });
     }
+    const resumo = resumoChuvaPng(Object.values(rain.byNome).map((item) => item[id]));
     if (!porNome.size) throw new Error(`Nenhum município com acumulado de ${rotulo}.`);
     const municipios = [...porNome.entries()]
       .sort((a, b) => b[1].mm - a[1].mm)
@@ -212,11 +220,16 @@ export function MeteorologiaWorkbench() {
         title: "Meteorologia",
         productLegend: `Chuva CEMADEN · acumulado de ${rotulo} por município`,
         filename: pngFilename(`chuva_cemaden_${id}`),
-        colorFor: (nome) => porNome.get(nome)?.color ?? "#e8eef5",
+        colorFor: (nome) =>
+          porNome.get(nome)?.color ?? (semChuva.has(nome) ? "#e8eef5" : SEM_LEITURA_FILL),
         legendTitle: `Acumulado ${rotulo}`,
         legendItems: [],
         municipios,
-        footerSources: "CEMADEN · pluviômetros automáticos do Amazonas",
+        extraNote: {
+          title: "Sem leitura não é 0 mm",
+          text: `${resumo.semLeitura} sem acumulado nesta janela. ${resumo.semChuva} com 0 mm. O cinza mais fechado é sem leitura.`,
+        },
+        footerSources: "CEMADEN · pluviômetros automáticos do Amazonas · horário de Manaus",
       });
       toast.success(`PNG de ${rotulo} exportado.`);
     } finally {
@@ -227,11 +240,10 @@ export function MeteorologiaWorkbench() {
   return (
     <AppShell
       consultaFalhou={Boolean(error)}
-      source="CEMADEN · pluviômetros do Amazonas · GOES-19 CPTEC/INPE"
+      source="CEMADEN · ANA telemetria · INMET · GOES-19 CPTEC/INPE"
       updatedAt={rain?.generatedAt}
       rainAt={rain?.generatedAt}
     >
-    <AppShell source="CEMADEN · ANA telemetria · INMET · GOES-19 CPTEC/INPE" updatedAt={rain?.generatedAt} rainAt={rain?.generatedAt}>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
         <header className="flex flex-wrap items-end justify-between gap-2">
           <div>
@@ -311,6 +323,9 @@ export function MeteorologiaWorkbench() {
                 {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
               </button>
             </div>
+            <p className="text-[11px] text-text-mute">
+              O PNG separa sem leitura de 0 mm e carimba o horário de Manaus.
+            </p>
             {STATIC_DEPLOY ? (
               <p className="rounded-xl border border-border bg-panel p-4 text-sm text-text-mute">
                 O mapa de chuva fica indisponível na publicação estática.

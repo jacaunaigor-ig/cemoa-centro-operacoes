@@ -13,12 +13,26 @@ export function reportClientError(message: string, context?: string) {
   }
 }
 
+const inflightJson = new Map<string, Promise<unknown>>();
+
+/** Coalesce GETs iguais no mesmo tick (Alertas + Boletim + Meteorologia). */
 export async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(withBase(url), { cache: "no-store" });
-  if (!res.ok) {
-    const err = new Error(`Falha ${res.status} em ${url}`);
-    reportClientError(err.message, "fetchJson");
-    throw err;
-  }
-  return res.json() as Promise<T>;
+  const key = withBase(url);
+  const pending = inflightJson.get(key);
+  if (pending) return pending as Promise<T>;
+
+  const request = (async () => {
+    const res = await fetch(key, { cache: "no-store" });
+    if (!res.ok) {
+      const err = new Error(`Falha ${res.status} em ${url}`);
+      reportClientError(err.message, "fetchJson");
+      throw err;
+    }
+    return res.json() as Promise<T>;
+  })().finally(() => {
+    inflightJson.delete(key);
+  });
+
+  inflightJson.set(key, request);
+  return request;
 }

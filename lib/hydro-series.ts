@@ -1,3 +1,4 @@
+import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
 import type { HydroStation } from "@/lib/types";
 
 export const HYDRO_TZ = "America/Manaus";
@@ -15,6 +16,8 @@ export function hydroTodayIso(now = Date.now()): string {
 /** Dia do boletim em vigor: hoje a partir das 16 h de Manaus; antes disso, o dia anterior. */
 export function hydroBoletimDiaIso(now = Date.now()): string {
   const today = hydroTodayIso(now);
+  const clock = relogioDoFuso(now, FUSO_MANAUS);
+  if (clock.hour >= ANA_HORAS[0]) return today;
   const hour = Number(
     new Intl.DateTimeFormat("en-US", {
       timeZone: HYDRO_TZ,
@@ -142,6 +145,23 @@ export function alignHydroSeries(
   };
 }
 
+export function syncOperationalCota<T extends HydroStation>(station: T): T {
+  let idx = -1;
+  for (let i = station.cotas.length - 1; i >= 0; i--) {
+    const value = station.cotas[i];
+    if (value != null && Number.isFinite(value)) {
+      idx = i;
+      break;
+    }
+  }
+  const cota = idx >= 0 ? Number(station.cotas[idx]) : null;
+  const prev = idx > 0 ? station.cotas[idx - 1] : null;
+  let variacao = station.variacao;
+  if (cota != null && prev != null && Number.isFinite(prev)) {
+    variacao = Math.round((cota - prev) * 100) / 100;
+  }
+  let tendencia = station.tendencia;
+  if (cota != null && prev != null && Number.isFinite(prev) && variacao != null) {
 export function syncOperationalCota<T extends HydroStation>(station: T, now = Date.now()): T {
   const dia = hydroBoletimDiaIso(now);
   const idx = indexOfIso(station, dia);
@@ -158,6 +178,8 @@ export function syncOperationalCota<T extends HydroStation>(station: T, now = Da
   }
   return {
     ...station,
+    cota,
+    semLeitura: cota == null,
     cota: cotaDia,
     semLeitura: cotaDia == null,
     variacao,

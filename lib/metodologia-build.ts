@@ -38,13 +38,6 @@ import {
 import type { AirQualityPayload, AlertLevel, RainfallPayload } from "@/lib/types";
 
 const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · alagamento no IRE de chuvas · movimento de massa no IRE correspondente · SELVA e focos no IRE de incêndio`;
-const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · boletim de estiagem e alertas ao vivo`;
-
-const ORDEM_ALERTA: NivelAlertaMet[] = ["Sem alerta", "Moderado", "Alto", "Severo", "Extremo"];
-
-function piorNivel(a: NivelAlertaMet, b: NivelAlertaMet): NivelAlertaMet {
-  return ORDEM_ALERTA.indexOf(b) > ORDEM_ALERTA.indexOf(a) ? b : a;
-}
 
 function nivelHidro(status: string | undefined): NivelAlertaMet {
   if (status === "MODERADO") return "Moderado";
@@ -170,8 +163,6 @@ export function buildMetodologiaPayload(
   now = Date.now(),
   live?: MetodologiaAoVivo,
 ): MetodologiaPayload {
-  // ---- 1. Alertas ao vivo por produto (classificação do operador) ---------
-export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
   // ---- 1. Alertas ao vivo por produto e grau do boletim de estiagem -------
   const chuvaMap = new Map(
     buildAlertsPayload(now, "CHUVA").municipios.map((r) => [r.id, r.risco]),
@@ -224,6 +215,7 @@ export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
     const arRec = live?.air?.byId[m.id] ?? live?.air?.byNome[m.nome];
     const onde = { id: m.id, nome: m.nome };
     const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
+      Estiagem: nivelHidro(hidroMap.get(m.id)),
       Chuvas: piorNivel(
         nivelAlertaMet(chuvaMap.get(m.id)),
         nivelAlertaMet(alagamentoMap.get(m.id)),
@@ -233,20 +225,12 @@ export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
         nivelAlertaMet(movimentoMap.get(m.id)),
         nivelAlertaMet(classifyMonitorRain("MOVIMENTO", chuvaRec?.mm24h, onde).level),
       ),
+      "Erosão": piorNivel(nivelAlertaMet(erosaoMap.get(m.id)), nivelHidro(hidroMap.get(m.id))),
       "Incêndio/QAr": piorNivel(
         nivelAlertaMet(incendioMap.get(m.id)),
         nivelAlertaMet(arRec?.level ?? undefined),
         nivelDeFocos(live?.focos?.byId[m.id]),
       ),
-    // Inundação: evento gradual de bacia. Sem alerta de cheia, FA = 0,30
-    // prevalece: o IRE permanece Baixo. O agravo só ordena pelo histórico
-    // de decretos, sem competir com a estiagem no IRG.
-    const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
-      Estiagem: nivelHidro(hidroMap.get(m.id)),
-      Chuvas: piorNivel(nivelAlertaMet(chuvaMap.get(m.id)), nivelAlertaMet(alagamentoMap.get(m.id))),
-      "Mov. Massa": nivelAlertaMet(movimentoMap.get(m.id)),
-      "Erosão": piorNivel(nivelAlertaMet(erosaoMap.get(m.id)), nivelHidro(hidroMap.get(m.id))),
-      "Incêndio/QAr": nivelAlertaMet(incendioMap.get(m.id)),
       "Inundação": "Sem alerta",
     };
 

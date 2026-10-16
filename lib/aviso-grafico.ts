@@ -1,6 +1,8 @@
 /** Aviso Meteorológico oficial — janela de 4 h a partir das 02 h (02–06, 06–10, 10–14, 14–18, 18–22, 22–02), Manaus. */
 
 export const AVISO_GRAFICO_HOURS = 4;
+/** Cena GOES com mais de 30 min não entra no aviso como se fosse agora. */
+export const GOES_AVISO_ATRASO_MS = 30 * 60_000;
 export const AVISO_SLOT_OFFSET_HOUR = 2;
 export const AVISO_SLOT_HOURS = ["02–06", "06–10", "10–14", "14–18", "18–22", "22–02"] as const;
 export type AvisoSlotHours = (typeof AVISO_SLOT_HOURS)[number];

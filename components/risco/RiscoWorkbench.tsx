@@ -24,6 +24,7 @@ import {
   type IndicadorRiscoId,
 } from "@/lib/metodologia-display";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
+import { LogisticaMapa } from "@/components/risco/LogisticaMapa";
 import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { decretoFill, decretosEstiagem, decretosInundacao } from "@/lib/decretos";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -34,7 +35,7 @@ import { toast } from "sonner";
 const POLL_MS = 20_000;
 const AREA = new Map(MUNICIPALITIES.map((item) => [item.id, item.areaKm2]));
 
-type Aba = "operacao" | "analise" | "territorio" | "decretos" | "dados";
+type Aba = "operacao" | "analise" | "territorio" | "logistica" | "decretos" | "dados";
 type Recorte = "todos" | "n6" | "n5" | "p1" | "rebaixados";
 type SortKey = "irg" | "ivm" | "nivel" | "nome" | "pop";
 
@@ -42,6 +43,7 @@ const ABAS: Array<{ id: Aba; label: string }> = [
   { id: "operacao", label: "Operação" },
   { id: "analise", label: "Análise" },
   { id: "territorio", label: "Território" },
+  { id: "logistica", label: "Logística" },
   { id: "decretos", label: "Decretos" },
   { id: "dados", label: "Dados" },
 ];
@@ -407,28 +409,6 @@ export function RiscoWorkbench() {
         </div>
 
         {aba === "operacao" ? (
-          <div className="grid min-h-[28rem] gap-2 lg:grid-cols-[minmax(18rem,26rem)_minmax(0,1fr)]">
-            <IndiceSheet
-              className="max-h-[72vh] min-h-[22rem]"
-              rows={filtered}
-              selectedId={selected?.codigo}
-              hideScopeFilters
-              loading={loading}
-              onPick={pick}
-            />
-            <Ficha
-              row={selected}
-              rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
-              rainEstado={rainEstado}
-              rainAt={rain?.generatedAt ?? null}
-              rainError={rain?.error ?? null}
-              hydro={selected ? hydro?.stations.find((item) => item.id === selected.codigo) ?? null : null}
-              hydroEstado={hydroEstado}
-              hydroAt={hydro?.generatedAt ?? null}
-              indiceEm={payload?.generatedAt ?? null}
-              indiceFonte={payload?.source ?? ""}
-              onClear={() => setQuery({ municipio: null })}
-            />
           <div className="grid gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-panel p-2">
               <div className="flex flex-wrap items-center gap-1">
@@ -565,6 +545,14 @@ export function RiscoWorkbench() {
                   <Ficha
                     row={selected}
                     rain={selected ? rain?.byId[selected.codigo] ?? null : undefined}
+                    rainEstado={rainEstado}
+                    rainAt={rain?.generatedAt ?? null}
+                    rainError={rain?.error ?? null}
+                    hydro={selected ? hydro?.stations.find((item) => item.id === selected.codigo) ?? null : null}
+                    hydroEstado={hydroEstado}
+                    hydroAt={hydro?.generatedAt ?? null}
+                    indiceEm={payload?.generatedAt ?? null}
+                    indiceFonte={payload?.source ?? ""}
                     onClear={() => {
                       setQuery({ municipio: null });
                       setPainelLateral("ranking");
@@ -578,6 +566,7 @@ export function RiscoWorkbench() {
 
         {aba === "analise" ? <Analise rows={filtered} /> : null}
         {aba === "territorio" ? <Territorio rows={rows} onPick={pick} /> : null}
+        {aba === "logistica" ? <LogisticaMapa rows={rows} onPick={pick} /> : null}
         {aba === "decretos" ? <Decretos rows={rows} onPick={pick} /> : null}
         {aba === "dados" ? (
           <Dados

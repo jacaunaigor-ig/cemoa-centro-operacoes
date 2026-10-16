@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import type { GeoJSON as GeoLayer, Map as LeafletMap, PathOptions } from "leaflet";
 import { addOsmTiles, loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { fitMapToAmazonas } from "@/lib/map";
-import { withBase } from "@/lib/site";
+import { loadMunicipalMesh } from "@/lib/stain-clip";
 
 export function MunicipioChoropleth({
   fills,
@@ -45,10 +45,7 @@ export function MunicipioChoropleth({
       resetLeafletHost(hostRef.current);
       const map = L.map(hostRef.current, { zoomControl: true, attributionControl: true });
       addOsmTiles(L, map);
-      const geo = await fetch(withBase("/geo/amazonas-municipios.json")).then((res) => {
-        if (!res.ok) throw new Error("Malha municipal indisponível.");
-        return res.json();
-      });
+      const geo = await loadMunicipalMesh();
       if (cancelled) {
         map.remove();
         return;

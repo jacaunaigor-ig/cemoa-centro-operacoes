@@ -38,6 +38,7 @@ import {
   PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
+  formatHydroRef,
   normalizeMunicipio,
   statusAtivo,
   statusMapa,
@@ -662,10 +663,9 @@ export function HydrologyWorkbench() {
               value={loading ? "—" : String(kpis.semLeitura)}
               sub={
                 data?.referencia
-                  ? `${pct(kpis.semLeitura)} · sem cota em ${formatHydroRef(data.referencia)}`
-                  : "sem cota do dia do boletim"
+                  ? `${pct(kpis.semLeitura)} · sem cota em ${formatHydroRef(data.referencia)} · ${kpis.serieAntiga} série antiga`
+                  : `${pct(kpis.semLeitura)} · ${kpis.serieAntiga} série antiga`
               }
-              sub={`${pct(kpis.semLeitura)} · ${kpis.serieAntiga} série antiga`}
               accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}

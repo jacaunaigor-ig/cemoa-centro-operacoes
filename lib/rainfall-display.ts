@@ -28,9 +28,17 @@ export function formatWindowsCompact(rain: RainfallWindows | null | undefined): 
   return `${formatMmShort(rain.mm1h)} · ${formatMmShort(rain.mm6h)} · ${formatMmShort(rain.mm24h)}`;
 }
 
-/** Azul mais escuro conforme o acumulado cresce. Sem chuva fica neutro. */
-export function rainHeatColor(mm: number | null | undefined): string {
-  if (mm == null || !Number.isFinite(mm) || mm <= 0.1) return "#e8eef5";
+const COR_SEM_ESTACAO = "#9aa3b2";
+const COR_ZERO_MM = "#e8eef5";
+
+/** Azul mais escuro conforme o acumulado cresce. Cinza = sem pluviômetro. */
+export function rainHeatColor(
+  mm: number | null | undefined,
+  opts?: { temEstacao?: boolean },
+): string {
+  if (opts && opts.temEstacao === false) return COR_SEM_ESTACAO;
+  if (mm == null || !Number.isFinite(mm)) return COR_SEM_ESTACAO;
+  if (mm <= 0.1) return COR_ZERO_MM;
   if (mm < 5) return "#c5ddf6";
   if (mm < 12.5) return "#7eb6ea";
   if (mm < 25) return "#3b82d6";
@@ -45,6 +53,19 @@ export function rainBand(mm: number | null | undefined): RainBand {
   if (mm < 30) return "moderada";
   if (mm < 50) return "forte";
   return "intensa";
+}
+
+export function resumoChuvaPng(valores: Array<number | null | undefined>) {
+  let semLeitura = 0;
+  let semChuva = 0;
+  let comChuva = 0;
+  for (const mm of valores) {
+    const band = rainBand(mm);
+    if (band === "sem_leitura") semLeitura += 1;
+    else if (band === "sem_chuva") semChuva += 1;
+    else comChuva += 1;
+  }
+  return { semLeitura, semChuva, comChuva };
 }
 
 export function rainBandLabel(band: RainBand, janela?: "1 h" | "6 h" | "24 h"): string {

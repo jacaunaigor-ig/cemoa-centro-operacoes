@@ -1,3 +1,10 @@
+export type FocoPonto = {
+  lat: number;
+  lon: number;
+  data: string;
+  satelite: string;
+};
+
 export type FocosReferencia = {
   generatedAt: number;
   source: string;
@@ -8,6 +15,7 @@ export type FocosReferencia = {
   total: number;
   byId: Record<string, number>;
   ranking: Array<{ id: string; nome: string; total: number }>;
+  pontos: FocoPonto[];
   error?: string;
 };
 
