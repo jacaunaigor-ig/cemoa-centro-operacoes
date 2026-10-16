@@ -411,6 +411,7 @@ export function AlertsWorkbench() {
   const [focosMapa, setFocosMapa] = useState(false);
   const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
+  const [showSetores, setShowSetores] = useState(true);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
@@ -933,9 +934,6 @@ export function AlertsWorkbench() {
     if (tipo === "INCENDIO") return applyAirClassification(rows, air);
     return rows;
   }, [data, tipo, rain, air]);
-    if (tipo === "INCENDIO") return applyAirClassification(rows, air);
-    return applyRainClassification(rows, rain, tipo);
-  }, [data, tipo, air, rain]);
   const hydroStations = useMemo(() => hydro?.stations ?? [], [hydro]);
   const nomesCalha = useMemo(
     () => nomesNaCalha(calha, hydroStations),
@@ -1880,6 +1878,11 @@ export function AlertsWorkbench() {
                     >
                       {showRivers ? "Ocultar rios" : "Rios"}
                     </MapToolButton>
+                    {tipo === "MOVIMENTO" ? (
+                      <MapToolButton active={showSetores} onClick={() => setShowSetores((v) => !v)}>
+                        {showSetores ? "Ocultar áreas R3/R4" : "Áreas R3/R4"}
+                      </MapToolButton>
+                    ) : null}
                     {tipo === "INCENDIO" ? (
                       <MapToolButton
                         active={focosMapa}
@@ -2010,6 +2013,7 @@ export function AlertsWorkbench() {
                   fillByNome={null}
                   labelByNome={focoLabels}
                   showFocosCalor={tipo === "INCENDIO" && focosMapa}
+                  showSetores={tipo === "MOVIMENTO" && showSetores}
                   focosCalor={focosRef?.pontos ?? []}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
@@ -2152,6 +2156,21 @@ export function AlertsWorkbench() {
                 ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
                   <div className="mt-2 border-t border-border/70 pt-2">
                     <MonitorThresholdLegend tipo={tipo} />
+                    {tipo === "MOVIMENTO" && showSetores ? (
+                      <div className="mt-1.5 space-y-0.5">
+                        <p className="text-[10px] leading-snug text-text-mute">
+                          Setorização CPRM/SGB. O polígono não muda o grau do município.
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-sm" style={{ background: "#f97316" }} />
+                          R3 · Alto
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <span className="size-2.5 rounded-sm" style={{ background: "#ef4444" }} />
+                          R4 · Muito alto
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </MapLegendCard>
