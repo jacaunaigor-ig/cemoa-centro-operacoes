@@ -87,6 +87,8 @@ export function buildSourceHealth(input: {
       detalhe: "CH13 Amazonas",
     },
   ];
+}
+
 /** Estado da última leitura conhecida. Não dispara consulta externa. */
 
 export type FonteEstado = "operacional" | "atrasada" | "indisponivel" | "erro";

@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { fetchJson } from "@/lib/client";
 import { startVisiblePoll } from "@/lib/client-hooks";
-import type { SourceHealth } from "@/lib/source-health";
+import type { FonteSaude, SourceHealth } from "@/lib/source-health";
 import { cn, formatAmazonDateTime } from "@/lib/utils";
-import type { FonteSaude } from "@/lib/source-health";
-import { formatAmazonDateTime } from "@/lib/utils";
 
 const FONTES = [
   { href: "https://www.gov.br/cemaden/pt-br", label: "CEMADEN" },
@@ -22,6 +20,13 @@ const TONE: Record<SourceHealth["tone"], string> = {
   ok: "bg-emerald-500",
   atraso: "bg-amber-400",
   falha: "bg-risco-alto",
+};
+
+type StatusPayload = {
+  sources?: SourceHealth[];
+  fontes?: FonteSaude[];
+  falhas?: Array<{ nome: string; estado: string; em: number; detalhe: string }>;
+  falhasDisponivel?: boolean;
 };
 
 export function OpsFooter({
@@ -40,36 +45,14 @@ export function OpsFooter({
   supabase?: "ligado" | "aguardando";
 }) {
   const [health, setHealth] = useState<SourceHealth[]>([]);
-
-  useEffect(() => {
-    return startVisiblePoll(async () => {
-      try {
-        const data = await fetchJson<{ sources: SourceHealth[] }>("/api/status");
-        setHealth(data.sources);
-      } catch {
-        /* o rodapé continua com os horários locais */
-      }
-    }, 60_000);
   const [fontes, setFontes] = useState<FonteSaude[]>([]);
   const [falhasNota, setFalhasNota] = useState("Nenhuma falha de fonte registrada neste servidor.");
 
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
+    return startVisiblePoll(async () => {
       try {
-        const res = await fetch("/api/status", { cache: "no-store" });
-        if (!res.ok) {
-          if (!cancelled) {
-            setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
-          }
-          return;
-        }
-        const data = (await res.json()) as {
-          fontes?: FonteSaude[];
-          falhas?: Array<{ nome: string; estado: string; em: number; detalhe: string }>;
-          falhasDisponivel?: boolean;
-        };
-        if (cancelled) return;
+        const data = await fetchJson<StatusPayload>("/api/status");
+        setHealth(data.sources ?? []);
         setFontes(data.fontes ?? []);
         if (data.falhasDisponivel === false) {
           setFalhasNota("Histórico de falhas indisponível neste servidor. Isso não significa que não houve falha.");
@@ -84,18 +67,10 @@ export function OpsFooter({
           setFalhasNota("Nenhuma falha de fonte registrada neste servidor.");
         }
       } catch {
-        if (!cancelled) {
-          setFontes([]);
-          setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
-        }
+        setFontes([]);
+        setFalhasNota("Consulta de integridade indisponível. Isso não significa que as fontes estão normais.");
       }
-    }
-    void load();
-    const timer = window.setInterval(load, 60_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
+    }, 60_000);
   }, []);
 
   const stamps = [

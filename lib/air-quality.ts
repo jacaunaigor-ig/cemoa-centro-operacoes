@@ -535,15 +535,19 @@ function buildFromPacket(
   };
 }
 
-export function peekAirCache(): { generatedAt: number; error: string | null; sensores: number } | null {
+export function peekAirCache(): {
+  generatedAt: number;
+  error: string | null;
+  sensores: number;
+  at: number;
+  registros: number;
+  erro: string | null;
+} | null {
   if (!memo) return null;
   return {
     generatedAt: memo.data.generatedAt,
     error: memo.data.error,
     sensores: memo.data.coverage.sensores,
-export function peekAirCache(): { at: number; registros: number; erro: string | null } | null {
-  if (!memo) return null;
-  return {
     at: memo.at,
     registros: memo.data.coverage.sensores,
     erro: memo.data.error,

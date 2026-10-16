@@ -317,9 +317,21 @@ function buildFromRows(
   };
 }
 
-export function peekRainfallCache(): { generatedAt: number; error: string | null } | null {
+export function peekRainfallCache(): {
+  generatedAt: number;
+  error: string | null;
+  at: number;
+  registros: number;
+  erro: string | null;
+} | null {
   if (!memo) return null;
-  return { generatedAt: memo.data.generatedAt, error: memo.data.error };
+  return {
+    generatedAt: memo.data.generatedAt,
+    error: memo.data.error,
+    at: memo.at,
+    registros: memo.data.coverage.estacoes,
+    erro: memo.data.error,
+  };
 }
 
 export function resetRainfallMemo() {
@@ -369,15 +381,6 @@ export async function getRainfallPayload(): Promise<RainfallPayload> {
     });
   }
   return inflight;
-}
-
-export function peekRainfallCache(): { at: number; registros: number; erro: string | null } | null {
-  if (!memo) return null;
-  return {
-    at: memo.at,
-    registros: memo.data.coverage.estacoes,
-    erro: memo.data.error,
-  };
 }
 
 export function rainOf(
