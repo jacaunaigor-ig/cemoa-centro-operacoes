@@ -107,8 +107,9 @@ import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
+import { PassagemDialog } from "@/components/alerts/PassagemDialog";
 import { linhasDaPassagem } from "@/lib/classification-audit";
-import { montarPassagemVarios, type PassagemEntrada } from "@/lib/passagem-turno";
+import { calhaDaBacia, type PassagemItem, type PassagemTexto } from "@/lib/passagem-turno";
 import { getMunicipality } from "@/lib/municipalities";
 import { entraNaContagemDeNivel, observacaoDoMunicipio, SEM_LEITURA_FILL } from "@/lib/map-observacao";
 import { formatManausStamp } from "@/lib/aviso-grafico";
@@ -133,7 +134,7 @@ const PRODUCT_ICONS = {
   INCENDIO: Flame,
 } as const;
 
-function entradaPassagem(
+function alertasDaPassagem(
   produto: string,
   tipoAlvo: AlertType,
   rows: Array<{
@@ -141,14 +142,12 @@ function entradaPassagem(
     nome: string;
     bacia: string;
     risco: string;
-    fonte: "admin" | "monitor";
     expiresAt?: number | null;
   }>,
   rain: RainfallPayload | null,
   air: AirQualityPayload | null,
   hydro: HydroStation[],
-): PassagemEntrada {
-  const product = ALERT_PRODUCTS[tipoAlvo];
+): { ativos: PassagemItem[]; expirados: PassagemItem[] } {
   const fila = buildPlantaoQueue({
     tipo: tipoAlvo,
     municipios: rows.map((m) => ({
@@ -162,45 +161,28 @@ function entradaPassagem(
     air,
     hydro,
   });
-  let sem = 0;
-  const niveis = product.levels.map((level) => {
-    let quantidade = 0;
-    for (const m of rows) {
-      if (m.risco !== level) continue;
-      const rec = rain?.byId[m.id];
-      const observacao = observacaoDoMunicipio({
-        fonte: m.fonte,
-        tipo: tipoAlvo,
-        consultaFeita: Boolean(rain),
-        temEstacao: Boolean(rec),
-        mm1h: rec?.mm1h ?? null,
-        mm24h: rec?.mm24h ?? null,
-        temAlgumaLeitura: hasRainReading(rec),
-      });
-      if (observacao === "sem-leitura") sem += 1;
-      if (entraNaContagemDeNivel(m.risco, observacao)) quantidade += 1;
-    }
-    return { nivel: levelLabel(level), quantidade };
-  });
-  return {
-    horario: "",
-    responsavel: null,
-    produto,
-    recorte: "",
-    fontes: [],
-    niveis,
-    semLeitura: sem,
-    ativos: rows
-      .filter((m) => isAlertActive(tipoAlvo, m.risco))
-      .sort(
-        (a, b) =>
-          levelRank(tipoAlvo, b.risco) - levelRank(tipoAlvo, a.risco) ||
-          a.nome.localeCompare(b.nome, "pt-BR"),
-      )
-      .map((m) => ({ nome: m.nome, detalhe: `${levelLabel(m.risco)} · ${m.bacia}` })),
-    fila: fila.map((item) => ({ acao: item.action, nome: item.nome, detalhe: item.motivo })),
-    classificacoesOperador: rows.filter((m) => m.fonte === "admin").length,
-  };
+  const ativos = rows
+    .filter((m) => isAlertActive(tipoAlvo, m.risco))
+    .sort(
+      (a, b) =>
+        levelRank(tipoAlvo, b.risco) - levelRank(tipoAlvo, a.risco) ||
+        a.nome.localeCompare(b.nome, "pt-BR"),
+    )
+    .map((m) => ({
+      produto,
+      calha: calhaDaBacia(m.bacia),
+      nome: m.nome,
+      detalhe: levelLabel(m.risco),
+    }));
+  const expirados = fila
+    .filter((item) => item.action === "vencido")
+    .map((item) => ({
+      produto,
+      calha: calhaDaBacia(item.bacia),
+      nome: item.nome,
+      detalhe: item.motivo,
+    }));
+  return { ativos, expirados };
 }
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
@@ -419,6 +401,9 @@ export function AlertsWorkbench() {
   const airPoints = useMemo(() => airSensorsForMap(air), [air]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [passagemAberta, setPassagemAberta] = useState(false);
+  const [passagemCarregando, setPassagemCarregando] = useState(false);
+  const [passagemBase, setPassagemBase] = useState<Omit<PassagemTexto, "comentario"> | null>(null);
   const mapApi = useRef<AlertsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
@@ -1628,10 +1613,16 @@ export function AlertsWorkbench() {
               <button
                 type="button"
                 className="rounded-lg border border-border bg-panel-2 px-2 py-1 text-[10px] font-bold tracking-wide text-text-mute uppercase hover:border-border-strong hover:text-text"
-                title="Copia o resumo dos cinco produtos. Não publica alerta."
+                title="Abre o resumo do turno: o que foi feito, alertas ativos, expirados e comentário."
                 onClick={() => {
+                  setPassagemAberta(true);
+                  setPassagemCarregando(true);
+                  setPassagemBase(null);
                   void (async () => {
-                    const produtos = await Promise.all(
+                    const ativos: PassagemItem[] = [];
+                    const expirados: PassagemItem[] = [];
+                    const falhas: string[] = [];
+                    await Promise.all(
                       ALERT_TYPES.map(async (id) => {
                         const label = ALERT_PRODUCTS[id].label;
                         try {
@@ -1647,21 +1638,16 @@ export function AlertsWorkbench() {
                             if (id === "INCENDIO") municipios = applyAirClassification(municipios, air);
                             rows = municipios;
                           }
-                          return {
-                            disponivel: true as const,
-                            entrada: entradaPassagem(label, id, rows, rain, air, hydroStations),
-                          };
+                          const parte = alertasDaPassagem(label, id, rows, rain, air, hydroStations);
+                          ativos.push(...parte.ativos);
+                          expirados.push(...parte.expirados);
                         } catch {
-                          return {
-                            disponivel: false as const,
-                            produto: label,
-                            motivo: "consulta não retornou",
-                          };
+                          falhas.push(`${label}: consulta não retornou. Esses alertas não entraram na lista.`);
                         }
                       }),
                     );
-                    let alteracoes: string[] | null = null;
-                    let alteracoesNota = "sessão de operador não aberta";
+                    let feito: string[] = [];
+                    let feitoIndisponivel: string | null = "sessão de operador não aberta";
                     try {
                       const res = await fetch("/api/alerts/audit?recentes=1", {
                         credentials: "same-origin",
@@ -1682,38 +1668,30 @@ export function AlertsWorkbench() {
                           nota?: string;
                         };
                         if (body.disponivel) {
-                          alteracoes = linhasDaPassagem(
+                          feito = linhasDaPassagem(
                             body.rows ?? [],
                             (id) => getMunicipality(id)?.nome ?? id,
                             (at) => formatManausStamp(Date.parse(at)),
                           );
-                          alteracoesNota = "";
+                          feitoIndisponivel = null;
                         } else {
-                          alteracoesNota = body.nota ?? "histórico indisponível nesta consulta";
+                          feitoIndisponivel = body.nota ?? "histórico indisponível nesta consulta";
                         }
                       }
                     } catch {
-                      alteracoesNota = "histórico indisponível nesta consulta";
+                      feitoIndisponivel = "histórico indisponível nesta consulta";
                     }
-                    const texto = montarPassagemVarios({
+                    if (falhas.length) feito = [...feito, ...falhas];
+                    setPassagemBase({
                       horario: formatManausStamp(Date.now()),
                       responsavel: session?.name ?? null,
                       recorte: calha || bacia || "todos os municípios",
-                      fontes: [
-                        { nome: "CEMADEN", detalhe: rain ? "consultada nesta tela" : "não consultada nesta tela" },
-                        { nome: "Boletim", detalhe: hydro ? "consultado nesta tela" : "não consultado nesta tela" },
-                        { nome: "SELVA", detalhe: air ? "consultada nesta tela" : "não consultada nesta tela" },
-                      ],
-                      produtos,
-                      alteracoes,
-                      alteracoesNota,
+                      feito,
+                      feitoIndisponivel,
+                      ativos,
+                      expirados,
                     });
-                    try {
-                      await navigator.clipboard.writeText(texto);
-                      toast.success("Passagem copiada. Revise antes de encaminhar.");
-                    } catch {
-                      toast.error("Não foi possível copiar a passagem.");
-                    }
+                    setPassagemCarregando(false);
                   })();
                 }}
               >
@@ -2246,6 +2224,12 @@ export function AlertsWorkbench() {
         </div>
       </div>
 
+      <PassagemDialog
+        open={passagemAberta}
+        carregando={passagemCarregando}
+        base={passagemBase}
+        onClose={() => setPassagemAberta(false)}
+      />
       <ClassifyConfirm
         open={sessionReview}
         level={

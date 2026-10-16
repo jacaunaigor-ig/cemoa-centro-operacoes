@@ -1,166 +1,97 @@
-export type PassagemLinha = { nome: string; detalhe: string };
+import { ALERT_PRODUCTS, ALERT_TYPES } from "@/lib/alert-types";
+import { BACIA_TO_CALHA, CALHAS } from "@/lib/hydrology";
 
-export type PassagemEntrada = {
-  horario: string;
-  responsavel: string | null;
+export type PassagemItem = {
   produto: string;
-  recorte: string;
-  niveis: Array<{ nivel: string; quantidade: number }>;
-  ativos: PassagemLinha[];
-  fila: Array<{ acao: "vencido" | "renovar" | "emitir"; nome: string; detalhe: string }>;
-  fontes: PassagemLinha[];
-  classificacoesOperador: number;
-  semLeitura?: number;
+  calha: string;
+  nome: string;
+  detalhe: string;
 };
 
-const ACOES = [
-  ["vencido", "Vencidos"],
-  ["renovar", "A renovar"],
-  ["emitir", "A emitir"],
-] as const;
+const ORDEM_PRODUTO = ALERT_TYPES.map((id) => ALERT_PRODUCTS[id].label);
 
-function bloco(titulo: string, linhas: string[]) {
-  return [
-    titulo,
-    ...linhas.map((linha) => (linha.startsWith("  ") ? linha : `- ${linha}`)),
-  ];
+export function calhaDaBacia(bacia: string) {
+  const nome = bacia.trim();
+  if (!nome) return "Sem calha";
+  return BACIA_TO_CALHA[nome] ?? nome;
 }
 
-function limitar(linhas: string[], max: number) {
-  if (linhas.length <= max) return linhas;
-  return [...linhas.slice(0, max), `e mais ${linhas.length - max}`];
-}
-
-export function montarPassagem(input: PassagemEntrada): string {
-  const responsavel = input.responsavel?.trim() || "sessão de operador não aberta";
-  const niveis = input.niveis.map((item) => `${item.nivel}: ${item.quantidade}`);
-  if (input.semLeitura && input.semLeitura > 0) {
-    niveis.push(
-      `Sem leitura: ${input.semLeitura}. Não entram na contagem de Baixo.`,
-    );
-  }
-  const ativos = input.ativos.map((item) => `${item.nome} — ${item.detalhe}`);
-  const fontes = input.fontes.map((item) => `${item.nome}: ${item.detalhe}`);
-  const continuidade = input.fila
-    .filter((item) => item.acao === "vencido" || item.acao === "renovar")
-    .map((item) => `${item.nome} — ${item.detalhe}`);
-
-  const pendencias = ACOES.flatMap(([acao, titulo]) => {
-    const itens = input.fila
-      .filter((item) => item.acao === acao)
-      .map((item) => `${item.nome} — ${item.detalhe}`);
-    if (!itens.length) return [`${titulo}: nenhum`];
-    return [`${titulo}:`, ...limitar(itens, 8).map((item) => `  ${item}`)];
-  });
-
-  return [
-    "Passagem de turno — CEMOA · Defesa Civil do Amazonas",
-    `Horário de Manaus: ${input.horario}`,
-    `Responsável pelo registro: ${responsavel}`,
-    `Produto aberto: ${input.produto}`,
-    `Recorte: ${input.recorte}`,
-    "Este texto cobre só o produto aberto nesta tela. Não reúne os outros produtos.",
-    "",
-    ...bloco("Situação", niveis.length ? niveis : ["Nenhum município carregado."]),
-    "",
-    ...bloco(
-      `Alertas ativos (${input.ativos.length})`,
-      input.ativos.length ? limitar(ativos, 12) : ["Nenhum alerta ativo neste recorte."],
-    ),
-    "",
-    `Classificações do operador neste recorte: ${input.classificacoesOperador}`,
-    "Alterações recentes não entram neste texto. O histórico fica na ficha do município, com a sessão aberta.",
-    "",
-    ...bloco("Pendências da fila", pendencias),
-    "",
-    ...bloco("Fontes nesta tela", fontes.length ? fontes : ["Nenhuma fonte informada."]),
-    "",
-    ...bloco(
-      "Continuidade",
-      continuidade.length
-        ? limitar(continuidade, 12)
-        : ["Nada vencido ou por renovar neste recorte."],
-    ),
-    "",
-    "Uso interno. Não publica alerta. Revise antes de encaminhar.",
-  ].join("\n");
-}
-
-export type ProdutoPassagem =
-  | { disponivel: true; entrada: PassagemEntrada }
-  | { disponivel: false; produto: string; motivo: string };
-
-function secaoProduto(produto: ProdutoPassagem): string[] {
-  if (!produto.disponivel) {
-    return [
-      produto.produto,
-      `- Consulta indisponível (${produto.motivo}). Não foi contada como risco baixo.`,
-    ];
-  }
-  const input = produto.entrada;
-  const niveis = input.niveis.map((item) => `${item.nivel}: ${item.quantidade}`);
-  if (input.semLeitura && input.semLeitura > 0) {
-    niveis.push(`Sem leitura: ${input.semLeitura}. Não entram na contagem de Baixo.`);
-  }
-  const ativos = input.ativos.map((item) => `${item.nome} — ${item.detalhe}`);
-  const continuidade = input.fila
-    .filter((item) => item.acao === "vencido" || item.acao === "renovar")
-    .map((item) => `${item.nome} — ${item.detalhe}`);
-  const pendencias = ACOES.flatMap(([acao, titulo]) => {
-    const itens = input.fila
-      .filter((item) => item.acao === acao)
-      .map((item) => `${item.nome} — ${item.detalhe}`);
-    if (!itens.length) return [`${titulo}: nenhum`];
-    return [`${titulo}:`, ...limitar(itens, 8).map((item) => `  ${item}`)];
-  });
-  return [
-    input.produto,
-    ...bloco("Situação", niveis.length ? niveis : ["Nenhum município carregado."]),
-    ...bloco(
-      `Alertas ativos (${input.ativos.length})`,
-      input.ativos.length ? limitar(ativos, 8) : ["Nenhum alerta ativo neste recorte."],
-    ),
-    `Classificações do operador neste recorte: ${input.classificacoesOperador}`,
-    ...bloco("Pendências", pendencias),
-    ...bloco(
-      "Continuidade",
-      continuidade.length ? limitar(continuidade, 8) : ["Nada vencido ou por renovar neste recorte."],
-    ),
-  ];
-}
-
-export function montarPassagemVarios(input: {
+export type PassagemTexto = {
   horario: string;
   responsavel: string | null;
   recorte: string;
-  fontes: PassagemLinha[];
-  produtos: ProdutoPassagem[];
-  alteracoes: string[] | null;
-  alteracoesNota?: string | null;
-}): string {
+  /** Linhas do que o turno fez. Vazio quando a consulta do histórico não trouxe alteração. */
+  feito: string[];
+  /** Preenchido quando o histórico não pôde ser lido. Não significa que nada foi feito. */
+  feitoIndisponivel: string | null;
+  ativos: PassagemItem[];
+  expirados: PassagemItem[];
+  comentario: string;
+};
+
+function secao(titulo: string, linhas: string[]) {
+  return [titulo, ...linhas.map((linha) => `- ${linha}`)];
+}
+
+function ordemDe(valor: string, ordem: readonly string[]) {
+  const indice = ordem.indexOf(valor);
+  return indice === -1 ? ordem.length : indice;
+}
+
+function linhasPorRisco(itens: PassagemItem[]) {
+  const produtos = [...new Set(itens.map((item) => item.produto))].sort(
+    (a, b) => ordemDe(a, ORDEM_PRODUTO) - ordemDe(b, ORDEM_PRODUTO) || a.localeCompare(b, "pt-BR"),
+  );
+  const linhas: string[] = [];
+  for (const produto of produtos) {
+    const doProduto = itens.filter((item) => item.produto === produto);
+    const calhas = [...new Set(doProduto.map((item) => item.calha))].sort(
+      (a, b) => ordemDe(a, CALHAS) - ordemDe(b, CALHAS) || a.localeCompare(b, "pt-BR"),
+    );
+    linhas.push(`${produto} (${doProduto.length})`);
+    for (const calha of calhas) {
+      const doCalha = doProduto.filter((item) => item.calha === calha);
+      linhas.push(`  ${calha}`);
+      for (const item of doCalha) linhas.push(`  - ${item.nome} — ${item.detalhe}`);
+    }
+  }
+  return linhas;
+}
+
+function secaoAlertas(titulo: string, itens: PassagemItem[], vazio: string) {
+  if (!itens.length) return [titulo, `- ${vazio}`];
+  return [titulo, ...linhasPorRisco(itens)];
+}
+
+export function montarPassagem(input: PassagemTexto): string {
   const responsavel = input.responsavel?.trim() || "sessão de operador não aberta";
-  const fontes = input.fontes.map((item) => `${item.nome}: ${item.detalhe}`);
-  const secoes = input.produtos.flatMap((produto) => ["", ...secaoProduto(produto)]);
+  const feito = [
+    ...(input.feitoIndisponivel
+      ? [
+          `Histórico não consultado (${input.feitoIndisponivel}). Isso não significa que nada foi feito.`,
+        ]
+      : []),
+    ...input.feito,
+  ];
+  const feitoLinhas = feito.length ? feito : ["Nenhuma alteração registrada nesta consulta."];
+  const comentario = input.comentario.trim() || "Sem comentário.";
+
   return [
     "Passagem de turno — CEMOA · Defesa Civil do Amazonas",
     `Horário de Manaus: ${input.horario}`,
-    `Responsável pelo registro: ${responsavel}`,
+    `Responsável: ${responsavel}`,
     `Recorte: ${input.recorte}`,
-    "Este texto reúne os produtos consultados neste recorte. Consulta que falhou não entra como risco baixo.",
     "",
-    ...bloco("Fontes nesta tela", fontes.length ? fontes : ["Nenhuma fonte informada."]),
-    ...secoes,
+    ...secao("O que foi feito", feitoLinhas),
     "",
-    ...bloco(
-      "Alterações recentes do operador",
-      input.alteracoes
-        ? input.alteracoes.length
-          ? input.alteracoes
-          : ["Nenhuma alteração registrada nesta consulta."]
-        : [
-            `Histórico não consultado (${input.alteracoesNota?.trim() || "motivo não informado"}). Isso não significa que não houve mudança.`,
-          ],
+    ...secaoAlertas(`Alertas ativos (${input.ativos.length})`, input.ativos, "Nenhum alerta ativo."),
+    "",
+    ...secaoAlertas(
+      `Alertas expirados (${input.expirados.length})`,
+      input.expirados,
+      "Nenhum alerta expirado.",
     ),
-    "Uso interno. Não publica alerta. Revise antes de encaminhar.",
+    "",
+    ...secao("Comentário", [comentario]),
   ].join("\n");
 }

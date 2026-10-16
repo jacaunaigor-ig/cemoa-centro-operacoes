@@ -1,89 +1,78 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { montarPassagem, montarPassagemVarios } from "./passagem-turno.ts";
+import { calhaDaBacia, montarPassagem } from "./passagem-turno.ts";
 
 const base = {
   horario: "15/10/2026, 15:50",
   responsavel: "Igor",
-  produto: "Risco de Chuva Intensa",
-  recorte: "todos os municípios deste produto",
-  niveis: [
-    { nivel: "Baixo", quantidade: 60 },
-    { nivel: "Alto", quantidade: 2 },
+  recorte: "todos os municípios",
+  feito: ["15:10 · Manaus · Igor alterou de Baixo para Alto."],
+  feitoIndisponivel: null,
+  ativos: [
+    { produto: "Incêndio/Qualidade do ar", calha: "Médio Amazonas", nome: "Barreirinha", detalhe: "Muito Ruim" },
+    { produto: "Incêndio/Qualidade do ar", calha: "Negro", nome: "Manaus", detalhe: "Muito Ruim" },
+    { produto: "Risco de Chuva Intensa", calha: "Japurá", nome: "Maraã", detalhe: "Alto" },
+    { produto: "Risco de Chuva Intensa", calha: "Negro", nome: "Manaus", detalhe: "Alto" },
   ],
-  ativos: [{ nome: "Manaus", detalhe: "Alto · Rio Negro" }],
-  fila: [
-    { acao: "vencido" as const, nome: "Manaus", detalhe: "alerta vencido" },
+  expirados: [
+    { produto: "Risco de Chuva Intensa", calha: "Negro", nome: "Manaus", detalhe: "alerta vencido" },
   ],
-  fontes: [
-    { nome: "CEMADEN", detalhe: "consultada" },
-    { nome: "Boletim", detalhe: "não consultado nesta tela" },
-  ],
-  classificacoesOperador: 3,
+  comentario: "Avaliar aviso sonoro quando o alerta expirar no meio do turno.",
 };
 
-test("a passagem nomeia responsável, horário e produto", () => {
+test("a passagem traz o que foi feito, ativos, expirados e o comentário", () => {
   const texto = montarPassagem(base);
   assert.match(texto, /Horário de Manaus: 15\/10\/2026, 15:50/);
-  assert.match(texto, /Responsável pelo registro: Igor/);
-  assert.match(texto, /Produto aberto: Risco de Chuva Intensa/);
-  assert.match(texto, /Manaus — Alto · Rio Negro/);
-  assert.match(texto, /Manaus — alerta vencido/);
-  assert.match(texto, /Boletim: não consultado nesta tela/);
-  assert.match(texto, /Não publica alerta/);
+  assert.match(texto, /Responsável: Igor/);
+  assert.match(texto, /O que foi feito/);
+  assert.match(texto, /15:10 · Manaus · Igor alterou de Baixo para Alto/);
+  assert.match(texto, /Alertas ativos \(4\)/);
+  const chuva = texto.indexOf("Risco de Chuva Intensa (2)");
+  const incendio = texto.indexOf("Incêndio/Qualidade do ar (2)");
+  assert.ok(chuva > 0 && incendio > chuva);
+  const negro = texto.indexOf("  Negro");
+  const japura = texto.indexOf("  Japurá");
+  assert.ok(negro > chuva && negro < incendio);
+  assert.ok(japura > negro && japura < incendio);
+  assert.match(texto, /  - Manaus — Alto/);
+  assert.match(texto, /  Médio Amazonas\n  - Barreirinha — Muito Ruim\n  Negro\n  - Manaus — Muito Ruim/);
+  assert.match(texto, /Alertas expirados \(1\)/);
+  assert.match(texto, /alerta vencido/);
+  assert.match(texto, /Comentário/);
+  assert.match(texto, /aviso sonoro/);
+  assert.doesNotMatch(texto, /Fontes/);
+  assert.doesNotMatch(texto, /Pendências/);
+  assert.doesNotMatch(texto, /Sem leitura/);
 });
 
-test("sem sessão e sem alerta ativo o texto não finge normalidade operacional", () => {
+test("sem sessão, sem feito e sem alerta o texto não finge normalidade", () => {
   const texto = montarPassagem({
     ...base,
     responsavel: null,
+    feito: [],
     ativos: [],
-    fila: [],
-    niveis: [],
+    expirados: [],
+    comentario: "   ",
   });
   assert.match(texto, /sessão de operador não aberta/);
-  assert.match(texto, /Nenhum município carregado/);
+  assert.match(texto, /Nenhuma alteração registrada nesta consulta/);
   assert.match(texto, /Nenhum alerta ativo/);
-  assert.match(texto, /Vencidos: nenhum/);
-  assert.match(texto, /Nada vencido ou por renovar/);
+  assert.match(texto, /Nenhum alerta expirado/);
+  assert.match(texto, /Sem comentário/);
 });
 
-test("sem leitura não entra como baixo na passagem", () => {
-  const texto = montarPassagem({ ...base, semLeitura: 60, niveis: [{ nivel: "Baixo", quantidade: 2 }] });
-  assert.match(texto, /Baixo: 2/);
-  assert.match(texto, /Sem leitura: 60. Não entram na contagem de Baixo/);
-  assert.doesNotMatch(texto, /Baixo: 60/);
+test("Rio Negro e Japurá entram na calha correspondente", () => {
+  assert.equal(calhaDaBacia("Rio Negro"), "Negro");
+  assert.equal(calhaDaBacia("Japurá"), "Médio Solimões");
+  assert.equal(calhaDaBacia(""), "Sem calha");
 });
 
-test("a passagem de vários produtos não trata falha como risco baixo", () => {
-  const texto = montarPassagemVarios({
-    horario: base.horario,
-    responsavel: null,
-    recorte: "todos os municípios",
-    fontes: base.fontes,
-    produtos: [
-      { disponivel: true, entrada: { ...base, produto: "Alagamento", semLeitura: 60, niveis: [{ nivel: "Baixo", quantidade: 2 }] } },
-      { disponivel: false, produto: "Chuva intensa", motivo: "consulta não retornou" },
-    ],
-    alteracoes: null,
-    alteracoesNota: "sessão de operador não aberta",
+test("histórico indisponível não vira 'nada foi feito'", () => {
+  const texto = montarPassagem({
+    ...base,
+    feito: [],
+    feitoIndisponivel: "sessão de operador não aberta",
   });
-  assert.match(texto, /reúne os produtos consultados/);
-  assert.match(texto, /Baixo: 2/);
-  assert.match(texto, /Sem leitura: 60/);
-  assert.match(texto, /Chuva intensa/);
-  assert.match(texto, /Consulta indisponível \(consulta não retornou\)/);
-  assert.match(texto, /sessão de operador não aberta/);
   assert.match(texto, /Histórico não consultado \(sessão de operador não aberta\)/);
-});
-
-test("a fila longa declara o que ficou de fora", () => {
-  const fila = Array.from({ length: 10 }, (_, i) => ({
-    acao: "emitir" as const,
-    nome: `Município ${i + 1}`,
-    detalhe: "limiar",
-  }));
-  const texto = montarPassagem({ ...base, fila, ativos: [] });
-  assert.match(texto, /e mais 2/);
-  assert.match(texto, /Nada vencido ou por renovar/);
+  assert.doesNotMatch(texto, /Nenhuma alteração registrada/);
 });
