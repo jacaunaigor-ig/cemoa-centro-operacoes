@@ -44,6 +44,84 @@ export function HydroDetail({
   const vazante = limitesDoModo(station, "vazante");
   const enchente = limitesDoModo(station, "enchente");
   const leituraDoDia = sit.atual;
+  const fonteCurta =
+    station.cotaFonte === "ANA"
+      ? "ANA"
+      : station.cotaFonte === "fabric"
+        ? "Fabric"
+        : station.cotaFonte === "operador"
+          ? "Operador"
+          : station.fonte;
+
+  if (compact) {
+    const limites = modo === "vazante" ? vazante : enchente;
+    return (
+      <section className="flex min-h-0 max-h-full min-w-0 max-w-full flex-1 flex-col overflow-y-auto overscroll-contain rounded-xl border border-border bg-panel/95 px-3 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-base font-black break-words">{station.municipio}</h3>
+            <p className="text-xs text-text-dim break-words">
+              {station.calha} · {station.rio}
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar detalhe">
+            <X />
+          </Button>
+        </div>
+
+        <p className="mt-1 text-xs font-semibold text-text">{tendenciaTexto(station.tendencia)}</p>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <Metric
+            label={leituraDoDia ? "Cota atual" : "Cota recente"}
+            value={sit.cotaRecente != null ? `${sit.cotaRecente.toFixed(2)} m` : "Sem leitura"}
+          />
+          <Metric
+            label="Variação 24h"
+            value={
+              station.variacao != null
+                ? `${station.variacao >= 0 ? "+" : ""}${station.variacao.toFixed(2)} m`
+                : "—"
+            }
+          />
+        </div>
+        <p className="mt-2 text-[11px] font-semibold text-text-dim">
+          {station.estacao} · {fonteCurta}
+        </p>
+
+        <div className="mt-2">
+          <RiskCard
+            title={modo === "vazante" ? "Estiagem" : "Inundação"}
+            status={modo === "vazante" ? station.statusVazante : station.statusEnchente}
+            missing={station.semLeitura}
+            moderado={limites.moderado}
+            alto={limites.alto}
+            active
+            slim
+          />
+        </div>
+
+        <div className="mt-2 min-w-0 max-w-full">
+          <CotaChart
+            station={station}
+            status={statusAtivo(station, modo)}
+            compact
+            limites={[
+              { label: "Moderado", value: limites.moderado ?? NaN, color: "#FFEB3B" },
+              { label: "Alto", value: limites.alto ?? NaN, color: "#FF9800" },
+            ].filter((l) => Number.isFinite(l.value))}
+          />
+        </div>
+
+        <Link
+          href={`/?municipio=${encodeURIComponent(station.municipio)}&bacia=${encodeURIComponent(station.bacia)}&calha=${encodeURIComponent(station.calha)}`}
+          className="mt-2 inline-block text-xs font-bold text-focus hover:underline"
+        >
+          Chuva no painel de alertas
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -54,7 +132,7 @@ export function HydroDetail({
           : "min-h-0 max-h-[min(50%,36rem)] shrink-0 border-t border-border",
       )}
     >
-      <div className="sticky top-0 z-10 -mx-4 -mt-3 mb-2 flex items-start justify-between gap-3 bg-panel/95 px-4 pt-3 pb-2 backdrop-blur-md">
+      <div className="mb-2 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.12em] text-text-mute uppercase">
             Detalhe hidrológico
@@ -430,6 +508,7 @@ function RiskCard({
   moderado,
   alto,
   active,
+  slim = false,
 }: {
   title: string;
   status: HydroStation["statusVazante"];
@@ -437,6 +516,7 @@ function RiskCard({
   moderado: number | null;
   alto: number | null;
   active: boolean;
+  slim?: boolean;
 }) {
   return (
     <div
@@ -450,8 +530,8 @@ function RiskCard({
         <span className="text-xs font-bold">{title}</span>
         <HydroStatusBadge status={status} missing={missing} />
       </div>
-      <p className="mt-1 text-[10px] text-text-mute">Grau · Defesa Civil AM</p>
-      <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-text-mute">
+      {slim ? null : <p className="mt-1 text-[10px] text-text-mute">Grau · Defesa Civil AM</p>}
+      <div className={cn("grid grid-cols-2 gap-2 text-[11px] text-text-mute", slim ? "mt-1.5" : "mt-2")}>
         <div>
           Moderado{" "}
           <b className="block font-mono text-text">
@@ -465,7 +545,7 @@ function RiskCard({
           </b>
         </div>
       </div>
-      <p className="mt-1.5 text-[10px] text-text-mute">Limiar de cota · ANA</p>
+      {slim ? null : <p className="mt-1.5 text-[10px] text-text-mute">Limiar de cota · ANA</p>}
     </div>
   );
 }

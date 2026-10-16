@@ -131,7 +131,7 @@ export function AppShell({
         </div>
         <nav
           aria-label="Produtos"
-          className="mt-1.5 grid grid-cols-4 gap-1 rounded-xl border border-border bg-hover p-1"
+          className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl border border-border bg-hover p-1"
         >
           <NavTab
             href={`/${suffix}`}
@@ -156,14 +156,6 @@ export function AppShell({
             compact
           >
             Meteo
-          </NavTab>
-          <NavTab
-            href={`/risco${suffix}`}
-            active={pathname.startsWith("/risco")}
-            icon={<ShieldAlert className="size-3.5" />}
-            compact
-          >
-            Risco
           </NavTab>
         </nav>
       </header>

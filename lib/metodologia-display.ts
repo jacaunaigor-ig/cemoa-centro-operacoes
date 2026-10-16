@@ -27,7 +27,7 @@ export function riscoDegrade(pontos: number | null | undefined): string {
 
 export const ESCALA_DEGRADE_RISCO = [
   { ate: "< 20 Baixo", piso: 0, cor: "#166534", label: "Baixo" },
-  { ate: "20–30 Moderado", piso: 20, cor: "#a16207", label: "Moderado" },
+  { ate: "20–30 Moderado", piso: 20, cor: "#facc15", label: "Moderado" },
   { ate: "30–40 Elevado", piso: 30, cor: "#ea580c", label: "Elevado" },
   { ate: "40–50 Alto", piso: 40, cor: "#dc2626", label: "Alto" },
   { ate: "50–58 Crítico", piso: 50, cor: "#9f1239", label: "Crítico" },

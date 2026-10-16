@@ -353,7 +353,7 @@ export function RiscoWorkbench() {
             label="Rebaixados"
             value={loading ? "—" : String(payload?.resumo.rebaixadosSemAlerta ?? 0)}
             sub="sem alerta em evento súbito"
-            accent="#a16207"
+            accent="#facc15"
             loading={loading}
             active={recorte === "rebaixados"}
             onClick={() => toggleRecorte("rebaixados")}

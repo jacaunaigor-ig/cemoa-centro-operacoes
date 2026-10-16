@@ -1770,16 +1770,12 @@ export function AlertsWorkbench() {
         <div className={cn(
           "grid min-h-0 flex-1",
           isMobile
-            ? "grid-cols-1 grid-rows-[minmax(12.5rem,42dvh)_minmax(0,1fr)] gap-1.5"
+            ? "grid-cols-1 gap-1.5"
             : mapFocus
               ? "grid-cols-1"
               : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {mapFocus ? null : isMobile ? (
-            <div className="order-2 min-h-0 overflow-hidden">{listNode}</div>
-          ) : (
-            listNode
-          )}
+          {mapFocus || isMobile ? null : listNode}
 
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
@@ -2097,6 +2093,7 @@ export function AlertsWorkbench() {
               <MapLegendCard
                 title={product.legendTitle}
                 forceHidden={drawMode || eraseMode}
+                className={tipo === "MOVIMENTO" || tipo === "EROSAO" ? "max-h-[34%]" : undefined}
               >
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
@@ -2176,28 +2173,20 @@ export function AlertsWorkbench() {
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
                   </>
-                ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" || (tipo === "EROSAO" && showSetores) ? (
-                  <div className="mt-2 border-t border-border/70 pt-2">
-                    {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
-                      <MonitorThresholdLegend tipo={tipo} />
-                    ) : null}
-                    {(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores ? (
-                      <div className="mt-1.5 space-y-0.5">
-                        <p className="text-[10px] leading-snug text-text-mute">
-                          {tipo === "EROSAO"
-                            ? "Erosão de margem fluvial e terras caídas da CPRM/SGB, nos municípios mapeados do estado. No zoom do estado cada município é um ponto; aproxime para ver o polígono. O polígono não muda o grau do município."
-                            : "Deslizamento, queda e rastejo da CPRM/SGB, nos municípios mapeados do estado. No zoom do estado cada município é um ponto; aproxime para ver o polígono. O polígono não muda o grau do município."}
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <span className="size-2.5 rounded-sm" style={{ background: "#f97316" }} />
-                          R3 · Alto
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <span className="size-2.5 rounded-sm" style={{ background: "#ef4444" }} />
-                          R4 · Muito alto
-                        </p>
-                      </div>
-                    ) : null}
+                ) : tipo === "ALAGAMENTO" ? (
+                  <div className="mt-1 border-t border-border/70 pt-1">
+                    <MonitorThresholdLegend tipo={tipo} />
+                  </div>
+                ) : (tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores ? (
+                  <div className="mt-1 space-y-0.5 border-t border-border/70 pt-1">
+                    <p className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-sm" style={{ background: "#f97316" }} />
+                      R3 · Alto
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-sm" style={{ background: "#ef4444" }} />
+                      R4 · Muito alto
+                    </p>
                   </div>
                 ) : null}
               </MapLegendCard>

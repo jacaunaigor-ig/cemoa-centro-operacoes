@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Modal } from "@/components/shared/Modal";
 import { Button } from "@/components/ui/button";
+import { nomeArquivoPassagem, passagemParaPdf } from "@/lib/passagem-pdf";
 import { montarPassagem, type PassagemTexto } from "@/lib/passagem-turno";
 
 export function PassagemDialog({
@@ -28,19 +29,21 @@ export function PassagemDialog({
     setAvisos("");
   }, [open]);
 
-  async function copiar() {
+  function gerarPdf() {
     if (!base) return;
     const texto = montarPassagem({ ...base, comentario, intercorrencias, avisos });
-    try {
-      await navigator.clipboard.writeText(texto);
-      toast.success("Passagem copiada.");
-      setComentario("");
-      setIntercorrencias("");
-      setAvisos("");
-      onClose();
-    } catch {
-      toast.error("Não foi possível copiar a passagem.");
-    }
+    const blob = new Blob([passagemParaPdf(texto)], { type: "application/pdf" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = nomeArquivoPassagem();
+    link.click();
+    URL.revokeObjectURL(href);
+    toast.success("PDF da passagem gerado.");
+    setComentario("");
+    setIntercorrencias("");
+    setAvisos("");
+    onClose();
   }
 
   const previa = base
@@ -55,7 +58,7 @@ export function PassagemDialog({
       onClose={onClose}
       wide
       title="Passagem de turno"
-      description="Alertas ativos do turno, com comentário, intercorrências e avisos gerais para quem assume."
+      description="Montada só neste painel. O PDF leva o que foi feito, os alertas ativos e os campos abaixo."
     >
       {carregando || !base ? (
         <p className="text-sm text-text-mute">Montando a passagem…</p>
@@ -86,8 +89,8 @@ export function PassagemDialog({
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="button" onClick={() => void copiar()}>
-              Copiar passagem
+            <Button type="button" onClick={gerarPdf}>
+              Gerar PDF
             </Button>
           </div>
         </div>

@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ClipboardList, CloudSun, LogIn, LogOut, Megaphone } from "lucide-react";
+import { CloudSun, LogIn, LogOut, Megaphone } from "lucide-react";
 import { AvisoGraficoButton } from "@/components/alerts/AvisoGrafico";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,6 @@ import {
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
 import { cn, formatAmazonTime } from "@/lib/utils";
 import { formatCountdown, remainingMs } from "@/lib/alert-validity";
-import { textoPassagemTurno, trilhaDesde } from "@/lib/classificacao-trilha";
 import {
   abrirPlantaoTurno,
   encerrarPlantaoTurno,
@@ -305,19 +304,6 @@ export function MeteoAvisoDutyCard() {
     toast.success(`Plantão ${shift.hours} aberto.`);
   }
 
-  function onPassagemTurno() {
-    const rows = trilhaDesde(shift.startAt);
-    const titulo = `Passagem de turno CEMOA · ${shift.label} ${shift.hours} · ${formatAmazonTime(shift.startAt).slice(0, 5)}–${until}`;
-    const blob = new Blob([textoPassagemTurno(rows, titulo)], { type: "text/plain;charset=utf-8" });
-    const href = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = href;
-    a.download = `passagem_turno_${shift.id}.txt`;
-    a.click();
-    URL.revokeObjectURL(href);
-    toast.success("Relatório de passagem deste posto.");
-  }
-
   function onEncerrarTurno() {
     if (!session) {
       openLogin();
@@ -397,10 +383,6 @@ export function MeteoAvisoDutyCard() {
               ? `Encerrado às ${formatAmazonTime(turno!.closedAt!).slice(0, 5)}`
               : "Este turno ainda não foi aberto neste posto."}
         </p>
-        <Button type="button" size="sm" variant="secondary" onClick={onPassagemTurno}>
-          <ClipboardList className="size-3.5" />
-          Passagem de turno
-        </Button>
         {turnoAberto ? (
           <Button type="button" size="sm" variant="secondary" onClick={onEncerrarTurno}>
             <LogOut className="size-3.5" />

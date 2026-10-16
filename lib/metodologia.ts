@@ -31,7 +31,7 @@ export const MET_NIVEIS = [
   { n: 5, id: "P1", nome: "Crítico", piso: 50.0, cor: "#9f1239" },
   { n: 4, id: "P2", nome: "Alto", piso: 40.0, cor: "#dc2626" },
   { n: 3, id: "P3", nome: "Elevado", piso: 30.0, cor: "#ea580c" },
-  { n: 2, id: "P4", nome: "Moderado", piso: 20.0, cor: "#a16207" },
+  { n: 2, id: "P4", nome: "Moderado", piso: 20.0, cor: "#facc15" },
   { n: 1, id: "P4", nome: "Baixo", piso: 0.0, cor: "#166534" },
 ] as const;
 
