@@ -1,5 +1,6 @@
 import { RISK_LEVELS, type RiskLevel } from "@/lib/types";
 export { RISK_LEVELS };
+export type { RiskLevel };
 
 export const RISK_COLORS: Record<RiskLevel, string> = {
   BAIXO: "#10b981",

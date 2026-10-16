@@ -343,8 +343,10 @@ export async function getRainfallPayload(): Promise<RainfallPayload> {
   if (memo && Date.now() - memo.at < TTL_MS) {
     return { ...memo.data, cache: "HIT" };
   }
-  if (!inflight) {
-    inflight = (async () => {
+  const current = inflight;
+  if (current) return current;
+
+  const pending: Promise<RainfallPayload> = (async () => {
       let cemadenError: string | null = null;
       let rows: CemadenRow[] = [];
       try {
@@ -363,14 +365,13 @@ export async function getRainfallPayload(): Promise<RainfallPayload> {
         refreshAnaRainfallBackground(semCemaden);
       }
 
-      if (rows.length === 0 && anaRainCache.size === 0 && cemadenError) {
-        if (memo) {
-          return {
-            ...memo.data,
-            cache: "HIT",
-            error: `Usando última leitura: ${cemadenError}`,
-          };
-        }
+      if (rows.length === 0 && anaRainCache.size === 0 && cemadenError && memo) {
+        const stale: RainfallPayload = {
+          ...memo.data,
+          cache: "HIT",
+          error: `Usando última leitura: ${cemadenError}`,
+        };
+        return stale;
       }
 
       const data = buildFromRows(rows, anaRainCache, cemadenError);
@@ -379,8 +380,8 @@ export async function getRainfallPayload(): Promise<RainfallPayload> {
     })().finally(() => {
       inflight = null;
     });
-  }
-  return inflight;
+  inflight = pending;
+  return pending;
 }
 
 export function rainOf(

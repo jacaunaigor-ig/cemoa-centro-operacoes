@@ -202,7 +202,7 @@ export function MeteorologiaWorkbench() {
     for (const item of Object.values(rain.byNome)) {
       const mm = item[id];
       const faixa = rainBand(mm);
-      if (faixa === "sem_leitura") continue;
+      if (mm == null || faixa === "sem_leitura") continue;
       if (faixa === "sem_chuva") {
         semChuva.add(item.nome);
         continue;
