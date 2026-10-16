@@ -44,7 +44,16 @@ import {
 } from "@/lib/map-overlays";
 import type { AirQualitySensor } from "@/lib/types";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
-import { estiloSetor, loadSetoresR3R4, SETOR_CORES, type SetoresR3R4 } from "@/lib/setores-r3r4";
+import {
+  estiloSetor,
+  loadSetoresR3R4,
+  setorEntra,
+  SETOR_CORES,
+  SETOR_POLIGONO_DESDE_ZOOM,
+  SETOR_USO_ROTULO,
+  type SetoresR3R4,
+  type UsoSetor,
+} from "@/lib/setores-r3r4";
 import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
 import { reportClientError } from "@/lib/client";
 import { withBase } from "@/lib/site";
@@ -100,6 +109,7 @@ export const AlertsMap = forwardRef<
         focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
     showFocosCalor?: boolean;
     showSetores?: boolean;
+    setorUso?: UsoSetor;
     fillByNome?: Record<string, string> | null;
     labelByNome?: Record<string, string> | null;
     onSelect: (nome: string, bacia: string) => void;
@@ -134,6 +144,7 @@ export const AlertsMap = forwardRef<
     focosCalor = [],
     showFocosCalor = false,
     showSetores = false,
+    setorUso = "movimento",
     fillByNome = null,
     labelByNome = null,
     onSelect,
@@ -158,6 +169,7 @@ export const AlertsMap = forwardRef<
   const stainLayerRef = useRef<GeoJSONType | null>(null);
   const focosLayerRef = useRef<LayerGroup | null>(null);
   const setoresLayerRef = useRef<GeoJSONType | null>(null);
+  const setorBolhasRef = useRef<LayerGroup | null>(null);
   const setoresDataRef = useRef<SetoresR3R4 | null>(null);
   const hoverTipRef = useRef<Tooltip | null>(null);
   const [meshReady, setMeshReady] = useState(0);
@@ -853,6 +865,8 @@ export const AlertsMap = forwardRef<
     function clear() {
       setoresLayerRef.current?.remove();
       setoresLayerRef.current = null;
+      setorBolhasRef.current?.remove();
+      setorBolhasRef.current = null;
     }
 
     if (!showSetores) {
@@ -871,18 +885,20 @@ export const AlertsMap = forwardRef<
       clear();
       const selectedId =
         stateRef.current.municipios.find((item) => item.nome === stateRef.current.selected)?.id ?? null;
+      const uso = setorUso;
       const layer = L.geoJSON(data, {
         pane: "setoresPane",
+        filter: (feature) => setorEntra(feature?.properties?.p, uso),
         style: (feature) => estiloSetor(feature?.properties?.g, feature?.properties?.ibge, selectedId),
         onEachFeature(feature, lyr) {
           const ibge = String(feature.properties?.ibge ?? "");
           const codigo = String(feature.properties?.s ?? "");
           const grau = feature.properties?.g === "R4" ? SETOR_CORES.R4.rotulo : SETOR_CORES.R3.rotulo;
           const mun = stateRef.current.municipios.find((item) => item.id === ibge);
-          lyr.bindTooltip(`<strong>${grau}</strong><br>${mun?.nome ?? ibge}<br>${codigo}`, {
-            sticky: true,
-            opacity: 0.95,
-          });
+          lyr.bindTooltip(
+            `<strong>${grau}</strong><br>${SETOR_USO_ROTULO[uso]}<br>${mun?.nome ?? ibge}<br>${codigo}`,
+            { sticky: true, opacity: 0.95 },
+          );
           lyr.on("click", () => {
             if (stateRef.current.drawMode || stateRef.current.eraseMode || !mun) return;
             if (stateRef.current.adminMode) paintFeature(mun.nome);
@@ -890,23 +906,101 @@ export const AlertsMap = forwardRef<
           });
         },
       });
-      layer.addTo(map);
       setoresLayerRef.current = layer;
-      if (selectedId) {
+
+      const grupos = new Map<string, { lat: number; lon: number; n: number; areas: number; r4: number }>();
+      layer.eachLayer((lyr) => {
+        const feature = (lyr as { feature?: GeoJSON.Feature }).feature;
+        const ring = feature?.geometry?.type === "Polygon" ? feature.geometry.coordinates[0] : null;
+        const ibge = String(feature?.properties?.ibge ?? "");
+        if (!ring || ring.length < 2 || !ibge) return;
+        let x = 0;
+        let y = 0;
+        const n = ring.length - 1;
+        for (let i = 0; i < n; i++) {
+          x += ring[i][0];
+          y += ring[i][1];
+        }
+        const atual = grupos.get(ibge) ?? { lat: 0, lon: 0, n: 0, areas: 0, r4: 0 };
+        atual.lat += y;
+        atual.lon += x;
+        atual.n += n;
+        atual.areas += 1;
+        if (feature?.properties?.g === "R4") atual.r4 += 1;
+        grupos.set(ibge, atual);
+      });
+
+      const bolhas = L.layerGroup();
+      for (const [ibge, grupo] of grupos) {
+        if (!grupo.n) continue;
+        const mun = stateRef.current.municipios.find((item) => item.id === ibge);
+        const cor = grupo.r4 > 0 ? SETOR_CORES.R4 : SETOR_CORES.R3;
+        const marker = L.circleMarker([grupo.lat / grupo.n, grupo.lon / grupo.n], {
+          pane: "setoresPane",
+          radius: Math.min(14, 5 + Math.sqrt(grupo.areas)),
+          color: selectedId === ibge ? "#f8fafc" : cor.stroke,
+          weight: selectedId === ibge ? 2.5 : 1.2,
+          fillColor: cor.fill,
+          fillOpacity: 0.92,
+        });
+        marker.bindTooltip(
+          `<strong>${mun?.nome ?? ibge}</strong><br>${SETOR_USO_ROTULO[uso]}<br>${grupo.areas} áreas · ${grupo.r4} em R4`,
+          { sticky: true, opacity: 0.95 },
+        );
+        marker.on("click", (ev) => {
+          L.DomEvent.stopPropagation(ev);
+          if (stateRef.current.drawMode || stateRef.current.eraseMode || !mun) return;
+          if (stateRef.current.adminMode) paintFeature(mun.nome);
+          else onSelectRef.current(mun.nome, mun.bacia);
+        });
+        bolhas.addLayer(marker);
+      }
+      setorBolhasRef.current = bolhas;
+      function focarSelecionado() {
+        if (!selectedId) return;
         const doMun = layer.getLayers().filter((lyr) => {
           const feature = (lyr as { feature?: GeoJSON.Feature }).feature;
           return feature?.properties?.ibge === selectedId;
         });
-        if (doMun.length) {
-          map.fitBounds(L.featureGroup(doMun).getBounds(), { padding: [28, 28], maxZoom: 14 });
-        }
+        if (!doMun.length) return;
+        const bounds = L.featureGroup(doMun).getBounds();
+        if (!bounds.isValid()) return;
+        const fitZoom = map.getBoundsZoom(bounds, false, L.point(36, 36));
+        const zoom = Math.min(14, Math.max(SETOR_POLIGONO_DESDE_ZOOM, fitZoom || SETOR_POLIGONO_DESDE_ZOOM));
+        map.setView(bounds.getCenter(), zoom, { animate: false });
+      }
+      focarSelecionado();
+      syncCamadas();
+      // O cartão de detalhe muda a altura do mapa e o ajuste do Amazonas
+      // desfaz o zoom. Reaplica depois desse ajuste.
+      window.setTimeout(() => {
+        if (cancelled) return;
+        focarSelecionado();
+        syncCamadas();
+      }, 220);
+    }
+
+    function syncCamadas() {
+      const perto = map.getZoom() >= SETOR_POLIGONO_DESDE_ZOOM;
+      const polys = setoresLayerRef.current;
+      const bolhas = setorBolhasRef.current;
+      if (polys) {
+        if (perto && !map.hasLayer(polys)) polys.addTo(map);
+        if (!perto && map.hasLayer(polys)) map.removeLayer(polys);
+      }
+      if (bolhas) {
+        if (!perto && !map.hasLayer(bolhas)) bolhas.addTo(map);
+        if (perto && map.hasLayer(bolhas)) map.removeLayer(bolhas);
       }
     }
+
+    map.on("zoomend", syncCamadas);
 
     if (setoresDataRef.current) {
       draw(setoresDataRef.current);
       return () => {
         cancelled = true;
+        map.off("zoomend", syncCamadas);
       };
     }
 
@@ -917,13 +1011,20 @@ export const AlertsMap = forwardRef<
         draw(data);
       })
       .catch(() => {
-        if (!cancelled) onGeoErrorRef.current?.("Não foi possível desenhar as áreas R3/R4.");
+        if (!cancelled) {
+          onGeoErrorRef.current?.(
+            setorUso === "margem"
+              ? "Não foi possível desenhar as áreas de erosão de margem."
+              : "Não foi possível desenhar as áreas R3/R4.",
+          );
+        }
       });
 
     return () => {
       cancelled = true;
+      map.off("zoomend", syncCamadas);
     };
-  }, [showSetores, selected, drawMode, eraseMode, meshReady]);
+  }, [showSetores, setorUso, selected, drawMode, eraseMode, meshReady]);
 
   return (
     <div
