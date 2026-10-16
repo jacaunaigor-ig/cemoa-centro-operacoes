@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getAirQualityPayload } from "@/lib/air-quality";
 import { cached } from "@/lib/cache";
+import { getFocosReferencia } from "@/lib/focos-referencia";
 import { buildMetodologiaPayload } from "@/lib/metodologia-build";
+import { getRainfallPayload } from "@/lib/rainfall";
 import { hydrateAlertOverridesFromRemote } from "@/lib/supabase-ops";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +11,15 @@ export const dynamic = "force-dynamic";
 export async function GET(): Promise<Response> {
   // O fator de alerta da metodologia vem da classificação do operador e do boletim de vazante.
   await hydrateAlertOverridesFromRemote();
+  const [rain, air, focos] = await Promise.all([
+    getRainfallPayload().catch(() => null),
+    getAirQualityPayload().catch(() => null),
+    getFocosReferencia().catch(() => null),
+  ]);
 
+  const { data, cache } = cached("metodologia-risco", 4000, () =>
+    buildMetodologiaPayload(Date.now(), { rain, air, focos }),
+  );
   const { data, cache } = cached("metodologia-risco", 4000, () => buildMetodologiaPayload(Date.now()));
 
   const payload = JSON.parse(JSON.stringify({ ...data, cache }));

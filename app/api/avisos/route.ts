@@ -39,6 +39,12 @@ export async function POST(request: Request) {
     issuedBy: gate.user.name,
     note,
   });
+  if (!aviso) {
+    return NextResponse.json(
+      { error: "Operador sem nome. O aviso de 12 h não foi emitido." },
+      { status: 400 },
+    );
+  }
   await upsertRemoteMeteoAviso(aviso);
   return NextResponse.json({ ok: true, aviso });
 }

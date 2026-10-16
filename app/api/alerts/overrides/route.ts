@@ -13,6 +13,7 @@ import { invalidate } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
 import { withOperatorRole } from "@/lib/equipe";
 import { parseAlertTtlMs } from "@/lib/alert-duration";
+import { linhasDeAuditoria } from "@/lib/classification-audit";
 import {
   appendClassificationAudit,
   deleteRemoteAlertOverrideIds,
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
     const ttlMs = parseAlertTtlMs(body.ttlMs);
     const meta = { issuedBy: who.name, issuedById: who.id, ttlMs };
     const previousById: Record<string, string | undefined> = {};
-    for (const id of Object.keys(updates)) previousById[id] = getOverride(id, tipo);
+    for (const id of [...Object.keys(updates), ...remove]) previousById[id] = getOverride(id, tipo);
     if (body.replace) replaceOverrides(tipo, updates, Date.now(), meta);
     else if (Object.keys(updates).length) mergeOverrides(tipo, updates, Date.now(), meta);
     if (remove.length) removeOverrides(tipo, remove);
@@ -71,14 +72,14 @@ export async function POST(request: Request) {
           ? "lote"
           : "clique";
     await appendClassificationAudit(
-      Object.entries(updates).map(([municipio_id, level]) => ({
+      linhasDeAuditoria({
         tipo,
-        municipio_id,
-        previous_level: previousById[municipio_id] ?? null,
-        level,
-        issued_by: who.name,
+        updates,
+        remove,
+        previous: previousById,
+        issuedBy: who.name,
         source,
-      })),
+      }),
     );
     invalidate(`alerts:${tipo}`);
     invalidate("alerts");
@@ -94,6 +95,19 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url);
   const tipoRaw = url.searchParams.get("tipo");
   const tipo = tipoRaw ? parseAlertType(tipoRaw) : undefined;
+  const who = withOperatorRole(gate.user);
+  const tipos = tipo ? [tipo] : [...ALERT_TYPES];
+  const limpeza = tipos.flatMap((item) =>
+    linhasDeAuditoria({
+      tipo: item,
+      updates: {},
+      remove: Object.keys(getOverrides(item)),
+      previous: getOverrides(item),
+      issuedBy: who.name,
+      source: "limpar",
+    }),
+  );
+  await appendClassificationAudit(limpeza);
   clearOverrides(tipo);
   await deleteRemoteAlertOverrides(tipo);
   invalidate("alerts");

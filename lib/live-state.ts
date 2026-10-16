@@ -12,11 +12,11 @@ import {
 } from "@/lib/alert-types";
 import {
   CALHAS,
+  formatHydroRef,
   HYDRO_FONTE,
   HYDRO_MUDANCAS,
   HYDRO_RIOS,
   catalogStations,
-  formatHydroRef,
   hydroBoletimDiaIso,
 } from "@/lib/hydrology";
 import { massRiskDo } from "@/lib/mass-risk";
@@ -92,6 +92,7 @@ function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, 
   return rain[risco] ?? rain.BAIXO;
 }
 
+/** Sem classificação do operador, o município fica no nível baixo do produto. Qualidade do ar usa só o grau do centro; alagamento e movimento de massa sobem pelo acumulado no painel. */
 /** Sem classificação do operador, o município fica no nível baixo do produto. No cliente, chuva/alagamento/movimento recebem o limiar e incêndio recebe o App SELVA. */
 export function buildAlertsPayload(
   now = Date.now(),
@@ -217,11 +218,16 @@ export function buildHydrologyPayload(
   const atualizadasAna = stations.filter((s) => s.cotaFonte === "ANA").length;
   const atualizadasFabric = stations.filter((s) => s.cotaFonte === "fabric").length;
   const boletim = formatHydroRef(hydroBoletimDiaIso(now));
+  const boletimIso = hydroBoletimDiaIso(now);
+  const boletim = formatHydroRef(boletimIso);
   const fonteViva = /\d{2}\/\d{2}\/\d{4}/.test(HYDRO_FONTE)
     ? HYDRO_FONTE.replace(/\d{2}\/\d{2}\/\d{4}/, boletim)
     : `${HYDRO_FONTE} · boletim ${boletim}`;
   const partes = [
     fonteViva,
+    "ANA às 07:00 (Brasília)",
+    "Fabric às 07:00 e 16:00 (Brasília)",
+    `${HYDRO_FONTE} · boletim ${formatHydroRef(hydroBoletimDiaIso(now))}`,
     "ANA às 16:00 (Manaus), cota ~07:00 do dia vigente",
     "Power BI / Fabric: cota mais próxima de 07:00 de Manaus (consulta 07 h e 16 h Brasília)",
   ];
@@ -238,6 +244,7 @@ export function buildHydrologyPayload(
   return {
     generatedAt: now,
     source: partes.join(" · "),
+    referencia: boletimIso,
     referencia: hydroBoletimDiaIso(now),
     dias: stations[0]?.dias ?? [],
     calhas: [...CALHAS],

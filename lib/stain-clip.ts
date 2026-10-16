@@ -29,6 +29,10 @@ export type StainGeometry =
 
 let meshPromise: Promise<MunicipalMesh> | null = null;
 
+export function prefetchMunicipalMesh() {
+  void loadMunicipalMesh().catch(() => undefined);
+}
+
 export function loadMunicipalMesh() {
   meshPromise ??= fetch(withBase("/geo/amazonas-municipios.json")).then((r) => {
     if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);

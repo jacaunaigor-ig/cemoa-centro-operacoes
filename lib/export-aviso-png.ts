@@ -136,6 +136,16 @@ export async function exportAvisoPng(aviso: AvisoGrafico, image: HTMLImageElemen
   const goesAtrasado =
     aviso.imageAt != null && Date.now() - aviso.imageAt >= GOES_AVISO_ATRASO_MS;
   ctx.fillStyle = goesAtrasado ? "#ffb4a2" : "#c9d4ee";
+  ctx.fillStyle = aviso.revisao === "operador" ? "#c9d4ee" : "#f5d90a";
+  ctx.font = "700 22px Inter, system-ui, sans-serif";
+  ctx.fillText(
+    aviso.revisao === "operador"
+      ? `Revisado por ${aviso.issuedBy}`
+      : "RASCUNHO · não publicado · sem revisão de operador",
+    48,
+    H - 68,
+  );
+  ctx.fillStyle = "#c9d4ee";
   ctx.font = "600 20px Inter, system-ui, sans-serif";
   ctx.fillText(
     goesAtrasado

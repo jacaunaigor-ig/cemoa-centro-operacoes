@@ -187,7 +187,9 @@ export function WeatherForecastPanel({
       ) : null}
 
       <p className="mt-2 text-center text-[10px] leading-snug text-text-mute">
-        Observação e previsão — não alteram o grau.
+        {data
+          ? `Consulta ${formatAmazonDateTime(data.generatedAt)}${data.cache === "HIT" ? " · lote em cache" : ""}. Previsão do INMET, não é observação nem grau.`
+          : "Previsão do INMET, não é observação nem grau."}
       </p>
       <a
         href={INMET_PORTAL_URL}

@@ -18,6 +18,14 @@ export function hydroBoletimDiaIso(now = Date.now()): string {
   const today = hydroTodayIso(now);
   const clock = relogioDoFuso(now, FUSO_MANAUS);
   if (clock.hour >= ANA_HORAS[0]) return today;
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: HYDRO_TZ,
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(new Date(now)),
+  );
+  if (hour >= 16) return today;
   return addDaysIso(today, -1);
 }
 
@@ -154,6 +162,17 @@ export function syncOperationalCota<T extends HydroStation>(station: T): T {
   }
   let tendencia = station.tendencia;
   if (cota != null && prev != null && Number.isFinite(prev) && variacao != null) {
+export function syncOperationalCota<T extends HydroStation>(station: T, now = Date.now()): T {
+  const dia = hydroBoletimDiaIso(now);
+  const idx = indexOfIso(station, dia);
+  const cotaDia = idx >= 0 ? station.cotas[idx] ?? null : null;
+  const prev = idx > 0 ? station.cotas[idx - 1] : null;
+  let variacao = station.variacao;
+  if (cotaDia != null && prev != null && Number.isFinite(prev)) {
+    variacao = Math.round((cotaDia - prev) * 100) / 100;
+  }
+  let tendencia = station.tendencia;
+  if (cotaDia != null && prev != null && Number.isFinite(prev) && variacao != null) {
     tendencia =
       variacao > 0.03 ? "SUBINDO" : variacao < -0.03 ? "BAIXANDO" : "PARADO";
   }
@@ -161,6 +180,8 @@ export function syncOperationalCota<T extends HydroStation>(station: T): T {
     ...station,
     cota,
     semLeitura: cota == null,
+    cota: cotaDia,
+    semLeitura: cotaDia == null,
     variacao,
     tendencia,
   };

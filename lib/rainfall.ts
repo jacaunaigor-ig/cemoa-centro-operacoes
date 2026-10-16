@@ -371,6 +371,15 @@ export async function getRainfallPayload(): Promise<RainfallPayload> {
   return inflight;
 }
 
+export function peekRainfallCache(): { at: number; registros: number; erro: string | null } | null {
+  if (!memo) return null;
+  return {
+    at: memo.at,
+    registros: memo.data.coverage.estacoes,
+    erro: memo.data.error,
+  };
+}
+
 export function rainOf(
   payload: RainfallPayload | null | undefined,
   nome: string | null | undefined,

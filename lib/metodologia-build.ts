@@ -17,10 +17,12 @@
 
 import raw from "@/data/metodologia-cemoa.json";
 import { demografiaDo } from "@/lib/demografia";
+import type { FocosReferencia } from "@/lib/focos-display";
 import { buildAlertsPayload } from "@/lib/live-state";
 import { decretosInundacao } from "@/lib/decretos";
 import { catalogStations } from "@/lib/hydrology";
 import { pessoasRiscoDo } from "@/lib/mass-risk";
+import { classifyMonitorRain } from "@/lib/monitor-thresholds";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import {
   isPimf,
@@ -33,8 +35,9 @@ import {
   type MetPrioridade,
   type SetoresR3R4,
 } from "@/lib/metodologia";
-import type { AlertLevel } from "@/lib/types";
+import type { AirQualityPayload, AlertLevel, RainfallPayload } from "@/lib/types";
 
+const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · alagamento no IRE de chuvas · movimento de massa no IRE correspondente · SELVA e focos no IRE de incêndio`;
 const SOURCE = `${METODOLOGIA_VERSAO} · Censo 2022 · SGB/CPRM + Casa Civil NT 1/2023 · boletim de estiagem e alertas ao vivo`;
 
 const ORDEM_ALERTA: NivelAlertaMet[] = ["Sem alerta", "Moderado", "Alto", "Severo", "Extremo"];
@@ -115,6 +118,25 @@ export type MetodologiaPayload = {
 // Conversão dos níveis ao vivo → vocabulário da metodologia
 // =============================================================================
 
+const ORDEM_ALERTA: NivelAlertaMet[] = ["Sem alerta", "Moderado", "Alto", "Severo", "Extremo"];
+
+export function piorNivel(...niveis: Array<NivelAlertaMet | null | undefined>): NivelAlertaMet {
+  return niveis.reduce<NivelAlertaMet>((best, nivel) => {
+    const atual = nivel && ORDEM_ALERTA.includes(nivel) ? nivel : "Sem alerta";
+    return ORDEM_ALERTA.indexOf(atual) > ORDEM_ALERTA.indexOf(best) ? atual : best;
+  }, "Sem alerta");
+}
+
+/** Focos AQUA-Tarde em 15 dias. A quantidade entra no fator de alerta do incêndio. */
+export function nivelDeFocos(total: number | null | undefined): NivelAlertaMet {
+  const n = total ?? 0;
+  if (n >= 40) return "Extremo";
+  if (n >= 15) return "Severo";
+  if (n >= 5) return "Alto";
+  if (n >= 1) return "Moderado";
+  return "Sem alerta";
+}
+
 export function nivelAlertaMet(level: AlertLevel | undefined): NivelAlertaMet {
   switch (level) {
     case "MODERADO":
@@ -138,6 +160,17 @@ export function nivelAlertaMet(level: AlertLevel | undefined): NivelAlertaMet {
 // Construção
 // =============================================================================
 
+export type MetodologiaAoVivo = {
+  rain?: RainfallPayload | null;
+  air?: AirQualityPayload | null;
+  focos?: FocosReferencia | null;
+};
+
+export function buildMetodologiaPayload(
+  now = Date.now(),
+  live?: MetodologiaAoVivo,
+): MetodologiaPayload {
+  // ---- 1. Alertas ao vivo por produto (classificação do operador) ---------
 export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
   // ---- 1. Alertas ao vivo por produto e grau do boletim de estiagem -------
   const chuvaMap = new Map(
@@ -187,6 +220,24 @@ export function buildMetodologiaPayload(now = Date.now()): MetodologiaPayload {
           }
         : null;
 
+    const chuvaRec = live?.rain?.byId[m.id] ?? live?.rain?.byNome[m.nome];
+    const arRec = live?.air?.byId[m.id] ?? live?.air?.byNome[m.nome];
+    const onde = { id: m.id, nome: m.nome };
+    const alertasVivos: Partial<Record<MetodologiaEvento, NivelAlertaMet>> = {
+      Chuvas: piorNivel(
+        nivelAlertaMet(chuvaMap.get(m.id)),
+        nivelAlertaMet(alagamentoMap.get(m.id)),
+        nivelAlertaMet(classifyMonitorRain("ALAGAMENTO", chuvaRec?.mm1h, onde).level),
+      ),
+      "Mov. Massa": piorNivel(
+        nivelAlertaMet(movimentoMap.get(m.id)),
+        nivelAlertaMet(classifyMonitorRain("MOVIMENTO", chuvaRec?.mm24h, onde).level),
+      ),
+      "Incêndio/QAr": piorNivel(
+        nivelAlertaMet(incendioMap.get(m.id)),
+        nivelAlertaMet(arRec?.level ?? undefined),
+        nivelDeFocos(live?.focos?.byId[m.id]),
+      ),
     // Inundação: evento gradual de bacia. Sem alerta de cheia, FA = 0,30
     // prevalece: o IRE permanece Baixo. O agravo só ordena pelo histórico
     // de decretos, sem competir com a estiagem no IRG.

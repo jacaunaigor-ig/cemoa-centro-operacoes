@@ -43,6 +43,7 @@ export function AirQualityStrip({
         </span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
+            {air && /selva/i.test(air.source) ? "App SELVA · pior sensor agora" : "PurpleAir · MP2,5 agora"}
             {air && /selva/i.test(air.source) ? "App SELVA · qualidade do ar ao vivo" : "PurpleAir · MP2,5 ao vivo"}
           </p>
           {loading && !air ? (
@@ -150,6 +151,7 @@ export function AirPmBadge({
     <span
       className="inline-flex items-center gap-1 font-mono text-[10px] font-bold tabular-nums"
       style={{ color: airUiInk(level) }}
+      title={`MP2,5 do pior sensor agora: ${formatUg(rec.pm25)}`}
       title={`MP2,5 em tempo real: ${formatUg(rec.pm25)}`}
     >
       <Wind className="size-3.5" />

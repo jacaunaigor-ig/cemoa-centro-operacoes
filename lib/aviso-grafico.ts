@@ -35,6 +35,8 @@ export type AvisoSlot = {
   hours: AvisoSlotHours;
 };
 
+export type RevisaoAviso = "rascunho" | "operador";
+
 export type AvisoGrafico = {
   id: string;
   codigo: string;
@@ -42,6 +44,7 @@ export type AvisoGrafico = {
   expiresAt: number;
   imageAt: number | null;
   issuedBy: string;
+  revisao: RevisaoAviso;
   texto: string;
   abrangendo: string[];
   evolucao: string[];
@@ -160,13 +163,15 @@ export function draftAvisoGrafico(input: {
 }): AvisoGrafico {
   const now = input.now ?? Date.now();
   const slot = avisoSlotAt(now);
+  const issuedBy = input.issuedBy?.trim() ?? "";
   return {
     id: `aviso-grafico-${now}`,
     codigo: nextAvisoCodigo(input.lastCodigo, now),
     issuedAt: now,
     expiresAt: slot.endAt,
     imageAt: input.imageAt ?? null,
-    issuedBy: input.issuedBy?.trim() || "Plantão CEMOA",
+    issuedBy,
+    revisao: issuedBy ? "operador" : "rascunho",
     texto: AVISO_TEXTO_PADRAO,
     abrangendo: [],
     evolucao: [],
@@ -192,12 +197,20 @@ export function parseAvisoGrafico(raw: unknown): AvisoGrafico | null {
     issuedAt,
     expiresAt: typeof row.expiresAt === "number" ? row.expiresAt : avisoSlotAt(issuedAt).endAt,
     imageAt: typeof row.imageAt === "number" ? row.imageAt : null,
-    issuedBy: typeof row.issuedBy === "string" ? row.issuedBy : "Plantão CEMOA",
+    issuedBy: typeof row.issuedBy === "string" ? row.issuedBy : "",
+    revisao: revisaoGravada(row.revisao, typeof row.issuedBy === "string" ? row.issuedBy : ""),
     texto: typeof row.texto === "string" ? row.texto : AVISO_TEXTO_PADRAO,
     abrangendo: list(row.abrangendo),
     evolucao: list(row.evolucao),
     imageUrl: typeof row.imageUrl === "string" ? row.imageUrl : null,
   };
+}
+
+function revisaoGravada(revisao: unknown, issuedBy: string): RevisaoAviso {
+  if (revisao === "operador" || revisao === "rascunho") return revisao;
+  const nome = issuedBy.trim();
+  if (nome && nome !== "Plantão CEMOA") return "operador";
+  return "rascunho";
 }
 
 export function joinCalhas(items: string[]) {
