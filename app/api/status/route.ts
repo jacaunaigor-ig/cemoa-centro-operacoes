@@ -1,40 +1,14 @@
-import { NextResponse } from "next/server";
-import { peekAirCache } from "@/lib/air-quality";
-import { peekAnaFetchedAt } from "@/lib/ana-telemetria";
-import { peekFabricFetchedAt } from "@/lib/fabric-cotas";
-import { getGoesMeta } from "@/lib/goes-satellite";
-import { peekRainfallCache } from "@/lib/rainfall";
-import { buildSourceHealth } from "@/lib/source-health";
-
-export const dynamic = "force-dynamic";
-
-export async function GET() {
-  const rain = peekRainfallCache();
-  const air = peekAirCache();
-  const goes = await getGoesMeta();
-  const sources = buildSourceHealth({
-    rainAt: rain?.generatedAt ?? null,
-    rainError: rain?.error ?? null,
-    airAt: air?.generatedAt ?? null,
-    airError: air?.error ?? null,
-    airSensores: air?.sensores ?? 0,
-    anaAt: peekAnaFetchedAt(),
-    fabricAt: peekFabricFetchedAt(),
-    goesAt: goes?.imageAt ?? null,
-  });
-  return NextResponse.json(
-    { generatedAt: Date.now(), sources },
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { peekAirCache } from "@/lib/air-quality";
-import { peekAnaCache } from "@/lib/ana-telemetria";
-import { peekFabricCache } from "@/lib/fabric-cotas";
+import { peekAnaCache, peekAnaFetchedAt } from "@/lib/ana-telemetria";
+import { peekFabricCache, peekFabricFetchedAt } from "@/lib/fabric-cotas";
 import { peekFocosCache } from "@/lib/focos-referencia";
 import { getGoesMeta } from "@/lib/goes-satellite";
 import { peekRainfallCache } from "@/lib/rainfall";
-import { peekWeatherCache, WEATHER_TTL_MS } from "@/lib/weather-forecast";
 import { anexarFalhas, lerFalhas, novasFalhas } from "@/lib/source-failures";
-import { classificarFonte, type FonteSaude, type FonteSinal } from "@/lib/source-health";
+import { buildSourceHealth, classificarFonte, type FonteSaude, type FonteSinal } from "@/lib/source-health";
+import { peekWeatherCache, WEATHER_TTL_MS } from "@/lib/weather-forecast";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +26,18 @@ export async function GET() {
   const focos = peekFocosCache();
   const previsao = peekWeatherCache();
   const goes = await getGoesMeta().catch(() => null);
+
+  const sources = buildSourceHealth({
+    now,
+    rainAt: chuva?.generatedAt ?? null,
+    rainError: chuva?.error ?? null,
+    airAt: ar?.generatedAt ?? null,
+    airError: ar?.error ?? null,
+    airSensores: ar?.sensores ?? 0,
+    anaAt: peekAnaFetchedAt(),
+    fabricAt: peekFabricFetchedAt(),
+    goesAt: goes?.imageAt ?? null,
+  });
 
   const sinais: FonteSinal[] = [
     {
@@ -127,6 +113,7 @@ export async function GET() {
   return NextResponse.json(
     {
       generatedAt: now,
+      sources,
       fontes,
       falhas: historico.falhas.slice(0, 8),
       falhasDisponivel: historico.disponivel,

@@ -164,8 +164,6 @@ const FILE = raw as RawFile;
 export const HYDRO_DIAS = FILE.dias;
 export const HYDRO_REFERENCIA = FILE.referencia;
 
-export { hydroBoletimDiaIso };
-
 export function formatHydroRef(ref: string | null | undefined) {
   if (!ref) return "—";
   const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(ref.trim());
@@ -250,7 +248,6 @@ export function situacaoLeitura(station: HydroStation) {
   const temLeitura = idxValido >= 0;
   const isoValido = temLeitura ? hydroDayToIso(String(labels[idxValido] ?? ""), ref) : null;
   const atual = isoValido === today || isoValido === boletim;
-  const atual = isoValido === today || isoValido === hydroBoletimDiaIso();
   return {
     semEstacao: station.semEstacao,
     temLeitura,

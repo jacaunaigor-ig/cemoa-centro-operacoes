@@ -240,7 +240,6 @@ export function MeteoAvisoDutyCard() {
   const [note, setNote] = useState("");
   const [turno, setTurno] = useState<PlantaoTurno | null>(null);
   const shift = meteoShiftAt(now || Date.now());
-  const tone = avisoTone(aviso?.expiresAt, now);
 
   useEffect(() => {
     setTurno(turnoDoShiftAtual(now || Date.now()));
