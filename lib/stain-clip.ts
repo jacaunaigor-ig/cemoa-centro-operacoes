@@ -41,6 +41,23 @@ export function loadMunicipalMesh() {
   return meshPromise;
 }
 
+/** Prefetch ocioso para o primeiro mapa da sessão não esperar a malha. */
+export function prefetchMunicipalMesh() {
+  if (typeof window === "undefined") return;
+  const run = () => {
+    void loadMunicipalMesh().catch(() => {
+      meshPromise = null;
+    });
+  };
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
+  if (typeof ric === "function") ric(run, { timeout: 2500 });
+  else window.setTimeout(run, 400);
+}
+
 function asPairs(ring: Ring): Pair[] {
   return ring.map((p) => [Number(p[0]), Number(p[1])] as Pair);
 }

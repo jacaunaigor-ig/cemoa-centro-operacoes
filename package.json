@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start --port 43127 --hostname 127.0.0.1",
     "lint": "eslint",
+    "test": "npx --yes tsx --test lib/p3.test.ts",
     "build:pages": "node scripts/build-pages.mjs"
   },
   "dependencies": {

@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/client";
+import { startVisiblePoll } from "@/lib/client-hooks";
+import type { SourceHealth } from "@/lib/source-health";
+import { cn, formatAmazonDateTime } from "@/lib/utils";
 import type { FonteSaude } from "@/lib/source-health";
 import { formatAmazonDateTime } from "@/lib/utils";
 
@@ -13,6 +17,12 @@ const FONTES = [
   { href: "https://www.purpleair.com/", label: "PurpleAir" },
   { href: "https://www.defesacivil.am.gov.br", label: "Defesa Civil AM" },
 ] as const;
+
+const TONE: Record<SourceHealth["tone"], string> = {
+  ok: "bg-emerald-500",
+  atraso: "bg-amber-400",
+  falha: "bg-risco-alto",
+};
 
 export function OpsFooter({
   source,
@@ -29,6 +39,17 @@ export function OpsFooter({
   hydroAt?: number | null;
   supabase?: "ligado" | "aguardando";
 }) {
+  const [health, setHealth] = useState<SourceHealth[]>([]);
+
+  useEffect(() => {
+    return startVisiblePoll(async () => {
+      try {
+        const data = await fetchJson<{ sources: SourceHealth[] }>("/api/status");
+        setHealth(data.sources);
+      } catch {
+        /* o rodapé continua com os horários locais */
+      }
+    }, 60_000);
   const [fontes, setFontes] = useState<FonteSaude[]>([]);
   const [falhasNota, setFalhasNota] = useState("Nenhuma falha de fonte registrada neste servidor.");
 
@@ -110,6 +131,19 @@ export function OpsFooter({
           ))}
         </nav>
       </div>
+      {health.length ? (
+        <ul className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1" aria-label="Saúde das fontes">
+          {health.map((s) => (
+            <li key={s.id} className="inline-flex items-center gap-1" title={s.detalhe}>
+              <span className={cn("size-1.5 shrink-0 rounded-full", TONE[s.tone])} />
+              <span className="font-semibold text-text">{s.label}</span>
+              <span className="font-mono tabular-nums">
+                {s.at ? formatAmazonDateTime(s.at) : "—"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {stamps.length ? (
         <p className="mt-0.5 font-mono tabular-nums">
           Última atualização · {stamps.join(" · ")} · horário de Manaus

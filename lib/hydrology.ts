@@ -8,8 +8,7 @@ import type {
   HydroTendencia,
 } from "@/lib/types";
 import raw from "@/data/hydrology.json";
-import { ANA_HORAS, FUSO_MANAUS, relogioDoFuso } from "@/lib/boletim-horario";
-import { hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
+import { hydroBoletimDiaIso, hydroDayToIso, hydroTodayIso, withSeriesThroughToday } from "@/lib/hydro-series";
 
 export const CALHAS = [
   "Alto Solimões",
@@ -163,12 +162,7 @@ const FILE = raw as RawFile;
 export const HYDRO_DIAS = FILE.dias;
 export const HYDRO_REFERENCIA = FILE.referencia;
 
-/** Depois das 16 h de Manaus o boletim do dia vigente substitui a data do snapshot. */
-export function hydroBoletimDiaIso(now = Date.now()) {
-  const clock = relogioDoFuso(now, FUSO_MANAUS);
-  if (clock.hour >= ANA_HORAS[0]) return hydroTodayIso(now);
-  return FILE.referencia;
-}
+export { hydroBoletimDiaIso };
 
 export function formatHydroRef(ref: string | null | undefined) {
   if (!ref) return "—";
@@ -242,6 +236,7 @@ export function situacaoLeitura(station: HydroStation) {
   const labels = station.dias;
   const serie = station.cotas;
   const today = hydroTodayIso();
+  const boletim = hydroBoletimDiaIso();
   const ref = station.referencia && station.referencia.length >= 8 ? station.referencia : today;
   let idxValido = -1;
   for (let i = serie.length - 1; i >= 0; i--) {
@@ -252,6 +247,7 @@ export function situacaoLeitura(station: HydroStation) {
   }
   const temLeitura = idxValido >= 0;
   const isoValido = temLeitura ? hydroDayToIso(String(labels[idxValido] ?? ""), ref) : null;
+  const atual = isoValido === today || isoValido === boletim;
   const atual = isoValido === today || isoValido === hydroBoletimDiaIso();
   return {
     semEstacao: station.semEstacao,

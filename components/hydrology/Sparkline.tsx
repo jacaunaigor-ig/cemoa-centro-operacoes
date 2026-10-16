@@ -18,8 +18,17 @@ export function Sparkline({
     .map((v, i) => (v != null && Number.isFinite(v) ? { i, v } : null))
     .filter((p): p is { i: number; v: number } => p != null);
 
-  if (points.length < 2) {
+  if (points.length === 0) {
     return <span className="text-[10px] text-text-mute">sem série</span>;
+  }
+
+  if (points.length === 1) {
+    const color = HYDRO_STATUS_COLORS[status];
+    return (
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden>
+        <circle cx={width - 4} cy={height / 2} r="2.2" fill={color} />
+      </svg>
+    );
   }
 
   const min = Math.min(...points.map((p) => p.v));

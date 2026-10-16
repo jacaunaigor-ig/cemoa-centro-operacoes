@@ -26,10 +26,11 @@ Este documento lista as rotas internas da aplicação, os parâmetros de consult
 | `/api/focos` | GET | — | Focos absolutos de calor dos últimos 15 dias pelo satélite AQUA_M-T (INPE BDQueimadas). |
 | `/api/risco` | GET | — | Retorna o cálculo da metodologia CEMOA (IVM, IRE por evento, IRG, ranking e fatores de alerta). |
 | `/api/clima/merge` | GET | `produto`, `qual` | Gera recortes cartográficos do produto MERGE/CPTEC (anomalia de precipitação, dias secos `dd` e `cdd`). |
-| `/api/satellite/goes` | GET | `refresh` | Metadados da imagem de infravermelho realçado do satélite GOES-19 (CPTEC/INPE). |
-| `/api/satellite/goes/image` | GET | — | Imagem JPEG processada do último recorte do satélite GOES-19 para o estado. |
+| `/api/satellite/goes` | GET | `refresh` | Metadados da imagem de infravermelho realçado do satélite GOES-19 (acervo DISSM `repositoriogoes`, canal 13). |
+| `/api/satellite/goes/image` | GET | — | Recorte JPEG do Amazonas com limites municipais, gerado a partir da cena mais recente. |
 | `/api/avisos` | GET, POST | — | Consulta ou registra avisos meteorológicos operacionais do plantão. |
 | `/api/logs` | GET, POST | — | Registro e consulta de logs de erros cartográficos e de dados do frontend. |
+| `/api/status` | GET | — | Saúde das fontes (SELVA, CEMADEN, ANA hidro, Power BI, GOES) para o rodapé do plantão. |
 
 ## Parâmetros Compartilhados de Consulta
 
