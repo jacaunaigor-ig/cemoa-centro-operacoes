@@ -12,6 +12,7 @@ import {
   Maximize2,
   Minimize2,
   Mountain,
+  RefreshCw,
   Settings2,
   Waves,
 } from "lucide-react";
@@ -1104,8 +1105,8 @@ export function AlertsWorkbench() {
     />
   );
   const listNode = (
-    <div className="flex h-full min-h-[320px] min-w-0 flex-col gap-2 xl:min-h-0">
-      {monitorStrip}
+    <div className={cn("flex h-full min-w-0 flex-col gap-2", isMobile ? "min-h-0" : "min-h-[320px] xl:min-h-0")}>
+      {isMobile ? null : monitorStrip}
       <div className="min-h-0 flex-1">
     <AlertList
       municipios={visibleMunicipios.map((m) => ({
@@ -1554,7 +1555,12 @@ export function AlertsWorkbench() {
                       sub={riskActionFor(level)}
                       accent={LEVEL_COLORS[level]}
                       active={activeFilter === level}
-                      onClick={() => setQuery({ risco: level, municipio: null })}
+                      onClick={() =>
+                        setQuery({
+                          risco: activeFilter === level ? null : level,
+                          municipio: null,
+                        })
+                      }
                       loading={loading}
                     />
                   ))}
@@ -1763,26 +1769,34 @@ export function AlertsWorkbench() {
 
         <div className={cn(
           "grid min-h-0 flex-1",
-          isMobile || mapFocus
-            ? "grid-cols-1"
-            : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+          isMobile
+            ? "grid-cols-1 grid-rows-[minmax(12.5rem,42dvh)_minmax(0,1fr)] gap-1.5"
+            : mapFocus
+              ? "grid-cols-1"
+              : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {mapFocus || isMobile ? null : listNode}
+          {mapFocus ? null : isMobile ? (
+            <div className="order-2 min-h-0 overflow-hidden">{listNode}</div>
+          ) : (
+            listNode
+          )}
 
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
+            isMobile && "order-1",
             mapFocus ? "rounded-none border-0 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
               status={
-                isMobile ? undefined : (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
                   <span className="live-dot" />
-                  {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
-                  {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
+                  <span className="truncate">
+                    {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
+                    {plantaoTotal > 0 ? ` · plantão ${plantaoTotal}` : ""}
+                    {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
+                  </span>
                 </span>
-                )
               }
             >
                 {mapFocus ? (
@@ -1811,7 +1825,19 @@ export function AlertsWorkbench() {
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile ? (
-                  <AmazonasMapButton onReset={resetAmazonasMap} />
+                  <>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => void refreshNow()}
+                      disabled={refreshing || loading}
+                      aria-label="Atualizar dados agora"
+                    >
+                      <RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} />
+                    </Button>
+                    <AmazonasMapButton onReset={resetAmazonasMap} />
+                  </>
                 ) : (
                   <>
                     {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null}

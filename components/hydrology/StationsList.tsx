@@ -89,7 +89,7 @@ export function StationsList({
   const showSearch = !isMobile || buscaOpen || Boolean(busca);
 
   return (
-    <Card className="flex h-full min-h-[320px] flex-1 flex-col overflow-hidden xl:min-h-0">
+    <Card className={cn("flex h-full min-h-0 flex-1 flex-col overflow-hidden", !isMobile && "min-h-[320px] xl:min-h-0")}>
       <div className="space-y-2 border-b border-border p-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
@@ -173,7 +173,7 @@ export function StationsList({
           />
         ) : null}
       </div>
-      <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">
+      <ScrollArea className={cn("min-h-0 flex-1", !isMobile && "max-xl:h-[min(52vh,640px)] max-xl:flex-none")}>
         <ul>
           {loading
             ? Array.from({ length: 7 }).map((_, i) => (
