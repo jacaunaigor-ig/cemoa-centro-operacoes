@@ -14,13 +14,12 @@ const base = {
     { produto: "Risco de Chuva Intensa", calha: "Japurá", nome: "Maraã", detalhe: "Alto" },
     { produto: "Risco de Chuva Intensa", calha: "Negro", nome: "Manaus", detalhe: "Alto" },
   ],
-  expirados: [
-    { produto: "Risco de Chuva Intensa", calha: "Negro", nome: "Manaus", detalhe: "alerta vencido" },
-  ],
   comentario: "Avaliar aviso sonoro quando o alerta expirar no meio do turno.",
+  intercorrencias: "CEMADEN sem retorno em Tabatinga no início do turno.",
+  avisos: "Manter o mapa de alagamento aberto até a próxima leitura.",
 };
 
-test("a passagem traz o que foi feito, ativos, expirados e o comentário", () => {
+test("a passagem traz o que foi feito, ativos, comentário, intercorrências e avisos", () => {
   const texto = montarPassagem(base);
   assert.match(texto, /Horário de Manaus: 15\/10\/2026, 15:50/);
   assert.match(texto, /Responsável: Igor/);
@@ -36,10 +35,13 @@ test("a passagem traz o que foi feito, ativos, expirados e o comentário", () =>
   assert.ok(japura > negro && japura < incendio);
   assert.match(texto, /  - Manaus — Alto/);
   assert.match(texto, /  Médio Amazonas\n  - Barreirinha — Muito Ruim\n  Negro\n  - Manaus — Muito Ruim/);
-  assert.match(texto, /Alertas expirados \(1\)/);
-  assert.match(texto, /alerta vencido/);
+  assert.doesNotMatch(texto, /Alertas expirados/);
   assert.match(texto, /Comentário/);
   assert.match(texto, /aviso sonoro/);
+  assert.match(texto, /Intercorrências/);
+  assert.match(texto, /CEMADEN sem retorno/);
+  assert.match(texto, /Avisos gerais/);
+  assert.match(texto, /mapa de alagamento/);
   assert.doesNotMatch(texto, /Fontes/);
   assert.doesNotMatch(texto, /Pendências/);
   assert.doesNotMatch(texto, /Sem leitura/);
@@ -51,14 +53,17 @@ test("sem sessão, sem feito e sem alerta o texto não finge normalidade", () =>
     responsavel: null,
     feito: [],
     ativos: [],
-    expirados: [],
     comentario: "   ",
+    intercorrencias: " ",
+    avisos: "",
   });
   assert.match(texto, /sessão de operador não aberta/);
   assert.match(texto, /Nenhuma alteração registrada nesta consulta/);
   assert.match(texto, /Nenhum alerta ativo/);
-  assert.match(texto, /Nenhum alerta expirado/);
+  assert.doesNotMatch(texto, /Alertas expirados/);
   assert.match(texto, /Sem comentário/);
+  assert.match(texto, /Sem intercorrência/);
+  assert.match(texto, /Sem aviso geral/);
 });
 
 test("Rio Negro e Japurá entram na calha correspondente", () => {

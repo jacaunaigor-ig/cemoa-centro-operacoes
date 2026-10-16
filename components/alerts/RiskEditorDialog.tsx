@@ -40,6 +40,7 @@ export function RiskEditorDialog({
   const [batchLevel, setBatchLevel] = useState(fallbackLevel);
   const [ttlMs, setTtlMs] = useState(DEFAULT_ALERT_DURATION_MS);
   const [applying, setApplying] = useState(false);
+  const [revisando, setRevisando] = useState(false);
   const effectiveLevel = levels.includes(batchLevel) ? batchLevel : fallbackLevel;
 
   const parsed = useMemo(() => matchMunicipioNames(text, rows), [text, rows]);
@@ -48,6 +49,7 @@ export function RiskEditorDialog({
     if (!open) {
       setText("");
       setApplying(false);
+      setRevisando(false);
       return;
     }
     setBatchLevel(fallbackLevel);
@@ -84,7 +86,7 @@ export function RiskEditorDialog({
             </h2>
             <p className="text-xs text-text-mute">
               Defina o grau e a duração de {productLabel.toLowerCase()}. Cole os municípios por
-              extenso. Ao encerrar, o mapa muda.
+              extenso. A classificação pede confirmação antes de entrar no mapa.
             </p>
           </div>
           <button
@@ -177,22 +179,40 @@ export function RiskEditorDialog({
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">
           <p className="text-[11px] text-text-mute">
-            {LEVEL_LABELS[effectiveLevel] ?? effectiveLevel} · {durationLabel(ttlMs)}
+            {revisando
+              ? `Confirmar ${parsed.matched.length} município(s) em ${LEVEL_LABELS[effectiveLevel] ?? effectiveLevel} · ${durationLabel(ttlMs)}?`
+              : `${LEVEL_LABELS[effectiveLevel] ?? effectiveLevel} · ${durationLabel(ttlMs)}`}
           </p>
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={applying}>
-              Cancelar
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                if (revisando) {
+                  setRevisando(false);
+                  return;
+                }
+                onClose();
+              }}
+              disabled={applying}
+            >
+              {revisando ? "Voltar" : "Cancelar"}
             </Button>
             <Button
               type="button"
               onClick={async () => {
                 if (!parsed.matched.length) return;
+                if (!revisando) {
+                  setRevisando(true);
+                  return;
+                }
                 setApplying(true);
                 try {
                   const updates: Record<string, string> = {};
                   for (const row of parsed.matched) updates[row.id] = effectiveLevel;
                   await onApply(updates, ttlMs);
                   setText("");
+                  setRevisando(false);
                   onClose();
                 } finally {
                   setApplying(false);
@@ -200,7 +220,7 @@ export function RiskEditorDialog({
               }}
               disabled={applying || parsed.matched.length === 0}
             >
-              {applying ? "Aplicando…" : "Encerrar edição"}
+              {applying ? "Aplicando…" : revisando ? "Confirmar" : "Classificar"}
             </Button>
           </div>
         </footer>

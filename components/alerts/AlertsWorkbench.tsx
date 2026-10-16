@@ -12,6 +12,7 @@ import {
   Maximize2,
   Minimize2,
   Mountain,
+  RefreshCw,
   Settings2,
   Waves,
 } from "lucide-react";
@@ -38,7 +39,7 @@ import { buildAlertsPayload, buildHydrologyPayload, mergeAlertsPreserveOperator 
 import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides, replaceOverrides } from "@/lib/overrides";
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
-import { DEFAULT_ALERT_DURATION_MS, durationLabel } from "@/lib/alert-duration";
+import { DEFAULT_ALERT_DURATION_MS, durationLabel, vigenciaMonitorMs } from "@/lib/alert-duration";
 import { alertExpiresAt } from "@/lib/alert-validity";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
@@ -106,7 +107,7 @@ import { SituationBar } from "@/components/alerts/SituationBar";
 import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
 import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
-import { buildPlantaoQueue, countPlantao, plantaoLabel } from "@/lib/plantao-queue";
+import { buildPlantaoQueue, countPlantao, plantaoLabel, type PlantaoItem } from "@/lib/plantao-queue";
 import { PassagemDialog } from "@/components/alerts/PassagemDialog";
 import { linhasDaPassagem } from "@/lib/classification-audit";
 import { calhaDaBacia, type PassagemItem, type PassagemTexto } from "@/lib/passagem-turno";
@@ -142,25 +143,8 @@ function alertasDaPassagem(
     nome: string;
     bacia: string;
     risco: string;
-    expiresAt?: number | null;
   }>,
-  rain: RainfallPayload | null,
-  air: AirQualityPayload | null,
-  hydro: HydroStation[],
-): { ativos: PassagemItem[]; expirados: PassagemItem[] } {
-  const fila = buildPlantaoQueue({
-    tipo: tipoAlvo,
-    municipios: rows.map((m) => ({
-      id: m.id,
-      nome: m.nome,
-      bacia: m.bacia,
-      risco: m.risco,
-      expiresAt: m.expiresAt ?? null,
-    })),
-    rain,
-    air,
-    hydro,
-  });
+): { ativos: PassagemItem[] } {
   const ativos = rows
     .filter((m) => isAlertActive(tipoAlvo, m.risco))
     .sort(
@@ -174,15 +158,7 @@ function alertasDaPassagem(
       nome: m.nome,
       detalhe: levelLabel(m.risco),
     }));
-  const expirados = fila
-    .filter((item) => item.action === "vencido")
-    .map((item) => ({
-      produto,
-      calha: calhaDaBacia(item.bacia),
-      nome: item.nome,
-      detalhe: item.motivo,
-    }));
-  return { ativos, expirados };
+  return { ativos };
 }
 
 function parseLevel(value: string | null, levels: readonly string[]): string | "TODOS" {
@@ -383,6 +359,8 @@ export function AlertsWorkbench() {
   const [classifying, setClassifying] = useState(false);
   const [sessionPaints, setSessionPaints] = useState<SessionPaint[]>([]);
   const [sessionReview, setSessionReview] = useState(false);
+  const [pendingClick, setPendingClick] = useState<{ id: string; nome: string; bacia: string } | null>(null);
+  const [pendingStain, setPendingStain] = useState<AlertStain | null>(null);
   const sessionReviewRef = useRef(false);
   sessionReviewRef.current = sessionReview;
   const [editorOpen, setEditorOpen] = useState(false);
@@ -403,7 +381,9 @@ export function AlertsWorkbench() {
   const [refreshing, setRefreshing] = useState(false);
   const [passagemAberta, setPassagemAberta] = useState(false);
   const [passagemCarregando, setPassagemCarregando] = useState(false);
-  const [passagemBase, setPassagemBase] = useState<Omit<PassagemTexto, "comentario"> | null>(null);
+  const [passagemBase, setPassagemBase] = useState<
+    Omit<PassagemTexto, "comentario" | "intercorrencias" | "avisos"> | null
+  >(null);
   const mapApi = useRef<AlertsMapHandle>(null);
   const hydrated = useRef(false);
   const localPushed = useRef(false);
@@ -453,7 +433,7 @@ export function AlertsWorkbench() {
         replace?: boolean;
         remove?: string[];
         skipHistory?: boolean;
-        source?: "clique" | "lote" | "poligono" | "desfazer";
+        source?: "clique" | "lote" | "poligono" | "fila" | "desfazer";
         tipo?: AlertType;
         ttlMs?: number;
         skipRefresh?: boolean;
@@ -882,7 +862,13 @@ export function AlertsWorkbench() {
           return;
         }
         if (event.key === "Escape") {
-        if (sessionReviewRef.current) return;
+        if (sessionReviewRef.current || pendingClick || pendingStain) {
+          if (pendingClick || pendingStain) {
+            setPendingClick(null);
+            setPendingStain(null);
+          }
+          return;
+        }
         if (editorOpen) return;
         if (drawMode) {
           mapApi.current?.cancelDraw();
@@ -909,7 +895,7 @@ export function AlertsWorkbench() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast]);
+  }, [selected, editorOpen, paintArmed, drawMode, eraseMode, admin, classifying, undoStack.length, undoLast, pendingClick, pendingStain]);
 
   const catalog = useMemo(() => {
     const rows = data?.municipios ?? [];
@@ -1046,7 +1032,7 @@ export function AlertsWorkbench() {
   const autoHint =
     autoCount > 0 ? ` · ${autoCount} município(s)` : "";
   const paintHint = paintArmed
-    ? `Grau ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}. A confirmação aparece ao encerrar a edição.`
+    ? `Grau ${levelLabel(paintLevel)} · ${durationLabel(paintTtlMs)}. Cada clique pede confirmação antes de classificar.`
     : tipo === "INCENDIO"
       ? `O mapa segue o MP2,5 em tempo real do App SELVA${autoHint}. Clique, lote (L) ou polígono altera o grau.`
       : tipo === "CHUVA" || tipo === "EROSAO"
@@ -1119,8 +1105,8 @@ export function AlertsWorkbench() {
     />
   );
   const listNode = (
-    <div className="flex h-full min-h-[320px] min-w-0 flex-col gap-2 xl:min-h-0">
-      {monitorStrip}
+    <div className={cn("flex h-full min-w-0 flex-col gap-2", isMobile ? "min-h-0" : "min-h-[320px] xl:min-h-0")}>
+      {isMobile ? null : monitorStrip}
       <div className="min-h-0 flex-1">
     <AlertList
       municipios={visibleMunicipios.map((m) => ({
@@ -1160,6 +1146,7 @@ export function AlertsWorkbench() {
         setBusca("");
         setQuery({ risco: null, bacia: null, calha: null, municipio: null, chuva: null, ar: null });
       }}
+      onEmitir={(item) => void emitirDaFila(item)}
     />
       </div>
     </div>
@@ -1229,8 +1216,52 @@ export function AlertsWorkbench() {
   }
 
   function requestPaint(id: string, nome: string, bacia: string) {
-    if (classifying || sessionReview) return;
-    void paintMunicipio(id, nome, bacia);
+    if (classifying || sessionReview || pendingClick || pendingStain) return;
+    setPendingClick({ id, nome, bacia });
+  }
+
+  async function emitirDaFila(item: PlantaoItem) {
+    if (!item.suggested || classifying) return;
+    const ttl = vigenciaMonitorMs(item.tipo) ?? paintTtlMs;
+    const saved = await persistOverrides(
+      { [item.id]: item.suggested },
+      { source: "fila", ttlMs: ttl, tipo: item.tipo },
+    );
+    if (!saved.ok) return;
+    const grau = levelLabel(item.suggested).toLowerCase();
+    toast.success(
+      item.tipo === "ALAGAMENTO"
+        ? `${item.nome} classificado em alagamento ${grau} · ${durationLabel(ttl)}.`
+        : `${item.nome} classificado em ${grau} · ${durationLabel(ttl)}.`,
+    );
+  }
+
+  async function confirmPending() {
+    if (pendingClick) {
+      const row = pendingClick;
+      setPendingClick(null);
+      await paintMunicipio(row.id, row.nome, row.bacia);
+      return;
+    }
+    if (!pendingStain) return;
+    const stain = pendingStain;
+    setPendingStain(null);
+    setClassifying(true);
+    try {
+      const ok = await persistStain(stain);
+      if (!ok) return;
+      const undoItem: UndoItem = { kind: "stain", tipo, stainId: stain.id };
+      setUndoStack((stack) => [undoItem, ...stack].slice(0, 20));
+      setClickSessionCount((n) => n + 1);
+      const names = stain.municipios;
+      toast.success(
+        names.length === 1
+          ? `Mancha ${levelLabel(paintLevel)} em parte de ${names[0]} · ${durationLabel(paintTtlMs)}`
+          : `Mancha ${levelLabel(paintLevel)} em parte de ${names.length} municípios · ${durationLabel(paintTtlMs)}.`,
+      );
+    } finally {
+      setClassifying(false);
+    }
   }
 
   async function paintMunicipio(id: string, nome: string, _baciaName: string) {
@@ -1316,22 +1347,7 @@ export function AlertsWorkbench() {
       ttlMs: paintTtlMs,
     };
     setDrawMode(false);
-    setClassifying(true);
-    try {
-      const ok = await persistStain(stain);
-      if (!ok) return;
-      const undoItem: UndoItem = { kind: "stain", tipo, stainId: stain.id };
-      setUndoStack((stack) => [undoItem, ...stack].slice(0, 20));
-      setClickSessionCount((n) => n + 1);
-      const names = clipped.municipios;
-      toast.success(
-        names.length === 1
-          ? `Mancha ${levelLabel(paintLevel)} em parte de ${names[0]} · ${durationLabel(paintTtlMs)}`
-          : `Mancha ${levelLabel(paintLevel)} em parte de ${names.length} municípios · ${durationLabel(paintTtlMs)}.`,
-      );
-    } finally {
-      setClassifying(false);
-    }
+    setPendingStain(stain);
   }
 
   async function deleteStain(stain: AlertStain) {
@@ -1539,7 +1555,12 @@ export function AlertsWorkbench() {
                       sub={riskActionFor(level)}
                       accent={LEVEL_COLORS[level]}
                       active={activeFilter === level}
-                      onClick={() => setQuery({ risco: level, municipio: null })}
+                      onClick={() =>
+                        setQuery({
+                          risco: activeFilter === level ? null : level,
+                          municipio: null,
+                        })
+                      }
                       loading={loading}
                     />
                   ))}
@@ -1613,14 +1634,13 @@ export function AlertsWorkbench() {
               <button
                 type="button"
                 className="rounded-lg border border-border bg-panel-2 px-2 py-1 text-[10px] font-bold tracking-wide text-text-mute uppercase hover:border-border-strong hover:text-text"
-                title="Abre o resumo do turno: o que foi feito, alertas ativos, expirados e comentário."
+                title="Abre o resumo do turno: o que foi feito, alertas ativos, comentário, intercorrências e avisos gerais."
                 onClick={() => {
                   setPassagemAberta(true);
                   setPassagemCarregando(true);
                   setPassagemBase(null);
                   void (async () => {
                     const ativos: PassagemItem[] = [];
-                    const expirados: PassagemItem[] = [];
                     const falhas: string[] = [];
                     await Promise.all(
                       ALERT_TYPES.map(async (id) => {
@@ -1638,9 +1658,8 @@ export function AlertsWorkbench() {
                             if (id === "INCENDIO") municipios = applyAirClassification(municipios, air);
                             rows = municipios;
                           }
-                          const parte = alertasDaPassagem(label, id, rows, rain, air, hydroStations);
+                          const parte = alertasDaPassagem(label, id, rows);
                           ativos.push(...parte.ativos);
-                          expirados.push(...parte.expirados);
                         } catch {
                           falhas.push(`${label}: consulta não retornou. Esses alertas não entraram na lista.`);
                         }
@@ -1689,7 +1708,6 @@ export function AlertsWorkbench() {
                       feito,
                       feitoIndisponivel,
                       ativos,
-                      expirados,
                     });
                     setPassagemCarregando(false);
                   })();
@@ -1751,26 +1769,34 @@ export function AlertsWorkbench() {
 
         <div className={cn(
           "grid min-h-0 flex-1",
-          isMobile || mapFocus
-            ? "grid-cols-1"
-            : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+          isMobile
+            ? "grid-cols-1 grid-rows-[minmax(12.5rem,42dvh)_minmax(0,1fr)] gap-1.5"
+            : mapFocus
+              ? "grid-cols-1"
+              : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {mapFocus || isMobile ? null : listNode}
+          {mapFocus ? null : isMobile ? (
+            <div className="order-2 min-h-0 overflow-hidden">{listNode}</div>
+          ) : (
+            listNode
+          )}
 
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
+            isMobile && "order-1",
             mapFocus ? "rounded-none border-0 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
               status={
-                isMobile ? undefined : (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
                   <span className="live-dot" />
-                  {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
-                  {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
+                  <span className="truncate">
+                    {counts.TODOS} município{counts.TODOS === 1 ? "" : "s"}
+                    {plantaoTotal > 0 ? ` · plantão ${plantaoTotal}` : ""}
+                    {calha ? ` · ${calha}` : bacia ? ` · ${bacia}` : ""}
+                  </span>
                 </span>
-                )
               }
             >
                 {mapFocus ? (
@@ -1799,7 +1825,19 @@ export function AlertsWorkbench() {
                 {isMobile ? null : <MapFocusButton />}
                 {mapFocus && !isMobile ? <PlantaoSoundButton labeled /> : null}
                 {isMobile ? (
-                  <AmazonasMapButton onReset={resetAmazonasMap} />
+                  <>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => void refreshNow()}
+                      disabled={refreshing || loading}
+                      aria-label="Atualizar dados agora"
+                    >
+                      <RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} />
+                    </Button>
+                    <AmazonasMapButton onReset={resetAmazonasMap} />
+                  </>
                 ) : (
                   <>
                     {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null}
@@ -2231,18 +2269,34 @@ export function AlertsWorkbench() {
         onClose={() => setPassagemAberta(false)}
       />
       <ClassifyConfirm
-        open={sessionReview}
+        open={Boolean(pendingClick || pendingStain) || sessionReview}
+        gate={Boolean(pendingClick || pendingStain)}
         level={
-          sessionPaints.every((paint) => paint.level === sessionPaints[0]?.level)
-            ? levelLabel(sessionPaints[0]?.level ?? paintLevel)
-            : "graus diferentes"
+          pendingClick || pendingStain
+            ? levelLabel(pendingStain?.level ?? paintLevel)
+            : sessionPaints.every((paint) => paint.level === sessionPaints[0]?.level)
+              ? levelLabel(sessionPaints[0]?.level ?? paintLevel)
+              : "graus diferentes"
         }
-        duration={durationLabel(paintTtlMs)}
-        names={sessionPaints.map((paint) => paint.nome)}
+        duration={durationLabel(pendingStain?.ttlMs ?? paintTtlMs)}
+        names={
+          pendingClick
+            ? [pendingClick.nome]
+            : pendingStain
+              ? pendingStain.municipios
+              : sessionPaints.map((paint) => paint.nome)
+        }
         busy={classifying}
-        onCancel={() => setSessionReview(false)}
+        onCancel={() => {
+          setPendingClick(null);
+          setPendingStain(null);
+          setSessionReview(false);
+        }}
         onUndo={() => void undoClickSession()}
-        onConfirm={confirmClickSession}
+        onConfirm={() => {
+          if (pendingClick || pendingStain) void confirmPending();
+          else confirmClickSession();
+        }}
       />
       <RiskEditorDialog
         open={editorOpen}

@@ -7,6 +7,7 @@ export const ALERT_DURATION_PRESETS = [
   { id: "6h", label: "6 h", ms: 6 * HOUR },
   { id: "8h", label: "8 h", ms: 8 * HOUR },
   { id: "10h", label: "10 h", ms: 10 * HOUR },
+  { id: "12h", label: "12 h", ms: 12 * HOUR },
   { id: "24h", label: "24 h", ms: 24 * HOUR },
   { id: "7d", label: "7 dias", ms: 7 * DAY },
 ] as const;
@@ -14,6 +15,18 @@ export const ALERT_DURATION_PRESETS = [
 export type AlertDurationId = (typeof ALERT_DURATION_PRESETS)[number]["id"];
 
 export const DEFAULT_ALERT_DURATION_MS = 6 * HOUR;
+
+/** Vigência da classificação automática. O operador valida dentro desse prazo. */
+export const MONITOR_VIGENCIA_MS = {
+  ALAGAMENTO: 6 * HOUR,
+  MOVIMENTO: 12 * HOUR,
+} as const;
+
+export function vigenciaMonitorMs(tipo: string): number | null {
+  if (tipo === "ALAGAMENTO") return MONITOR_VIGENCIA_MS.ALAGAMENTO;
+  if (tipo === "MOVIMENTO") return MONITOR_VIGENCIA_MS.MOVIMENTO;
+  return null;
+}
 
 export function durationLabel(ms: number | null | undefined): string {
   if (!ms) return "";

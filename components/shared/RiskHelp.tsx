@@ -32,10 +32,6 @@ export function RiskHelpButton({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (isMobile) setOpen(false);
-  }, [isMobile]);
-
-  useEffect(() => {
     if (!open) return;
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key === "Escape") setOpen(false);
@@ -48,8 +44,6 @@ export function RiskHelpButton({
       document.body.style.overflow = prev;
     };
   }, [open]);
-
-  if (isMobile) return null;
 
   return (
     <>
@@ -74,7 +68,9 @@ export function RiskHelpButton({
             <path d="M12 5.8v.1" />
           </svg>
         </span>
-        <span className="text-[10px] font-extrabold tracking-wide text-text">Níveis de risco</span>
+        {isMobile ? null : (
+          <span className="text-[10px] font-extrabold tracking-wide text-text">Níveis de risco</span>
+        )}
       </button>
 
       {open ? (

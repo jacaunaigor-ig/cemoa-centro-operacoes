@@ -435,16 +435,14 @@ export const StationsMap = forwardRef<
   }, [pluvio, overlays.pluvio]);
 
   return (
-    <div
-      ref={hostRef}
-      className={
-        adminMode
-          ? "hydro-map absolute inset-0 cursor-crosshair"
-          : "hydro-map absolute inset-0"
-      }
-      data-basemap={OSM_BASEMAP_ID}
-      role="presentation"
-    />
+    <div className={adminMode ? "absolute inset-0 cursor-crosshair" : "absolute inset-0"}>
+      <div
+        ref={hostRef}
+        className="hydro-map absolute inset-0"
+        data-basemap={OSM_BASEMAP_ID}
+        role="presentation"
+      />
+    </div>
   );
 });
 

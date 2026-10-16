@@ -32,6 +32,7 @@ import { formatMm } from "@/lib/rainfall-display";
 import { RainWindowsPills } from "@/components/alerts/RainfallStrip";
 import { AirPmBadge } from "@/components/alerts/AirQualityStrip";
 import { PlantaoQueue } from "@/components/alerts/PlantaoQueue";
+import type { PlantaoItem } from "@/lib/plantao-queue";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { massRiskDo, pessoasRiscoDo } from "@/lib/mass-risk";
 import { formatHab } from "@/lib/demografia";
@@ -55,6 +56,7 @@ export function AlertList({
   onBacia,
   onBusca,
   onLimpar,
+  onEmitir,
 }: {
   municipios: Array<{
     id: string;
@@ -89,6 +91,7 @@ export function AlertList({
   onBacia: (bacia: string | null) => void;
   onBusca: (q: string) => void;
   onLimpar: () => void;
+  onEmitir?: (item: PlantaoItem) => void;
 }) {
   const alertByMuni = useMemo(() => new Map(alerts.map((a) => [a.municipio, a])), [alerts]);
   const hydroByMuni = useMemo(() => {
@@ -165,7 +168,7 @@ export function AlertList({
   }, [selected]);
 
   return (
-    <Card className="flex h-full min-h-[320px] flex-col overflow-hidden xl:min-h-0">
+    <Card className={cn("flex h-full min-h-0 flex-col overflow-hidden", !isMobile && "min-h-[320px] xl:min-h-0")}>
       <div className="space-y-2 border-b border-border px-3 py-2.5">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
@@ -182,7 +185,7 @@ export function AlertList({
             Limpar
           </button>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex flex-row items-end gap-2">
         <label className="block min-w-0 flex-1 text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
           Região
           <select
@@ -232,9 +235,10 @@ export function AlertList({
           hydro={hydro}
           compact
           onSelect={onSelect}
+          onEmitir={onEmitir}
         />
       </div>
-      <ScrollArea className="min-h-0 flex-1 max-xl:h-[min(52vh,640px)] max-xl:flex-none">
+      <ScrollArea className={cn("min-h-0 flex-1", !isMobile && "max-xl:h-[min(52vh,640px)] max-xl:flex-none")}>
         <ul>
           {loading
             ? Array.from({ length: 7 }).map((_, i) => (
@@ -323,18 +327,16 @@ export function AlertList({
                             ) : (
                               <RiskBadge
                                 level={m.risco}
-                                showAction={!isMobile && isAlertActive(tipo, m.risco)}
+                                showAction={isAlertActive(tipo, m.risco)}
                                 strong={isAlertActive(tipo, m.risco)}
                               />
                             )}
                           </span>
                         </button>
                         {tipo === "INCENDIO" ? (
-                          !isMobile ? (
-                            <p className="text-[11px] leading-snug break-words text-text-dim">
-                              {briefing.headline}
-                            </p>
-                          ) : null
+                          <p className={cn("text-[11px] leading-snug break-words text-text-dim", isMobile && "line-clamp-2")}>
+                            {briefing.headline}
+                          </p>
                         ) : rain ? (
                           <RainWindowsPills
                             rain={rain.byNome[m.nome] ?? null}
@@ -363,17 +365,15 @@ export function AlertList({
                             {tipo === "INCENDIO" ? (
                               <AirPmBadge rec={air?.byNome[m.nome] ?? null} />
                             ) : null}
-                            {!isMobile ? (
-                              <CotaPeek
-                                nome={m.nome}
-                                fonte={m.fonte}
-                                classifiedBy={m.classifiedBy}
-                                risco={m.risco}
-                                cota={cota}
-                                rain={rain?.byNome[m.nome]}
-                                hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
-                              />
-                            ) : null}
+                            <CotaPeek
+                              nome={m.nome}
+                              fonte={m.fonte}
+                              classifiedBy={m.classifiedBy}
+                              risco={m.risco}
+                              cota={cota}
+                              rain={rain?.byNome[m.nome]}
+                              hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
+                            />
                             <Link
                               href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}${calhaHref ? `&calha=${encodeURIComponent(calhaHref)}` : ""}`}
                               className="inline-flex size-8 items-center justify-center rounded-md text-focus hover:bg-hover"

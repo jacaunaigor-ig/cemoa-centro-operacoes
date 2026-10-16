@@ -25,8 +25,9 @@ export type PassagemTexto = {
   /** Preenchido quando o histórico não pôde ser lido. Não significa que nada foi feito. */
   feitoIndisponivel: string | null;
   ativos: PassagemItem[];
-  expirados: PassagemItem[];
   comentario: string;
+  intercorrencias: string;
+  avisos: string;
 };
 
 function secao(titulo: string, linhas: string[]) {
@@ -75,6 +76,8 @@ export function montarPassagem(input: PassagemTexto): string {
   ];
   const feitoLinhas = feito.length ? feito : ["Nenhuma alteração registrada nesta consulta."];
   const comentario = input.comentario.trim() || "Sem comentário.";
+  const intercorrencias = input.intercorrencias.trim() || "Sem intercorrência.";
+  const avisos = input.avisos.trim() || "Sem aviso geral.";
 
   return [
     "Passagem de turno — CEMOA · Defesa Civil do Amazonas",
@@ -86,12 +89,10 @@ export function montarPassagem(input: PassagemTexto): string {
     "",
     ...secaoAlertas(`Alertas ativos (${input.ativos.length})`, input.ativos, "Nenhum alerta ativo."),
     "",
-    ...secaoAlertas(
-      `Alertas expirados (${input.expirados.length})`,
-      input.expirados,
-      "Nenhum alerta expirado.",
-    ),
-    "",
     ...secao("Comentário", [comentario]),
+    "",
+    ...secao("Intercorrências", [intercorrencias]),
+    "",
+    ...secao("Avisos gerais", [avisos]),
   ].join("\n");
 }

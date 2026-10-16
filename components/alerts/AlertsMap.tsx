@@ -1006,15 +1006,19 @@ export const AlertsMap = forwardRef<
 
   return (
     <div
-      ref={hostRef}
       className={
         adminMode || drawMode || eraseMode
-          ? "hydro-map absolute inset-0 cursor-crosshair"
-          : "hydro-map absolute inset-0"
+          ? "absolute inset-0 cursor-crosshair"
+          : "absolute inset-0"
       }
-      data-basemap={OSM_BASEMAP_ID}
-      role="presentation"
-    />
+    >
+      <div
+        ref={hostRef}
+        className="hydro-map absolute inset-0"
+        data-basemap={OSM_BASEMAP_ID}
+        role="presentation"
+      />
+    </div>
   );
 });
 

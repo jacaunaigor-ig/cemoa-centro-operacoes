@@ -87,7 +87,7 @@ export const ALERT_PRODUCTS: Record<AlertType, AlertProduct> = {
     id: "ALAGAMENTO",
     label: "Risco de Alagamento",
     short: "Alagamento",
-    subtitle: "Áreas urbanas, igarapés e planícies inundáveis",
+    subtitle: "Áreas urbanas, igarapés e trechos baixos",
     legendTitle: "Alagamento",
     scale: "risco",
     levels: RISK_LEVELS,

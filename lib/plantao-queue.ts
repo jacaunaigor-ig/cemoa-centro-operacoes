@@ -1,12 +1,10 @@
-import { isAlertActive, levelRank, type AlertType } from "@/lib/alert-types";
+import { isAlertActive, levelLabel, levelRank, type AlertType } from "@/lib/alert-types";
 import { countdownTone, remainingMs } from "@/lib/alert-validity";
-import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import { temAreaMapeada } from "@/lib/mass-risk";
 import {
   rainApoio,
   rainRankAction,
   rainScore,
-  type RainApoio,
 } from "@/lib/rainfall-display";
 import { airApoio, airRankAction } from "@/lib/air-quality-display";
 import type { AirQualityPayload, HydroStation, RainfallPayload, RiskLevel } from "@/lib/types";
@@ -16,6 +14,7 @@ export type PlantaoAction = (typeof PLANTAO_ACTIONS)[number];
 
 export type PlantaoItem = {
   action: PlantaoAction;
+  id: string;
   nome: string;
   bacia: string;
   tipo: AlertType;
@@ -33,32 +32,6 @@ const ACTION_RANK: Record<PlantaoAction, number> = {
   renovar: 1,
   emitir: 2,
 };
-
-function hydroApoio(tipo: AlertType, station: HydroStation | undefined): RainApoio | null {
-  if (tipo !== "ALAGAMENTO" || !station || station.semLeitura) return null;
-  const st = statusAtivo(station, "enchente");
-  if (st !== "MODERADO" && st !== "ALTO" && st !== "SEVERO") return null;
-  const cota = station.cota != null ? `${station.cota.toFixed(2)} m` : "sem cota do dia";
-  return {
-    level: st,
-    motivo: `Cota ${cota} — inundação ${HYDRO_STATUS_LABELS[st]}.`,
-  };
-}
-
-function mergeApoio(rain: RainApoio | null, hydro: RainApoio | null): RainApoio | null {
-  if (!rain && !hydro) return null;
-  if (!rain) return hydro;
-  if (!hydro) return rain;
-  const rainActs = rain.level !== "BAIXO";
-  const hydroActs = hydro.level !== "BAIXO";
-  if (rainActs && hydroActs) {
-    const level = levelRank("ALAGAMENTO", rain.level) >= levelRank("ALAGAMENTO", hydro.level)
-      ? rain.level
-      : hydro.level;
-    return { level, motivo: `${rain.motivo} ${hydro.motivo}` };
-  }
-  return rainActs ? rain : hydro;
-}
 
 export function buildPlantaoQueue({
   tipo,
@@ -81,12 +54,7 @@ export function buildPlantaoQueue({
   air?: AirQualityPayload | null;
   now?: number;
 }): PlantaoItem[] {
-  const hydroByNome = new Map<string, HydroStation>();
-  for (const s of hydro) {
-    hydroByNome.set(s.municipio, s);
-    if (s.municipioBoletim) hydroByNome.set(s.municipioBoletim, s);
-  }
-
+  void hydro;
   const items: PlantaoItem[] = [];
 
   for (const m of municipios) {
@@ -98,8 +66,7 @@ export function buildPlantaoQueue({
     if (tipo === "MOVIMENTO" && apoio && apoio.level !== "BAIXO" && !temAreaMapeada(m.id)) {
       apoio = null;
     }
-    const hydroHint = hydroApoio(tipo, hydroByNome.get(m.nome));
-    const merged = tipo === "INCENDIO" ? null : mergeApoio(apoio, hydroHint);
+    const merged = tipo === "INCENDIO" ? null : apoio;
     const airHint = tipo === "INCENDIO" ? airApoio(air?.byNome[m.nome]) : null;
     const suggested = airHint
       ? airHint.level
@@ -116,7 +83,10 @@ export function buildPlantaoQueue({
 
     if (active && tone === "expired") {
       action = "vencido";
-      motivo = `Alerta ${m.risco.toLowerCase()} vencido — renovar ou rebaixar.`;
+      motivo =
+        tipo === "ALAGAMENTO"
+          ? `Alagamento ${levelLabel(m.risco).toLowerCase()} vencido — renovar ou rebaixar.`
+          : `Alerta ${levelLabel(m.risco).toLowerCase()} vencido — renovar ou rebaixar.`;
       if (hintMotivo && suggested) motivo = `${motivo} ${hintMotivo}`;
     } else if (active && (tone === "urgent" || tone === "warn")) {
       action = "renovar";
@@ -137,6 +107,7 @@ export function buildPlantaoQueue({
 
     items.push({
       action,
+      id: m.id,
       nome: m.nome,
       bacia: m.bacia,
       tipo,

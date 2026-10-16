@@ -38,8 +38,8 @@ function levelRank(tipo: AlertType, level: string) {
 function alertCopy(tipo: AlertType, nome: string, risco: string, bacia: string, muniId: string) {
   if (tipo === "ALAGAMENTO") {
     const copy: Record<string, string> = {
-      MODERADO: `Risco moderado de alagamento em ${nome}. Observar igarapés e trechos baixos da bacia ${bacia}.`,
-      ALTO: `Risco alto de alagamento em ${nome}, com transbordo pontual e interrupção de vias.`,
+      MODERADO: `Alagamento moderado em ${nome}. Observar igarapés e trechos baixos da bacia ${bacia}.`,
+      ALTO: `Alagamento alto em ${nome}, com transbordo pontual e interrupção de vias.`,
       SEVERO: `Alagamento severo em ${nome}. Preparar isolamento de comunidades e apoio à drenagem.`,
       EXTREMO: `Alagamento extremo em ${nome}. Ação imediata de proteção da população na bacia ${bacia}.`,
       BAIXO: `Sem alagamento significativo em ${nome}.`,

@@ -157,7 +157,7 @@ export function AlertDetail({
       {hydro ? (
         <p className="mt-2 text-[11px] text-text-dim">
           Cota {hydro.semLeitura ? "sem leitura" : `${hydro.cota?.toFixed(2)} m`}
-          {hydro.semLeitura
+          {hydro.semLeitura || tipo === "ALAGAMENTO"
             ? ""
             : ` · inundação ${HYDRO_STATUS_LABELS[statusAtivo(hydro, "enchente")]}`}
           {calha ? ` · ${calha}` : ""}
