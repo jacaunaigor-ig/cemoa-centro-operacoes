@@ -115,6 +115,7 @@ import { calhaDaBacia, type PassagemItem, type PassagemTexto } from "@/lib/passa
 import { getMunicipality } from "@/lib/municipalities";
 import { entraNaContagemDeNivel, observacaoDoMunicipio, SEM_LEITURA_FILL } from "@/lib/map-observacao";
 import { formatManausStamp } from "@/lib/aviso-grafico";
+import { AVISO_METEO_STORAGE_KEY, avisoMeteoLigado } from "@/lib/aviso-meteo-pref";
 import { ensureOpsBoardReset } from "@/lib/ops-board";
 import { appendClassificacaoTrilha } from "@/lib/classificacao-trilha";
 const POLL_MS = 20_000;
@@ -375,6 +376,23 @@ export function AlertsWorkbench() {
   const [showSetores, setShowSetores] = useState(true);
   const [avisoInmet, setAvisoInmet] = useState(true);
   const [inmetAvisos, setInmetAvisos] = useState<InmetAvisoMapa[]>([]);
+
+  useEffect(() => {
+    try {
+      setAvisoInmet(avisoMeteoLigado(localStorage.getItem(AVISO_METEO_STORAGE_KEY)));
+    } catch {
+      /* preferência fica no padrão ligado */
+    }
+  }, []);
+
+  function gravarAvisoMeteo(ligado: boolean) {
+    setAvisoInmet(ligado);
+    try {
+      localStorage.setItem(AVISO_METEO_STORAGE_KEY, ligado ? "1" : "0");
+    } catch {
+      /* o mapa acompanha o clique mesmo sem gravar */
+    }
+  }
 
   useEffect(() => {
     if (tipo !== "CHUVA" || !avisoInmet) return;
@@ -1862,6 +1880,18 @@ export function AlertsWorkbench() {
                     {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null}
                   </>
                 )}
+                {tipo === "CHUVA" ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    aria-pressed={avisoInmet}
+                    onClick={() => gravarAvisoMeteo(!avisoInmet)}
+                  >
+                    <CloudRain className="size-3.5" />
+                    {avisoInmet ? "Aviso ligado" : "Aviso meteorológico"}
+                  </Button>
+                ) : null}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1927,10 +1957,10 @@ export function AlertsWorkbench() {
                     {tipo === "CHUVA" ? (
                       <MapToolButton
                         active={avisoInmet}
-                        onClick={() => setAvisoInmet((v) => !v)}
+                        onClick={() => gravarAvisoMeteo(!avisoInmet)}
                         icon={<CloudRain className="size-3.5" />}
                       >
-                        {avisoInmet ? "Ocultar aviso INMET" : "Aviso INMET"}
+                        {avisoInmet ? "Desligar aviso meteorológico" : "Ligar aviso meteorológico"}
                       </MapToolButton>
                     ) : null}
                     {tipo === "INCENDIO" ? (
