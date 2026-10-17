@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { fetchJson } from "@/lib/client";
 import { startVisiblePoll } from "@/lib/client-hooks";
 import type { FonteSaude, SourceHealth } from "@/lib/source-health";
@@ -110,8 +109,7 @@ export function OpsFooter({
           aria-expanded={false}
           onClick={() => gravarOculto(false)}
         >
-          <Eye className="size-3" aria-hidden />
-          Mostrar rodapé
+          Exibir fontes
         </button>
       </footer>
     );
@@ -149,8 +147,7 @@ export function OpsFooter({
             aria-expanded={true}
             onClick={() => gravarOculto(true)}
           >
-            <EyeOff className="size-3" aria-hidden />
-            Ocultar rodapé
+            Ocultar fontes
           </button>
         </div>
       </div>
