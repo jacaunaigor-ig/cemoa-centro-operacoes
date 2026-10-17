@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import type { AirQualityPayload } from "@/lib/types";
 
 const POLL_MS = 60_000;
+const AVISO_OCULTO_KEY = "cemoa_aviso_ar_oculto_v1";
 
 export function AirCriticalBanner() {
   const { isMobile } = useOpsMode();
@@ -27,7 +28,17 @@ export function AirCriticalBanner() {
   const params = useSearchParams();
   const [linhas, setLinhas] = useState<ArCritico[]>([]);
   const [oculta, setOculta] = useState<string | null>(null);
+  const [preferenciaLida, setPreferenciaLida] = useState(false);
   const assinatura = assinaturaArCritico(linhas);
+
+  useEffect(() => {
+    try {
+      setOculta(sessionStorage.getItem(AVISO_OCULTO_KEY));
+    } catch {
+      /* storage indisponível: o aviso some só nesta montagem */
+    }
+    setPreferenciaLida(true);
+  }, []);
 
   useEffect(() => {
     if (STATIC_DEPLOY) return;
@@ -47,7 +58,7 @@ export function AirCriticalBanner() {
     };
   }, []);
 
-  if (!avisoArDeveAparecer(linhas, oculta)) return null;
+  if (!preferenciaLida || !avisoArDeveAparecer(linhas, oculta)) return null;
 
   const jaNoIncendio = pathname === "/" && (params.get("tipo") === "INCENDIO" || params.get("tipo") === "AR");
   const pico = linhas[0];
@@ -79,7 +90,14 @@ export function AirCriticalBanner() {
       <button
         type="button"
         className="inline-flex min-h-9 items-center rounded-lg px-2 text-[11px] font-bold text-text-mute"
-        onClick={() => setOculta(assinatura)}
+        onClick={() => {
+          setOculta(assinatura);
+          try {
+            sessionStorage.setItem(AVISO_OCULTO_KEY, assinatura);
+          } catch {
+            /* o estado local já esconde o aviso */
+          }
+        }}
       >
         Recolher
       </button>
