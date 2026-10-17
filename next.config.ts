@@ -8,6 +8,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ["*.trycloudflare.com"],
   turbopack: { root },
   ...(staticDeploy
     ? {

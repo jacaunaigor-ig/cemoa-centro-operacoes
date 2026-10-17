@@ -133,7 +133,7 @@ export function OpsFooter({
                   fonte.estado === "operacional"
                     ? "text-risco-baixo"
                     : fonte.estado === "atrasada"
-                      ? "text-[#a16207]"
+                      ? "text-risco-moderado"
                       : fonte.estado === "erro"
                         ? "text-risco-severo"
                         : "text-text-mute"

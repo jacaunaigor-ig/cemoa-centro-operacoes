@@ -7,20 +7,20 @@
   --panel: #ffffff;
   --panel-2: #f9fafb;
   --hover: #f3f4f6;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
+  --border: #c5ced9;
+  --border-strong: #94a3b8;
   --text: #111827;
-  --text-dim: #374151;
-  --text-mute: #6b7280;
-  --brand: #2563eb;
-  --brand-2: #3b82f6;
-  --focus: #3b82f6;
-  --risco-baixo: #10b981;
-  --risco-moderado: #f59e0b;
-  --risco-alto: #f97316;
-  --risco-severo: #ef4444;
-  --risco-extremo: #7c3aed;
-  --live: #10b981;
+  --text-dim: #1f2937;
+  --text-mute: #3f4a5a;
+  --brand: #1d4ed8;
+  --brand-2: #2563eb;
+  --focus: #1d4ed8;
+  --risco-baixo: #047857;
+  --risco-moderado: #a16207;
+  --risco-alto: #c2410c;
+  --risco-severo: #b91c1c;
+  --risco-extremo: #6d28d9;
+  --live: #047857;
   --radius: 12px;
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.05);
   --map-wash: #e8edf3;
@@ -206,7 +206,10 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   font-weight: 600;
 }
 
-.meteo-map { height: min(42vh, 380px); }
+.meteo-map { height: min(52dvh, 420px); }
+@media (min-width: 768px) {
+  .meteo-map { height: min(42vh, 380px); }
+}
 .meteo-lista { max-height: min(32vh, 240px); }
 .meteo-goes-img { max-height: min(70vh, 640px); }
 @media (min-width: 1280px) {

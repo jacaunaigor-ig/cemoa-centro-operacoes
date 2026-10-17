@@ -149,16 +149,18 @@ export function AlertList({
   const { isMobile } = useOpsMode();
   const fila = useMemo(
     () =>
-      catalog
-        .filter((m) => !bacia || m.bacia === bacia)
-        .map((m) => ({
-          id: m.id,
-          nome: m.nome,
-          bacia: m.bacia,
-          risco: m.risco ?? "BAIXO",
-          expiresAt: m.expiresAt ?? null,
-        })),
-    [catalog, bacia],
+      isMobile
+        ? []
+        : catalog
+            .filter((m) => !bacia || m.bacia === bacia)
+            .map((m) => ({
+              id: m.id,
+              nome: m.nome,
+              bacia: m.bacia,
+              risco: m.risco ?? "BAIXO",
+              expiresAt: m.expiresAt ?? null,
+            })),
+    [catalog, bacia, isMobile],
   );
 
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
@@ -227,16 +229,18 @@ export function AlertList({
             ))}
           </div>
         ) : null}
-        <PlantaoQueue
-          tipo={tipo}
-          municipios={fila}
-          rain={rain}
-          air={air ?? null}
-          hydro={hydro}
-          compact
-          onSelect={onSelect}
-          onEmitir={onEmitir}
-        />
+        {isMobile ? null : (
+          <PlantaoQueue
+            tipo={tipo}
+            municipios={fila}
+            rain={rain}
+            air={air ?? null}
+            hydro={hydro}
+            compact
+            onSelect={onSelect}
+            onEmitir={onEmitir}
+          />
+        )}
       </div>
       <ScrollArea className={cn("min-h-0 flex-1", !isMobile && "max-xl:h-[min(52vh,640px)] max-xl:flex-none")}>
         <ul>
@@ -272,16 +276,19 @@ export function AlertList({
                   const semLeitura = m.observacao === "sem-leitura";
                   const color = semLeitura ? SEM_LEITURA_FILL : (LEVEL_COLORS[m.risco] ?? "#7c8fab");
                   const highlighted = selected === m.nome || hovered === m.nome;
-                  const briefing = buildAlertBriefing({
-                    nome: m.nome,
-                    risco: m.risco,
-                    tipo,
-                    novo: alert?.novo,
-                    agravado: alert?.agravado,
-                    rain: rain ? rain.byNome[m.nome] ?? null : undefined,
-                    air: air ? air.byNome[m.nome] ?? null : undefined,
-                    hydro: cota ?? null,
-                  });
+                  const briefing =
+                    tipo === "INCENDIO"
+                      ? buildAlertBriefing({
+                          nome: m.nome,
+                          risco: m.risco,
+                          tipo,
+                          novo: alert?.novo,
+                          agravado: alert?.agravado,
+                          rain: rain ? rain.byNome[m.nome] ?? null : undefined,
+                          air: air ? air.byNome[m.nome] ?? null : undefined,
+                          hydro: cota ?? null,
+                        })
+                      : null;
                   const expiresAt = m.expiresAt ?? alert?.expiresAt ?? null;
                   const prazoVencido =
                     Boolean(expiresAt) && expiresAt! <= Date.now() && isAlertActive(tipo, m.risco);
@@ -294,8 +301,8 @@ export function AlertList({
                       }}
                       data-muni={m.nome}
                       className="border-b border-border"
-                      onMouseEnter={() => onHover(m.nome)}
-                      onMouseLeave={() => onHover(null)}
+                      onMouseEnter={isMobile ? undefined : () => onHover(m.nome)}
+                      onMouseLeave={isMobile ? undefined : () => onHover(null)}
                     >
                       <div
                         className={cn(
@@ -333,7 +340,7 @@ export function AlertList({
                             )}
                           </span>
                         </button>
-                        {tipo === "INCENDIO" ? (
+                        {tipo === "INCENDIO" && briefing ? (
                           <p className={cn("text-[11px] leading-snug break-words text-text-dim", isMobile && "line-clamp-2")}>
                             {briefing.headline}
                           </p>
@@ -349,6 +356,15 @@ export function AlertList({
                           </p>
                         ) : null}
                         <div className="flex items-center justify-between gap-2 text-xs text-text-mute">
+                          {isMobile ? (
+                            <span className="min-w-0 truncate font-medium">
+                              {alert
+                                ? `Alerta · ${formatRelative(alert.updatedAt)}`
+                                : isAlertActive(tipo, m.risco)
+                                  ? LEVEL_LABELS[m.risco] ?? m.risco
+                                  : "Aguardando operador"}
+                            </span>
+                          ) : (
                           <span className="min-w-0 break-words">
                             {m.fonte === "admin"
                               ? m.classifiedBy
@@ -361,10 +377,12 @@ export function AlertList({
                                 ? LEVEL_LABELS[m.risco] ?? m.risco
                                 : "Aguardando operador"}
                           </span>
+                          )}
                           <div className="flex shrink-0 items-center gap-1">
                             {tipo === "INCENDIO" ? (
                               <AirPmBadge rec={air?.byNome[m.nome] ?? null} />
                             ) : null}
+                            {isMobile ? null : (
                             <CotaPeek
                               nome={m.nome}
                               fonte={m.fonte}
@@ -374,6 +392,7 @@ export function AlertList({
                               rain={rain?.byNome[m.nome]}
                               hasRainStation={rain ? Boolean(rain.byNome[m.nome]) : undefined}
                             />
+                            )}
                             <Link
                               href={`/boletim?municipio=${encodeURIComponent(m.nome)}&bacia=${encodeURIComponent(m.bacia)}${calhaHref ? `&calha=${encodeURIComponent(calhaHref)}` : ""}`}
                               className="inline-flex size-8 items-center justify-center rounded-md text-focus hover:bg-hover"

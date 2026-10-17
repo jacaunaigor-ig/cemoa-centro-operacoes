@@ -40,6 +40,7 @@ import { clearOverrides, hydrateOverrideRecord, mergeOverrides, removeOverrides,
 import { mergeHydroOverrides } from "@/lib/hydro-overrides";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { DEFAULT_ALERT_DURATION_MS, durationLabel, vigenciaMonitorMs } from "@/lib/alert-duration";
+import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import { alertExpiresAt } from "@/lib/alert-validity";
 import { OSM_BASEMAP_ID } from "@/lib/map";
 import {
@@ -114,6 +115,7 @@ import { calhaDaBacia, type PassagemItem, type PassagemTexto } from "@/lib/passa
 import { getMunicipality } from "@/lib/municipalities";
 import { entraNaContagemDeNivel, observacaoDoMunicipio, SEM_LEITURA_FILL } from "@/lib/map-observacao";
 import { formatManausStamp } from "@/lib/aviso-grafico";
+import { AVISO_METEO_STORAGE_KEY, avisoMeteoLigado } from "@/lib/aviso-meteo-pref";
 import { ensureOpsBoardReset } from "@/lib/ops-board";
 import { appendClassificacaoTrilha } from "@/lib/classificacao-trilha";
 const POLL_MS = 20_000;
@@ -372,6 +374,45 @@ export function AlertsWorkbench() {
   const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [showSetores, setShowSetores] = useState(true);
+  const [avisoInmet, setAvisoInmet] = useState(true);
+  const [inmetAvisos, setInmetAvisos] = useState<InmetAvisoMapa[]>([]);
+
+  useEffect(() => {
+    try {
+      setAvisoInmet(avisoMeteoLigado(localStorage.getItem(AVISO_METEO_STORAGE_KEY)));
+    } catch {
+      /* preferência fica no padrão ligado */
+    }
+  }, []);
+
+  function gravarAvisoMeteo(ligado: boolean) {
+    setAvisoInmet(ligado);
+    try {
+      localStorage.setItem(AVISO_METEO_STORAGE_KEY, ligado ? "1" : "0");
+    } catch {
+      /* o mapa acompanha o clique mesmo sem gravar */
+    }
+  }
+
+  useEffect(() => {
+    if (tipo !== "CHUVA" || !avisoInmet) return;
+    let cancel = false;
+    async function load() {
+      try {
+        const data = await fetchJson<{ avisos?: InmetAvisoMapa[] }>("/api/inmet-avisos");
+        if (!cancel) setInmetAvisos(data.avisos ?? []);
+      } catch (err) {
+        reportClientError("inmet-avisos", err);
+        if (!cancel) setInmetAvisos([]);
+      }
+    }
+    void load();
+    const timer = window.setInterval(() => void load(), 60 * 60_000);
+    return () => {
+      cancel = true;
+      window.clearInterval(timer);
+    };
+  }, [tipo, avisoInmet]);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
@@ -1770,16 +1811,12 @@ export function AlertsWorkbench() {
         <div className={cn(
           "grid min-h-0 flex-1",
           isMobile
-            ? "grid-cols-1 grid-rows-[minmax(12.5rem,42dvh)_minmax(0,1fr)] gap-1.5"
+            ? "grid-cols-1 gap-1.5"
             : mapFocus
               ? "grid-cols-1"
               : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
-          {mapFocus ? null : isMobile ? (
-            <div className="order-2 min-h-0 overflow-hidden">{listNode}</div>
-          ) : (
-            listNode
-          )}
+          {mapFocus || isMobile ? null : listNode}
 
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
@@ -1843,6 +1880,20 @@ export function AlertsWorkbench() {
                     {!mapFocus ? <ExportPngButton onExport={exportMapPng} disabled={!ready} /> : null}
                   </>
                 )}
+                {tipo === "CHUVA" ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    aria-pressed={avisoInmet}
+                    aria-label={avisoInmet ? "Desligar aviso meteorológico" : "Ligar aviso meteorológico"}
+                    className={avisoInmet ? "border-brand bg-brand/15" : undefined}
+                    onClick={() => gravarAvisoMeteo(!avisoInmet)}
+                  >
+                    <CloudRain className="size-3.5" />
+                    {isMobile ? "Aviso" : avisoInmet ? "Aviso ligado" : "Aviso meteorológico"}
+                  </Button>
+                ) : null}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1903,6 +1954,15 @@ export function AlertsWorkbench() {
                           : showSetores
                             ? "Ocultar áreas R3/R4"
                             : "Áreas R3/R4"}
+                      </MapToolButton>
+                    ) : null}
+                    {tipo === "CHUVA" ? (
+                      <MapToolButton
+                        active={avisoInmet}
+                        onClick={() => gravarAvisoMeteo(!avisoInmet)}
+                        icon={<CloudRain className="size-3.5" />}
+                      >
+                        {avisoInmet ? "Desligar aviso meteorológico" : "Ligar aviso meteorológico"}
                       </MapToolButton>
                     ) : null}
                     {tipo === "INCENDIO" ? (
@@ -2043,6 +2103,8 @@ export function AlertsWorkbench() {
                   drawMode={admin && drawMode}
                   eraseMode={admin && eraseMode}
                   stains={data.stains ?? []}
+                  inmetAvisos={inmetAvisos}
+                  showInmetAvisos={tipo === "CHUVA" && avisoInmet}
                   onSelect={(nome, basinName) => {
                     setHovered(null);
                     setQuery(geoForNome(nome, basinName));
@@ -2097,6 +2159,7 @@ export function AlertsWorkbench() {
               <MapLegendCard
                 title={product.legendTitle}
                 forceHidden={drawMode || eraseMode}
+                className={tipo === "MOVIMENTO" || tipo === "EROSAO" ? "max-h-[34%]" : undefined}
               >
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
@@ -2132,6 +2195,26 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                {tipo === "CHUVA" && avisoInmet ? (
+                  <ul className="mt-1.5 space-y-0.5 border-t border-border pt-1">
+                    {inmetAvisos.length ? (
+                      inmetAvisos.map((aviso) => (
+                        <li key={aviso.id} className="flex items-start gap-1.5 px-0.5 py-0.5 text-text">
+                          <span
+                            className="mt-0.5 size-2.5 shrink-0 rounded-sm border border-[#a16207]"
+                            style={{ background: aviso.cor }}
+                          />
+                          <span className="leading-snug">
+                            Aviso INMET · {aviso.descricao} · {aviso.severidade}
+                            {aviso.fim ? ` · até ${aviso.fim}` : ""}
+                          </span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="px-0.5 text-text-mute">Sem aviso INMET vigente no Amazonas.</li>
+                    )}
+                  </ul>
+                ) : null}
                 {semLeitura > 0 ? (
                   <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-text-mute">
                     <span
@@ -2176,28 +2259,20 @@ export function AlertsWorkbench() {
                     <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
                   </button>
                   </>
-                ) : tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" || (tipo === "EROSAO" && showSetores) ? (
-                  <div className="mt-2 border-t border-border/70 pt-2">
-                    {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
-                      <MonitorThresholdLegend tipo={tipo} />
-                    ) : null}
-                    {(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores ? (
-                      <div className="mt-1.5 space-y-0.5">
-                        <p className="text-[10px] leading-snug text-text-mute">
-                          {tipo === "EROSAO"
-                            ? "Erosão de margem fluvial e terras caídas da CPRM/SGB, nos municípios mapeados do estado. No zoom do estado cada município é um ponto; aproxime para ver o polígono. O polígono não muda o grau do município."
-                            : "Deslizamento, queda e rastejo da CPRM/SGB, nos municípios mapeados do estado. No zoom do estado cada município é um ponto; aproxime para ver o polígono. O polígono não muda o grau do município."}
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <span className="size-2.5 rounded-sm" style={{ background: "#f97316" }} />
-                          R3 · Alto
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <span className="size-2.5 rounded-sm" style={{ background: "#ef4444" }} />
-                          R4 · Muito alto
-                        </p>
-                      </div>
-                    ) : null}
+                ) : tipo === "ALAGAMENTO" ? (
+                  <div className="mt-1 border-t border-border/70 pt-1">
+                    <MonitorThresholdLegend tipo={tipo} />
+                  </div>
+                ) : (tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores ? (
+                  <div className="mt-1 space-y-0.5 border-t border-border/70 pt-1">
+                    <p className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-sm" style={{ background: "#f97316" }} />
+                      R3 · Alto
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      <span className="size-2.5 rounded-sm" style={{ background: "#ef4444" }} />
+                      R4 · Muito alto
+                    </p>
                   </div>
                 ) : null}
               </MapLegendCard>

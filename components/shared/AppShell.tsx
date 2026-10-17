@@ -25,6 +25,7 @@ import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
+import { AirCriticalBanner } from "@/components/alerts/AirCriticalBanner";
 import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
 import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
@@ -131,7 +132,7 @@ export function AppShell({
         </div>
         <nav
           aria-label="Produtos"
-          className="mt-1.5 grid grid-cols-4 gap-1 rounded-xl border border-border bg-hover p-1"
+          className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl border border-border bg-hover p-1"
         >
           <NavTab
             href={`/${suffix}`}
@@ -156,14 +157,6 @@ export function AppShell({
             compact
           >
             Meteo
-          </NavTab>
-          <NavTab
-            href={`/risco${suffix}`}
-            active={pathname.startsWith("/risco")}
-            icon={<ShieldAlert className="size-3.5" />}
-            compact
-          >
-            Risco
           </NavTab>
         </nav>
       </header>
@@ -350,6 +343,7 @@ export function AppShell({
           terminar. Desfazer (Ctrl+Z).
         </div>
       ) : null}
+      <AirCriticalBanner />
       <div
         id="conteudo"
         className={cn(

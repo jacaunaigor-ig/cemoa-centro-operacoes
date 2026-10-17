@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { EyeOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const STORAGE = "cemoa_legend_hidden";
 
@@ -11,6 +12,7 @@ export function MapLegendCard({
   forceHidden = false,
   hidden,
   onHiddenChange,
+  className,
   children,
 }: {
   title: string;
@@ -19,6 +21,7 @@ export function MapLegendCard({
   forceHidden?: boolean;
   hidden?: boolean;
   onHiddenChange?: (hidden: boolean) => void;
+  className?: string;
   children: React.ReactNode;
 }) {
   const [stored, setStored] = useState(false);
@@ -58,7 +61,7 @@ export function MapLegendCard({
   }
 
   return (
-    <div className="pointer-events-auto absolute bottom-2 left-2 z-[500] rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur">
+    <div className={cn("pointer-events-auto absolute bottom-2 left-2 z-[500] max-w-[min(100%-1rem,16rem)] overflow-y-auto rounded-lg border border-border bg-panel/88 px-2 py-1.5 text-[10px] backdrop-blur", className)}>
       <div className="mb-1 flex items-center gap-2">
         <div className="font-bold tracking-wide text-text-mute uppercase">{title}</div>
         {hideable ? (

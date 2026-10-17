@@ -691,14 +691,14 @@ export function HydrologyWorkbench() {
           className={cn(
             "grid min-h-0 flex-1",
             isMobile
-              ? "grid-cols-1 grid-rows-[minmax(12.5rem,42dvh)_minmax(0,1fr)] gap-1.5"
+              ? "grid-cols-1 gap-1.5"
               : mapFocus
                 ? "grid-cols-1"
                 : "gap-4 sm:gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
           )}
         >
-          {mapFocus ? null : (
-          <div className={cn("flex h-full min-h-0 flex-col gap-3 overflow-hidden", isMobile && "order-2")}>
+          {mapFocus || isMobile ? null : (
+          <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
             {status === "SL" ? (
               <NoReadingPanel
                 stations={visible}
@@ -1036,7 +1036,7 @@ export function HydrologyWorkbench() {
                   className={cn(
                     "pointer-events-auto absolute z-[1200] flex flex-col overflow-hidden rounded-xl shadow-lg",
                     isMobile
-                      ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
+                      ? "inset-x-1.5 bottom-1.5 top-auto flex h-auto max-h-[70%] min-w-0 flex-col"
                       : "top-2 right-2 bottom-2 flex w-[min(calc(100%-1rem),32rem)] min-h-0 flex-col",
                   )}
                 >
