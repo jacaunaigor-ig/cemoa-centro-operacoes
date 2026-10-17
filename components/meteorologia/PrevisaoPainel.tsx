@@ -83,8 +83,9 @@ export function PrevisaoPainel() {
     <section className="grid gap-2">
       <h3 className="text-sm font-black">Previsão</h3>
 
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+      <div className={cn("grid grid-cols-2 xl:grid-cols-4", isMobile ? "gap-1.5" : "gap-2")}>
         <KpiCard
+          dense={isMobile}
           label="Com chuva em 24 h"
           value={lote ? String(comChuva) : "—"}
           sub="municípios com mais de 0,1 mm"
@@ -96,6 +97,7 @@ export function PrevisaoPainel() {
           onClick={() => undefined}
         />
         <KpiCard
+          dense={isMobile}
           label="Maior chuva 24 h"
           value={picoChuva?.precip24hMm != null ? formatMm(picoChuva.precip24hMm) : "—"}
           sub={picoChuva?.nome ?? "sem previsão"}
@@ -106,6 +108,7 @@ export function PrevisaoPainel() {
           onClick={() => undefined}
         />
         <KpiCard
+          dense={isMobile}
           label="Maior probabilidade"
           value={picoProb?.prob24h != null ? `${picoProb.prob24h}%` : "—"}
           sub={picoProb?.nome ?? "próximas 24 h"}
@@ -117,6 +120,7 @@ export function PrevisaoPainel() {
           onClick={() => undefined}
         />
         <KpiCard
+          dense={isMobile}
           label="Temperatura agora"
           value={picoTemp?.tempC != null ? `${Math.round(picoTemp.tempC)} °C` : "—"}
           sub={picoTemp ? `pico em ${picoTemp.nome}` : "hora vigente"}
@@ -154,7 +158,9 @@ export function PrevisaoPainel() {
             camada ? "border-brand bg-brand/15 text-text" : "border-border bg-panel text-text",
           )}
         >
-          {camada ? "Ocultar camada de precipitação" : "Camada de precipitação"}
+          {isMobile
+            ? camada ? "Ocultar camada" : "Camada"
+            : camada ? "Ocultar camada de precipitação" : "Camada de precipitação"}
         </button>
       </div>
 
@@ -178,20 +184,18 @@ export function PrevisaoPainel() {
                 {erro ?? "Consultando a previsão dos 62 municípios…"}
               </p>
             )}
-            <ul className="flex flex-wrap gap-2 text-[10px] text-text-mute">
-              {camada ? (
-                <>
-                  <Legenda cor="#e8eef5" texto={`0 mm · ${janela}`} />
-                  <Legenda cor="#c5ddf6" texto="< 5" />
-                  <Legenda cor="#7eb6ea" texto="< 12,5" />
-                  <Legenda cor="#3b82d6" texto="< 25" />
-                  <Legenda cor="#1d4ed8" texto="< 50" />
-                  <Legenda cor="#1e3a8a" texto="≥ 50 mm" />
-                </>
-              ) : (
-                <li>Marcadores na sede municipal. Ligue a camada para pintar a chuva prevista.</li>
-              )}
-            </ul>
+            {camada ? (
+              <ul className="flex flex-wrap gap-2 text-[10px] text-text-mute">
+                <Legenda cor="#e8eef5" texto={`0 mm · ${janela}`} />
+                <Legenda cor="#c5ddf6" texto="< 5" />
+                <Legenda cor="#7eb6ea" texto="< 12,5" />
+                <Legenda cor="#3b82d6" texto="< 25" />
+                <Legenda cor="#1d4ed8" texto="< 50" />
+                <Legenda cor="#1e3a8a" texto="≥ 50 mm" />
+              </ul>
+            ) : isMobile ? null : (
+              <p className="text-[11px] text-text-mute">Marcadores na sede municipal. Ligue a camada para pintar a chuva prevista.</p>
+            )}
             <p className="text-[11px] text-text-mute">
               {lote
                 ? `Consulta ${formatAmazonDateTime(lote.generatedAt)}${lote.cache === "HIT" ? " · lote em cache" : ""}.`

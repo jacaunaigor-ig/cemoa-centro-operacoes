@@ -251,21 +251,16 @@ export function MeteorologiaWorkbench() {
         <header className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 className="text-lg font-black tracking-tight">Meteorologia</h2>
-            <p className="max-w-3xl text-[12px] text-text-mute">
-              Chuva, previsão, temperatura e satélite do Amazonas.
-            </p>
+            {isMobile ? null : (
+              <p className="max-w-3xl text-[12px] text-text-mute">
+                Chuva, previsão, temperatura e satélite do Amazonas.
+              </p>
+            )}
           </div>
-          <p className="text-[11px] text-text-mute">{error ?? rain?.source ?? "Consultando o CEMADEN…"}</p>
+          {error ? <p className="text-[11px] font-semibold text-risco-alto">{error}</p> : null}
         </header>
 
         {isMobile ? null : <MeteoAvisoDutyCard />}
-
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-          <KpiCard label="Com chuva" value={rain ? String(comChuva) : "—"} sub={`na janela de ${JANELAS.find((item) => item.id === janela)?.label}`} accent="#1d4ed8" icon={<Droplets className="size-4" />} loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-          <KpiCard label="Maior acumulado" value={pico?.mm != null ? formatMm(pico.mm) : "—"} sub={pico?.item.nome ?? "sem leitura"} accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-          <KpiCard label="Com leitura" value={rain ? String(rain.coverage.comLeitura) : "—"} sub="municípios com pluviômetro" accent="#3b82d6" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-          <KpiCard label="Intenso em 1 h" value={rain ? String(rain.coverage.intenso1h) : "—"} sub="≥ 20 mm na última hora" accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-        </div>
 
         <div className="flex shrink-0 gap-1 overflow-x-auto" role="tablist" aria-label="Painel meteorológico">
           {([
@@ -290,9 +285,16 @@ export function MeteorologiaWorkbench() {
           ))}
         </div>
 
+        {painel === "chuva" ? <div className={cn("grid grid-cols-2 xl:grid-cols-4", isMobile ? "gap-1.5" : "gap-2")}>
+          <KpiCard dense={isMobile} label="Com chuva" value={rain ? String(comChuva) : "—"} sub={`na janela de ${JANELAS.find((item) => item.id === janela)?.label}`} accent="#1d4ed8" icon={<Droplets className="size-4" />} loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard dense={isMobile} label="Maior acumulado" value={pico?.mm != null ? formatMm(pico.mm) : "—"} sub={pico?.item.nome ?? "sem leitura"} accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard dense={isMobile} label="Com leitura" value={rain ? String(rain.coverage.comLeitura) : "—"} sub="municípios com pluviômetro" accent="#3b82d6" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard dense={isMobile} label="Intenso em 1 h" value={rain ? String(rain.coverage.intenso1h) : "—"} sub="≥ 20 mm na última hora" accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+        </div> : null}
+
         <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel !== "chuva" && "hidden")}>
           <div className="grid content-start gap-2">
-            <div className="flex flex-wrap gap-1">
+            <div className={cn("flex gap-1", isMobile ? "shrink-0 overflow-x-auto" : "flex-wrap")}>
               {JANELAS.map((item) => (
                 <button
                   key={item.id}
@@ -300,7 +302,8 @@ export function MeteorologiaWorkbench() {
                   aria-pressed={janela === item.id}
                   onClick={() => setJanela(item.id)}
                   className={cn(
-                    "min-h-11 min-w-14 flex-1 rounded-lg border px-3 text-[13px] font-bold sm:flex-none",
+                    "min-h-11 min-w-14 shrink-0 rounded-lg border px-3 text-[13px] font-bold",
+                    !isMobile && "flex-1 sm:flex-none",
                     janela === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
                   )}
                 >
@@ -311,7 +314,7 @@ export function MeteorologiaWorkbench() {
                 type="button"
                 disabled={!rain || exportando != null || STATIC_DEPLOY}
                 onClick={() => void exportarChuva("mm1h", "1 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
-                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
               >
                 <ImageDown className="size-3.5" />
                 {exportando === "mm1h" ? "Gerando…" : "PNG 1 h"}
@@ -320,15 +323,17 @@ export function MeteorologiaWorkbench() {
                 type="button"
                 disabled={!rain || exportando != null || STATIC_DEPLOY}
                 onClick={() => void exportarChuva("mm24h", "24 h").catch((err) => toast.error(err instanceof Error ? err.message : "Falha ao exportar."))}
-                className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[13px] font-bold disabled:opacity-50"
               >
                 <ImageDown className="size-3.5" />
                 {exportando === "mm24h" ? "Gerando…" : "PNG 24 h"}
               </button>
             </div>
-            <p className="text-[11px] text-text-mute">
-              O PNG separa sem leitura de 0 mm e carimba o horário de Manaus.
-            </p>
+            {isMobile ? null : (
+              <p className="text-[11px] text-text-mute">
+                O PNG separa sem leitura de 0 mm e carimba o horário de Manaus.
+              </p>
+            )}
             {STATIC_DEPLOY ? (
               <p className="rounded-xl border border-border bg-panel p-4 text-sm text-text-mute">
                 O mapa de chuva fica indisponível na publicação estática.
@@ -347,7 +352,7 @@ export function MeteorologiaWorkbench() {
           </div>
 
           <div className="grid content-start gap-2">
-            <aside className="meteo-lista flex max-h-[min(70vh,40rem)] flex-col rounded-xl border border-border bg-panel">
+            <aside className={cn("meteo-lista flex flex-col rounded-xl border border-border bg-panel", !isMobile && "max-h-[min(70vh,40rem)]")}>
               <div className="border-b border-border px-3 py-2">
                 <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">Acumulado</h3>
                 {foco ? <Foco item={foco} janela={janela} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}
@@ -480,9 +485,11 @@ export function MeteorologiaWorkbench() {
         <section className={cn("grid gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]", painel !== "temperatura" && "hidden")}>
           <div>
             <h3 className="text-sm font-black">Temperatura · estações operando</h3>
-            <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
-              Temperatura instantânea só onde a estação INMET está transmitindo. Não há classificação de onda de calor para o estado: faltam estações para cobrir todos os municípios.
-            </p>
+            {isMobile ? null : (
+              <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
+                Temperatura instantânea só onde a estação INMET está transmitindo. Não há classificação de onda de calor para o estado: faltam estações para cobrir todos os municípios.
+              </p>
+            )}
             <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-text-mute">
               {[
                 ["< 26 °C", "#38bdf8"],
@@ -530,14 +537,16 @@ export function MeteorologiaWorkbench() {
         <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
           <div>
             <h3 className="text-sm font-black">Clima · MERGE</h3>
-            <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
-              Contexto de estiagem, sem classificar chuva nem alerta. Vermelho é déficit em relação à climatologia; azul é excesso.
-              Fonte:{" "}
-              <a className="underline" href="https://data.inpe.br/dados/merge/" target="_blank" rel="noreferrer">
-                data.inpe.br/dados/merge
-              </a>
-              .
-            </p>
+            {isMobile ? null : (
+              <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
+                Contexto de estiagem, sem classificar chuva nem alerta. Vermelho é déficit em relação à climatologia; azul é excesso.
+                Fonte:{" "}
+                <a className="underline" href="https://data.inpe.br/dados/merge/" target="_blank" rel="noreferrer">
+                  data.inpe.br/dados/merge
+                </a>
+                .
+              </p>
+            )}
           </div>
           <div className="grid gap-3 lg:grid-cols-2">
             <MergeCard qual="anterior" titulo="Mês anterior" />
@@ -556,10 +565,6 @@ export function MeteorologiaWorkbench() {
             />
           </div>
         </section>
-
-        <p className="text-[11px] leading-snug text-text-mute">
-          Janelas de acumulado no espírito do WeeWX, leitura por município no espírito do Sahana Eden e degradê de intensidade no espírito do InaSAFE. São referências de código aberto; o cálculo e o mapa são do CEMOA.
-        </p>
       </div>
     </AppShell>
   );
@@ -605,7 +610,7 @@ function IndiceCard({ produto, titulo, texto }: { produto: "dd" | "cdd"; titulo:
       <figcaption className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
         <span>
           <span className="block text-[12px] font-bold">{titulo}</span>
-          <span className="mt-0.5 block text-[11px] font-normal text-text-mute">{texto}</span>
+          <span className="mt-0.5 hidden text-[11px] font-normal text-text-mute sm:block">{texto}</span>
         </span>
         <button
           type="button"
