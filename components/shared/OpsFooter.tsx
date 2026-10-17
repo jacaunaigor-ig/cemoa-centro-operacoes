@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { fetchJson } from "@/lib/client";
 import { startVisiblePoll } from "@/lib/client-hooks";
 import type { FonteSaude, SourceHealth } from "@/lib/source-health";
 import { cn, formatAmazonDateTime } from "@/lib/utils";
+
+const RODAPE_STORAGE = "cemoa_rodape_oculto_v1";
 
 const FONTES = [
   { href: "https://www.gov.br/cemaden/pt-br", label: "CEMADEN" },
@@ -47,6 +50,24 @@ export function OpsFooter({
   const [health, setHealth] = useState<SourceHealth[]>([]);
   const [fontes, setFontes] = useState<FonteSaude[]>([]);
   const [falhasNota, setFalhasNota] = useState("Nenhuma falha de fonte registrada neste servidor.");
+  const [oculto, setOculto] = useState(false);
+
+  useEffect(() => {
+    try {
+      setOculto(localStorage.getItem(RODAPE_STORAGE) === "1");
+    } catch {
+      /* o rodapé permanece visível se o navegador bloquear o armazenamento */
+    }
+  }, []);
+
+  function gravarOculto(next: boolean) {
+    setOculto(next);
+    try {
+      localStorage.setItem(RODAPE_STORAGE, next ? "1" : "0");
+    } catch {
+      /* a escolha vale só nesta visita */
+    }
+  }
 
   useEffect(() => {
     return startVisiblePoll(async () => {
@@ -80,6 +101,22 @@ export function OpsFooter({
     hydroAt ? `Cotas ${formatAmazonDateTime(hydroAt)}` : null,
   ].filter(Boolean);
 
+  if (oculto) {
+    return (
+      <footer className="shrink-0 border-t border-border bg-panel/90 px-3 py-1 text-[10px] text-text-mute sm:px-6">
+        <button
+          type="button"
+          className="inline-flex min-h-7 items-center gap-1 rounded px-1 py-0.5 font-bold tracking-wide uppercase hover:bg-hover hover:text-text"
+          aria-expanded={false}
+          onClick={() => gravarOculto(false)}
+        >
+          <Eye className="size-3" aria-hidden />
+          Mostrar rodapé
+        </button>
+      </footer>
+    );
+  }
+
   return (
     <footer className="shrink-0 border-t border-border bg-panel/90 px-3 py-1.5 text-[10px] text-text-mute sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -92,19 +129,30 @@ export function OpsFooter({
             </span>
           ) : null}
         </p>
-        <nav aria-label="Fontes de dados" className="flex flex-wrap items-center gap-x-2">
-          {FONTES.map((f) => (
-            <a
-              key={f.href}
-              href={f.href}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-focus hover:underline"
-            >
-              {f.label}
-            </a>
-          ))}
-        </nav>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <nav aria-label="Fontes de dados" className="flex flex-wrap items-center gap-x-2">
+            {FONTES.map((f) => (
+              <a
+                key={f.href}
+                href={f.href}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-focus hover:underline"
+              >
+                {f.label}
+              </a>
+            ))}
+          </nav>
+          <button
+            type="button"
+            className="inline-flex min-h-7 items-center gap-1 rounded px-1.5 py-0.5 font-bold tracking-wide uppercase hover:bg-hover hover:text-text"
+            aria-expanded={true}
+            onClick={() => gravarOculto(true)}
+          >
+            <EyeOff className="size-3" aria-hidden />
+            Ocultar rodapé
+          </button>
+        </div>
       </div>
       {health.length ? (
         <ul className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1" aria-label="Saúde das fontes">
