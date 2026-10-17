@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CloudRain, Droplets, Thermometer } from "lucide-react";
 import { PrevisaoMap } from "@/components/meteorologia/PrevisaoMap";
 import { KpiCard } from "@/components/shared/KpiCard";
@@ -28,6 +28,7 @@ export function PrevisaoPainel() {
   const [metrica, setMetrica] = useState<PrevisaoMetrica>("precip24h");
   const [camada, setCamada] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const mapaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (STATIC_DEPLOY) return;
@@ -67,6 +68,14 @@ export function PrevisaoPainel() {
   const picoProb = maior(pontos, (ponto) => ponto.prob24h);
   const picoTemp = maior(pontos, (ponto) => ponto.tempC);
   const janela = janelaDaCamada(metrica);
+
+  useEffect(() => {
+    if (!pontos.length) return;
+    const id = window.setTimeout(() => {
+      mapaRef.current?.scrollIntoView({ block: "start" });
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, [pontos.length]);
 
   return (
     <section className="grid gap-2">
@@ -160,7 +169,7 @@ export function PrevisaoPainel() {
         </p>
       ) : (
         <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
-          <div className="grid content-start gap-2">
+          <div ref={mapaRef} className="grid content-start gap-2">
             {pontos.length ? (
               <PrevisaoMap
                 pontos={pontos}
