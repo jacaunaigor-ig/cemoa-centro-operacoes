@@ -556,10 +556,6 @@ export function MeteorologiaWorkbench() {
             />
           </div>
         </section>
-
-        <p className="text-[11px] leading-snug text-text-mute">
-          Janelas de acumulado no espírito do WeeWX, leitura por município no espírito do Sahana Eden e degradê de intensidade no espírito do InaSAFE. São referências de código aberto; o cálculo e o mapa são do CEMOA.
-        </p>
       </div>
     </AppShell>
   );

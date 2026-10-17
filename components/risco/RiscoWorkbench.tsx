@@ -945,9 +945,6 @@ function Decretos({ rows, onPick }: { rows: MetodologiaRow[]; onPick: (row: Meto
           ))}
         </ul>
       </div>
-      <p className="text-[11px] leading-snug text-text-mute">
-        Leitura territorial por município, no espírito do Sahana Eden, com degradê de intensidade no espírito do InaSAFE. A série vem do histórico de decretos já usado no aplicativo de referência do CEMOA.
-      </p>
     </div>
   );
 }
