@@ -17,12 +17,14 @@ import {
   type PrevisaoPonto,
 } from "@/lib/open-meteo";
 import { formatMm } from "@/lib/rainfall-display";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { STATIC_DEPLOY } from "@/lib/site";
 import { cn, formatAmazonDateTime } from "@/lib/utils";
 
 const POLL_MS = 30 * 60_000;
 
 export function PrevisaoPainel() {
+  const { isMobile } = useOpsMode();
   const [lote, setLote] = useState<PrevisaoLote | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [metrica, setMetrica] = useState<PrevisaoMetrica>("precip24h");
@@ -79,14 +81,7 @@ export function PrevisaoPainel() {
 
   return (
     <section className="grid gap-2">
-      <div>
-        <h3 className="text-sm font-black">Previsão · Open-Meteo</h3>
-        <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
-          Precipitação, temperatura e probabilidade de chuva nas sedes dos 62 municípios.
-          Os marcadores mostram o valor previsto. A camada espacial pinta o município pela chuva das próximas {janela}.
-          É previsão, não observação e não altera o grau do alerta.
-        </p>
-      </div>
+      <h3 className="text-sm font-black">Previsão</h3>
 
       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
         <KpiCard
@@ -134,7 +129,7 @@ export function PrevisaoPainel() {
         />
       </div>
 
-      <div className="flex flex-wrap gap-1" role="tablist" aria-label="Variável prevista">
+      <div className="flex shrink-0 gap-1 overflow-x-auto" role="tablist" aria-label="Variável prevista">
         {PREVISAO_METRICAS.map((item) => (
           <button
             key={item.id}
@@ -143,7 +138,7 @@ export function PrevisaoPainel() {
             aria-selected={metrica === item.id}
             onClick={() => setMetrica(item.id)}
             className={cn(
-              "min-h-11 rounded-lg border px-3 text-[13px] font-bold",
+              "min-h-11 shrink-0 rounded-lg border px-3 text-[13px] font-bold",
               metrica === item.id ? "border-brand bg-brand text-white" : "border-border bg-panel text-text",
             )}
           >
@@ -155,7 +150,7 @@ export function PrevisaoPainel() {
           aria-pressed={camada}
           onClick={() => setCamada((valor) => !valor)}
           className={cn(
-            "min-h-11 rounded-lg border px-3 text-[13px] font-bold",
+            "min-h-11 shrink-0 rounded-lg border px-3 text-[13px] font-bold",
             camada ? "border-brand bg-brand/15 text-text" : "border-border bg-panel text-text",
           )}
         >
@@ -209,7 +204,7 @@ export function PrevisaoPainel() {
               {erro ? <span className="text-risco-alto"> {erro}</span> : null}
             </p>
           </div>
-          <aside className="flex max-h-[min(70vh,40rem)] flex-col rounded-xl border border-border bg-panel">
+          <aside className={cn("flex flex-col rounded-xl border border-border bg-panel", isMobile ? "max-h-[42vh]" : "max-h-[min(70vh,40rem)]")}>
             <div className="border-b border-border px-3 py-2">
               <h3 className="text-[11px] font-bold tracking-wide text-text-mute uppercase">62 municípios</h3>
               {foco ? <Foco ponto={foco} /> : <p className="mt-1 text-[12px] text-text-mute">Toque num município do mapa.</p>}

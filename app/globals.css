@@ -206,7 +206,10 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   font-weight: 600;
 }
 
-.meteo-map { height: min(42vh, 380px); }
+.meteo-map { height: min(52dvh, 420px); }
+@media (min-width: 768px) {
+  .meteo-map { height: min(42vh, 380px); }
+}
 .meteo-lista { max-height: min(32vh, 240px); }
 .meteo-goes-img { max-height: min(70vh, 640px); }
 @media (min-width: 1280px) {

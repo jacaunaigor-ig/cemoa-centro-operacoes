@@ -1886,10 +1886,12 @@ export function AlertsWorkbench() {
                     variant="secondary"
                     size="sm"
                     aria-pressed={avisoInmet}
+                    aria-label={avisoInmet ? "Desligar aviso meteorológico" : "Ligar aviso meteorológico"}
+                    className={avisoInmet ? "border-brand bg-brand/15" : undefined}
                     onClick={() => gravarAvisoMeteo(!avisoInmet)}
                   >
                     <CloudRain className="size-3.5" />
-                    {avisoInmet ? "Aviso ligado" : "Aviso meteorológico"}
+                    {isMobile ? "Aviso" : avisoInmet ? "Aviso ligado" : "Aviso meteorológico"}
                   </Button>
                 ) : null}
                 <Popover>

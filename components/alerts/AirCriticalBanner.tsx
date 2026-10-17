@@ -8,12 +8,15 @@ import { fetchJson } from "@/lib/client";
 import { startVisiblePoll } from "@/lib/client-hooks";
 import { assinaturaArCritico, municipiosArCritico, resumoArCritico, type ArCritico } from "@/lib/air-critical";
 import { formatUg } from "@/lib/air-quality-display";
+import { useOpsMode } from "@/components/shared/OpsMode";
 import { STATIC_DEPLOY } from "@/lib/site";
+import { cn } from "@/lib/utils";
 import type { AirQualityPayload } from "@/lib/types";
 
 const POLL_MS = 60_000;
 
 export function AirCriticalBanner() {
+  const { isMobile } = useOpsMode();
   const pathname = usePathname();
   const params = useSearchParams();
   const [linhas, setLinhas] = useState<ArCritico[]>([]);
@@ -54,17 +57,17 @@ export function AirCriticalBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="flex shrink-0 flex-wrap items-center gap-2 border-b border-risco-severo/50 bg-risco-severo/12 px-3 py-2 text-text"
+      className="flex shrink-0 flex-wrap items-center gap-2 border-b border-risco-severo/50 bg-risco-severo/12 px-2 py-1.5 text-text sm:px-3 sm:py-2"
     >
       <Wind className="size-4 shrink-0 text-risco-severo" aria-hidden />
       <div className="min-w-0 flex-1 leading-tight">
         <p className="text-[12px] font-bold">
-          Qualidade do ar crítica · {linhas.length} município{linhas.length === 1 ? "" : "s"}
-          {pico ? ` · pico ${pico.nome} ${formatUg(pico.pm25)}` : ""}
+          Ar extremo · {linhas.length} município{linhas.length === 1 ? "" : "s"}
+          {pico ? ` · ${pico.nome} ${formatUg(pico.pm25)}` : ""}
         </p>
         {recolhido ? null : (
-          <p className="text-[11px] text-text">
-            {resumoArCritico(linhas)}. O aviso permanece enquanto o MP2,5 estiver em Muito Ruim ou Péssima, em qualquer produto.
+          <p className={cn("text-[11px] text-text", isMobile && "line-clamp-2")}>
+            {resumoArCritico(linhas, isMobile ? 2 : 4)}
           </p>
         )}
       </div>
@@ -73,7 +76,7 @@ export function AirCriticalBanner() {
           href="/?tipo=INCENDIO"
           className="inline-flex min-h-9 items-center rounded-lg border border-risco-severo/40 bg-panel px-2.5 text-[11px] font-bold text-risco-severo"
         >
-          Abrir incêndio
+          {isMobile ? "Incêndio" : "Abrir incêndio"}
         </Link>
       )}
       <button
