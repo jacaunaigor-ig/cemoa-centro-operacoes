@@ -25,6 +25,7 @@ import { InfoTooltip } from "@/components/shared/InfoTooltip";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
+import { AirCriticalBanner } from "@/components/alerts/AirCriticalBanner";
 import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
 import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
@@ -342,6 +343,7 @@ export function AppShell({
           terminar. Desfazer (Ctrl+Z).
         </div>
       ) : null}
+      <AirCriticalBanner />
       <div
         id="conteudo"
         className={cn(
