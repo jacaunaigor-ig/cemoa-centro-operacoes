@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CloudSun, Droplets, ImageDown, RefreshCw, Thermometer } from "lucide-react";
+import { PrevisaoPainel } from "@/components/meteorologia/PrevisaoPainel";
 import { TemperaturaMap } from "@/components/meteorologia/TemperaturaMap";
 import { corTemperatura, type TemperaturaPayload } from "@/lib/inmet-temperatura";
 import { MeteoAvisoDutyCard } from "@/components/alerts/MeteoAvisoWatch";
@@ -66,7 +67,7 @@ export function MeteorologiaWorkbench() {
   const [goesFrames, setGoesFrames] = useState<GoesFrame[]>([]);
   const [goesFrameIdx, setGoesFrameIdx] = useState(-1);
   const [goesPlaying, setGoesPlaying] = useState(false);
-  const [painel, setPainel] = useState<"chuva" | "clima" | "temperatura">("chuva");
+  const [painel, setPainel] = useState<"chuva" | "clima" | "temperatura" | "previsao">("chuva");
   const [temp, setTemp] = useState<TemperaturaPayload | null>(null);
   const [tempErro, setTempErro] = useState<string | null>(null);
   const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
@@ -250,7 +251,7 @@ export function MeteorologiaWorkbench() {
             <p className="text-[10px] font-bold tracking-[0.14em] text-text-mute uppercase">Defesa Civil do Amazonas</p>
             <h2 className="text-lg font-black tracking-tight">Meteorologia</h2>
             <p className="max-w-3xl text-[12px] text-text-mute">
-              Aviso do plantão, chuva CEMADEN, temperatura das estações INMET que estão transmitindo e GOES-19. O município fica azul onde chove e a cor escurece conforme o acumulado da janela.
+              Aviso do plantão, chuva CEMADEN, previsão Open-Meteo dos 62 municípios, temperatura das estações INMET que estão transmitindo e GOES-19. O município fica azul onde chove e a cor escurece conforme o acumulado da janela.
             </p>
           </div>
           <p className="text-[11px] text-text-mute">{error ?? rain?.source ?? "Consultando o CEMADEN…"}</p>
@@ -268,6 +269,7 @@ export function MeteorologiaWorkbench() {
         <div className="flex gap-1" role="tablist" aria-label="Painel meteorológico">
           {([
             ["chuva", "Chuva"],
+            ["previsao", "Previsão"],
             ["temperatura", "Temperatura"],
             ["clima", "Clima"],
           ] as const).map(([id, label]) => (
@@ -471,6 +473,8 @@ export function MeteorologiaWorkbench() {
             </section>
           </div>
         </div>
+
+        {painel === "previsao" ? <PrevisaoPainel /> : null}
 
         <section className={cn("grid gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]", painel !== "temperatura" && "hidden")}>
           <div>
