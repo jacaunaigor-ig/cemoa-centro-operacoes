@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assinaturaArCritico, municipiosArCritico, resumoArCritico } from "./air-critical.ts";
+import { assinaturaArCritico, avisoArDeveAparecer, municipiosArCritico, resumoArCritico } from "./air-critical.ts";
 import type { AirQualityMunicipio, AirQualityPayload } from "./types.ts";
 
 function rec(partial: Pick<AirQualityMunicipio, "id" | "nome" | "pm25" | "level">): AirQualityMunicipio {
@@ -41,7 +41,7 @@ function payload(rows: AirQualityMunicipio[]): AirQualityPayload {
   };
 }
 
-test("aviso crítico fica em Muito Ruim e Péssima, fora da faixa só de atenção", () => {
+test("qualidade do ar só avisa em Muito Ruim e Péssima", () => {
   const linhas = municipiosArCritico(
     payload([
       rec({ id: "1", nome: "Manaus", pm25: 40, level: "RUIM" }),
@@ -60,4 +60,27 @@ test("aviso crítico fica em Muito Ruim e Péssima, fora da faixa só de atenç�
 
 test("sem leitura crítica a lista fica vazia", () => {
   assert.deepEqual(municipiosArCritico(null), []);
+  assert.equal(avisoArDeveAparecer([], null), false);
+});
+
+test("recolher some o aviso e uma faixa nova faz ele voltar", () => {
+  const extremo = municipiosArCritico(
+    payload([rec({ id: "3", nome: "Tefé", pm25: 160, level: "PESSIMA" })]),
+  );
+  const assinatura = assinaturaArCritico(extremo);
+  assert.equal(avisoArDeveAparecer(extremo, null), true);
+  assert.equal(avisoArDeveAparecer(extremo, assinatura), false);
+
+  const novo = municipiosArCritico(
+    payload([
+      rec({ id: "3", nome: "Tefé", pm25: 160, level: "PESSIMA" }),
+      rec({ id: "2", nome: "Parintins", pm25: 80, level: "MUITO_RUIM" }),
+    ]),
+  );
+  assert.equal(avisoArDeveAparecer(novo, assinatura), true);
+
+  const soRuim = municipiosArCritico(
+    payload([rec({ id: "1", nome: "Manaus", pm25: 40, level: "RUIM" })]),
+  );
+  assert.equal(avisoArDeveAparecer(soRuim, null), false);
 });

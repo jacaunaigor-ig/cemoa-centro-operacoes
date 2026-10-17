@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Wind } from "lucide-react";
 import { fetchJson } from "@/lib/client";
 import { startVisiblePoll } from "@/lib/client-hooks";
-import { assinaturaArCritico, municipiosArCritico, resumoArCritico, type ArCritico } from "@/lib/air-critical";
+import {
+  assinaturaArCritico,
+  avisoArDeveAparecer,
+  municipiosArCritico,
+  resumoArCritico,
+  type ArCritico,
+} from "@/lib/air-critical";
 import { formatUg } from "@/lib/air-quality-display";
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -14,15 +20,25 @@ import { cn } from "@/lib/utils";
 import type { AirQualityPayload } from "@/lib/types";
 
 const POLL_MS = 60_000;
+const AVISO_OCULTO_KEY = "cemoa_aviso_ar_oculto_v1";
 
 export function AirCriticalBanner() {
   const { isMobile } = useOpsMode();
   const pathname = usePathname();
   const params = useSearchParams();
   const [linhas, setLinhas] = useState<ArCritico[]>([]);
-  const [recolhido, setRecolhido] = useState(false);
+  const [oculta, setOculta] = useState<string | null>(null);
+  const [preferenciaLida, setPreferenciaLida] = useState(false);
   const assinatura = assinaturaArCritico(linhas);
-  const vista = useRef(assinatura);
+
+  useEffect(() => {
+    try {
+      setOculta(sessionStorage.getItem(AVISO_OCULTO_KEY));
+    } catch {
+      /* storage indisponível: o aviso some só nesta montagem */
+    }
+    setPreferenciaLida(true);
+  }, []);
 
   useEffect(() => {
     if (STATIC_DEPLOY) return;
@@ -42,13 +58,7 @@ export function AirCriticalBanner() {
     };
   }, []);
 
-  useEffect(() => {
-    if (vista.current === assinatura) return;
-    vista.current = assinatura;
-    setRecolhido(false);
-  }, [assinatura]);
-
-  if (!linhas.length) return null;
+  if (!preferenciaLida || !avisoArDeveAparecer(linhas, oculta)) return null;
 
   const jaNoIncendio = pathname === "/" && (params.get("tipo") === "INCENDIO" || params.get("tipo") === "AR");
   const pico = linhas[0];
@@ -62,14 +72,12 @@ export function AirCriticalBanner() {
       <Wind className="size-4 shrink-0 text-risco-severo" aria-hidden />
       <div className="min-w-0 flex-1 leading-tight">
         <p className="text-[12px] font-bold">
-          Ar extremo · {linhas.length} município{linhas.length === 1 ? "" : "s"}
+          Qualidade do ar · {linhas.length} município{linhas.length === 1 ? "" : "s"}
           {pico ? ` · ${pico.nome} ${formatUg(pico.pm25)}` : ""}
         </p>
-        {recolhido ? null : (
-          <p className={cn("text-[11px] text-text", isMobile && "line-clamp-2")}>
-            {resumoArCritico(linhas, isMobile ? 2 : 4)}
-          </p>
-        )}
+        <p className={cn("text-[11px] text-text", isMobile && "line-clamp-2")}>
+          {resumoArCritico(linhas, isMobile ? 2 : 4)}
+        </p>
       </div>
       {jaNoIncendio ? null : (
         <Link
@@ -82,9 +90,16 @@ export function AirCriticalBanner() {
       <button
         type="button"
         className="inline-flex min-h-9 items-center rounded-lg px-2 text-[11px] font-bold text-text-mute"
-        onClick={() => setRecolhido((valor) => !valor)}
+        onClick={() => {
+          setOculta(assinatura);
+          try {
+            sessionStorage.setItem(AVISO_OCULTO_KEY, assinatura);
+          } catch {
+            /* o estado local já esconde o aviso */
+          }
+        }}
       >
-        {recolhido ? "Expandir" : "Recolher"}
+        Recolher
       </button>
     </div>
   );
