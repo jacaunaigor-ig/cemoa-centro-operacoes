@@ -402,7 +402,10 @@ export function AlertsWorkbench() {
         const data = await fetchJson<{ avisos?: InmetAvisoMapa[] }>("/api/inmet-avisos");
         if (!cancel) setInmetAvisos(data.avisos ?? []);
       } catch (err) {
-        reportClientError("inmet-avisos", err);
+        reportClientError(
+          err instanceof Error ? err.message : "Falha ao consultar os avisos do INMET.",
+          "inmet-avisos",
+        );
         if (!cancel) setInmetAvisos([]);
       }
     }

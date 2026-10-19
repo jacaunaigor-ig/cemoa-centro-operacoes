@@ -32,7 +32,10 @@ export function PassagemDialog({
   function gerarPdf() {
     if (!base) return;
     const texto = montarPassagem({ ...base, comentario, intercorrencias, avisos });
-    const blob = new Blob([passagemParaPdf(texto)], { type: "application/pdf" });
+    const pdf = passagemParaPdf(texto);
+    const bytes = new ArrayBuffer(pdf.byteLength);
+    new Uint8Array(bytes).set(pdf);
+    const blob = new Blob([bytes], { type: "application/pdf" });
     const href = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = href;
