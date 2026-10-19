@@ -82,7 +82,7 @@ import { cn } from "@/lib/utils";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
-import { focoFill, type FocosReferencia } from "@/lib/focos-display";
+import { focoFill, focoPontoCor, periodoFocosTexto, type FocosReferencia } from "@/lib/focos-display";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
@@ -370,7 +370,7 @@ export function AlertsWorkbench() {
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
-  const [focosMapa, setFocosMapa] = useState(false);
+  const [focosMapa, setFocosMapa] = useState(true);
   const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [showSetores, setShowSetores] = useState(true);
@@ -873,6 +873,22 @@ export function AlertsWorkbench() {
     setOverlays((prev) => (prev.sedes ? prev : { ...prev, sedes: true }));
     window.setTimeout(() => mapApi.current?.fitAmazonas(), 80);
   }
+  useEffect(() => {
+    if (tipo !== "INCENDIO") return;
+    let cancel = false;
+    void (async () => {
+      try {
+        const data = await fetchJson<FocosReferencia>("/api/focos");
+        if (!cancel) setFocosRef(data);
+      } catch (err) {
+        if (!cancel) toast.error(err instanceof Error ? err.message : "Não foi possível ler os focos do INPE.");
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [tipo]);
+
   async function toggleFocosMapa() {
     if (tipo !== "INCENDIO") return;
     if (focosMapa) {
@@ -988,6 +1004,22 @@ export function AlertsWorkbench() {
     if (selected) list = list.filter((a) => a.municipio === selected);
     return list;
   }, [data, activeFilter, geo, selected, tipo]);
+
+  const focosPontos = useMemo(() => {
+    if (!focosRef) return [];
+    return focosRef.pontos.map((ponto) => ({
+      ...ponto,
+      cor: focoPontoCor(ponto.data, focosRef.periodo.inicio, focosRef.periodo.fim),
+    }));
+  }, [focosRef]);
+
+  const focoFillByNome = useMemo(() => {
+    if (tipo !== "INCENDIO" || !focosMapa || !focosRef || focosRef.error) return null;
+    const max = focosRef.ranking[0]?.total ?? 1;
+    const next: Record<string, string> = {};
+    for (const item of catalog) next[item.nome] = focoFill(focosRef.byId[item.id] ?? 0, max);
+    return next;
+  }, [tipo, focosMapa, focosRef, catalog]);
 
   const focoLabels = useMemo(() => {
     if (tipo !== "INCENDIO" || !focosMapa || !focosRef) return null;
@@ -1515,31 +1547,78 @@ export function AlertsWorkbench() {
 
   async function exportMapPng() {
     if (!data) throw new Error("Mapa ainda não carregou");
-    const colorByNome = new Map(catalog.map((m) => [m.nome, LEVEL_COLORS[m.risco] ?? "#7c8fab"]));
-    const itemsSource = product.scale === "ar" ? PNG_AIR_ITEMS : PNG_RISK_ITEMS;
+    const focosNoPng = tipo === "INCENDIO" && focosMapa && focosRef && !focosRef.error;
+    const maxFocos = focosRef?.ranking[0]?.total ?? 1;
+    const colorByNome = new Map(
+      catalog.map((m) => [
+        m.nome,
+        focosNoPng && focosRef
+          ? focoFill(focosRef.byId[m.id] ?? 0, maxFocos)
+          : (LEVEL_COLORS[m.risco] ?? "#7c8fab"),
+      ]),
+    );
+    const itemsSource = product.scale === "ar" && !focosNoPng ? PNG_AIR_ITEMS : PNG_RISK_ITEMS;
+    const periodo = focosRef ? periodoFocosTexto(focosRef.periodo) : "";
+    const faixaFocos = (total: number) => {
+      if (total <= 0) return "zero";
+      if (total <= maxFocos * 0.33) return "baixo";
+      if (total <= maxFocos * 0.66) return "medio";
+      return "alto";
+    };
+    const contagemFaixa = focosRef
+      ? catalog.reduce<Record<string, number>>((acc, item) => {
+          const faixa = faixaFocos(focosRef.byId[item.id] ?? 0);
+          acc[faixa] = (acc[faixa] ?? 0) + 1;
+          return acc;
+        }, {})
+      : {};
+    const legendaFocos: Array<{ key: string; title: string; text: string; color: string; count: number }> = focosNoPng && focosRef
+      ? [
+          { key: "zero", title: "Sem foco", text: "0 no período", color: focoFill(0, 1), count: contagemFaixa.zero ?? 0 },
+          { key: "baixo", title: "Poucos focos", text: "início da escala", color: focoFill(Math.max(1, Math.round(maxFocos * 0.25)), maxFocos), count: contagemFaixa.baixo ?? 0 },
+          { key: "medio", title: "Volume intermediário", text: "meio da escala", color: focoFill(Math.round(maxFocos * 0.55), maxFocos), count: contagemFaixa.medio ?? 0 },
+          { key: "alto", title: "Mais focos", text: `até ${maxFocos.toLocaleString("pt-BR")}`, color: focoFill(maxFocos, maxFocos), count: contagemFaixa.alto ?? 0 },
+        ]
+      : [];
     await exportInstitutionalPng({
-      title: "Painel de Alertas",
-      productLegend: `${product.label} — ${product.subtitle}`,
-      filename: pngFilename("painel_alertas_cemoa"),
+      title: focosNoPng ? "Focos de calor" : "Painel de Alertas",
+      productLegend: focosNoPng
+        ? `INPE · AQUA_M-T · Amazônia · ${periodo}`
+        : `${product.label} — ${product.subtitle}`,
+      filename: pngFilename(focosNoPng ? "focos_inpe_cemoa" : "painel_alertas_cemoa"),
       colorFor: (nome) => colorByNome.get(nome) ?? "#7c8fab",
-      legendTitle: product.scale === "ar" ? "Qualidade do ar (µg/m³)" : "Níveis de risco",
-      legendItems: itemsSource.map((item) => ({
-        ...item,
-        color: LEVEL_COLORS[item.key] ?? "#7c8fab",
-        count: counts[item.key] ?? 0,
-      })),
-      footerSources: `Fontes de monitoramento: ${product.sources}`,
-      stains: (data.stains ?? []).map((stain) => ({
-        geometry: stain.geometry,
-        color: LEVEL_COLORS[stain.level] ?? "#f59e0b",
-      })),
+      legendTitle: focosNoPng ? "Focos INPE no período" : product.scale === "ar" ? "Qualidade do ar (µg/m³)" : "Níveis de risco",
+      legendItems: focosNoPng
+        ? legendaFocos
+        : itemsSource.map((item) => ({
+            ...item,
+            color: LEVEL_COLORS[item.key] ?? "#7c8fab",
+            count: counts[item.key] ?? 0,
+          })),
+      footerSources: focosNoPng && focosRef
+        ? `${focosRef.source} · período ${periodo}`
+        : `Fontes de monitoramento: ${product.sources}`,
+      pontos: focosNoPng
+        ? focosPontos.map((ponto) => ({ lat: ponto.lat, lon: ponto.lon, color: ponto.cor }))
+        : undefined,
+      stains: focosNoPng
+        ? []
+        : (data.stains ?? []).map((stain) => ({
+            geometry: stain.geometry,
+            color: LEVEL_COLORS[stain.level] ?? "#f59e0b",
+          })),
       extraNote:
-        tipo === "INCENDIO"
+        focosNoPng && focosRef
           ? {
-              title: "MP2,5 — MATERIAL PARTICULADO FINO",
-              text: "MP2,5 em µg/m³ em tempo real (pior sensor; 10 min, atual ou 1 h — não usa média de 24 h) via App SELVA / PurpleAir. Faixas US AQI: Boa 0–12, Moderada 12,1–35,4, Ruim 35,5–55,4, Muito ruim 55,5–150,4, Péssima >150,4. A plataforma pinta Moderada ou pior; o operador pode alterar depois.",
+              title: "PERÍODO DOS FOCOS",
+              text: `${periodo}. O degradê do município soma os focos AQUA_M-T do intervalo (${focosRef.total.toLocaleString("pt-BR")} no Amazonas). Os pontos são os dois dias mais recentes dessa janela, do vermelho claro ao escuro.`,
             }
-          : undefined,
+          : tipo === "INCENDIO"
+            ? {
+                title: "MP2,5 — MATERIAL PARTICULADO FINO",
+                text: "MP2,5 em µg/m³ em tempo real (pior sensor; 10 min, atual ou 1 h — não usa média de 24 h) via App SELVA / PurpleAir. Faixas US AQI: Boa 0–12, Moderada 12,1–35,4, Ruim 35,5–55,4, Muito ruim 55,5–150,4, Péssima >150,4. A plataforma pinta Moderada ou pior; o operador pode alterar depois.",
+              }
+            : undefined,
     });
   }
 
@@ -2095,12 +2174,12 @@ export function AlertsWorkbench() {
                   pluvio={pluvio}
                   airSensors={airPoints}
                   pointKind={tipo === "INCENDIO" ? "air" : "cemaden"}
-                  fillByNome={null}
+                  fillByNome={focoFillByNome}
                   labelByNome={focoLabels}
                   showFocosCalor={tipo === "INCENDIO" && focosMapa}
                   showSetores={(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores}
                   setorUso={tipo === "EROSAO" ? "margem" : "movimento"}
-                  focosCalor={focosRef?.pontos ?? []}
+                  focosCalor={focosPontos}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
                   drawMode={admin && drawMode}
@@ -2231,10 +2310,22 @@ export function AlertsWorkbench() {
                   <>
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
                     {focosMapa
-                      ? `Camada INPE (AQUA_M-T, Amazônia)${focosRef ? ` · ${focosRef.periodo.inicio} a ${focosRef.periodo.fim} · ${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Os pontos não pintam o grau — o mapa segue o MP2,5.`
+                      ? `Focos INPE · ${focosRef ? periodoFocosTexto(focosRef.periodo) : "carregando o período"} · ${focosRef ? `${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Vermelho mais forte = mais focos no município.`
                       : "App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor. Sem monitor não pinta. A classificação do operador prevalece."}
                   </p>
                   {focosMapa && focosRef ? (
+                    <>
+                    <div className="mt-1 flex h-2 overflow-hidden rounded-sm border border-border">
+                      <span className="flex-1" style={{ background: focoFill(0, 1) }} />
+                      <span className="flex-1" style={{ background: focoFill(1, 4) }} />
+                      <span className="flex-1" style={{ background: focoFill(2, 4) }} />
+                      <span className="flex-1" style={{ background: focoFill(3, 4) }} />
+                      <span className="flex-1" style={{ background: focoFill(4, 4) }} />
+                    </div>
+                    <p className="flex justify-between text-[9px] text-text-mute">
+                      <span>0 focos</span>
+                      <span>mais focos</span>
+                    </p>
                     <ul className="mt-1 space-y-0.5">
                       {focosRef.ranking.slice(0, 5).map((item) => (
                         <li key={item.id} className="flex items-center gap-1.5 text-[10px]">
@@ -2244,6 +2335,7 @@ export function AlertsWorkbench() {
                         </li>
                       ))}
                     </ul>
+                    </>
                   ) : null}
                   <button
                     type="button"

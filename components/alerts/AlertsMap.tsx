@@ -109,7 +109,7 @@ export const AlertsMap = forwardRef<
     stains?: AlertStain[];
     inmetAvisos?: InmetAvisoMapa[];
     showInmetAvisos?: boolean;
-        focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string }>;
+        focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string; cor?: string }>;
     showFocosCalor?: boolean;
     showSetores?: boolean;
     setorUso?: UsoSetor;
@@ -488,20 +488,22 @@ export const AlertsMap = forwardRef<
     const match = matchLevel && matchBasin && matchCalha;
     const isSel = !stateRef.current.adminMode && sel === nome;
     const isHov = hov === nome;
-    const fill = Math.max(0.12, Math.min(0.92, op / 100));
+    const fill = choropleth ? 0.86 : Math.max(0.12, Math.min(0.92, op / 100));
     return {
       color: muniStroke(isSel, isHov, match),
       weight: isSel ? 2.8 : isHov ? 2.4 : match ? 1.1 : 0.7,
       opacity: match || isSel || isHov ? 1 : 0.28,
       fillColor: choropleth ?? (semLeitura ? SEM_LEITURA_FILL : semAlertaAr ? "#d5dde6" : (LEVEL_COLORS[risco] ?? "#7c8fab")),
-      dashArray: semLeitura ? "3 3" : undefined,
+      dashArray: semLeitura && !choropleth ? "3 3" : undefined,
       fillOpacity: isSel
-        ? Math.min(0.95, fill + 0.12)
+        ? Math.min(0.96, fill + 0.08)
         : isHov
-          ? Math.min(0.92, fill + 0.18)
+          ? Math.min(0.94, fill + 0.06)
           : match
             ? fill
-            : 0.08,
+            : choropleth
+              ? 0.45
+              : 0.08,
       className: "muni-path",
     };
   }
@@ -878,10 +880,10 @@ export const AlertsMap = forwardRef<
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
         const dot = L.circleMarker([lat, lon], {
           radius: 5,
-          fillColor: "#ea580c",
+          fillColor: foco.cor || "#b91c1c",
           color: "#fff7ed",
           weight: 1,
-          fillOpacity: 0.85,
+          fillOpacity: 0.9,
           pane: "overlayPane",
         });
         dot.bindTooltip(

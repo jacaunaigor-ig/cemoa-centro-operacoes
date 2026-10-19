@@ -1,4 +1,5 @@
 import { AIR_LABELS, AIR_PM25, airLevelFromPm25, levelRank, type AirLevel } from "@/lib/alert-types";
+import { sensorDesconsiderado } from "@/lib/sensor-defeito";
 import type {
   AirFilter,
   AirNetwork,
@@ -111,7 +112,7 @@ export function airRankAction(
 
 export function airSensorsForMap(payload: AirQualityPayload | null | undefined): AirQualitySensor[] {
   if (!payload) return [];
-  return payload.sensors.filter((s) => s.municipioId);
+  return payload.sensors.filter((s) => s.municipioId && !sensorDesconsiderado(s.name));
 }
 
 const AQI_STOPS: Array<{ aqi: number; rgb: [number, number, number] }> = [

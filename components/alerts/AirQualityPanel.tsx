@@ -12,12 +12,17 @@ import {
   purpleAirSensorUrl,
   SELVA_URL,
 } from "@/lib/air-quality-display";
+import { sensorDesconsiderado } from "@/lib/sensor-defeito";
 import type { AirQualityMunicipio } from "@/lib/types";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
 
 export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
   const latest = rec.observedAt;
-  const sensors = [...rec.sensors].sort((a, b) => b.pm25 - a.pm25);
+  const sensors = [...rec.sensors].sort((a, b) => {
+    const aFora = sensorDesconsiderado(a.name) ? 1 : 0;
+    const bFora = sensorDesconsiderado(b.name) ? 1 : 0;
+    return aFora - bFora || b.pm25 - a.pm25;
+  });
   const apoio = airApoio(rec);
   const level = rec.level ?? (rec.pm25 != null ? airLevelFromPm25(rec.pm25) : null);
 
@@ -126,7 +131,11 @@ export function AirQualityPanel({ rec }: { rec: AirQualityMunicipio }) {
                     {AIR_NETWORK_LABELS[s.network]}
                     {s.indoor ? " · interno" : " · externo"}
                     {s.kmSede != null ? ` · ${s.kmSede.toLocaleString("pt-BR")} km` : ""}
-                    {s.anomalous ? " · anômalo" : ""}
+                    {sensorDesconsiderado(s.name)
+                      ? " · desconsiderado · sensor com defeito"
+                      : s.anomalous
+                        ? " · anômalo"
+                        : ""}
                     {` · ${formatRelative(s.lastSeen)}`}
                   </span>
                 </td>
