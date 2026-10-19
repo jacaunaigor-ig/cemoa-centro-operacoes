@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AIR_PM25, airLevelFromPm25 } from "@/lib/alert-types";
+import { sensorDesconsiderado } from "@/lib/sensor-defeito";
+import { ancoraMunicipal } from "@/lib/sensor-ancora";
 import { pointInRing } from "@/lib/geo";
 import { MUNICIPALITIES } from "@/lib/municipalities";
 import type {
@@ -421,8 +423,10 @@ function buildFromPacket(
     if (lat < AM_BBOX.south || lat > AM_BBOX.north || lon < AM_BBOX.west || lon > AM_BBOX.east) {
       continue;
     }
+    const name = String(row[iName] ?? `sensor ${iIndex >= 0 ? row[iIndex] : ""}`);
+    const ancora = ancoraMunicipal(name);
     const indoor = iLoc >= 0 && Number(row[iLoc]) === 1;
-    if (indoor) continue;
+    if (indoor && !ancora) continue;
     const lastSeenSec = iSeen >= 0 ? Number(row[iSeen]) : NaN;
     const lastSeen = Number.isFinite(lastSeenSec) && lastSeenSec > 0 ? lastSeenSec * 1000 : nowMs;
     if (iSeen >= 0 && lastSeen < freshAfter) continue;
@@ -433,9 +437,13 @@ function buildFromPacket(
     const pm25Atm = pm25AtmFromRow(row, fields);
     const pm25 = pm25Now ?? pm25Hour;
     if (pm25 == null) continue;
-    const hit = municipioOf(lat, lon);
+    const hit = ancora
+      ? (() => {
+          const muni = MUNICIPALITIES.find((item) => item.id === ancora.municipioId);
+          return muni ? { id: muni.id, nome: muni.nome, km: null as number | null } : null;
+        })()
+      : municipioOf(lat, lon);
     if (!hit) continue;
-    const name = String(row[iName] ?? `sensor ${iIndex >= 0 ? row[iIndex] : ""}`);
     sensors.push({
       sensorIndex: iIndex >= 0 ? Number(row[iIndex]) || 0 : 0,
       name,
@@ -450,8 +458,8 @@ function buildFromPacket(
       lastSeen,
       municipioId: hit.id,
       municipioNome: hit.nome,
-      kmSede: Math.round(hit.km * 10) / 10,
-      anomalous: pm25 > ANOMALOUS_UG,
+      kmSede: hit.km == null ? null : Math.round(hit.km * 10) / 10,
+      anomalous: pm25 > ANOMALOUS_UG || sensorDesconsiderado(name),
       indoor: false,
       network: networkOf(name),
     });
@@ -486,7 +494,8 @@ function buildFromPacket(
       .filter((n): n is number => n != null && Number.isFinite(n));
     const pm25 = instantaneos.length ? Math.max(...instantaneos) : pm25Day;
     const level = pm25 == null ? null : airLevelFromPm25(pm25);
-    const observedAt = Math.max(...list.map((s) => s.lastSeen));
+    const observados = valid.length ? valid : list;
+    const observedAt = Math.max(...observados.map((s) => s.lastSeen));
     const rec: AirQualityMunicipio = {
       id: m.id,
       nome: m.nome,
