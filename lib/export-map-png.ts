@@ -36,6 +36,7 @@ export type InstitutionalPngOptions = {
   extraNote?: { title: string; text: string };
   stains?: Array<{ geometry: Geom; color: string }>;
   municipios?: Array<{ nome: string; valor: string; color: string }>;
+  pontos?: Array<{ lat: number; lon: number; color: string }>;
 };
 
 function merc(lon: number, lat: number): [number, number] {
@@ -269,6 +270,19 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
       if (stain.geometry.type === "Polygon") drawPoly(stain.geometry.coordinates);
       else stain.geometry.coordinates.forEach(drawPoly);
       ctx.restore();
+    }
+  }
+
+  if (opts.pontos?.length) {
+    for (const ponto of opts.pontos) {
+      const [x, y] = project(ponto.lon, ponto.lat);
+      ctx.beginPath();
+      ctx.fillStyle = ponto.color;
+      ctx.strokeStyle = "#fff7ed";
+      ctx.lineWidth = 0.6;
+      ctx.arc(x, y, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
   }
 
