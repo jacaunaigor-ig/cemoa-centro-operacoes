@@ -1,7 +1,7 @@
 import { AIR_LABELS, levelRank, type AirLevel } from "@/lib/alert-types";
 import type { AirQualityPayload } from "@/lib/types";
 
-/** Muito Ruim e Péssima: ação iminente ou imediata. Ruim continua no painel de incêndio. */
+/** Aviso global: só Muito Ruim e Péssima (faixa extremo). Ruim fica no painel de incêndio. */
 export const NIVEIS_AR_CRITICOS: readonly AirLevel[] = ["MUITO_RUIM", "PESSIMA"];
 
 export type ArCritico = {
@@ -34,6 +34,12 @@ export function municipiosArCritico(payload: AirQualityPayload | null | undefine
 
 export function assinaturaArCritico(linhas: ArCritico[]) {
   return linhas.map((linha) => `${linha.id}:${linha.level}:${Math.round(linha.pm25)}`).join("|");
+}
+
+/** Some ao recolher a assinatura atual e volta se a faixa de municípios mudar. */
+export function avisoArDeveAparecer(linhas: ArCritico[], assinaturaOculta: string | null) {
+  if (!linhas.length) return false;
+  return assinaturaOculta !== assinaturaArCritico(linhas);
 }
 
 export function resumoArCritico(linhas: ArCritico[], limite = 4) {
