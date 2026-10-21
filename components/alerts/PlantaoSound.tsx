@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { fetchJson } from "@/lib/client";
@@ -12,10 +12,12 @@ import type { RainfallPayload } from "@/lib/types";
 import {
   plantaoSoundEnabled,
   playVencimentoChime,
+  prepararAvisoSonoro,
   setPlantaoSoundEnabled,
   subscribePlantaoSound,
   unlockPlantaoAudio,
 } from "@/lib/plantao-chime";
+import { withBase } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 function getSoundSnapshot() {
@@ -32,10 +34,10 @@ export function usePlantaoSoundEnabled() {
 
 export function PlantaoSoundUnlock() {
   useEffect(() => {
+    prepararAvisoSonoro(withBase("/aviso-chuva.wav"));
     const unlock = () => {
       unlockPlantaoAudio();
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
+      prepararAvisoSonoro(withBase("/aviso-chuva.wav"));
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
@@ -152,23 +154,27 @@ export function PlantaoSoundButton({
 }
 
 export function PlantaoSoundTestButton({ className }: { className?: string }) {
+  const [aviso, setAviso] = useState<string | null>(null);
+
   return (
     <button
       type="button"
       className={cn(
         "inline-flex items-center rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute transition-colors hover:text-text",
+        aviso === "Tocando" && "border-brand text-text",
         className,
       )}
       aria-label="Testar som de chuva severa"
-      title="Toca o aviso agora, para conferir o alto-falante."
+      title="Toca o aviso e fala “teste de som”. Se nada sair, a aba está no mudo."
       onClick={() => {
-        void playVencimentoChime({ ignorarMudo: true }).then((tocou) => {
-          if (tocou) toast.success("Som de teste em reprodução. Confira o volume do Windows e da aba.");
-          else toast.error("O navegador bloqueou o áudio. Clique em Testar som de novo.");
+        setAviso("Tocando");
+        window.setTimeout(() => setAviso(null), 2200);
+        void playVencimentoChime({ ignorarMudo: true, falar: true }).then((tocou) => {
+          if (!tocou) setAviso("Bloqueado");
         });
       }}
     >
-      Testar som
+      {aviso ?? "Testar som"}
     </button>
   );
 }

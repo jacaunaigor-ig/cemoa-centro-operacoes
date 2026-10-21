@@ -135,56 +135,72 @@ export function avisoWavDataUri() {
   return `data:audio/wav;base64,${btoa(binary)}`;
 }
 
-let clip: HTMLAudioElement | null = null;
+const AVISO_ID = "cemoa-aviso-som";
 
-function clipDeAviso() {
-  if (typeof Audio === "undefined") return null;
-  if (!clip) {
-    clip = new Audio(avisoWavDataUri());
-    clip.preload = "auto";
-    clip.volume = 1;
+/** O elemento fica na página. Áudio criado só na memória não sai no alto-falante do Windows. */
+export function prepararAvisoSonoro(src: string) {
+  if (typeof document === "undefined") return null;
+  let el = document.getElementById(AVISO_ID);
+  if (!(el instanceof HTMLAudioElement)) {
+    el = document.createElement("audio");
+    el.id = AVISO_ID;
+    el.preload = "auto";
+    el.setAttribute("playsinline", "");
+    document.body.appendChild(el);
   }
-  return clip;
+  if (el.src !== new URL(src, window.location.href).href) el.src = src;
+  el.volume = 1;
+  el.muted = false;
+  return el;
 }
 
 function tocarPeloContexto(): boolean {
   const ctx = unlockPlantaoAudio();
   if (!ctx) return false;
-  const t0 = ctx.currentTime + 0.02;
+  if (ctx.state === "suspended") void ctx.resume();
+  const t0 = ctx.currentTime + 0.05;
   for (const tom of AVISO_TONS) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     const start = t0 + tom.inicio;
     osc.type = "square";
     osc.frequency.setValueAtTime(tom.f, start);
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.linearRampToValueAtTime(0.35, start + 0.03);
-    gain.gain.linearRampToValueAtTime(0.0001, start + tom.duracao);
+    gain.gain.setValueAtTime(0.45, start);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(start);
-    osc.stop(start + tom.duracao + 0.02);
+    osc.stop(start + tom.duracao);
   }
-  return ctx.state === "running" || ctx.state === "suspended";
+  return true;
 }
 
-/** Três bipes. O teste ignora o mudo para conferir o alto-falante. */
-export function playVencimentoChime(opcoes?: { ignorarMudo?: boolean }): Promise<boolean> {
+function falarTeste() {
+  if (typeof speechSynthesis === "undefined") return;
+  const frase = new SpeechSynthesisUtterance("Teste de som.");
+  frase.lang = "pt-BR";
+  frase.volume = 1;
+  frase.rate = 1;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(frase);
+}
+
+/** Três bipes. O teste ignora o mudo e também fala, para o Windows entregar algum áudio. */
+export function playVencimentoChime(opcoes?: { ignorarMudo?: boolean; falar?: boolean }): Promise<boolean> {
   if (!opcoes?.ignorarMudo && !plantaoSoundEnabled()) return Promise.resolve(false);
-  const audio = clipDeAviso();
-  if (audio) {
-    try {
-      audio.volume = 1;
-      if (audio.currentTime > 0) audio.currentTime = 0;
-      const started = audio.play();
-      if (started) {
-        return started.then(() => true).catch(() => tocarPeloContexto());
-      }
-    } catch {
-      /* o contexto abaixo cobre o navegador sem Audio */
-    }
+  if (opcoes?.falar) falarTeste();
+  tocarPeloContexto();
+  const audio = typeof document === "undefined" ? null : document.getElementById(AVISO_ID);
+  if (!(audio instanceof HTMLAudioElement)) return Promise.resolve(false);
+  audio.muted = false;
+  audio.volume = 1;
+  try {
+    audio.currentTime = 0;
+  } catch {
+    /* ainda carregando: o play abaixo puxa do início */
   }
-  return Promise.resolve(tocarPeloContexto());
+  const started = audio.play();
+  if (!started) return Promise.resolve(true);
+  return started.then(() => true).catch(() => false);
 }
 
 let coalesceTimer: number | null = null;
