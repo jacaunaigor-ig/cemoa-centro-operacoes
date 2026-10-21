@@ -1988,7 +1988,7 @@ export function AlertsWorkbench() {
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
             isMobile && "order-1",
-            mapFocus ? "rounded-none border-0 pt-14 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+            mapFocus ? "rounded-none border-0 pt-11 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
@@ -2168,21 +2168,24 @@ export function AlertsWorkbench() {
                 </Popover>
             </MapChromeBar>
             {mapFocus && !isMobile ? (
-              <SituationStrip
-                items={product.levels.map((level) => ({
-                  id: level,
-                  label: LEVEL_LABELS[level] ?? level,
-                  action: riskActionFor(level),
-                  count: counts[level] ?? 0,
-                  color: corPainel(level),
-                  active: activeFilter === level,
-                  onClick: () =>
-                    setQuery({
-                      risco: activeFilter === level ? null : level,
-                      municipio: null,
-                    }),
-                }))}
-              />
+              <div className="pointer-events-none absolute inset-x-2 top-1.5 z-[2200] flex max-w-[calc(100%-20rem)]">
+                <SituationStrip
+                  className="pointer-events-auto min-w-0 border-0 bg-transparent px-0 py-0"
+                  items={product.levels.map((level) => ({
+                    id: level,
+                    label: LEVEL_LABELS[level] ?? level,
+                    action: riskActionFor(level),
+                    count: counts[level] ?? 0,
+                    color: corPainel(level),
+                    active: activeFilter === level,
+                    onClick: () =>
+                      setQuery({
+                        risco: activeFilter === level ? null : level,
+                        municipio: null,
+                      }),
+                  }))}
+                />
+              </div>
             ) : null}
 
             <div className={cn(
@@ -2200,37 +2203,28 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               {mapFocus ? (
-                <div className={cn(
-                  "pointer-events-auto absolute left-2 z-[1100] max-w-[min(100%,22rem)] rounded-lg border border-border bg-panel/92 p-2 shadow-[var(--shadow-card)] backdrop-blur-md",
-                  "top-20",
-                )}>
-                  <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
-                    Três críticos
+                <div className="pointer-events-auto absolute top-16 left-2 z-[1100] flex max-w-[min(100%-1rem,40rem)] items-center gap-1 rounded-lg border border-border bg-panel/92 px-1.5 py-1 shadow-[var(--shadow-card)] backdrop-blur-md">
+                  <p className="shrink-0 text-[9px] font-bold tracking-wide text-text-mute uppercase">
+                    Críticos
                   </p>
                   {criticos.length ? (
-                    <ol className="mt-1 grid gap-1">
-                      {criticos.map((m, i) => (
-                        <li key={m.id}>
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left hover:bg-hover"
-                            onClick={() => setQuery({ municipio: m.nome, risco: null })}
-                          >
-                            <span className="font-mono text-[10px] text-text-mute">{i + 1}</span>
-                            <span
-                              className="size-2.5 shrink-0 rounded-full"
-                              style={{ background: LEVEL_COLORS[m.risco] }}
-                            />
-                            <span className="min-w-0 flex-1 truncate text-[12px] font-bold">{m.nome}</span>
-                            <span className="shrink-0 text-[10px] font-bold">
-                              {LEVEL_LABELS[m.risco] ?? m.risco}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ol>
+                    criticos.map((m, i) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className="inline-flex min-w-0 items-center gap-1 rounded-md px-1 py-0.5 text-left hover:bg-hover"
+                        onClick={() => setQuery({ municipio: m.nome, risco: null })}
+                      >
+                        <span className="font-mono text-[10px] text-text-mute">{i + 1}</span>
+                        <span
+                          className="size-2 shrink-0 rounded-full"
+                          style={{ background: LEVEL_COLORS[m.risco] }}
+                        />
+                        <span className="max-w-[7rem] truncate text-[11px] font-bold">{m.nome}</span>
+                      </button>
+                    ))
                   ) : (
-                    <p className="mt-1 text-[11px] text-text-mute">Nenhum município em grau ativo.</p>
+                    <p className="text-[11px] text-text-mute">Nenhum em grau ativo.</p>
                   )}
                 </div>
               ) : null}
@@ -2337,12 +2331,13 @@ export function AlertsWorkbench() {
                   />
                 </div>
               ) : null}
+              {mapFocus && tipo !== "INCENDIO" && tipo !== "ALAGAMENTO" && !((tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores) && !(tipo === "CHUVA" && avisoInmet) && semLeitura <= 0 ? null : (
               <MapLegendCard
                 title={tipo === "INCENDIO" ? "Camadas do mapa" : product.legendTitle}
                 forceHidden={drawMode || eraseMode}
                 className={tipo === "MOVIMENTO" || tipo === "EROSAO" ? "max-h-[34%]" : undefined}
               >
-                {tipo === "INCENDIO" ? null : (
+                {mapFocus || tipo === "INCENDIO" ? null : (
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
                     <li key={level}>
@@ -2412,7 +2407,9 @@ export function AlertsWorkbench() {
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
                     {focosMapa
                       ? `Focos INPE · ${focosRef ? periodoFocosTexto(focosRef.periodo) : "carregando o período"} · ${focosRef ? `${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Vermelho mais forte = mais focos no município.`
-                      : "A cor do município é a classificação do ar. A bolinha é o MP2,5 do sensor."}
+                      : mapFocus
+                        ? "A bolinha é o MP2,5 do sensor."
+                        : "A cor do município é a classificação do ar. A bolinha é o MP2,5 do sensor."}
                   </p>
                   {focosMapa && focosRef ? (
                     <>
@@ -2433,7 +2430,7 @@ export function AlertsWorkbench() {
                     <p className="mt-1.5 flex items-start gap-1.5 text-[10px] leading-snug text-text">
                       <span className="mt-0.5 size-2.5 shrink-0 rounded-sm bg-[#0369a1]" />
                       <span>
-                        Vento Open-Meteo a 10 m · {horaVentoLegenda(ventoCampo?.hora ?? null)}. A seta aponta para onde sopra. Azul até 10 km/h, laranja até 25, vinho acima.
+                        Vento Open-Meteo a 10 m · {horaVentoLegenda(ventoCampo?.hora ?? null)}. Os traços correm para onde sopra agora. Azul até 10 km/h, laranja até 25, vinho acima.
                         {ventoCampo?.error ? ` ${ventoCampo.error}` : ""}
                       </span>
                     </p>
@@ -2456,6 +2453,7 @@ export function AlertsWorkbench() {
                   </div>
                 ) : null}
               </MapLegendCard>
+              )}
             </div>
 
             {isMobile || paintArmed || drawMode || eraseMode ? null : (

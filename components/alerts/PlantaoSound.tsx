@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { fetchJson } from "@/lib/client";
@@ -149,32 +149,6 @@ export function PlantaoSoundButton({
     >
       {on ? <Bell className="size-3.5" /> : <BellOff className="size-3.5" />}
       {labeled ? <span className="hidden sm:inline">{on ? "Som" : "Mudo"}</span> : null}
-    </button>
-  );
-}
-
-export function PlantaoSoundTestButton({ className }: { className?: string }) {
-  const [aviso, setAviso] = useState<string | null>(null);
-
-  return (
-    <button
-      type="button"
-      className={cn(
-        "inline-flex items-center rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute transition-colors hover:text-text",
-        aviso === "Tocando" && "border-brand text-text",
-        className,
-      )}
-      aria-label="Testar som de chuva severa"
-      title="Toca o aviso e fala “teste de som”. Se nada sair, a aba está no mudo."
-      onClick={() => {
-        setAviso("Tocando");
-        window.setTimeout(() => setAviso(null), 2200);
-        void playVencimentoChime({ ignorarMudo: true, falar: true }).then((tocou) => {
-          if (!tocou) setAviso("Bloqueado");
-        });
-      }}
-    >
-      {aviso ?? "Testar som"}
     </button>
   );
 }

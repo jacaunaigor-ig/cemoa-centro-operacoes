@@ -15,13 +15,18 @@ export type SituationStripItem = {
 export function SituationStrip({
   items,
   ariaLabel = "Resumo da sala de situação",
+  className,
 }: {
   items: SituationStripItem[];
   ariaLabel?: string;
+  className?: string;
 }) {
   return (
     <div
-      className="pointer-events-auto flex flex-wrap items-center gap-1.5 border-b border-border bg-panel/92 px-2 py-1.5 backdrop-blur-sm"
+      className={cn(
+        "pointer-events-auto flex flex-nowrap items-center gap-1 overflow-x-auto border-b border-border bg-panel/92 px-2 py-1 [scrollbar-width:none] backdrop-blur-sm [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
       role="toolbar"
       aria-label={ariaLabel}
     >
@@ -30,9 +35,10 @@ export function SituationStrip({
           key={item.id}
           type="button"
           aria-pressed={item.active}
+          title={item.action ? `${item.label}: ${item.action}` : item.label}
           onClick={item.onClick}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-left transition-colors",
+            "inline-flex shrink-0 items-center gap-1 rounded-lg border px-1.5 py-0.5 text-left transition-colors",
             item.active
               ? "border-transparent"
               : "border-border bg-panel-2/80 hover:border-border-strong",
@@ -54,9 +60,7 @@ export function SituationStrip({
             {item.count}
           </span>
           {item.action ? (
-            <span className="hidden text-[10px] font-semibold opacity-80 xl:inline">
-              {item.action}
-            </span>
+            <span className="sr-only">{item.action}</span>
           ) : null}
         </button>
       ))}

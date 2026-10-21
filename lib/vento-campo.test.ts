@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { corVento, gradeVento, lerVentoAtual, rosaDosVentos, sopraPara } from "./vento-campo.ts";
+import { corVento, duracaoVentoSeg, gradeVento, lerVentoAtual, rosaDosVentos, sopraPara } from "./vento-campo.ts";
 
 test("a seta sopra para o lado oposto de onde o vento vem", () => {
   assert.equal(rosaDosVentos(0), "N");
@@ -10,6 +10,8 @@ test("a seta sopra para o lado oposto de onde o vento vem", () => {
   assert.equal(corVento(8), "#0369a1");
   assert.equal(corVento(18), "#c2410c");
   assert.equal(corVento(30), "#7f1d1d");
+  assert.ok(duracaoVentoSeg(4) > duracaoVentoSeg(30));
+  assert.ok(duracaoVentoSeg(30) >= 0.7 && duracaoVentoSeg(4) <= 3.2);
 });
 
 test("a leitura atual do Open-Meteo vira ponto de vento", () => {

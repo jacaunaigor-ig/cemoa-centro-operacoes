@@ -38,7 +38,6 @@ import {
   PNG_HYDRO_ITEMS,
   contarStatus,
   filtrarEstacoes,
-  formatHydroRef,
   normalizeMunicipio,
   statusAtivo,
   statusMapa,
@@ -650,7 +649,7 @@ export function HydrologyWorkbench() {
               compact
               label="Com leitura"
               value={loading ? "—" : String(kpis.comLeitura)}
-              sub={`${kpis.cotaHoje} hoje · ${pct(kpis.comLeitura)}`}
+              sub={pct(kpis.comLeitura)}
               accent="#3b82f6"
               icon={<Waves className="size-3.5" />}
               active={status === "COM_LEITURA"}
@@ -661,11 +660,7 @@ export function HydrologyWorkbench() {
               compact
               label="Sem leitura"
               value={loading ? "—" : String(kpis.semLeitura)}
-              sub={
-                data?.referencia
-                  ? `${pct(kpis.semLeitura)} · sem cota em ${formatHydroRef(data.referencia)} · ${kpis.serieAntiga} série antiga`
-                  : `${pct(kpis.semLeitura)} · ${kpis.serieAntiga} série antiga`
-              }
+              sub={pct(kpis.semLeitura)}
               accent="#f97316"
               icon={<RadioTower className="size-3.5" />}
               active={status === "SL"}
@@ -751,7 +746,7 @@ export function HydrologyWorkbench() {
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
             isMobile && "order-1",
-            mapFocus ? "rounded-none border-0 pt-14 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+            mapFocus ? "rounded-none border-0 pt-11 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
@@ -922,8 +917,10 @@ export function HydrologyWorkbench() {
                 </Popover>
             </MapChromeBar>
             {mapFocus && !isMobile ? (
+              <div className="pointer-events-none absolute inset-x-2 top-1.5 z-[2200] flex max-w-[calc(100%-20rem)]">
               <SituationStrip
                 ariaLabel="Resumo hidrológico da sala de situação"
+                className="pointer-events-auto min-w-0 border-0 bg-transparent px-0 py-0"
                 items={[
                   {
                     id: "NORMAL",
@@ -979,6 +976,7 @@ export function HydrologyWorkbench() {
                   },
                 ]}
               />
+              </div>
             ) : null}
 
             <div className={cn(
@@ -1053,8 +1051,11 @@ export function HydrologyWorkbench() {
                   />
                 </div>
               ) : null}
+              {mapFocus && status !== "SL" ? null : (
               <MapLegendCard title={modo === "vazante" ? "Estiagem" : "Inundação"}>
                 <ul className="space-y-0.5">
+                  {mapFocus ? null : (
+                    <>
                   <LegendDot
                     color={HYDRO_STATUS_COLORS.NORMAL}
                     label="Baixo"
@@ -1075,11 +1076,14 @@ export function HydrologyWorkbench() {
                     label="Severo"
                     action={!isMobile ? HYDRO_ACTIONS.SEVERO : undefined}
                   />
+                    </>
+                  )}
                   {status === "SL" ? (
                     <LegendDot color="#7c8fab" label="Sem leitura" />
                   ) : null}
                 </ul>
               </MapLegendCard>
+              )}
             </div>
 
             {isMobile ? null : <HydroTicker stations={visible} modo={modo} />}

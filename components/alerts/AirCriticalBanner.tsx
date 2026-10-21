@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import type { AirQualityPayload } from "@/lib/types";
 
 const POLL_MS = 60_000;
+const AVISO_MS = 7_000;
 const AVISO_OCULTO_KEY = "cemoa_aviso_ar_oculto_v1";
 
 export function AirCriticalBanner() {
@@ -29,7 +30,15 @@ export function AirCriticalBanner() {
   const [linhas, setLinhas] = useState<ArCritico[]>([]);
   const [oculta, setOculta] = useState<string | null>(null);
   const [preferenciaLida, setPreferenciaLida] = useState(false);
+  const [expirado, setExpirado] = useState(false);
   const assinatura = assinaturaArCritico(linhas);
+
+  useEffect(() => {
+    if (!assinatura) return;
+    setExpirado(false);
+    const timer = window.setTimeout(() => setExpirado(true), AVISO_MS);
+    return () => window.clearTimeout(timer);
+  }, [assinatura]);
 
   useEffect(() => {
     try {
@@ -58,7 +67,7 @@ export function AirCriticalBanner() {
     };
   }, []);
 
-  if (!preferenciaLida || !avisoArDeveAparecer(linhas, oculta)) return null;
+  if (!preferenciaLida || expirado || !avisoArDeveAparecer(linhas, oculta)) return null;
 
   const jaNoIncendio = pathname === "/" && (params.get("tipo") === "INCENDIO" || params.get("tipo") === "AR");
   const pico = linhas[0];

@@ -203,6 +203,39 @@ html[data-theme="dark"] .leaflet-control-attribution a {
 .leaflet-div-icon.vento-seta {
   background: transparent;
   border: none;
+  overflow: visible;
+}
+.vento-fluxo {
+  width: 64px;
+  height: 64px;
+  position: relative;
+}
+.vento-fluxo i {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  margin-left: -6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 16px solid currentColor;
+  filter: drop-shadow(0 0 1px #f8fafc);
+  animation-name: vento-corre;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes vento-corre {
+  from { transform: translateY(6px); opacity: 0; }
+  18% { opacity: 1; }
+  to { transform: translateY(-48px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vento-fluxo i {
+    animation: none;
+    opacity: 0.9;
+    transform: translateY(-14px);
+  }
 }
 .leaflet-tooltip.foco-balao-zero {
   color: #6b7280;
