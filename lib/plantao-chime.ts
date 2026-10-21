@@ -138,11 +138,11 @@ export function avisoWavDataUri() {
 const AVISO_ID = "cemoa-aviso-som";
 
 /** O elemento fica na página. Áudio criado só na memória não sai no alto-falante do Windows. */
-export function prepararAvisoSonoro(src: string) {
+export function prepararAvisoSonoro(src: string): HTMLAudioElement | null {
   if (typeof document === "undefined") return null;
-  let el = document.getElementById(AVISO_ID);
-  if (!(el instanceof HTMLAudioElement)) {
-    el = document.createElement("audio");
+  const found = document.getElementById(AVISO_ID);
+  const el = found instanceof HTMLAudioElement ? found : document.createElement("audio");
+  if (el !== found) {
     el.id = AVISO_ID;
     el.preload = "auto";
     el.setAttribute("playsinline", "");
