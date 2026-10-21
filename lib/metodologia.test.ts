@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildMetodologiaPayload,
   nivelDeFocos,
+  nivelIncendio,
   piorNivel,
 } from "./metodologia-build.ts";
 import {
@@ -177,6 +178,27 @@ test("focos nulos não elevam o incêndio e as faixas seguem o mapeamento operac
   assert.equal(nivelDeFocos(15), "Severo");
   assert.equal(nivelDeFocos(39), "Severo");
   assert.equal(nivelDeFocos(40), "Extremo");
+});
+
+test("monitor oficial corrigido define o incêndio e os focos não o elevam", () => {
+  assert.equal(
+    nivelIncendio({ temMonitor: true, ar: "MODERADO", focos: 112, operadorManual: true, operador: "MODERADO" }),
+    "Moderado",
+  );
+  assert.equal(nivelIncendio({ temMonitor: false, focos: 112 }), "Extremo");
+  assert.equal(
+    nivelIncendio({ temMonitor: true, ar: "MUITO_RUIM", focos: 10, operadorManual: true, operador: "MODERADO" }),
+    "Severo",
+  );
+  const semAr = buildMetodologiaPayload(1, { focos: { byId: { "1300706": 112 } } as never });
+  assert.equal(semAr.byId["1300706"].alertasVivos["Incêndio/QAr"], "Extremo");
+  const comAr = buildMetodologiaPayload(1, {
+    air: { byId: { "1300706": { level: "MODERADO", pm25: 33.9 } }, byNome: {} } as never,
+    focos: { byId: { "1300706": 112 } } as never,
+  });
+  const boca = comAr.byId["1300706"];
+  assert.equal(boca.alertasVivos["Incêndio/QAr"], "Moderado");
+  assert.ok(boca.ire["Incêndio/QAr"] < 60);
 });
 
 test("o pior nível ignora ausência e não deixa um nulo vencer um alerta", () => {

@@ -60,8 +60,8 @@ export function PassagemDialog({
       open={open}
       onClose={onClose}
       wide
-      title="Passagem de turno"
-      description="Montada só neste painel. O PDF leva o que foi feito, os alertas ativos e os campos abaixo."
+      title="Passagem de plantão"
+      description="Documento interno do CEMOA. O PDF leva a identificação do turno, o que foi feito, os alertas ativos e a ciência de saída e assunção."
     >
       {carregando || !base ? (
         <p className="text-sm text-text-mute">Montando a passagem…</p>
@@ -74,7 +74,7 @@ export function PassagemDialog({
             label="Comentário"
             value={comentario}
             onChange={setComentario}
-            placeholder="O que o próximo turno precisa saber sobre a operação."
+            placeholder="Situação que o turno seguinte precisa receber."
           />
           <Campo
             label="Intercorrências"

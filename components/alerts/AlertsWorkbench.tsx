@@ -7,6 +7,7 @@ import {
   CloudRain,
   Dam,
   Flame,
+  Wind,
   Layers,
   MapPinned,
   Maximize2,
@@ -53,6 +54,7 @@ import {
   ALERT_PRODUCTS,
   ALERT_TYPES,
   LEVEL_COLORS,
+  corPainel,
   LEVEL_LABELS,
   PNG_AIR_ITEMS,
   PNG_RISK_ITEMS,
@@ -83,6 +85,7 @@ import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
 import { focoFill, focoPontoCor, periodoFocosTexto, type FocosReferencia } from "@/lib/focos-display";
+import { horaVentoLegenda, VENTO_VAZIO, type VentoCampo } from "@/lib/vento-campo";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
@@ -105,9 +108,10 @@ import { AdminToolbar } from "@/components/alerts/AdminToolbar";
 import { ClassifyConfirm } from "@/components/alerts/ClassifyConfirm";
 import { RiskEditorDialog } from "@/components/alerts/RiskEditorDialog";
 import { SituationBar } from "@/components/alerts/SituationBar";
+import { SituationDigest } from "@/components/alerts/SituationDigest";
 import { ProductMonitorStrip } from "@/components/alerts/ProductMonitorStrip";
 import { MonitorThresholdLegend } from "@/components/alerts/MonitorThresholdLegend";
-import { usePlantaoExpiryChime, PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
+import { PlantaoSoundButton } from "@/components/alerts/PlantaoSound";
 import { buildPlantaoQueue, countPlantao, plantaoLabel, type PlantaoItem } from "@/lib/plantao-queue";
 import { PassagemDialog } from "@/components/alerts/PassagemDialog";
 import { linhasDaPassagem } from "@/lib/classification-audit";
@@ -370,8 +374,10 @@ export function AlertsWorkbench() {
   const [onlyRisk, setOnlyRisk] = useState(false);
   const [showNames, setShowNames] = useState(false);
   const [showRivers, setShowRivers] = useState(true);
-  const [focosMapa, setFocosMapa] = useState(true);
+  const [focosMapa, setFocosMapa] = useState(false);
   const [focosRef, setFocosRef] = useState<FocosReferencia | null>(null);
+  const [ventoMapa, setVentoMapa] = useState(true);
+  const [ventoCampo, setVentoCampo] = useState<VentoCampo | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [showSetores, setShowSetores] = useState(true);
   const [avisoInmet, setAvisoInmet] = useState(true);
@@ -878,10 +884,18 @@ export function AlertsWorkbench() {
     let cancel = false;
     void (async () => {
       try {
-        const data = await fetchJson<FocosReferencia>("/api/focos");
-        if (!cancel) setFocosRef(data);
+        const data = await fetchJson<VentoCampo>("/api/vento");
+        if (!cancel) setVentoCampo(data);
       } catch (err) {
-        if (!cancel) toast.error(err instanceof Error ? err.message : "Não foi possível ler os focos do INPE.");
+        if (!cancel) {
+          setVentoCampo({
+            generatedAt: Date.now(),
+            source: "Open-Meteo · vento a 10 m",
+            hora: null,
+            error: err instanceof Error ? err.message : "Não foi possível ler o vento.",
+            pontos: [],
+          });
+        }
       }
     })();
     return () => {
@@ -1122,19 +1136,6 @@ export function AlertsWorkbench() {
     filteredAlerts.find((a) => a.municipio === selected) ??
     null;
   const selectedHydro = estacaoDoMunicipio(selected, hydroStations);
-  const urgentAlert = useMemo(() => {
-    const list = (data?.alerts ?? []).filter(
-      (a) => matchMunicipioGeo(a.municipio, a.bacia, geo) && a.expiresAt,
-    );
-    if (!list.length) return null;
-    list.sort(
-      (a, b) =>
-        levelRank(tipo, b.risco) - levelRank(tipo, a.risco) ||
-        (a.expiresAt ?? 0) - (b.expiresAt ?? 0),
-    );
-    const top = list[0];
-    return { municipio: top.municipio, risco: top.risco, expiresAt: top.expiresAt };
-  }, [data, geo, tipo]);
   const criticos = useMemo(() => {
     return catalog
       .filter((m) => isAlertActive(tipo, m.risco))
@@ -1167,7 +1168,73 @@ export function AlertsWorkbench() {
   );
   const plantaoTotal =
     plantaoCounts.vencido + plantaoCounts.renovar + plantaoCounts.emitir;
-  usePlantaoExpiryChime(tipo, catalog, !isMobile);
+
+  const situacao = useMemo(() => {
+    const ativos = scopedCatalog
+      .filter((m) => isAlertActive(tipo, m.risco))
+      .sort(
+        (a, b) =>
+          levelRank(tipo, b.risco) - levelRank(tipo, a.risco) ||
+          a.nome.localeCompare(b.nome, "pt-BR"),
+      )
+      .slice(0, 3)
+      .map((m) => ({ nome: m.nome, bacia: m.bacia, risco: m.risco }));
+
+    const picos: { rotulo: string; nome: string; mm?: number; ug?: number }[] = [];
+    if (tipo === "INCENDIO") {
+      let melhor: { nome: string; pm25: number } | null = null;
+      for (const m of scopedCatalog) {
+        const pm = air?.byNome[m.nome]?.pm25;
+        if (pm == null || !Number.isFinite(pm)) continue;
+        if (!melhor || pm > melhor.pm25) melhor = { nome: m.nome, pm25: pm };
+      }
+      if (melhor && melhor.pm25 > 0) {
+        picos.push({ rotulo: "MP2,5", nome: melhor.nome, ug: melhor.pm25 });
+      }
+    } else if (tipo !== "EROSAO") {
+      const janelas =
+        tipo === "ALAGAMENTO"
+          ? ([["Última hora", "mm1h"]] as const)
+          : tipo === "MOVIMENTO"
+            ? ([["24 horas", "mm24h"]] as const)
+            : ([["Última hora", "mm1h"], ["24 horas", "mm24h"]] as const);
+      for (const [rotulo, chave] of janelas) {
+        let melhor: { nome: string; mm: number } | null = null;
+        for (const m of scopedCatalog) {
+          const mm = rain?.byNome[m.nome]?.[chave];
+          if (mm == null || mm <= 0) continue;
+          if (!melhor || mm > melhor.mm) melhor = { nome: m.nome, mm };
+        }
+        if (melhor) picos.push({ rotulo, nome: melhor.nome, mm: melhor.mm });
+      }
+      if (picos.length > 1) picos.splice(1);
+    }
+
+    const primeiro = tipo === "CHUVA" && avisoInmet ? inmetAvisos[0] : undefined;
+    const aviso = primeiro
+      ? {
+          n: inmetAvisos.length,
+          severidade: primeiro.severidade,
+          cor: primeiro.cor,
+          descricao: primeiro.descricao,
+        }
+      : null;
+
+    const nota =
+      tipo === "EROSAO"
+        ? "Grau definido pelo operador"
+        : tipo === "INCENDIO"
+          ? picos.length
+            ? null
+            : "Sem leitura de MP2,5"
+          : !rain
+            ? "Pluviometria em leitura"
+            : picos.length
+              ? null
+              : "Sem chuva registrada";
+
+    return { ativos, picos, aviso, nota };
+  }, [scopedCatalog, tipo, air, rain, avisoInmet, inmetAvisos]);
   const ProductIcon = PRODUCT_ICONS[tipo];
   const monitorStrip = (
     <ProductMonitorStrip
@@ -1634,7 +1701,7 @@ export function AlertsWorkbench() {
     >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col",
-        mapFocus ? "gap-0 overflow-hidden p-0" : isMobile ? "gap-1.5 overflow-hidden p-1.5" : "gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        mapFocus ? "gap-0 overflow-hidden p-0" : isMobile ? "gap-1.5 overflow-hidden p-1.5" : "gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-2.5 sm:p-3",
       )}>
         {mapFocus ? null : (
         <DashboardPanel>
@@ -1676,7 +1743,7 @@ export function AlertsWorkbench() {
                       label={shortLevelLabel(level)}
                       value={loading ? "—" : String(counts[level] ?? 0)}
                       sub={riskActionFor(level)}
-                      accent={LEVEL_COLORS[level]}
+                      accent={corPainel(level)}
                       active={activeFilter === level}
                       onClick={() =>
                         setQuery({
@@ -1699,7 +1766,6 @@ export function AlertsWorkbench() {
             loading={loading}
             refreshing={refreshing}
             onRefresh={() => void refreshNow()}
-            urgent={urgentAlert}
             tools={
               <>
                 <label className="inline-flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
@@ -1727,6 +1793,25 @@ export function AlertsWorkbench() {
                   </select>
                 </label>
               </>
+            }
+            summary={
+              <SituationDigest
+                loading={loading}
+                recorte={calha || bacia}
+                recorteTipo={calha ? "calha" : bacia ? "bacia" : null}
+                onLimparRecorte={() =>
+                  setQuery({ bacia: null, calha: null, municipio: null })
+                }
+                ativos={situacao.ativos}
+                vazio={`Nenhum acima de ${levelLabel(product.low).toLowerCase()}`}
+                onSelect={(nome, basinName) => {
+                  setHovered(null);
+                  setQuery(geoForNome(nome, basinName || null));
+                }}
+                picos={situacao.picos}
+                aviso={situacao.aviso}
+                nota={situacao.nota}
+              />
             }
           >
             {plantaoTotal > 0 ? (
@@ -1864,10 +1949,10 @@ export function AlertsWorkbench() {
                 value={loading ? "—" : String(counts[level] ?? 0)}
                 sub={
                   level === "BAIXO" && semLeitura > 0
-                    ? `${riskActionFor(level)} · ${semLeitura} sem leitura fora`
-                    : `${riskActionFor(level)} · ${pct(counts[level] ?? 0)}`
+                    ? `${semLeitura} sem leitura`
+                    : pct(counts[level] ?? 0)
                 }
-                accent={LEVEL_COLORS[level]}
+                accent={corPainel(level)}
                 active={activeFilter === level}
                 onClick={() => setQuery({ risco: level, municipio: null })}
                 loading={loading}
@@ -1896,14 +1981,14 @@ export function AlertsWorkbench() {
             ? "grid-cols-1 gap-1.5"
             : mapFocus
               ? "grid-cols-1"
-              : "gap-4 sm:gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+              : "gap-2 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
         )}>
           {mapFocus || isMobile ? null : listNode}
 
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
             isMobile && "order-1",
-            mapFocus ? "rounded-none border-0 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+            mapFocus ? "rounded-none border-0 pt-14 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}
@@ -2056,6 +2141,15 @@ export function AlertsWorkbench() {
                         {focosMapa ? "Ocultar focos INPE" : "Focos INPE"}
                       </MapToolButton>
                     ) : null}
+                    {tipo === "INCENDIO" ? (
+                      <MapToolButton
+                        active={ventoMapa}
+                        onClick={() => setVentoMapa((v) => !v)}
+                        icon={<Wind className="size-3.5" />}
+                      >
+                        {ventoMapa ? "Ocultar vento" : "Vento Open-Meteo"}
+                      </MapToolButton>
+                    ) : null}
                     <MapOverlayToggles vis={overlays} product={tipo} onChange={setOverlays} />
                     <label className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] font-semibold">
                       Opacidade
@@ -2080,7 +2174,7 @@ export function AlertsWorkbench() {
                   label: LEVEL_LABELS[level] ?? level,
                   action: riskActionFor(level),
                   count: counts[level] ?? 0,
-                  color: LEVEL_COLORS[level],
+                  color: corPainel(level),
                   active: activeFilter === level,
                   onClick: () =>
                     setQuery({
@@ -2106,7 +2200,10 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               {mapFocus ? (
-                <div className="pointer-events-auto absolute left-2 top-2 z-[1100] max-w-[min(100%,22rem)] rounded-lg border border-border bg-panel/92 p-2 shadow-[var(--shadow-card)] backdrop-blur-md">
+                <div className={cn(
+                  "pointer-events-auto absolute left-2 z-[1100] max-w-[min(100%,22rem)] rounded-lg border border-border bg-panel/92 p-2 shadow-[var(--shadow-card)] backdrop-blur-md",
+                  "top-20",
+                )}>
                   <p className="text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">
                     Três críticos
                   </p>
@@ -2177,6 +2274,8 @@ export function AlertsWorkbench() {
                   fillByNome={focoFillByNome}
                   labelByNome={focoLabels}
                   showFocosCalor={tipo === "INCENDIO" && focosMapa}
+                  showVento={tipo === "INCENDIO" && ventoMapa}
+                  vento={tipo === "INCENDIO" && ventoMapa ? (ventoCampo?.pontos ?? VENTO_VAZIO) : VENTO_VAZIO}
                   showSetores={(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores}
                   setorUso={tipo === "EROSAO" ? "margem" : "movimento"}
                   focosCalor={focosPontos}
@@ -2239,10 +2338,11 @@ export function AlertsWorkbench() {
                 </div>
               ) : null}
               <MapLegendCard
-                title={product.legendTitle}
+                title={tipo === "INCENDIO" ? "Camadas do mapa" : product.legendTitle}
                 forceHidden={drawMode || eraseMode}
                 className={tipo === "MOVIMENTO" || tipo === "EROSAO" ? "max-h-[34%]" : undefined}
               >
+                {tipo === "INCENDIO" ? null : (
                 <ul className="space-y-0.5">
                   {product.levels.map((level) => (
                     <li key={level}>
@@ -2277,6 +2377,7 @@ export function AlertsWorkbench() {
                     </li>
                   ))}
                 </ul>
+                )}
                 {tipo === "CHUVA" && avisoInmet ? (
                   <ul className="mt-1.5 space-y-0.5 border-t border-border pt-1">
                     {inmetAvisos.length ? (
@@ -2297,7 +2398,7 @@ export function AlertsWorkbench() {
                     )}
                   </ul>
                 ) : null}
-                {semLeitura > 0 ? (
+                {tipo !== "INCENDIO" && semLeitura > 0 ? (
                   <p className="mt-1.5 flex items-center gap-1.5 text-[10px] text-text-mute">
                     <span
                       className="size-2.5 rounded-sm border border-dashed border-text-mute"
@@ -2311,7 +2412,7 @@ export function AlertsWorkbench() {
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
                     {focosMapa
                       ? `Focos INPE · ${focosRef ? periodoFocosTexto(focosRef.periodo) : "carregando o período"} · ${focosRef ? `${focosRef.total.toLocaleString("pt-BR")} focos` : ""}. Vermelho mais forte = mais focos no município.`
-                      : "App SELVA pinta Moderada, Ruim, Muito Ruim e Péssima. Boa fica sem cor. Sem monitor não pinta. A classificação do operador prevalece."}
+                      : "A cor do município é a classificação do ar. A bolinha é o MP2,5 do sensor."}
                   </p>
                   {focosMapa && focosRef ? (
                     <>
@@ -2326,33 +2427,17 @@ export function AlertsWorkbench() {
                       <span>0 focos</span>
                       <span>mais focos</span>
                     </p>
-                    <ul className="mt-1 space-y-0.5">
-                      {focosRef.ranking.slice(0, 5).map((item) => (
-                        <li key={item.id} className="flex items-center gap-1.5 text-[10px]">
-                          <span className="size-2.5 rounded-sm" style={{ background: focoFill(item.total, focosRef.ranking[0]?.total ?? 1) }} />
-                          <span className="min-w-0 flex-1 truncate">{item.nome}</span>
-                          <span className="font-mono">{item.total}</span>
-                        </li>
-                      ))}
-                    </ul>
                     </>
                   ) : null}
-                  <button
-                    type="button"
-                    className="mt-1.5 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-left text-[10px] text-text-mute hover:bg-hover"
-                    aria-pressed={airFilter === "RUIM"}
-                    onClick={() =>
-                      setQuery({
-                        ar: airFilter === "RUIM" ? null : "RUIM",
-                        chuva: null,
-                        municipio: null,
-                      })
-                    }
-                  >
-                    <span className="size-2.5 rounded-full bg-risco-alto" />
-                    MP2,5 ≥ 35,5 µg/m³
-                    <span className="ml-auto font-mono">{air?.coverage.ruim ?? 0}</span>
-                  </button>
+                  {ventoMapa ? (
+                    <p className="mt-1.5 flex items-start gap-1.5 text-[10px] leading-snug text-text">
+                      <span className="mt-0.5 size-2.5 shrink-0 rounded-sm bg-[#0369a1]" />
+                      <span>
+                        Vento Open-Meteo a 10 m · {horaVentoLegenda(ventoCampo?.hora ?? null)}. A seta aponta para onde sopra. Azul até 10 km/h, laranja até 25, vinho acima.
+                        {ventoCampo?.error ? ` ${ventoCampo.error}` : ""}
+                      </span>
+                    </p>
+                  ) : null}
                   </>
                 ) : tipo === "ALAGAMENTO" ? (
                   <div className="mt-1 border-t border-border/70 pt-1">

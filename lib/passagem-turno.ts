@@ -80,10 +80,15 @@ export function montarPassagem(input: PassagemTexto): string {
   const avisos = input.avisos.trim() || "Sem aviso geral.";
 
   return [
-    "Passagem de turno — CEMOA · Defesa Civil do Amazonas",
+    "PASSAGEM DE PLANTÃO",
+    "Governo do Estado do Amazonas",
+    "Defesa Civil do Amazonas · Centro de Monitoramento e Alerta — CEMOA",
+    "",
+    "Identificação",
     `Horário de Manaus: ${input.horario}`,
     `Responsável: ${responsavel}`,
     `Recorte: ${input.recorte}`,
+    "Natureza: documento interno de transmissão do turno.",
     "",
     ...secao("O que foi feito", feitoLinhas),
     "",
@@ -94,5 +99,11 @@ export function montarPassagem(input: PassagemTexto): string {
     ...secao("Intercorrências", [intercorrencias]),
     "",
     ...secao("Avisos gerais", [avisos]),
+    "",
+    "Ciência",
+    "O turno de saída registra a situação descrita neste documento.",
+    "O turno que assume declara ciência ao recebê-lo.",
+    "Turno de saída: ________________________________",
+    "Turno que assume: ________________________________",
   ].join("\n");
 }

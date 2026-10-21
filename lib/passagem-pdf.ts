@@ -75,20 +75,69 @@ function quebrar(texto: string) {
 }
 
 function negrito(linha: string) {
-  return Boolean(linha) && !linha.startsWith(" ") && !linha.startsWith("-");
+  const texto = linha.trim();
+  if (!texto || linha.startsWith(" ") || texto.startsWith("-")) return false;
+  if (texto.length > 72 || texto.endsWith(".") || texto.includes(":")) return false;
+  return true;
 }
 
+const LINHAS_POR_PAGINA = 48;
+
 function paginasDe(linhas: string[]) {
-  const porPagina = 52;
   const paginas: string[][] = [];
-  for (let i = 0; i < linhas.length; i += porPagina) {
-    paginas.push(linhas.slice(i, i + porPagina));
+  for (let i = 0; i < linhas.length; i += LINHAS_POR_PAGINA) {
+    paginas.push(linhas.slice(i, i + LINHAS_POR_PAGINA));
   }
   return paginas.length ? paginas : [[""]];
 }
 
-function fluxo(linhas: string[]) {
-  const comandos = ["BT", "/F1 10 Tf", "13 TL", "48 790 Td"];
+function fluxo(linhas: string[], pagina: number, total: number) {
+  const comandos = [
+    "0.012 0.106 0.208 rg",
+    "0 778 595 64 re f",
+    "0.945 0.420 0.051 rg",
+    "0 775 595 3 re f",
+    "1 1 1 rg",
+    "BT",
+    "/F2 8 Tf",
+    "40 824 Td",
+    "(GOVERNO DO ESTADO DO AMAZONAS) Tj",
+    "/F2 13 Tf",
+    "0 -16 Td",
+    "(DEFESA CIVIL DO AMAZONAS) Tj",
+    "/F1 8 Tf",
+    "0 -12 Td",
+    `(${escapar("Centro de Monitoramento e Alerta — CEMOA")}) Tj`,
+    "ET",
+    "BT",
+    "/F2 9 Tf",
+    "400 816 Td",
+    `(${escapar("PASSAGEM DE PLANTÃO")}) Tj`,
+    "/F1 8 Tf",
+    "0 -12 Td",
+    "(Documento interno) Tj",
+    "ET",
+    "0.012 0.106 0.208 rg",
+    "0 0 595 34 re f",
+    "0.945 0.420 0.051 rg",
+    "0 34 595 2.5 re f",
+    "1 1 1 rg",
+    "BT",
+    "/F1 8 Tf",
+    "40 14 Td",
+    `(${escapar("CEMOA · uso interno da operação")}) Tj`,
+    "ET",
+    "BT",
+    "/F1 8 Tf",
+    "448 14 Td",
+    `(${escapar(`Página ${pagina} de ${total}`)}) Tj`,
+    "ET",
+    "0 0 0 rg",
+    "BT",
+    "/F1 10 Tf",
+    "14 TL",
+    "40 752 Td",
+  ];
   linhas.forEach((linha, indice) => {
     const fonte = negrito(linha) ? "/F2 10 Tf" : "/F1 10 Tf";
     comandos.push(fonte, `(${escapar(linha)}) Tj`);
@@ -108,7 +157,7 @@ export function passagemParaPdf(texto: string): Uint8Array {
     const fluxoId = id + 1;
     id += 2;
     paginaIds.push(paginaId);
-    const conteudo = fluxo(linhas);
+    const conteudo = fluxo(linhas, paginaIds.length, paginas.length);
     objetos[fluxoId] = `<< /Length ${conteudo.length} >>\nstream\n${conteudo}\nendstream`;
     objetos[paginaId] =
       `<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595 842] /Contents ${fluxoId} 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> >>`;

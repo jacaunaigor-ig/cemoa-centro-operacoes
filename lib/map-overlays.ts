@@ -306,7 +306,7 @@ export function syncAirSensors(L: LeafletNS, layer: LayerGroup, sensors: AirQual
     const padTop = s.indoor ? 8 : 0;
     const icon = L.divIcon({
       className: "map-air-icon",
-      html: `<span class="map-air-badge${s.indoor ? " is-indoor" : ""}${s.anomalous ? " is-anom" : ""}" style="--air:${color};color:${ink};width:${size}px;height:${size}px;font-size:${size >= 38 ? 12 : 11}px">${s.indoor ? '<i class="map-air-house" aria-hidden="true"></i>' : ""}<b>${n}</b></span>`,
+      html: `<span class="map-air-badge${s.indoor ? " is-indoor" : ""}${s.anomalous ? " is-anom" : ""}" style="--air:${color};color:${ink};width:${size}px;height:${size}px;font-size:${size >= 32 ? 11 : 10}px">${s.indoor ? '<i class="map-air-house" aria-hidden="true"></i>' : ""}<b>${n}</b></span>`,
       iconSize: [size, size + padTop],
       iconAnchor: [size / 2, size / 2 + padTop],
     });

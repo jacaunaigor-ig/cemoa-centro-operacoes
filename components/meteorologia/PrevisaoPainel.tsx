@@ -85,7 +85,7 @@ export function PrevisaoPainel() {
 
       <div className={cn("grid grid-cols-2 xl:grid-cols-4", isMobile ? "gap-1.5" : "gap-2")}>
         <KpiCard
-          dense={isMobile}
+          compact dense={isMobile}
           label="Com chuva em 24 h"
           value={lote ? String(comChuva) : "—"}
           sub="municípios com mais de 0,1 mm"
@@ -97,7 +97,7 @@ export function PrevisaoPainel() {
           onClick={() => undefined}
         />
         <KpiCard
-          dense={isMobile}
+          compact dense={isMobile}
           label="Maior chuva 24 h"
           value={picoChuva?.precip24hMm != null ? formatMm(picoChuva.precip24hMm) : "—"}
           sub={picoChuva?.nome ?? "sem previsão"}
@@ -108,7 +108,7 @@ export function PrevisaoPainel() {
           onClick={() => undefined}
         />
         <KpiCard
-          dense={isMobile}
+          compact dense={isMobile}
           label="Maior probabilidade"
           value={picoProb?.prob24h != null ? `${picoProb.prob24h}%` : "—"}
           sub={picoProb?.nome ?? "próximas 24 h"}
@@ -120,7 +120,7 @@ export function PrevisaoPainel() {
           onClick={() => undefined}
         />
         <KpiCard
-          dense={isMobile}
+          compact dense={isMobile}
           label="Temperatura agora"
           value={picoTemp?.tempC != null ? `${Math.round(picoTemp.tempC)} °C` : "—"}
           sub={picoTemp ? `pico em ${picoTemp.nome}` : "hora vigente"}

@@ -81,21 +81,36 @@ export function PlantaoQueue({
   return (
     <div
       id="fila-plantao"
-      className="rounded-lg border border-border bg-bg/35 p-2"
+      className={cn("rounded-lg border border-border bg-bg/35", compact ? "px-1.5 py-1" : "p-2")}
       title={title}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
+      <div className="flex items-center gap-1">
+        <p className="inline-flex shrink-0 items-center gap-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
           <ClipboardList className="size-3" />
-          Fila · plantão
+          Fila
         </p>
-        <span className="flex min-w-0 items-center gap-1">
-          <p className="truncate text-[10px] text-text-mute">{product}</p>
-          {!compact ? <PlantaoSoundButton className="px-1.5 py-1" /> : null}
-        </span>
+        <div className={cn("flex min-w-0 flex-1 gap-1", compact ? "overflow-x-auto" : "flex-wrap")} role="toolbar" aria-label="Filtrar a fila do plantão">
+          <FilterChip active={activeFilter === "TODOS"} onClick={() => setFilter("TODOS")}>
+            Todos ({items.length})
+          </FilterChip>
+          {(["vencido", "renovar", "emitir"] as const).map((key) => (
+            <FilterChip
+              key={key}
+              active={activeFilter === key}
+              tone={key}
+              disabled={counts[key] === 0}
+              onClick={() => setFilter(key)}
+            >
+              {plantaoLabel(key)} ({counts[key]})
+            </FilterChip>
+          ))}
+        </div>
+        {!compact ? <PlantaoSoundButton className="px-1.5 py-1" /> : (
+          <span className="sr-only">{product}</span>
+        )}
       </div>
 
-      {tipo === "ALAGAMENTO" || tipo === "MOVIMENTO" ? (
+      {!compact && (tipo === "ALAGAMENTO" || tipo === "MOVIMENTO") ? (
         <p className="mt-1 text-[10px] leading-snug text-text-dim">
           {tipo === "ALAGAMENTO"
             ? "Estado: 20–40 / 40–70 / >70 mm/h. Manaus: severo >20 mm/h. Vigência de 6 h."
@@ -104,26 +119,9 @@ export function PlantaoQueue({
         </p>
       ) : null}
 
-      <div className="mt-1.5 flex flex-wrap gap-1" role="toolbar" aria-label="Filtrar a fila do plantão">
-        <FilterChip active={activeFilter === "TODOS"} onClick={() => setFilter("TODOS")}>
-          Todos ({items.length})
-        </FilterChip>
-        {(["vencido", "renovar", "emitir"] as const).map((key) => (
-          <FilterChip
-            key={key}
-            active={activeFilter === key}
-            tone={key}
-            disabled={counts[key] === 0}
-            onClick={() => setFilter(key)}
-          >
-            {plantaoLabel(key)} ({counts[key]})
-          </FilterChip>
-        ))}
-      </div>
-
       {shown.length === 0 ? (
-        <p className="px-1 py-2 text-[11px] text-text-mute">
-          Nada na fila deste produto. Sem vencido, renovação próxima ou limiar sugerido.
+        <p className="truncate px-0.5 text-[10px] leading-tight text-text-mute">
+          {compact ? "Fila vazia." : "Nada na fila deste produto. Sem vencido, renovação próxima ou limiar sugerido."}
         </p>
       ) : (
         <ol className={cn("mt-1.5 space-y-0.5 overflow-auto", compact ? "max-h-28" : "max-h-56")}>

@@ -313,6 +313,7 @@ export function RiscoWorkbench() {
 
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
           <KpiCard
+            compact
             label="Municípios"
             value={loading ? "—" : String(rows.length)}
             sub="monitorados"
@@ -323,6 +324,7 @@ export function RiscoWorkbench() {
             onClick={() => setRecorte("todos")}
           />
           <KpiCard
+            compact
             label="N6 Extremo"
             value={loading ? "—" : String(n6)}
             sub="prioridade máxima"
@@ -332,6 +334,7 @@ export function RiscoWorkbench() {
             onClick={() => toggleRecorte("n6")}
           />
           <KpiCard
+            compact
             label="N5 Crítico"
             value={loading ? "—" : String(n5)}
             sub="mobilização"
@@ -341,6 +344,7 @@ export function RiscoWorkbench() {
             onClick={() => toggleRecorte("n5")}
           />
           <KpiCard
+            compact
             label="P1 confirmado"
             value={loading ? "—" : String(payload?.resumo.p1Confirmados ?? 0)}
             sub="com alerta ativo"
@@ -350,6 +354,7 @@ export function RiscoWorkbench() {
             onClick={() => toggleRecorte("p1")}
           />
           <KpiCard
+            compact
             label="Rebaixados"
             value={loading ? "—" : String(payload?.resumo.rebaixadosSemAlerta ?? 0)}
             sub="sem alerta em evento súbito"

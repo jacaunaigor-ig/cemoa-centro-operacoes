@@ -1,6 +1,6 @@
 "use client";
 
-import { LEVEL_COLORS, LEVEL_LABELS, riskActionFor } from "@/lib/alert-types";
+import { corPainel, LEVEL_LABELS, riskActionFor } from "@/lib/alert-types";
 import type { RainAlert } from "@/lib/types";
 import { AlertCountdown } from "@/components/alerts/AlertCountdown";
 
@@ -9,7 +9,7 @@ export function AlertTicker({ alerts }: { alerts: RainAlert[] }) {
 
   const row = (suffix: string) =>
     items.map((e) => {
-      const color = LEVEL_COLORS[e.risco] ?? "#7c8fab";
+      const color = corPainel(e.risco);
       return (
         <span key={`${e.id}-${suffix}`} className="ticker-item">
           <strong className="text-brand-2">{e.bacia}</strong>
