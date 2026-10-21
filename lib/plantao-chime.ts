@@ -174,20 +174,9 @@ function tocarPeloContexto(): boolean {
   return true;
 }
 
-function falarTeste() {
-  if (typeof speechSynthesis === "undefined") return;
-  const frase = new SpeechSynthesisUtterance("Teste de som.");
-  frase.lang = "pt-BR";
-  frase.volume = 1;
-  frase.rate = 1;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(frase);
-}
-
-/** Três bipes. O teste ignora o mudo e também fala, para o Windows entregar algum áudio. */
-export function playVencimentoChime(opcoes?: { ignorarMudo?: boolean; falar?: boolean }): Promise<boolean> {
+/** Três bipes quando a chuva medida chega a severa ou extrema. */
+export function playVencimentoChime(opcoes?: { ignorarMudo?: boolean }): Promise<boolean> {
   if (!opcoes?.ignorarMudo && !plantaoSoundEnabled()) return Promise.resolve(false);
-  if (opcoes?.falar) falarTeste();
   tocarPeloContexto();
   const audio = typeof document === "undefined" ? null : document.getElementById(AVISO_ID);
   if (!(audio instanceof HTMLAudioElement)) return Promise.resolve(false);

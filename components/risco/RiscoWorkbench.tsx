@@ -293,16 +293,12 @@ export function RiscoWorkbench() {
       updatedAt={payload?.generatedAt}
       rainAt={rain?.generatedAt}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
-        <header className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+        <header className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold tracking-[0.14em] text-text-mute uppercase">
-              Defesa Civil do Amazonas
-            </p>
-            <h2 className="text-lg font-black tracking-tight">Gestão de Risco</h2>
-            <p className="max-w-3xl text-[12px] text-text-mute">
-              Índice IRE/IRG dos 62 municípios, distribuição por nível e prioridade, e o histórico de decretos de estiagem e inundação.
-              O índice não altera o grau dos produtos de alerta nem do boletim.
+            <h2 className="text-base font-black tracking-tight">Gestão de Risco</h2>
+            <p className="text-[11px] text-text-mute">
+              IRE/IRG dos 62 municípios. O índice não altera o grau dos alertas nem do boletim.
             </p>
           </div>
           <p className="text-[11px] text-text-mute">

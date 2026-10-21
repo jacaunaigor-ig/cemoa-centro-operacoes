@@ -247,15 +247,10 @@ export function MeteorologiaWorkbench() {
       updatedAt={rain?.generatedAt}
       rainAt={rain?.generatedAt}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
-        <header className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+        <header className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-lg font-black tracking-tight">Meteorologia</h2>
-            {isMobile ? null : (
-              <p className="max-w-3xl text-[12px] text-text-mute">
-                Chuva, previsão, temperatura e satélite do Amazonas.
-              </p>
-            )}
+            <h2 className="text-base font-black tracking-tight">Meteorologia</h2>
           </div>
           {error ? <p className="text-[11px] font-semibold text-risco-alto">{error}</p> : null}
         </header>
