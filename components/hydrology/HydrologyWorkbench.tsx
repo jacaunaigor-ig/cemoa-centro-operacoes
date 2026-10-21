@@ -497,7 +497,7 @@ export function HydrologyWorkbench() {
     >
       <div className={cn(
         "flex min-h-0 flex-1 flex-col",
-        mapFocus ? "gap-0 overflow-hidden p-0" : isMobile ? "gap-1.5 overflow-hidden p-1.5" : "gap-4 overflow-hidden p-4 max-lg:overflow-visible sm:gap-5 sm:p-5 lg:gap-6 lg:p-6",
+        mapFocus ? "gap-0 overflow-hidden p-0" : isMobile ? "gap-1.5 overflow-hidden p-1.5" : "gap-2 overflow-hidden p-2 max-lg:overflow-visible sm:gap-2.5 sm:p-3",
       )}>
         {mapFocus ? null : (
         <DashboardPanel>
@@ -552,7 +552,7 @@ export function HydrologyWorkbench() {
                 label="Mod."
                 value={loading ? "—" : String(kpis.moderado)}
                 sub={HYDRO_ACTIONS.MODERADO}
-                accent={HYDRO_STATUS_COLORS.MODERADO}
+                accent="var(--risco-moderado)"
                 active={status === "MODERADO"}
                 onClick={() => setQuery({ status: status === "MODERADO" ? null : "MODERADO", municipio: null })}
                 loading={loading}
@@ -610,7 +610,7 @@ export function HydrologyWorkbench() {
               compact
               label="Baixo"
               value={loading ? "—" : String(kpis.baixo)}
-              sub={`${HYDRO_ACTIONS.NORMAL} · ${pct(kpis.baixo)}`}
+              sub={pct(kpis.baixo)}
               accent="#10b981"
               active={status === "NORMAL"}
               onClick={() => setQuery({ status: "NORMAL", municipio: null })}
@@ -620,8 +620,8 @@ export function HydrologyWorkbench() {
               compact
               label="Moderado"
               value={loading ? "—" : String(kpis.moderado)}
-              sub={`${HYDRO_ACTIONS.MODERADO} · ${pct(kpis.moderado)}`}
-              accent={HYDRO_STATUS_COLORS.MODERADO}
+              sub={pct(kpis.moderado)}
+              accent="var(--risco-moderado)"
               active={status === "MODERADO"}
               onClick={() => setQuery({ status: "MODERADO", municipio: null })}
               loading={loading}
@@ -630,7 +630,7 @@ export function HydrologyWorkbench() {
               compact
               label="Alto"
               value={loading ? "—" : String(kpis.alto)}
-              sub={`${HYDRO_ACTIONS.ALTO} · ${pct(kpis.alto)}`}
+              sub={pct(kpis.alto)}
               accent="#f97316"
               active={status === "ALTO"}
               onClick={() => setQuery({ status: "ALTO", municipio: null })}
@@ -640,7 +640,7 @@ export function HydrologyWorkbench() {
               compact
               label="Severo"
               value={loading ? "—" : String(kpis.severo)}
-              sub={`${HYDRO_ACTIONS.SEVERO} · ${pct(kpis.severo)}`}
+              sub={pct(kpis.severo)}
               accent="#ef4444"
               active={status === "SEVERO"}
               onClick={() => setQuery({ status: "SEVERO", municipio: null })}
@@ -694,7 +694,7 @@ export function HydrologyWorkbench() {
               ? "grid-cols-1 gap-1.5"
               : mapFocus
                 ? "grid-cols-1"
-                : "gap-4 sm:gap-6 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
+                : "gap-2 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:overflow-hidden",
           )}
         >
           {mapFocus || isMobile ? null : (
@@ -751,7 +751,7 @@ export function HydrologyWorkbench() {
           <Card className={cn(
             "relative flex h-full min-h-0 flex-col overflow-hidden",
             isMobile && "order-1",
-            mapFocus ? "rounded-none border-0 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
+            mapFocus ? "rounded-none border-0 pt-14 shadow-none" : isMobile ? "min-h-0" : "min-h-[min(58dvh,640px)] lg:min-h-0",
           )}>
             <MapChromeBar
               mapFocus={mapFocus}

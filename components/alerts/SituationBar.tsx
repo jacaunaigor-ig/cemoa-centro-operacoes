@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCountdown } from "@/components/alerts/AlertCountdown";
+import { JornadaRelogio } from "@/components/alerts/JornadaRelogio";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatAmazonDateTime, formatRelative } from "@/lib/utils";
@@ -12,16 +12,16 @@ export function SituationBar({
   loading,
   refreshing,
   onRefresh,
-  urgent,
   tools,
+  summary,
   children,
 }: {
   generatedAt: number | null;
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
-  urgent?: { municipio: string; risco: string; expiresAt: number | null } | null;
   tools?: React.ReactNode;
+  summary?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const { isMobile } = useOpsMode();
@@ -33,20 +33,16 @@ export function SituationBar({
       )}
     >
       {tools ? (
-        <div className={cn("flex min-w-0 items-center gap-2", isMobile ? "w-full" : "min-w-0")}>
+        <div className={cn("flex min-w-0 items-center gap-2", isMobile ? "w-full" : "shrink-0")}>
           {tools}
         </div>
       ) : null}
-      <div className={cn("flex min-w-0 flex-wrap items-center gap-2", !isMobile && "ml-auto")}>
-      {children}
-      {urgent?.expiresAt ? (
-        <AlertCountdown
-          variant={isMobile ? "row" : "hero"}
-          expiresAt={urgent.expiresAt}
-          municipio={urgent.municipio}
-          risco={urgent.risco}
-        />
+      {summary && !isMobile ? (
+        <div className="hidden min-w-0 flex-1 items-center overflow-hidden lg:flex">{summary}</div>
       ) : null}
+      <div className={cn("flex min-w-0 flex-wrap items-center gap-2", !isMobile && "ml-auto shrink-0")}>
+      {children}
+      <JornadaRelogio />
       <div className="flex items-center gap-2">
         <div className="hidden text-right sm:block">
           <small className="block text-[9px] font-bold tracking-[0.1em] text-text-mute uppercase">

@@ -84,12 +84,7 @@ export function unlockPlantaoAudio() {
   return ctx;
 }
 
-/** Três notas descendentes — vencimento no posto, não sirene. */
-export function playVencimentoChime() {
-  if (!plantaoSoundEnabled()) return false;
-  const ctx = unlockPlantaoAudio();
-  if (!ctx || ctx.state === "suspended") return false;
-
+function tocarNotas(ctx: AudioContext) {
   const t0 = ctx.currentTime + 0.02;
   const notes = [
     { f: 784, t: 0, d: 0.13, g: 0.2 },
@@ -110,7 +105,21 @@ export function playVencimentoChime() {
     osc.start(start);
     osc.stop(start + note.d + 0.04);
   }
-  return true;
+}
+
+/** Três notas descendentes. O teste ignora o mudo para conferir o alto-falante. */
+export function playVencimentoChime(opcoes?: { ignorarMudo?: boolean }): Promise<boolean> {
+  if (!opcoes?.ignorarMudo && !plantaoSoundEnabled()) return Promise.resolve(false);
+  const ctx = unlockPlantaoAudio();
+  if (!ctx) return Promise.resolve(false);
+  const pronto = ctx.state === "suspended" ? ctx.resume().then(() => ctx) : Promise.resolve(ctx);
+  return pronto
+    .then((ativo) => {
+      if (ativo.state !== "running") return false;
+      tocarNotas(ativo);
+      return true;
+    })
+    .catch(() => false);
 }
 
 let coalesceTimer: number | null = null;
@@ -124,7 +133,7 @@ export function announceAlertExpired(nome: string, onToast: (message: string) =>
     const unique = [...new Set(pendingNames)];
     pendingNames.length = 0;
     coalesceTimer = null;
-    const played = playVencimentoChime();
+    void playVencimentoChime().then((played) => {
     const list =
       unique.length === 1
         ? unique[0]
@@ -136,7 +145,8 @@ export function announceAlertExpired(nome: string, onToast: (message: string) =>
     onToast(`${head} Renovar ou rebaixar em Edição — o mapa não muda sozinho.`);
     if (!played && plantaoSoundEnabled() && !audioHintShown) {
       audioHintShown = true;
-      onToast("Som do plantão: clique no sino do cabeçalho para autorizar o áudio neste navegador.");
+      onToast("Som do plantão: clique em Testar som no cabeçalho para autorizar o áudio neste navegador.");
     }
+    });
   }, 80);
 }

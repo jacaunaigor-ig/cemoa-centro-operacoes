@@ -191,6 +191,12 @@ export function levelColor(level: string) {
   return LEVEL_COLORS[level] ?? "#7c8fab";
 }
 
+/** Cor do nível no painel e no letreiro. O amarelo do mapa (#ffff00) some no fundo claro. */
+export function corPainel(level: string) {
+  if (level === "MODERADO") return "var(--risco-moderado)";
+  return LEVEL_COLORS[level] ?? "#7c8fab";
+}
+
 export function isAlertActive(tipo: AlertType, level: string) {
   const product = productOf(tipo);
   return level !== product.low;

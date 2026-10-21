@@ -171,27 +171,33 @@ export function AlertList({
 
   return (
     <Card className={cn("flex h-full min-h-0 flex-col overflow-hidden", !isMobile && "min-h-[320px] xl:min-h-0")}>
-      <div className="space-y-2 border-b border-border px-3 py-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-            Lista de municípios
-            <span className="ml-1.5 font-mono text-text">
+      <div className="space-y-1 border-b border-border px-2 py-1.5">
+        <div className="flex items-center gap-1.5">
+          <h3 className="shrink-0 text-[10px] font-semibold tracking-[0.08em] text-text-mute uppercase">
+            Municípios
+            <span className="ml-1 font-mono text-text">
               {loading ? "…" : municipios.length}
             </span>
           </h3>
+          <Input
+            id="busca-municipio"
+            value={busca}
+            onChange={(e) => onBusca(e.target.value)}
+            placeholder="Buscar município…"
+            aria-label="Buscar município ou região"
+            className="h-8 min-w-0 flex-1"
+          />
           <button
             type="button"
             onClick={onLimpar}
-            className="text-[11px] font-semibold text-focus hover:underline"
+            className="shrink-0 text-[11px] font-semibold text-focus hover:underline"
           >
             Limpar
           </button>
         </div>
-        <div className="flex flex-row items-end gap-2">
-        <label className="block min-w-0 flex-1 text-[10px] font-bold tracking-[0.08em] text-text-mute uppercase">
-          Região
+        <div className="flex items-center gap-1.5">
           <select
-            className="hydro-select mt-1"
+            className="hydro-select hydro-select-sm w-[9.25rem] shrink-0"
             value={bacia ?? "Todas"}
             onChange={(e) =>
               onBacia(e.target.value === "Todas" ? null : e.target.value)
@@ -204,31 +210,23 @@ export function AlertList({
                 {c}
               </option>
             ))}
-            </select>
-          </label>
-        <Input
-          id="busca-municipio"
-          value={busca}
-          onChange={(e) => onBusca(e.target.value)}
-          placeholder="Buscar município ou região…"
-          aria-label="Buscar município ou região"
-          className="sm:max-w-[14rem]"
-        />
+          </select>
+          {clusters.length ? (
+            <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto" role="toolbar" aria-label="Regiões com alerta">
+              {clusters.map((c) => (
+                <Chip
+                  key={c.nome}
+                  compact
+                  active={bacia === c.nome}
+                  color="#38bdf8"
+                  onClick={() => onBacia(bacia === c.nome ? null : c.nome)}
+                >
+                  {c.nome} ({c.ativos})
+                </Chip>
+              ))}
+            </div>
+          ) : null}
         </div>
-        {clusters.length ? (
-          <div className={cn("flex gap-1.5", isMobile ? "overflow-x-auto pb-0.5" : "flex-wrap")} role="toolbar" aria-label="Regiões com alerta">
-            {clusters.map((c) => (
-              <Chip
-                key={c.nome}
-                active={bacia === c.nome}
-                color="#38bdf8"
-                onClick={() => onBacia(bacia === c.nome ? null : c.nome)}
-              >
-                {c.nome} ({c.ativos})
-              </Chip>
-            ))}
-          </div>
-        ) : null}
         {isMobile ? null : (
           <PlantaoQueue
             tipo={tipo}
@@ -514,12 +512,14 @@ function Chip({
   onClick,
   color,
   disabled,
+  compact,
   children,
 }: {
   active: boolean;
   onClick: () => void;
   color?: string;
   disabled?: boolean;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -529,7 +529,8 @@ function Chip({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
+        "inline-flex shrink-0 items-center gap-1 rounded-full border font-semibold transition-[background-color,border-color,color,filter] duration-150 hover:brightness-110 active:scale-[0.97]",
+        compact ? "min-h-7 px-2 py-0 text-[10px]" : "min-h-9 gap-1.5 px-2.5 py-1 text-xs",
         active ? "shadow" : "text-text-dim hover:text-text",
         disabled && "cursor-not-allowed opacity-45 hover:brightness-100",
       )}
