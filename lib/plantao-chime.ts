@@ -84,42 +84,107 @@ export function unlockPlantaoAudio() {
   return ctx;
 }
 
-function tocarNotas(ctx: AudioContext) {
+const AVISO_TONS = [
+  { f: 880, inicio: 0, duracao: 0.22 },
+  { f: 659.25, inicio: 0.26, duracao: 0.22 },
+  { f: 523.25, inicio: 0.52, duracao: 0.34 },
+];
+
+/** Três bipes em PCM. O elemento de áudio sai no alto-falante; o oscilador do navegador muitas vezes não. */
+export function avisoWavDataUri() {
+  const taxa = 22050;
+  const total = 0.92;
+  const n = Math.floor(taxa * total);
+  const dados = new Int16Array(n);
+  for (const tom of AVISO_TONS) {
+    const i0 = Math.floor(tom.inicio * taxa);
+    const len = Math.floor(tom.duracao * taxa);
+    for (let i = 0; i < len && i0 + i < n; i++) {
+      const env = Math.sin((Math.PI * i) / len);
+      const amostra = Math.sin((2 * Math.PI * tom.f * i) / taxa) * env * 0.92;
+      dados[i0 + i] = Math.max(-32767, Math.min(32767, Math.round(amostra * 32767)));
+    }
+  }
+  const bytes = n * 2;
+  const buffer = new ArrayBuffer(44 + bytes);
+  const view = new DataView(buffer);
+  const texto = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+  };
+  texto(0, "RIFF");
+  view.setUint32(4, 36 + bytes, true);
+  texto(8, "WAVE");
+  texto(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, taxa, true);
+  view.setUint32(28, taxa * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  texto(36, "data");
+  view.setUint32(40, bytes, true);
+  let offset = 44;
+  for (let i = 0; i < n; i++) {
+    view.setInt16(offset, dados[i], true);
+    offset += 2;
+  }
+  const raw = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < raw.length; i++) binary += String.fromCharCode(raw[i]);
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+let clip: HTMLAudioElement | null = null;
+
+function clipDeAviso() {
+  if (typeof Audio === "undefined") return null;
+  if (!clip) {
+    clip = new Audio(avisoWavDataUri());
+    clip.preload = "auto";
+    clip.volume = 1;
+  }
+  return clip;
+}
+
+function tocarPeloContexto(): boolean {
+  const ctx = unlockPlantaoAudio();
+  if (!ctx) return false;
   const t0 = ctx.currentTime + 0.02;
-  const notes = [
-    { f: 784, t: 0, d: 0.13, g: 0.2 },
-    { f: 523.25, t: 0.15, d: 0.16, g: 0.18 },
-    { f: 392, t: 0.34, d: 0.32, g: 0.22 },
-  ];
-  for (const note of notes) {
+  for (const tom of AVISO_TONS) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(note.f, t0 + note.t);
-    const start = t0 + note.t;
+    const start = t0 + tom.inicio;
+    osc.type = "square";
+    osc.frequency.setValueAtTime(tom.f, start);
     gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(note.g, start + 0.018);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + note.d);
+    gain.gain.linearRampToValueAtTime(0.35, start + 0.03);
+    gain.gain.linearRampToValueAtTime(0.0001, start + tom.duracao);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(start);
-    osc.stop(start + note.d + 0.04);
+    osc.stop(start + tom.duracao + 0.02);
   }
+  return ctx.state === "running" || ctx.state === "suspended";
 }
 
-/** Três notas descendentes. O teste ignora o mudo para conferir o alto-falante. */
+/** Três bipes. O teste ignora o mudo para conferir o alto-falante. */
 export function playVencimentoChime(opcoes?: { ignorarMudo?: boolean }): Promise<boolean> {
   if (!opcoes?.ignorarMudo && !plantaoSoundEnabled()) return Promise.resolve(false);
-  const ctx = unlockPlantaoAudio();
-  if (!ctx) return Promise.resolve(false);
-  const pronto = ctx.state === "suspended" ? ctx.resume().then(() => ctx) : Promise.resolve(ctx);
-  return pronto
-    .then((ativo) => {
-      if (ativo.state !== "running") return false;
-      tocarNotas(ativo);
-      return true;
-    })
-    .catch(() => false);
+  const audio = clipDeAviso();
+  if (audio) {
+    try {
+      audio.volume = 1;
+      if (audio.currentTime > 0) audio.currentTime = 0;
+      const started = audio.play();
+      if (started) {
+        return started.then(() => true).catch(() => tocarPeloContexto());
+      }
+    } catch {
+      /* o contexto abaixo cobre o navegador sem Audio */
+    }
+  }
+  return Promise.resolve(tocarPeloContexto());
 }
 
 let coalesceTimer: number | null = null;

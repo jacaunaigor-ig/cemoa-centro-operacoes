@@ -91,14 +91,17 @@ export function ChuvaSeveraSound() {
         if (cancel) return;
         const novas = linhasChuvaSevera(data).filter((linha) => !ouvidas.has(chaveChuvaSevera(linha)));
         if (!novas.length) return;
-        for (const linha of novas) ouvidas.add(chaveChuvaSevera(linha));
-        gravarChuvasOuvidas(ouvidas);
         const tocou = await playVencimentoChime();
         if (cancel) return;
-        toast.error(avisoDeChuva(novas));
-        if (!tocou && plantaoSoundEnabled()) {
-          toast.message("O navegador ainda não liberou o áudio. Use Testar som no cabeçalho.");
+        if (!tocou) {
+          if (plantaoSoundEnabled()) {
+            toast.message("O navegador ainda não liberou o áudio. Use Testar som no cabeçalho.");
+          }
+          return;
         }
+        for (const linha of novas) ouvidas.add(chaveChuvaSevera(linha));
+        gravarChuvasOuvidas(ouvidas);
+        toast.error(avisoDeChuva(novas));
       } catch {
         /* a próxima leitura tenta de novo */
       }
@@ -160,7 +163,7 @@ export function PlantaoSoundTestButton({ className }: { className?: string }) {
       title="Toca o aviso agora, para conferir o alto-falante."
       onClick={() => {
         void playVencimentoChime({ ignorarMudo: true }).then((tocou) => {
-          if (tocou) toast.success("Som de teste reproduzido.");
+          if (tocou) toast.success("Som de teste em reprodução. Confira o volume do Windows e da aba.");
           else toast.error("O navegador bloqueou o áudio. Clique em Testar som de novo.");
         });
       }}
