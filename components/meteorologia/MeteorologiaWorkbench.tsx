@@ -247,15 +247,10 @@ export function MeteorologiaWorkbench() {
       updatedAt={rain?.generatedAt}
       rainAt={rain?.generatedAt}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 sm:p-3">
-        <header className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+        <header className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-lg font-black tracking-tight">Meteorologia</h2>
-            {isMobile ? null : (
-              <p className="max-w-3xl text-[12px] text-text-mute">
-                Chuva, previsão, temperatura e satélite do Amazonas.
-              </p>
-            )}
+            <h2 className="text-base font-black tracking-tight">Meteorologia</h2>
           </div>
           {error ? <p className="text-[11px] font-semibold text-risco-alto">{error}</p> : null}
         </header>
@@ -286,10 +281,10 @@ export function MeteorologiaWorkbench() {
         </div>
 
         {painel === "chuva" ? <div className={cn("grid grid-cols-2 xl:grid-cols-4", isMobile ? "gap-1.5" : "gap-2")}>
-          <KpiCard dense={isMobile} label="Com chuva" value={rain ? String(comChuva) : "—"} sub={`na janela de ${JANELAS.find((item) => item.id === janela)?.label}`} accent="#1d4ed8" icon={<Droplets className="size-4" />} loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-          <KpiCard dense={isMobile} label="Maior acumulado" value={pico?.mm != null ? formatMm(pico.mm) : "—"} sub={pico?.item.nome ?? "sem leitura"} accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-          <KpiCard dense={isMobile} label="Com leitura" value={rain ? String(rain.coverage.comLeitura) : "—"} sub="municípios com pluviômetro" accent="#3b82d6" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
-          <KpiCard dense={isMobile} label="Intenso em 1 h" value={rain ? String(rain.coverage.intenso1h) : "—"} sub="≥ 20 mm na última hora" accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard compact dense={isMobile} label="Com chuva" value={rain ? String(comChuva) : "—"} sub={`na janela de ${JANELAS.find((item) => item.id === janela)?.label}`} accent="#1d4ed8" icon={<Droplets className="size-4" />} loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard compact dense={isMobile} label="Maior acumulado" value={pico?.mm != null ? formatMm(pico.mm) : "—"} sub={pico?.item.nome ?? "sem leitura"} accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard compact dense={isMobile} label="Com leitura" value={rain ? String(rain.coverage.comLeitura) : "—"} sub="municípios com pluviômetro" accent="#3b82d6" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
+          <KpiCard compact dense={isMobile} label="Intenso em 1 h" value={rain ? String(rain.coverage.intenso1h) : "—"} sub="≥ 20 mm na última hora" accent="#1e3a8a" loading={!rain && !error} active={false} interactive={false} onClick={() => undefined} />
         </div> : null}
 
         <div className={cn("grid gap-2 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start", painel !== "chuva" && "hidden")}>

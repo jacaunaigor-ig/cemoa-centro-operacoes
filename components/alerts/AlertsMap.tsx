@@ -60,6 +60,7 @@ import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
 import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import { durationLabel } from "@/lib/alert-duration";
+import { corVento, duracaoVentoSeg, rosaDosVentos, sopraPara, VENTO_VAZIO, type VentoPonto } from "@/lib/vento-campo";
 import "leaflet/dist/leaflet.css";
 
 type Muni = {
@@ -111,6 +112,8 @@ export const AlertsMap = forwardRef<
     showInmetAvisos?: boolean;
         focosCalor?: Array<{ lat: number; lon: number; data: string; satelite: string; cor?: string }>;
     showFocosCalor?: boolean;
+    vento?: VentoPonto[];
+    showVento?: boolean;
     showSetores?: boolean;
     setorUso?: UsoSetor;
     fillByNome?: Record<string, string> | null;
@@ -148,6 +151,8 @@ export const AlertsMap = forwardRef<
     showInmetAvisos = false,
     focosCalor = [],
     showFocosCalor = false,
+    vento = VENTO_VAZIO,
+    showVento = false,
     showSetores = false,
     setorUso = "movimento",
     fillByNome = null,
@@ -178,6 +183,7 @@ export const AlertsMap = forwardRef<
   inmetAvisosRef.current = inmetAvisos;
   showInmetRef.current = showInmetAvisos;
   const focosLayerRef = useRef<LayerGroup | null>(null);
+  const ventoLayerRef = useRef<LayerGroup | null>(null);
   const setoresLayerRef = useRef<GeoJSONType | null>(null);
   const setorBolhasRef = useRef<LayerGroup | null>(null);
   const setoresDataRef = useRef<SetoresR3R4 | null>(null);
@@ -895,7 +901,39 @@ export const AlertsMap = forwardRef<
       layer.addTo(map);
       focosLayerRef.current = layer;
     }
-  }, [showFocosCalor, focosCalor]);
+  }, [showFocosCalor, focosCalor, meshReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L) return;
+    ventoLayerRef.current?.remove();
+    ventoLayerRef.current = null;
+    if (!showVento || !vento.length) return;
+    const pane = map.getPane("ventoPane") ?? map.createPane("ventoPane");
+    pane.style.zIndex = "640";
+    pane.style.pointerEvents = "none";
+    const layer = L.layerGroup();
+    for (const ponto of vento) {
+      const para = sopraPara(ponto.de);
+      const cor = corVento(ponto.kmh);
+      const seg = duracaoVentoSeg(ponto.kmh);
+      const marker = L.marker([ponto.lat, ponto.lon], {
+        interactive: false,
+        keyboard: false,
+        pane: "ventoPane",
+        icon: L.divIcon({
+          className: "vento-seta",
+          iconSize: [64, 64],
+          iconAnchor: [32, 32],
+          html: `<div class="vento-fluxo" title="Vento de ${rosaDosVentos(ponto.de)}, ${ponto.kmh} km/h, sopra para ${rosaDosVentos(para)}" style="color:${cor};transform:rotate(${para}deg)"><i style="animation-duration:${seg}s"></i><i style="animation-duration:${seg}s;animation-delay:${(-seg / 3).toFixed(2)}s"></i><i style="animation-duration:${seg}s;animation-delay:${((-2 * seg) / 3).toFixed(2)}s"></i></div>`,
+        }),
+      });
+      layer.addLayer(marker);
+    }
+    layer.addTo(map);
+    ventoLayerRef.current = layer;
+  }, [showVento, vento, meshReady]);
 
   useEffect(() => {
     const map = mapRef.current;

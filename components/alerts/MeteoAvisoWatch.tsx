@@ -40,7 +40,6 @@ import {
   turnoDoShiftAtual,
   type PlantaoTurno,
 } from "@/lib/plantao-turno";
-import { playVencimentoChime } from "@/lib/plantao-chime";
 
 function emitSuccessMessage(issuedAt: number) {
   const shift = meteoShiftAt(issuedAt);
@@ -104,8 +103,6 @@ function notifyAvisoStage(aviso: MeteoAviso, stage: string, notified: { current:
     if (notified.current === key) return;
   }
   notified.current = key;
-  // O cartão do plantão já mostra warn / urgent / expired. Só o sino toca aqui.
-  if (stage === "expired") playVencimentoChime();
 }
 
 export function MeteoAvisoProvider({ children }: { children: React.ReactNode }) {

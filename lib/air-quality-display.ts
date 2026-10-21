@@ -181,9 +181,9 @@ export function airBadgeInteger(pm25: number) {
 
 export function airBadgeSize(pm25: number) {
   const digits = String(airBadgeInteger(pm25)).length;
-  if (digits >= 3) return 38;
-  if (digits >= 2) return 34;
-  return 30;
+  if (digits >= 3) return 26;
+  if (digits >= 2) return 22;
+  return 18;
 }
 
 export function airBadgeTextColor(pm25: number) {

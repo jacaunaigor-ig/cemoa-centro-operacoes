@@ -17,7 +17,7 @@ export function HydroTicker({
   const row = (suffix: string) =>
     items.map((e) => {
       const st = statusAtivo(e, modo);
-      const color = HYDRO_STATUS_COLORS[st];
+      const color = st === "MODERADO" ? "var(--risco-moderado)" : HYDRO_STATUS_COLORS[st];
       return (
         <span key={`${e.id}-${suffix}`} className="ticker-item">
           <strong className="text-brand-2">{e.calha}</strong>

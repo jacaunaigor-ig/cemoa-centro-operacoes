@@ -1,20 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
-import { isAlertActive, type AlertType } from "@/lib/alert-types";
+import { fetchJson } from "@/lib/client";
+import { startVisiblePoll } from "@/lib/client-hooks";
+import { chaveChuvaSevera, linhasChuvaSevera, type ChuvaSevera } from "@/lib/chuva-severa";
+import { RISK_LABELS } from "@/lib/risk";
+import { STATIC_DEPLOY } from "@/lib/site";
+import type { RainfallPayload } from "@/lib/types";
 import {
-  announceAlertExpired,
-  hasPlantaoChimed,
-  markPlantaoChimed,
-  plantaoExpiryKey,
   plantaoSoundEnabled,
   playVencimentoChime,
+  prepararAvisoSonoro,
   setPlantaoSoundEnabled,
   subscribePlantaoSound,
   unlockPlantaoAudio,
 } from "@/lib/plantao-chime";
+import { withBase } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 function getSoundSnapshot() {
@@ -31,10 +34,10 @@ export function usePlantaoSoundEnabled() {
 
 export function PlantaoSoundUnlock() {
   useEffect(() => {
+    prepararAvisoSonoro(withBase("/aviso-chuva.wav"));
     const unlock = () => {
       unlockPlantaoAudio();
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
+      prepararAvisoSonoro(withBase("/aviso-chuva.wav"));
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
@@ -46,47 +49,73 @@ export function PlantaoSoundUnlock() {
   return null;
 }
 
-export function usePlantaoExpiryChime(
-  tipo: AlertType,
-  municipios: Array<{ nome: string; risco: string; expiresAt?: number | null }>,
-  enabled: boolean,
-) {
-  const signature = useMemo(
-    () =>
-      municipios
-        .map((m) => `${m.nome}:${m.risco}:${m.expiresAt ?? ""}`)
-        .sort()
-        .join("|"),
-    [municipios],
-  );
+const CHUVAS_OUIDAS = "cemoa_chuva_severa_ouvida_v1";
+const CHUVA_POLL_MS = 60_000;
 
+function chuvasJaOuvidas(): Set<string> {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(CHUVAS_OUIDAS) || "[]") as unknown;
+    return new Set(Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function gravarChuvasOuvidas(chaves: Set<string>) {
+  try {
+    sessionStorage.setItem(CHUVAS_OUIDAS, JSON.stringify([...chaves].slice(-300)));
+  } catch {
+    /* a sessão segue só em memória */
+  }
+}
+
+function avisoDeChuva(linhas: ChuvaSevera[]) {
+  const nomes = linhas
+    .slice(0, 3)
+    .map((linha) => `${linha.nome} (${RISK_LABELS[linha.level] ?? linha.level})`)
+    .join(", ");
+  const resto = linhas.length > 3 ? ` e mais ${linhas.length - 3}` : "";
+  return linhas.length === 1
+    ? `Chuva ${RISK_LABELS[linhas[0].level]?.toLowerCase() ?? "severa"} em ${linhas[0].nome}.`
+    : `Chuva severa em ${linhas.length} municípios: ${nomes}${resto}.`;
+}
+
+/** Toca uma vez por município e nível, enquanto a sessão estiver aberta. */
+export function ChuvaSeveraSound() {
   useEffect(() => {
-    if (!enabled) return;
-    const now = Date.now();
-    const timers: number[] = [];
-    for (const m of municipios) {
-      const expiresAt = m.expiresAt;
-      if (!expiresAt || !isAlertActive(tipo, m.risco)) continue;
-      const key = plantaoExpiryKey(tipo, m.nome, expiresAt);
-      if (expiresAt <= now) {
-        markPlantaoChimed(key);
-        continue;
+    if (STATIC_DEPLOY) return;
+    let cancel = false;
+    const ouvidas = chuvasJaOuvidas();
+
+    async function load() {
+      try {
+        const data = await fetchJson<RainfallPayload>("/api/rainfall");
+        if (cancel) return;
+        const novas = linhasChuvaSevera(data).filter((linha) => !ouvidas.has(chaveChuvaSevera(linha)));
+        if (!novas.length) return;
+        const tocou = await playVencimentoChime();
+        if (cancel) return;
+        if (!tocou) {
+          if (plantaoSoundEnabled()) {
+            toast.message("O navegador ainda não liberou o áudio. Use Testar som no cabeçalho.");
+          }
+          return;
+        }
+        for (const linha of novas) ouvidas.add(chaveChuvaSevera(linha));
+        gravarChuvasOuvidas(ouvidas);
+        toast.error(avisoDeChuva(novas));
+      } catch {
+        /* a próxima leitura tenta de novo */
       }
-      if (hasPlantaoChimed(key)) continue;
-      timers.push(
-        window.setTimeout(() => {
-          if (hasPlantaoChimed(key)) return;
-          markPlantaoChimed(key);
-          announceAlertExpired(m.nome, (message) => toast.error(message));
-        }, expiresAt - Date.now()),
-      );
     }
+
+    const stop = startVisiblePoll(load, CHUVA_POLL_MS);
     return () => {
-      for (const id of timers) window.clearTimeout(id);
+      cancel = true;
+      stop();
     };
-    // signature captures the watch list without resetting on new array identity
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, tipo, signature]);
+  }, []);
+  return null;
 }
 
 export function PlantaoSoundButton({
@@ -107,17 +136,15 @@ export function PlantaoSoundButton({
         className,
       )}
       aria-pressed={on}
-      aria-label={on ? "Silenciar som de vencimento" : "Ligar som de vencimento"}
+      aria-label={on ? "Silenciar som de chuva severa" : "Ligar som de chuva severa"}
       title={
         on
-          ? "Som de vencimento ligado"
-          : "Som de vencimento mudo"
+          ? "Som ligado. Toca quando a chuva medida chega a severa ou extrema."
+          : "Som mudo. A chuva severa não toca até ligar."
       }
       onClick={() => {
-        const next = !on;
-        setPlantaoSoundEnabled(next);
+        setPlantaoSoundEnabled(!on);
         unlockPlantaoAudio();
-        if (next) playVencimentoChime();
       }}
     >
       {on ? <Bell className="size-3.5" /> : <BellOff className="size-3.5" />}

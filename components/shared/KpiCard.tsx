@@ -47,13 +47,13 @@ export function KpiCard({
       )}
       style={{
         borderColor: active ? accent : undefined,
-        boxShadow: active ? `0 0 0 2px ${accent}33, var(--shadow-card)` : undefined,
+        boxShadow: active ? `0 0 0 2px color-mix(in srgb, ${accent} 28%, transparent), var(--shadow-card)` : undefined,
       }}
     >
       <span
         aria-hidden
         className={dense ? "absolute inset-x-0 top-0 h-0.5" : "absolute inset-y-0 left-0 w-1"}
-        style={{ background: accent, opacity: active ? 1 : 0.45 }}
+        style={{ background: accent, opacity: active || accent.includes("risco-moderado") ? 1 : 0.7 }}
       />
       {dense ? (
         <>
@@ -68,27 +68,46 @@ export function KpiCard({
             </p>
           )}
         </>
+      ) : compact || isMobile ? (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-1.5">
+              {icon ? (
+                <span className="grid size-4 shrink-0 place-items-center" style={{ color: accent }}>{icon}</span>
+              ) : (
+                <span className="size-2 shrink-0 rounded-full" style={{ background: accent }} />
+              )}
+              <small className="truncate text-[10px] font-bold tracking-wide text-text-mute uppercase">{label}</small>
+            </span>
+            {loading ? (
+              <Skeleton className="h-6 w-8" />
+            ) : (
+              <p className={cn("font-semibold tabular-nums leading-none", isMobile ? "text-xl" : "text-2xl")}>{value}</p>
+            )}
+          </div>
+          {!isMobile && sub ? <p className="mt-1 truncate text-[11px] text-text-mute">{sub}</p> : null}
+        </>
       ) : (
         <>
           <div className="flex items-start justify-between gap-2">
             <span
-              className={cn("grid shrink-0 place-items-center rounded-lg", isMobile ? "size-7" : "size-8")}
-              style={{ background: `${accent}1a`, color: accent }}
+              className="grid size-8 shrink-0 place-items-center rounded-lg"
+              style={{ background: `color-mix(in srgb, ${accent} 16%, transparent)`, color: accent }}
             >
               {icon ?? <span className="size-2 rounded-full" style={{ background: accent }} />}
             </span>
-            <small className="pt-1 text-[10px] font-semibold tracking-[0.12em] text-text-mute uppercase sm:text-[11px]">
+            <small className="pt-1 text-[10px] font-bold tracking-wide text-text-mute uppercase">
               {label}
             </small>
           </div>
           {loading ? (
             <Skeleton className="mt-2 h-7 w-14" />
           ) : (
-            <p className={cn("mt-1.5 leading-none font-semibold tracking-tight tabular-nums", isMobile ? "text-xl" : "text-[1.75rem]")}>
+            <p className="mt-1.5 text-2xl leading-none font-semibold tracking-tight tabular-nums">
               {value}
             </p>
           )}
-          {!isMobile ? <p className="mt-1 text-xs text-text-mute">{sub}</p> : null}
+          {sub ? <p className="mt-1 truncate text-[11px] text-text-mute">{sub}</p> : null}
         </>
       )}
     </button>

@@ -1,13 +1,8 @@
 "use client";
 
 import { Wind } from "lucide-react";
-import { useOpsMode } from "@/components/shared/OpsMode";
-import { AIR_LABELS, airLevelFromPm25, airUiInk } from "@/lib/alert-types";
-import {
-  formatUg,
-  formatUgShort,
-  SELVA_URL,
-} from "@/lib/air-quality-display";
+import { airLevelFromPm25, airUiInk } from "@/lib/alert-types";
+import { formatUg, formatUgShort } from "@/lib/air-quality-display";
 import type { AirFilter, AirQualityPayload } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -26,56 +21,40 @@ export function AirQualityStrip({
 }) {
   const cov = air?.coverage;
   const pico = cov?.pico;
-  const { isMobile } = useOpsMode();
-  const picoLevel = pico ? airLevelFromPm25(pico.pm25) : null;
+  const fonte = air && /selva/i.test(air.source) ? "App SELVA" : "PurpleAir";
 
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-xl border border-border bg-panel shadow-[var(--shadow-card)]",
-        isMobile ? "flex-nowrap px-2 py-1.5" : "flex-wrap px-3.5 py-2.5 gap-3",
+        "flex flex-nowrap items-center gap-2 overflow-hidden rounded-xl border border-border bg-panel px-2 py-1 shadow-[var(--shadow-card)]",
         className,
       )}
     >
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-focus/12 text-focus">
-          <Wind className="size-5" />
-        </span>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-[11px] font-semibold tracking-[0.12em] text-text-mute uppercase">
-            {air && /selva/i.test(air.source) ? "App SELVA · pior sensor agora" : "PurpleAir · MP2,5 agora"}
-            {air && /selva/i.test(air.source) ? "App SELVA · qualidade do ar ao vivo" : "PurpleAir · MP2,5 ao vivo"}
-          </p>
-          {loading && !air ? (
-            <p className="text-xs text-text-mute">Consultando monitores…</p>
-          ) : air?.error && !cov?.sensores ? (
-            <p className="text-xs text-risco-alto">Monitores indisponíveis.</p>
-          ) : (
-            <p className="truncate text-xs text-text">
-              {cov?.comSensor ?? 0}/{cov?.municipiosCemoa ?? 62} municípios
-              {pico ? (
-                <span className="text-text-mute">
-                  {" "}
-                  · pico {pico.nome} {formatUg(pico.pm25)}
-                </span>
-              ) : (
-                <span className="text-text-mute"> · sem leitura válida</span>
-              )}
-            </p>
-          )}
-        </div>
-      </div>
-      {!isMobile && (cov?.semaDcam || cov?.ueaEducair) ? (
-        <p className="hidden shrink-0 text-[10px] text-text-mute lg:block">
-          {cov?.semaDcam ?? 0} SEMA/DC-AM · {cov?.ueaEducair ?? 0} UEA EducAIR
-        </p>
-      ) : null}
-      <div className={cn("flex min-w-0 gap-1", isMobile ? "flex-1 overflow-x-auto" : "ml-auto flex-wrap")}>
+      <Wind className="size-4 shrink-0 text-focus" aria-hidden />
+      <p className="w-[58%] shrink-0 truncate text-[11px] leading-none text-text">
+        <span className="font-bold tracking-wide text-text-mute uppercase">{fonte}</span>
+        {loading && !air ? (
+          <span className="text-text-mute"> · consultando</span>
+        ) : air?.error && !cov?.sensores ? (
+          <span className="text-risco-alto"> · monitores indisponíveis</span>
+        ) : (
+          <>
+            {" "}
+            · {cov?.comSensor ?? 0}/{cov?.municipiosCemoa ?? 62}
+            {pico ? (
+              <span className="text-text-mute"> · pico {pico.nome} {formatUg(pico.pm25)}</span>
+            ) : (
+              <span className="text-text-mute"> · sem leitura válida</span>
+            )}
+          </>
+        )}
+      </p>
+      <div className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <AirChip active={filter === "TODOS"} onClick={() => onFilter("TODOS")}>
           Todos
         </AirChip>
         <AirChip active={filter === "COM_SENSOR"} onClick={() => onFilter("COM_SENSOR")}>
-          Com sensor ({cov?.comSensor ?? 0})
+          Sensor ({cov?.comSensor ?? 0})
         </AirChip>
         <AirChip active={filter === "ATENCAO"} onClick={() => onFilter("ATENCAO")}>
           ≥12,1 ({cov?.atencao ?? 0})
@@ -84,27 +63,6 @@ export function AirQualityStrip({
           ≥35,5 ({cov?.ruim ?? 0})
         </AirChip>
       </div>
-      {picoLevel && picoLevel !== "BOA" ? (
-        <span
-          className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold lg:inline"
-          style={{
-            color: airUiInk(picoLevel),
-            background: `${airUiInk(picoLevel)}22`,
-          }}
-        >
-          {AIR_LABELS[picoLevel]}
-        </span>
-      ) : null}
-      {!isMobile ? (
-        <a
-          href={SELVA_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="hidden text-[10px] font-bold text-focus hover:underline xl:inline"
-        >
-          App SELVA
-        </a>
-      ) : null}
     </div>
   );
 }
@@ -124,7 +82,7 @@ function AirChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-8 shrink-0 items-center rounded-full border px-2.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
+        "inline-flex min-h-7 shrink-0 items-center rounded-full border px-2 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97]",
         active
           ? "border-focus/50 bg-focus/20 text-text"
           : "border-border bg-hover text-text-mute hover:text-text",

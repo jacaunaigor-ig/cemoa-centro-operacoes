@@ -120,6 +120,24 @@ export function piorNivel(...niveis: Array<NivelAlertaMet | null | undefined>): 
   }, "Sem alerta");
 }
 
+/**
+ * Fator de alerta do incêndio. Monitor oficial e classificação do operador
+ * prevalecem: um sensor corrigido não fica Extremo só porque a contagem de
+ * focos é alta. Sem monitor e sem classificação, os focos AQUA definem o fator.
+ */
+export function nivelIncendio(input: {
+  operador?: AlertLevel;
+  operadorManual?: boolean;
+  ar?: AlertLevel | null;
+  temMonitor: boolean;
+  focos?: number | null;
+}): NivelAlertaMet {
+  const manual = input.operadorManual ? nivelAlertaMet(input.operador) : "Sem alerta";
+  const qualidade = input.temMonitor ? nivelAlertaMet(input.ar ?? undefined) : "Sem alerta";
+  if (input.temMonitor || input.operadorManual) return piorNivel(manual, qualidade);
+  return nivelDeFocos(input.focos);
+}
+
 /** Focos AQUA-Tarde em 15 dias. A quantidade entra no fator de alerta do incêndio. */
 export function nivelDeFocos(total: number | null | undefined): NivelAlertaMet {
   const n = total ?? 0;
@@ -177,7 +195,7 @@ export function buildMetodologiaPayload(
     buildAlertsPayload(now, "EROSAO").municipios.map((r) => [r.id, r.risco]),
   );
   const incendioMap = new Map(
-    buildAlertsPayload(now, "INCENDIO").municipios.map((r) => [r.id, r.risco]),
+    buildAlertsPayload(now, "INCENDIO").municipios.map((r) => [r.id, r]),
   );
   const hidroMap = new Map(catalogStations().map((s) => [s.id, s.statusVazante]));
 
@@ -226,11 +244,13 @@ export function buildMetodologiaPayload(
         nivelAlertaMet(classifyMonitorRain("MOVIMENTO", chuvaRec?.mm24h, onde).level),
       ),
       "Erosão": piorNivel(nivelAlertaMet(erosaoMap.get(m.id)), nivelHidro(hidroMap.get(m.id))),
-      "Incêndio/QAr": piorNivel(
-        nivelAlertaMet(incendioMap.get(m.id)),
-        nivelAlertaMet(arRec?.level ?? undefined),
-        nivelDeFocos(live?.focos?.byId[m.id]),
-      ),
+      "Incêndio/QAr": nivelIncendio({
+        operador: incendioMap.get(m.id)?.risco,
+        operadorManual: incendioMap.get(m.id)?.fonte === "admin",
+        ar: arRec?.level,
+        temMonitor: Boolean(arRec && arRec.pm25 != null && arRec.level),
+        focos: live?.focos?.byId[m.id],
+      }),
       "Inundação": "Sem alerta",
     };
 

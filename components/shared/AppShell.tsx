@@ -26,9 +26,10 @@ import { useOpsMode } from "@/components/shared/OpsMode";
 import { LoginDialog } from "@/components/auth/LoginDialog";
 import { AdminsDialog } from "@/components/auth/AdminsDialog";
 import { AirCriticalBanner } from "@/components/alerts/AirCriticalBanner";
+import { ChuvaAcumuladaBanner } from "@/components/alerts/ChuvaAcumuladaBanner";
 import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
-import { PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
+import { ChuvaSeveraSound, PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
 import { OpsFooter } from "@/components/shared/OpsFooter";
 import { situacaoConsulta, textoConsulta } from "@/lib/consulta-rotulo";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -96,6 +97,7 @@ export function AppShell({
     <MeteoAvisoProvider>
       <AvisoGraficoProvider>
       <PlantaoSoundUnlock />
+      <ChuvaSeveraSound />
       <div
         className={cn(
           "flex h-dvh flex-col overflow-hidden transition-[min-height] duration-300",
@@ -226,7 +228,11 @@ export function AppShell({
             {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
             <span className="hidden sm:inline">{theme === "dark" ? "Claro" : "Escuro"}</span>
           </button>
-          {!isMobile ? <PlantaoSoundButton labeled /> : null}
+          {!isMobile ? (
+            <>
+              <PlantaoSoundButton labeled />
+            </>
+          ) : null}
           {!isMobile && session ? (
             <span
               className="hidden max-w-[18rem] truncate rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute xl:inline"
@@ -344,6 +350,7 @@ export function AppShell({
         </div>
       ) : null}
       <AirCriticalBanner />
+      <ChuvaAcumuladaBanner />
       <div
         id="conteudo"
         className={cn(

@@ -200,6 +200,43 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
 }
 .leaflet-tooltip.foco-balao::before { display: none; }
+.leaflet-div-icon.vento-seta {
+  background: transparent;
+  border: none;
+  overflow: visible;
+}
+.vento-fluxo {
+  width: 64px;
+  height: 64px;
+  position: relative;
+}
+.vento-fluxo i {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  margin-left: -6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 16px solid currentColor;
+  filter: drop-shadow(0 0 1px #f8fafc);
+  animation-name: vento-corre;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes vento-corre {
+  from { transform: translateY(6px); opacity: 0; }
+  18% { opacity: 1; }
+  to { transform: translateY(-48px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vento-fluxo i {
+    animation: none;
+    opacity: 0.9;
+    transform: translateY(-14px);
+  }
+}
 .leaflet-tooltip.foco-balao-zero {
   color: #6b7280;
   border-color: #d1d5db;
@@ -255,6 +292,11 @@ html[data-theme="dark"] .leaflet-control-attribution a {
 .hydro-map.leaflet-container,
 .hydro-map {
   background: var(--map-wash);
+}
+
+.hydro-select.hydro-select-sm {
+  height: 2rem;
+  font-size: 11px;
 }
 
 .hydro-select {
@@ -459,7 +501,7 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   place-items: center;
   border-radius: 999px;
   background: var(--air, #00e400);
-  box-shadow: 0 0 0 2px #fff, 0 1px 3px rgba(15, 23, 42, 0.4);
+  box-shadow: 0 0 0 1.5px #fff, 0 1px 2px rgba(15, 23, 42, 0.35);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
