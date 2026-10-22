@@ -8,7 +8,6 @@ import { RiskBadge } from "@/components/shared/RiskBadge";
 import { classificationByline, type AlertType } from "@/lib/alert-types";
 import { buildAlertBriefing, buildFichaLinha } from "@/lib/alert-briefing";
 import { formatUg } from "@/lib/air-quality-display";
-import { HYDRO_STATUS_LABELS, statusAtivo } from "@/lib/hydrology";
 import type { AirQualityMunicipio, AlertLevel, HydroStation, RainAlert, RainfallMunicipio } from "@/lib/types";
 import { cn, formatRelative } from "@/lib/utils";
 import { useOpsMode } from "@/components/shared/OpsMode";
@@ -157,9 +156,6 @@ export function AlertDetail({
       {hydro ? (
         <p className="mt-2 text-[11px] text-text-dim">
           Cota {hydro.semLeitura ? "sem leitura" : `${hydro.cota?.toFixed(2)} m`}
-          {hydro.semLeitura || tipo === "ALAGAMENTO"
-            ? ""
-            : ` · inundação ${HYDRO_STATUS_LABELS[statusAtivo(hydro, "enchente")]}`}
           {calha ? ` · ${calha}` : ""}
         </p>
       ) : null}

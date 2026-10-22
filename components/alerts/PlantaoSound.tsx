@@ -12,10 +12,12 @@ import type { RainfallPayload } from "@/lib/types";
 import {
   plantaoSoundEnabled,
   playVencimentoChime,
+  prepararAvisoSonoro,
   setPlantaoSoundEnabled,
   subscribePlantaoSound,
   unlockPlantaoAudio,
 } from "@/lib/plantao-chime";
+import { withBase } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 function getSoundSnapshot() {
@@ -32,10 +34,10 @@ export function usePlantaoSoundEnabled() {
 
 export function PlantaoSoundUnlock() {
   useEffect(() => {
+    prepararAvisoSonoro(withBase("/aviso-chuva.wav"));
     const unlock = () => {
       unlockPlantaoAudio();
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
+      prepararAvisoSonoro(withBase("/aviso-chuva.wav"));
     };
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
@@ -91,14 +93,17 @@ export function ChuvaSeveraSound() {
         if (cancel) return;
         const novas = linhasChuvaSevera(data).filter((linha) => !ouvidas.has(chaveChuvaSevera(linha)));
         if (!novas.length) return;
-        for (const linha of novas) ouvidas.add(chaveChuvaSevera(linha));
-        gravarChuvasOuvidas(ouvidas);
         const tocou = await playVencimentoChime();
         if (cancel) return;
-        toast.error(avisoDeChuva(novas));
-        if (!tocou && plantaoSoundEnabled()) {
-          toast.message("O navegador ainda não liberou o áudio. Use Testar som no cabeçalho.");
+        if (!tocou) {
+          if (plantaoSoundEnabled()) {
+            toast.message("O navegador ainda não liberou o áudio. Use Testar som no cabeçalho.");
+          }
+          return;
         }
+        for (const linha of novas) ouvidas.add(chaveChuvaSevera(linha));
+        gravarChuvasOuvidas(ouvidas);
+        toast.error(avisoDeChuva(novas));
       } catch {
         /* a próxima leitura tenta de novo */
       }
@@ -144,28 +149,6 @@ export function PlantaoSoundButton({
     >
       {on ? <Bell className="size-3.5" /> : <BellOff className="size-3.5" />}
       {labeled ? <span className="hidden sm:inline">{on ? "Som" : "Mudo"}</span> : null}
-    </button>
-  );
-}
-
-export function PlantaoSoundTestButton({ className }: { className?: string }) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        "inline-flex items-center rounded-lg border border-border bg-panel-2 px-2 py-1.5 text-[10px] font-bold text-text-mute transition-colors hover:text-text",
-        className,
-      )}
-      aria-label="Testar som de chuva severa"
-      title="Toca o aviso agora, para conferir o alto-falante."
-      onClick={() => {
-        void playVencimentoChime({ ignorarMudo: true }).then((tocou) => {
-          if (tocou) toast.success("Som de teste reproduzido.");
-          else toast.error("O navegador bloqueou o áudio. Clique em Testar som de novo.");
-        });
-      }}
-    >
-      Testar som
     </button>
   );
 }

@@ -60,7 +60,7 @@ import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
 import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import { durationLabel } from "@/lib/alert-duration";
-import { corVento, rosaDosVentos, sopraPara, VENTO_VAZIO, type VentoPonto } from "@/lib/vento-campo";
+import { corVento, duracaoVentoSeg, rosaDosVentos, sopraPara, VENTO_VAZIO, type VentoPonto } from "@/lib/vento-campo";
 import "leaflet/dist/leaflet.css";
 
 type Muni = {
@@ -910,24 +910,23 @@ export const AlertsMap = forwardRef<
     ventoLayerRef.current?.remove();
     ventoLayerRef.current = null;
     if (!showVento || !vento.length) return;
-    if (!map.getPane("ventoPane")) {
-      const pane = map.createPane("ventoPane");
-      pane.style.zIndex = "470";
-      pane.style.pointerEvents = "none";
-    }
+    const pane = map.getPane("ventoPane") ?? map.createPane("ventoPane");
+    pane.style.zIndex = "640";
+    pane.style.pointerEvents = "none";
     const layer = L.layerGroup();
     for (const ponto of vento) {
       const para = sopraPara(ponto.de);
       const cor = corVento(ponto.kmh);
+      const seg = duracaoVentoSeg(ponto.kmh);
       const marker = L.marker([ponto.lat, ponto.lon], {
         interactive: false,
         keyboard: false,
         pane: "ventoPane",
         icon: L.divIcon({
           className: "vento-seta",
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-          html: `<div title="Vento de ${rosaDosVentos(ponto.de)}, ${ponto.kmh} km/h, sopra para ${rosaDosVentos(para)}" style="width:26px;height:26px;transform:rotate(${para}deg)"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.2 L16.2 13.2 H13.1 V21.2 H10.9 V13.2 H7.8 Z" fill="${cor}" stroke="#f8fafc" stroke-width="0.7"/></svg></div>`,
+          iconSize: [64, 64],
+          iconAnchor: [32, 32],
+          html: `<div class="vento-fluxo" title="Vento de ${rosaDosVentos(ponto.de)}, ${ponto.kmh} km/h, sopra para ${rosaDosVentos(para)}" style="color:${cor};transform:rotate(${para}deg)"><i style="animation-duration:${seg}s"></i><i style="animation-duration:${seg}s;animation-delay:${(-seg / 3).toFixed(2)}s"></i><i style="animation-duration:${seg}s;animation-delay:${((-2 * seg) / 3).toFixed(2)}s"></i></div>`,
         }),
       });
       layer.addLayer(marker);

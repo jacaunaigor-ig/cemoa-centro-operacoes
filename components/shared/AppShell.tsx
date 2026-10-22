@@ -29,7 +29,7 @@ import { AirCriticalBanner } from "@/components/alerts/AirCriticalBanner";
 import { ChuvaAcumuladaBanner } from "@/components/alerts/ChuvaAcumuladaBanner";
 import { MeteoAvisoProvider } from "@/components/alerts/MeteoAvisoWatch";
 import { AvisoGraficoProvider } from "@/components/alerts/AvisoGrafico";
-import { ChuvaSeveraSound, PlantaoSoundButton, PlantaoSoundTestButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
+import { ChuvaSeveraSound, PlantaoSoundButton, PlantaoSoundUnlock } from "@/components/alerts/PlantaoSound";
 import { OpsFooter } from "@/components/shared/OpsFooter";
 import { situacaoConsulta, textoConsulta } from "@/lib/consulta-rotulo";
 import { STATIC_DEPLOY } from "@/lib/site";
@@ -231,7 +231,6 @@ export function AppShell({
           {!isMobile ? (
             <>
               <PlantaoSoundButton labeled />
-              <PlantaoSoundTestButton />
             </>
           ) : null}
           {!isMobile && session ? (

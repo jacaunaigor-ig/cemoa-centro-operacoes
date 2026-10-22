@@ -41,6 +41,13 @@ export function corVento(kmh: number) {
   return "#0369a1";
 }
 
+/** Segundos de um ciclo. Vento mais forte corre mais depressa. */
+export function duracaoVentoSeg(kmh: number) {
+  const v = Number.isFinite(kmh) ? Math.max(0, kmh) : 0;
+  const seg = 28 / Math.max(v, 6);
+  return Math.round(Math.min(3.2, Math.max(0.7, seg)) * 100) / 100;
+}
+
 function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number) {
   const rad = Math.PI / 180;
   const dLat = (bLat - aLat) * rad;
