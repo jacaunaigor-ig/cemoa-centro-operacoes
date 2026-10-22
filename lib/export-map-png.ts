@@ -142,6 +142,19 @@ export function pngFilename(prefix: string) {
   return `${prefix}_alta_resolucao_${day}.png`;
 }
 
+function quadroDoFoco(gw: number, gh: number) {
+  const maxW = 1500;
+  const maxH = 1220;
+  const aspect = gw / Math.max(gh, 1e-9);
+  let mapW = maxW;
+  let mapH = mapW / aspect;
+  if (mapH > maxH) {
+    mapH = maxH;
+    mapW = mapH * aspect;
+  }
+  return { left: 70, right: 70 + mapW, top: 220, bottom: 220 + mapH };
+}
+
 export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   const geo = (await loadMunicipalMesh()) as FeatureCollection;
 
@@ -178,8 +191,8 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     });
   }
   if (opts.foco?.length && Number.isFinite(minX)) {
-    const dx = Math.max((maxX - minX) * 0.28, 0.002);
-    const dy = Math.max((maxY - minY) * 0.28, 0.002);
+    const dx = Math.max((maxX - minX) * 0.12, 0.002);
+    const dy = Math.max((maxY - minY) * 0.12, 0.002);
     minX -= dx;
     maxX += dx;
     minY -= dy;
@@ -215,12 +228,15 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   ctx.fillText("CEMOA · DEFESA CIVIL DO AMAZONAS", BASE_W - 55, 114);
   ctx.textAlign = "left";
 
-  const area = { left: 70, right: 1800, top: 220, bottom: 1490 };
-  const aw = area.right - area.left;
-  const ah = area.bottom - area.top;
   const gw = maxX - minX;
   const gh = maxY - minY;
-  const scale = Math.min((aw - 120) / gw, (ah - 90) / gh);
+  const area = opts.foco?.length
+    ? quadroDoFoco(gw, gh)
+    : { left: 70, right: 1800, top: 220, bottom: 1490 };
+  const aw = area.right - area.left;
+  const ah = area.bottom - area.top;
+  const margem = opts.foco?.length ? 48 : 120;
+  const scale = Math.min((aw - margem) / gw, (ah - margem) / gh);
   const usedW = gw * scale;
   const usedH = gh * scale;
   const ox = area.left + (aw - usedW) / 2;
@@ -230,18 +246,23 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     return [ox + (m[0] - minX) * scale, oy + (maxY - m[1]) * scale];
   };
 
-  ctx.fillStyle = opts.foco?.length ? "#e7eef4" : "#ffffff";
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(area.left - 18, area.top - 18, aw + 36, ah + 36);
-  ctx.strokeStyle = "#b8c7d2";
+  ctx.strokeStyle = "#d5dee6";
   ctx.lineWidth = 2;
   ctx.strokeRect(area.left - 18, area.top - 18, aw + 36, ah + 36);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(area.left, area.top, aw, ah);
+  ctx.clip();
 
   const drawGeom = (g: Geom | null, fill: string) => {
     if (!g) return;
     ctx.save();
     ctx.fillStyle = fill;
-    ctx.strokeStyle = opts.foco?.length ? "#c5d2dc" : "#ffffff";
-    ctx.lineWidth = opts.foco?.length ? 1.2 : 2.2;
+    ctx.strokeStyle = opts.foco?.length ? "#8aa0b0" : "#ffffff";
+    ctx.lineWidth = opts.foco?.length ? 1.6 : 2.2;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     const drawPoly = (poly: Ring[]) => {
@@ -397,8 +418,8 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   ctx.restore();
   ctx.textAlign = "left";
 
-  const sx = 105;
-  const sy = 1435;
+  const sx = opts.foco?.length ? area.left + 28 : 105;
+  const sy = opts.foco?.length ? area.bottom - 28 : 1435;
   ctx.fillStyle = "#263e50";
   ctx.font = "700 15px Arial, sans-serif";
   if (!opts.foco?.length) {
@@ -431,7 +452,9 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     ctx.strokeRect(sx, sy, largura, 12);
   }
 
-  const panelX = 1840;
+  ctx.restore();
+
+  const panelX = opts.foco?.length ? area.right + 48 : 1840;
   const panelY = 205;
   const panelW = 705;
   const panelH = 1285;

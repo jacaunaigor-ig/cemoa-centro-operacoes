@@ -206,10 +206,9 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   overflow: visible;
 }
 .vento-fluxo {
-  width: 28px;
-  height: 28px;
+  width: 42px;
+  height: 42px;
   position: relative;
-  opacity: 0.72;
 }
 .vento-fluxo i {
   position: absolute;
@@ -217,24 +216,26 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   bottom: 2px;
   width: 0;
   height: 0;
-  margin-left: -3.5px;
-  border-left: 3.5px solid transparent;
-  border-right: 3.5px solid transparent;
-  border-bottom: 8px solid currentColor;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 14px solid currentColor;
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 1px 1px rgba(15, 23, 42, 0.55));
   animation-name: vento-corre;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 @keyframes vento-corre {
-  from { transform: translateY(2px); opacity: 0; }
-  22% { opacity: 0.85; }
-  to { transform: translateY(-16px); opacity: 0; }
+  from { transform: translateY(4px); opacity: 0; }
+  16% { opacity: 1; }
+  72% { opacity: 0.95; }
+  to { transform: translateY(-28px); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .vento-fluxo i {
     animation: none;
-    opacity: 0.7;
-    transform: translateY(-6px);
+    opacity: 1;
+    transform: translateY(-10px);
   }
 }
 .leaflet-tooltip.foco-balao-zero {
