@@ -20,6 +20,7 @@ import { RISK_COLORS } from "@/lib/risk";
 import { aneisExternos, corZona, type ZonaChuva } from "@/lib/zona-chuva";
 import { anelParaMapa, bairroNoPonto, type BairroManaus } from "@/lib/manaus-chuva";
 import { desenharApoioManaus } from "@/lib/manaus-camada";
+import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import type { ViaEscoamento, ZonaAdministrativa } from "@/lib/manaus-zonas";
 import type { BairroFichaDados } from "@/components/alerts/BairroManausFicha";
 import type { PluvioFichaDados } from "@/components/alerts/PluvioChuvaFicha";
@@ -68,7 +69,6 @@ import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-h
 import { reportClientError } from "@/lib/client";
 import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
-import type { InmetAvisoMapa } from "@/lib/inmet-avisos";
 import { durationLabel } from "@/lib/alert-duration";
 import { corVento, duracaoVentoSeg, rosaDosVentos, sopraPara, VENTO_VAZIO, type VentoPonto } from "@/lib/vento-campo";
 import "leaflet/dist/leaflet.css";
@@ -944,6 +944,10 @@ export const AlertsMap = forwardRef<
     chuvaPluvioRef.current?.remove();
     chuvaPluvioRef.current = null;
     if (!showZonas || pointKind === "air") return;
+    if (!map.getPane("pointsPane")) {
+      const pane = map.createPane("pointsPane");
+      pane.style.zIndex = "630";
+    }
     const layer = L.layerGroup().addTo(map);
     chuvaPluvioRef.current = layer;
     for (const estacao of pluviosRegistrandoChuva(pluvio)) {
@@ -1102,9 +1106,9 @@ export const AlertsMap = forwardRef<
         pane: "ventoPane",
         icon: L.divIcon({
           className: "vento-seta",
-          iconSize: [64, 64],
-          iconAnchor: [32, 32],
-          html: `<div class="vento-fluxo" title="Vento de ${rosaDosVentos(ponto.de)}, ${ponto.kmh} km/h, sopra para ${rosaDosVentos(para)}" style="color:${cor};transform:rotate(${para}deg)"><i style="animation-duration:${seg}s"></i><i style="animation-duration:${seg}s;animation-delay:${(-seg / 3).toFixed(2)}s"></i><i style="animation-duration:${seg}s;animation-delay:${((-2 * seg) / 3).toFixed(2)}s"></i></div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          html: `<div class="vento-fluxo" title="Vento de ${rosaDosVentos(ponto.de)}, ${ponto.kmh} km/h, sopra para ${rosaDosVentos(para)}" style="color:${cor};transform:rotate(${para}deg)"><i style="animation-duration:${Math.max(seg, 1.8)}s"></i></div>`,
         }),
       });
       layer.addLayer(marker);
@@ -1315,6 +1319,7 @@ export const AlertsMap = forwardRef<
     const ordem = [...zonas].sort(
       (a, b) => Number(a.id === zonaSelecionada) - Number(b.id === zonaSelecionada),
     );
+    const centros: ZonaChuva[] = [];
     for (const zona of ordem) {
       const selecionada = zona.id === zonaSelecionada;
       const partes = selecionada
@@ -1357,10 +1362,11 @@ export const AlertsMap = forwardRef<
         onSelectZonaRef.current?.(zona.id);
       });
       circulo.bindTooltip(
-        `${zona.estacao}<br/>Raio de perigo ${zona.raioKm} km<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h`,
+        `<strong>${zona.estacao}</strong><br/>${LEVEL_LABELS[zona.level] ?? zona.level} · raio de perigo ${zona.raioKm} km<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h<br/>Clique no ponto central para abrir a influência`,
         { direction: "top", className: "map-point-tip" },
       );
       circulo.addTo(layer);
+      centros.push(zona);
       for (const bairro of partes) {
         const realce = bairroRealce === bairro.geometry;
         const poly = L.polygon(anelParaMapa(bairro.geometry.coordinates[0]), {
@@ -1401,6 +1407,43 @@ export const AlertsMap = forwardRef<
         },
       ).addTo(layer);
     }
+    for (const zona of centros) {
+      const selecionada = zona.id === zonaSelecionada;
+      const tinta = RISK_COLORS[zona.level] ?? corZona(zona.level);
+      const abrir = (event: LeafletMouseEvent) => {
+        L.DomEvent.stop(event);
+        onSelectZonaRef.current?.(zona.id);
+      };
+      L.marker([zona.lat, zona.lon], {
+        icon: L.divIcon({
+          className: "map-raio-centro-icon",
+          html: `<span class="map-raio-centro${selecionada ? " is-on" : ""}" style="--raio:${tinta}"></span>`,
+          iconSize: selecionada ? [12, 12] : [10, 10],
+          iconAnchor: selecionada ? [6, 6] : [5, 5],
+        }),
+        keyboard: false,
+        pane: "raioPane",
+        zIndexOffset: selecionada ? 500 : 400,
+      })
+        .on("click", abrir)
+        .bindTooltip(
+          `<strong>${zona.estacao}</strong><br/>Abrir influência · ${zona.raioKm} km`,
+          { direction: "top", className: "map-point-tip" },
+        )
+        .addTo(layer);
+      const norte = zona.lat + zona.raioKm / 111.2;
+      L.marker([norte, zona.lon], {
+        icon: L.divIcon({
+          className: "map-raio-km-icon",
+          html: `<span class="map-raio-km">${zona.raioKm} km</span>`,
+          iconSize: [36, 14],
+          iconAnchor: [18, 7],
+        }),
+        keyboard: false,
+        interactive: false,
+        pane: "raioPane",
+      }).addTo(layer);
+    }
     return () => {
       layer.remove();
     };
@@ -1425,8 +1468,14 @@ export const AlertsMap = forwardRef<
         anel.map(([lon, lat]) => [lat, lon] as [number, number]),
       );
       if (pontos.length < 2) return;
+      const limites = folheto.latLngBounds(pontos);
+      const vista = atual.getBounds();
+      const jaEnquadra =
+        vista.contains(limites) &&
+        limites.getNorth() - limites.getSouth() > (vista.getNorth() - vista.getSouth()) * 0.35;
+      if (jaEnquadra) return;
       atual.invalidateSize();
-      atual.fitBounds(folheto.latLngBounds(pontos), { padding: [48, 48], maxZoom: 13, animate: false });
+      atual.fitBounds(limites, { padding: [48, 48], maxZoom: 13, animate: false });
     };
     enquadrar();
     const timer = window.setTimeout(enquadrar, 280);

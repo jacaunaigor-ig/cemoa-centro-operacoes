@@ -206,35 +206,35 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   overflow: visible;
 }
 .vento-fluxo {
-  width: 64px;
-  height: 64px;
+  width: 28px;
+  height: 28px;
   position: relative;
+  opacity: 0.72;
 }
 .vento-fluxo i {
   position: absolute;
   left: 50%;
-  bottom: 0;
+  bottom: 2px;
   width: 0;
   height: 0;
-  margin-left: -6px;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-bottom: 16px solid currentColor;
-  filter: drop-shadow(0 0 1px #f8fafc);
+  margin-left: -3.5px;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-bottom: 8px solid currentColor;
   animation-name: vento-corre;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 @keyframes vento-corre {
-  from { transform: translateY(6px); opacity: 0; }
-  18% { opacity: 1; }
-  to { transform: translateY(-48px); opacity: 0; }
+  from { transform: translateY(2px); opacity: 0; }
+  22% { opacity: 0.85; }
+  to { transform: translateY(-16px); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .vento-fluxo i {
     animation: none;
-    opacity: 0.9;
-    transform: translateY(-14px);
+    opacity: 0.7;
+    transform: translateY(-6px);
   }
 }
 .leaflet-tooltip.foco-balao-zero {
@@ -674,12 +674,80 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   100% { transform: scale(1.75); opacity: 0; }
 }
 
+.chuva-estado {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 420;
+  overflow: hidden;
+  container-type: size;
+}
+
+.chuva-estado i {
+  position: absolute;
+  top: 0;
+  width: 1.5px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, transparent, rgba(70, 116, 158, 0.55), transparent);
+  opacity: 0;
+  animation-name: chuva-gota;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+html[data-theme="dark"] .chuva-estado i {
+  background: linear-gradient(to bottom, transparent, rgba(214, 228, 242, 0.42), transparent);
+}
+
+@keyframes chuva-gota {
+  0% { transform: translate3d(0, -24px, 0) rotate(11deg); opacity: 0; }
+  14% { opacity: 0.42; }
+  78% { opacity: 0.28; }
+  100% { transform: translate3d(0, calc(100cqh + 20px), 0) rotate(11deg); opacity: 0; }
+}
+
+.leaflet-container .map-raio-centro-icon,
+.leaflet-container .map-raio-km-icon {
+  background: transparent;
+  border: 0;
+}
+
+.map-raio-centro {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--raio, #f59e0b);
+}
+
+.map-raio-centro.is-on {
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 0 3px var(--raio, #f59e0b);
+}
+
+.map-raio-km {
+  display: block;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1f2937;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
 html.page-hidden .ticker-track,
 html.page-hidden .river-flow-animated,
 html.page-hidden .aviso-pulse,
 html.page-hidden .live-dot,
 html.page-hidden .rain-burst::before,
-html.page-hidden .rain-burst::after {
+html.page-hidden .rain-burst::after,
+html.page-hidden .chuva-estado i,
+html.page-hidden .vento-fluxo i {
   animation-play-state: paused;
 }
 
@@ -689,6 +757,7 @@ html.page-hidden .rain-burst::after {
   .card-in,
   .rain-burst::before,
   .rain-burst::after { animation: none; }
+  .chuva-estado { display: none; }
   .ticker-track,
   .river-flow-animated { animation: none; }
   *, *::before, *::after {

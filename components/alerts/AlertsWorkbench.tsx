@@ -436,7 +436,7 @@ export function AlertsWorkbench() {
   }
 
   useEffect(() => {
-    if (tipo !== "CHUVA" || !avisoInmet) return;
+    if (tipo !== "CHUVA") return;
     let cancel = false;
     async function load() {
       try {
@@ -456,7 +456,7 @@ export function AlertsWorkbench() {
       cancel = true;
       window.clearInterval(timer);
     };
-  }, [tipo, avisoInmet]);
+  }, [tipo]);
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
@@ -527,6 +527,12 @@ export function AlertsWorkbench() {
     if (zonaId && !zonasChuva.some((zona) => zona.id === zonaId)) setZonaId(null);
   }, [zonaId, zonasChuva]);
   const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
+  const chuvaNoEstado = useMemo(
+    () =>
+      tipo === "CHUVA" &&
+      Object.values(rain?.byNome ?? {}).some((rec) => (rec.mm1h ?? 0) > 0 || (rec.mm6h ?? 0) > 0),
+    [tipo, rain],
+  );
   const pluviosChuva = useMemo(() => pluviosRegistrandoChuva(pluvio), [pluvio]);
   const airPoints = useMemo(() => airSensorsForMap(air), [air]);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -982,7 +988,7 @@ export function AlertsWorkbench() {
     window.setTimeout(() => mapApi.current?.fitAmazonas(), 80);
   }
   useEffect(() => {
-    if (tipo !== "INCENDIO") return;
+    if (tipo !== "CHUVA" && tipo !== "INCENDIO") return;
     let cancel = false;
     void (async () => {
       try {
@@ -1848,10 +1854,11 @@ export function AlertsWorkbench() {
         : "Nenhum pluviômetro com chuva dentro deste raio.",
       zonaAtiva.cotaEstacao == null ? "" : `Cota da estação: ${zonaAtiva.cotaEstacao} m.`,
       zonaAtiva.bairros.length
-        ? `${zonaAtiva.bairros.length} bairros cruzam o raio${comPopulacao ? ` · ${populacao.toLocaleString("pt-BR")} habitantes` : ""}.`
+        ? `Bairros no recorte: ${zonaAtiva.bairros
+            .slice(0, 8)
+            .map((bairro) => bairro.nome)
+            .join(", ")}${zonaAtiva.bairros.length > 8 ? ` e mais ${zonaAtiva.bairros.length - 8}` : ""}${comPopulacao ? ` · ${populacao.toLocaleString("pt-BR")} habitantes` : ""}.`
         : "",
-      ...zonaAtiva.bairros.slice(0, 12).map((bairro) => bairro.nome),
-      zonaAtiva.bairros.length > 12 ? `e mais ${zonaAtiva.bairros.length - 12} bairros.` : "",
       zonaAtiva.setores.length
         ? `${zonaAtiva.setores.length} polígonos de risco interceptam o raio.`
         : "Nenhum polígono de risco intercepta o raio.",
@@ -1878,19 +1885,17 @@ export function AlertsWorkbench() {
         text: "O círculo é o raio de perigo. Não indica que toda a área recebeu o mesmo acumulado. A exportação não emite alerta.",
       },
       foco: [zonaAtiva.geometry],
-      stains: [
-        ...zonaAtiva.setores.map((setor) => ({
-          geometry: setor.geometry,
-          color: SETOR_CORES[(setor.grau === "R4" ? "R4" : "R3") as GrauSetor].fill,
-        })),
-        { geometry: zonaAtiva.geometry, color: cor },
-      ],
+      stains: zonaAtiva.setores.map((setor) => ({
+        geometry: setor.geometry,
+        color: SETOR_CORES[(setor.grau === "R4" ? "R4" : "R3") as GrauSetor].fill,
+      })),
       raioKm: zonaAtiva.raioKm,
+      raioCor: cor,
       pontos: [
         {
           lat: zonaAtiva.lat,
           lon: zonaAtiva.lon,
-          color: "#111827",
+          color: cor,
           nome: daEstacao
             ? `${zonaAtiva.estacao} · ${formatMmShort(daEstacao.mm)} mm / ${daEstacao.janela}`
             : zonaAtiva.estacao,
@@ -2394,7 +2399,7 @@ export function AlertsWorkbench() {
                         {focosMapa ? "Ocultar focos INPE" : "Focos INPE"}
                       </MapToolButton>
                     ) : null}
-                    {tipo === "INCENDIO" ? (
+                    {tipo === "CHUVA" || tipo === "INCENDIO" ? (
                       <MapToolButton
                         active={ventoMapa}
                         onClick={() => setVentoMapa((v) => !v)}
@@ -2521,8 +2526,8 @@ export function AlertsWorkbench() {
                   fillByNome={focoFillByNome}
                   labelByNome={focoLabels}
                   showFocosCalor={tipo === "INCENDIO" && focosMapa}
-                  showVento={tipo === "INCENDIO" && ventoMapa}
-                  vento={tipo === "INCENDIO" && ventoMapa ? (ventoCampo?.pontos ?? VENTO_VAZIO) : VENTO_VAZIO}
+                  showVento={(tipo === "CHUVA" || tipo === "INCENDIO") && ventoMapa}
+                  vento={(tipo === "CHUVA" || tipo === "INCENDIO") && ventoMapa ? (ventoCampo?.pontos ?? VENTO_VAZIO) : VENTO_VAZIO}
                   showSetores={(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores}
                   setorUso={tipo === "EROSAO" ? "margem" : "movimento"}
                   zonas={zonasChuva}
@@ -2844,6 +2849,16 @@ export function AlertsWorkbench() {
                     Sem leitura · {semLeitura}. Não é o verde de Baixo.
                   </p>
                 ) : null}
+                {(tipo === "CHUVA" || tipo === "INCENDIO") && ventoMapa ? (
+                  <p className="mt-1.5 flex items-start gap-1.5 text-[10px] leading-snug text-text-mute">
+                    <span className="mt-0.5 size-2 shrink-0 rounded-sm bg-[#0369a1]" />
+                    <span>
+                      Vento a 10 m · {horaVentoLegenda(ventoCampo?.hora ?? null)}. Traço curto no sentido em que sopra.
+                      Azul até 10 km/h, laranja até 25, vinho acima.
+                      {ventoCampo?.error ? ` ${ventoCampo.error}` : ""}
+                    </span>
+                  </p>
+                ) : null}
                 {tipo === "INCENDIO" ? (
                   <>
                   <p className="mt-1.5 text-[10px] leading-snug text-text-mute">
@@ -2868,15 +2883,6 @@ export function AlertsWorkbench() {
                     </p>
                     </>
                   ) : null}
-                  {ventoMapa ? (
-                    <p className="mt-1.5 flex items-start gap-1.5 text-[10px] leading-snug text-text">
-                      <span className="mt-0.5 size-2.5 shrink-0 rounded-sm bg-[#0369a1]" />
-                      <span>
-                        Vento Open-Meteo a 10 m · {horaVentoLegenda(ventoCampo?.hora ?? null)}. Os traços correm para onde sopra agora. Azul até 10 km/h, laranja até 25, vinho acima.
-                        {ventoCampo?.error ? ` ${ventoCampo.error}` : ""}
-                      </span>
-                    </p>
-                  ) : null}
                   </>
                 ) : tipo === "ALAGAMENTO" ? (
                   <div className="mt-1 border-t border-border/70 pt-1">
@@ -2897,6 +2903,21 @@ export function AlertsWorkbench() {
               </MapLegendCard>
               )}
             </div>
+
+            {chuvaNoEstado ? (
+              <div className="chuva-estado" aria-hidden="true">
+                {Array.from({ length: 40 }, (_, i) => (
+                  <i
+                    key={i}
+                    style={{
+                      left: `${(i * 17.3) % 100}%`,
+                      animationDelay: `${(i % 13) * 0.62}s`,
+                      animationDuration: `${9 + (i % 5) * 1.6}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
 
             {isMobile || paintArmed || drawMode || eraseMode ? null : (
               <AlertTicker alerts={filteredAlerts} />

@@ -116,7 +116,7 @@ export function ZonaChuvaFicha({
                   }}
                   onClick={() => onSelectZona(item.id)}
                 >
-                  {item.estacao} · {item.mm.toFixed(0)} mm
+                  {item.estacao} · {item.mm.toFixed(1)} mm
                 </button>
               );
             })}

@@ -41,6 +41,8 @@ export type InstitutionalPngOptions = {
   pontos?: Array<{ lat: number; lon: number; color: string; nome?: string }>;
   /** Quando informado, o círculo do raio de perigo ganha contorno e rótulo. */
   raioKm?: number;
+  /** Cor do círculo. O preenchimento fica leve para os polígonos de risco aparecerem. */
+  raioCor?: string;
   /** Linhas curtas no painel lateral, abaixo da legenda. */
   painel?: string[];
 };
@@ -228,7 +230,7 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     return [ox + (m[0] - minX) * scale, oy + (maxY - m[1]) * scale];
   };
 
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = opts.foco?.length ? "#e7eef4" : "#ffffff";
   ctx.fillRect(area.left - 18, area.top - 18, aw + 36, ah + 36);
   ctx.strokeStyle = "#b8c7d2";
   ctx.lineWidth = 2;
@@ -238,8 +240,8 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     if (!g) return;
     ctx.save();
     ctx.fillStyle = fill;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = opts.foco?.length ? "#c5d2dc" : "#ffffff";
+    ctx.lineWidth = opts.foco?.length ? 1.2 : 2.2;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     const drawPoly = (poly: Ring[]) => {
@@ -292,60 +294,88 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     }
   }
 
-  if (opts.foco?.length && opts.raioKm) {
+  const ocupados: Array<{ x: number; y: number; w: number; h: number }> = [];
+  const rotulo = (texto: string, x: number, y: number) => {
+    ctx.font = "800 16px Arial, sans-serif";
+    const largura = Math.ceil(ctx.measureText(texto).width) + 14;
+    const altura = 24;
+    let topo = y - 18;
+    for (let tentativa = 0; tentativa < 5; tentativa += 1) {
+      const caixa = { x, y: topo, w: largura, h: altura };
+      const bate = ocupados.some(
+        (item) =>
+          caixa.x < item.x + item.w &&
+          caixa.x + caixa.w > item.x &&
+          caixa.y < item.y + item.h &&
+          caixa.y + caixa.h > item.y,
+      );
+      if (!bate) {
+        ctx.fillStyle = "rgba(255,255,255,0.94)";
+        roundRect(ctx, caixa.x, caixa.y, caixa.w, caixa.h, 6, true, false);
+        ctx.strokeStyle = "#c5d0d8";
+        ctx.lineWidth = 1;
+        roundRect(ctx, caixa.x, caixa.y, caixa.w, caixa.h, 6, false, true);
+        ctx.fillStyle = "#111827";
+        ctx.textAlign = "left";
+        ctx.fillText(texto, caixa.x + 7, caixa.y + 17);
+        ocupados.push(caixa);
+        return;
+      }
+      topo += 28;
+    }
+  };
+
+  const centroRaio = opts.raioKm ? opts.pontos?.[0] : undefined;
+  if (centroRaio && opts.raioKm) {
+    const cor = opts.raioCor || "#f59e0b";
+    const dLat = opts.raioKm / 111.32;
+    const dLon = opts.raioKm / (111.32 * Math.max(0.2, Math.cos((centroRaio.lat * Math.PI) / 180)));
+    const [cx, cy] = project(centroRaio.lon, centroRaio.lat);
+    const rx = Math.abs(project(centroRaio.lon + dLon, centroRaio.lat)[0] - cx);
+    const ry = Math.abs(project(centroRaio.lon, centroRaio.lat + dLat)[1] - cy);
     ctx.save();
-    ctx.setLineDash([14, 8]);
-    ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 3;
-    ctx.lineJoin = "round";
-    for (const geometry of opts.foco) {
-      const drawPoly = (poly: Ring[]) => {
-        ctx.beginPath();
-        poly.forEach((ring) => {
-          ring.forEach((p, idx) => {
-            const q = project(p[0], p[1]);
-            if (idx === 0) ctx.moveTo(q[0], q[1]);
-            else ctx.lineTo(q[0], q[1]);
-          });
-          ctx.closePath();
-        });
-        ctx.stroke();
-      };
-      if (geometry.type === "Polygon") drawPoly(geometry.coordinates);
-      else geometry.coordinates.forEach(drawPoly);
-    }
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = cor;
+    ctx.globalAlpha = 0.16;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 8;
+    ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.strokeStyle = cor;
+    ctx.lineWidth = 3.5;
+    ctx.setLineDash([16, 10]);
+    ctx.stroke();
     ctx.restore();
-    const ancora = opts.pontos?.[0];
-    if (ancora) {
-      const dLon = opts.raioKm / (111 * Math.max(0.2, Math.cos((ancora.lat * Math.PI) / 180)));
-      const [x, y] = project(ancora.lon + dLon, ancora.lat);
-      ctx.fillStyle = "#111827";
-      ctx.font = "800 18px Arial, sans-serif";
-      ctx.fillText(`raio ${opts.raioKm} km`, x + 10, y - 8);
-    }
+    rotulo(`${opts.raioKm} km`, cx - 18, cy - ry - 6);
   }
 
   if (opts.pontos?.length) {
-    for (const ponto of opts.pontos) {
+    opts.pontos.forEach((ponto, indice) => {
       const [x, y] = project(ponto.lon, ponto.lat);
-      const raio = ponto.nome ? 8 : 3.4;
+      const principal = indice === 0 && Boolean(opts.raioKm);
+      const raio = principal ? 9 : ponto.nome ? 6 : 3.4;
       ctx.beginPath();
-      ctx.fillStyle = ponto.color;
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = ponto.nome ? 2.5 : 0.6;
+      ctx.fillStyle = principal ? "#ffffff" : ponto.color;
+      ctx.strokeStyle = principal ? ponto.color : "#ffffff";
+      ctx.lineWidth = principal ? 3.5 : ponto.nome ? 2 : 0.6;
       ctx.arc(x, y, raio, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      if (ponto.nome) {
-        ctx.fillStyle = "#111827";
-        ctx.font = "800 18px Arial, sans-serif";
-        ctx.fillText(ponto.nome, x + 14, y - 12);
-      }
-    }
+      if (ponto.nome) rotulo(ponto.nome, x + 12, y - 8);
+    });
   }
 
-  const nx = 1680;
-  const ny = 300;
+  const nx = opts.foco?.length ? area.left + 54 : 1680;
+  const ny = opts.foco?.length ? area.top + 78 : 300;
+  if (opts.foco?.length) {
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.arc(nx, ny, 46, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.save();
   ctx.translate(nx, ny);
   ctx.strokeStyle = "#193a50";
