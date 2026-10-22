@@ -19,6 +19,7 @@ import {
   airDotColor,
   formatUg,
 } from "@/lib/air-quality-display";
+import { coordenadaCemaden } from "@/lib/cemaden-estacoes";
 import { formatRelative } from "@/lib/utils";
 
 type LeafletNS = typeof import("leaflet");
@@ -190,7 +191,7 @@ function paintLegend(
 export function addTerritoryOverlays(L: LeafletNS, map: LeafletMap): TerritoryLayers {
   if (!map.getPane("pointsPane")) map.createPane("pointsPane");
   const pane = map.getPane("pointsPane");
-  if (pane) pane.style.zIndex = "620";
+  if (pane) pane.style.zIndex = "630";
 
   const sedes = L.layerGroup();
   const rurais = clusterGroup(L, "rural");
@@ -261,18 +262,24 @@ export function syncPluviometers(L: LeafletNS, layer: LayerGroup, stations: Pluv
   }
   for (const [munId, list] of groups) {
     list.forEach((s, i) => {
+      const cemaden = coordenadaCemaden(s.id, s.nome, munId);
       const hit = localidadeProxima(munId, s.nome);
       const seat = sedeDo(munId);
-      const baseLat = hit?.a ?? seat?.a;
-      const baseLng = hit?.o ?? seat?.o;
+      const baseLat = cemaden?.lat ?? hit?.a ?? seat?.a;
+      const baseLng = cemaden?.lon ?? hit?.o ?? seat?.o;
       if (baseLat == null || baseLng == null) return;
-      const placedAtLocality = Boolean(hit && hit.t !== "Sede");
-      const [lat, lng] = placedAtLocality
-        ? [hit!.a, hit!.o]
+      const placedAtLocality = Boolean(!cemaden && hit && hit.t !== "Sede");
+      const [lat, lng] = cemaden || placedAtLocality
+        ? [baseLat, baseLng]
         : offsetAround(baseLat, baseLng, i, list.length);
       const mm = [s.mm1h, s.mm6h, s.mm24h]
         .map((v) => (v == null ? "—" : v.toFixed(1)))
         .join(" / ");
+      const origem = cemaden
+        ? "<br/>Coordenada do catálogo CEMADEN"
+        : placedAtLocality
+          ? ""
+          : "<br/><em>Posição na sede — esta estação não está no catálogo de coordenadas</em>";
       L.marker([lat, lng], {
         icon,
         keyboard: false,
@@ -280,9 +287,7 @@ export function syncPluviometers(L: LeafletNS, layer: LayerGroup, stations: Pluv
         zIndexOffset: 40,
       })
         .bindTooltip(
-          `<strong>${s.nome}</strong><br/>CEMADEN · ${s.munNome}<br/>1 / 6 / 24 h: ${mm} mm${
-            placedAtLocality ? "" : "<br/><em>Posição na sede — CEMADEN não publica a coordenada do sensor</em>"
-          }`,
+          `<strong>${s.nome}</strong><br/>CEMADEN · ${s.munNome}<br/>1 / 6 / 24 h: ${mm} mm${origem}`,
           { direction: "top", className: "map-point-tip" },
         )
         .addTo(layer);

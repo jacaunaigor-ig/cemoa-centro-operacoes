@@ -48,6 +48,7 @@ import {
   DEFAULT_OVERLAYS,
   effectiveOverlays,
   pluvioFromRain,
+  showsPluvio,
   type TerritoryVisibility,
 } from "@/lib/map-overlays";
 import {
@@ -80,12 +81,23 @@ import {
   type AlertStain,
 } from "@/lib/stains";
 import { estacaoDoMunicipio, matchMunicipioGeo, nomesNaCalha, parseSharedBacia, parseSharedCalha } from "@/lib/geo-query";
-import { cn } from "@/lib/utils";
+import { formatAmazonDateTime, cn } from "@/lib/utils";
 import { MapLegendCard } from "@/components/shared/MapLegendCard";
 import { SituationStrip } from "@/components/shared/SituationStrip";
 import { useDebouncedValue, startVisiblePoll } from "@/lib/client-hooks";
 import { focoFill, focoPontoCor, periodoFocosTexto, type FocosReferencia } from "@/lib/focos-display";
 import { horaVentoLegenda, VENTO_VAZIO, type VentoCampo } from "@/lib/vento-campo";
+import { loadSetoresR3R4, SETOR_CORES, type GrauSetor, type SetoresR3R4 } from "@/lib/setores-r3r4";
+import { kmlZonas, kmzDeKml } from "@/lib/kmz";
+import {
+  RAIOS_INFLUENCIA_KM,
+  RAIO_INFLUENCIA_PADRAO_KM,
+  aneisExternos,
+  corZona,
+  geojsonZonas,
+  montarZonasChuva,
+} from "@/lib/zona-chuva";
+import { loadBairrosManaus, loadGradeManaus, type BairroManaus, type GradeRelevo } from "@/lib/manaus-chuva";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
@@ -101,6 +113,7 @@ import {
   parseAirFilter,
 } from "@/lib/air-quality-display";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
+import { ZonaChuvaFicha } from "@/components/alerts/ZonaChuvaFicha";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
 import { AlertTicker } from "@/components/alerts/AlertTicker";
@@ -380,6 +393,15 @@ export function AlertsWorkbench() {
   const [ventoCampo, setVentoCampo] = useState<VentoCampo | null>(null);
   const [overlays, setOverlays] = useState<TerritoryVisibility>(DEFAULT_OVERLAYS);
   const [showSetores, setShowSetores] = useState(true);
+  const [showZonas, setShowZonas] = useState(false);
+  const [raioZonaKm, setRaioZonaKm] = useState<number>(RAIO_INFLUENCIA_PADRAO_KM);
+  const [zonaId, setZonaId] = useState<string | null>(null);
+  const [setorZonaId, setSetorZonaId] = useState<string | null>(null);
+  const [bairroZonaId, setBairroZonaId] = useState<string | null>(null);
+  const [setoresRisco, setSetoresRisco] = useState<SetoresR3R4 | null>(null);
+  const [bairrosManaus, setBairrosManaus] = useState<BairroManaus[] | null>(null);
+  const [gradeManaus, setGradeManaus] = useState<GradeRelevo | null>(null);
+  const [incluirSetoresZona, setIncluirSetoresZona] = useState(true);
   const [avisoInmet, setAvisoInmet] = useState(true);
   const [inmetAvisos, setInmetAvisos] = useState<InmetAvisoMapa[]>([]);
 
@@ -425,6 +447,57 @@ export function AlertsWorkbench() {
   const [opacity, setOpacity] = useState(58);
   const mapOpacity = useDebouncedValue(opacity, 60);
   const overlayVis = useMemo(() => effectiveOverlays(overlays, tipo), [overlays, tipo]);
+  const zonasChuva = useMemo(() => {
+    if (!showZonas || !showsPluvio(tipo)) return [];
+    return montarZonasChuva({
+      rain,
+      tipo,
+      raioKm: raioZonaKm,
+      setores: setoresRisco,
+      bairrosManaus,
+      gradeManaus,
+    });
+  }, [showZonas, tipo, rain, raioZonaKm, setoresRisco, bairrosManaus, gradeManaus]);
+  const zonaAtiva = zonasChuva.find((zona) => zona.id === zonaId) ?? null;
+
+  useEffect(() => {
+    if (!showZonas || (setoresRisco && bairrosManaus && gradeManaus)) return;
+    let cancel = false;
+    if (!setoresRisco) {
+      loadSetoresR3R4()
+        .then((payload) => {
+          if (!cancel) setSetoresRisco(payload);
+        })
+        .catch(() => {
+          /* a ficha informa a ausência dos polígonos */
+        });
+    }
+    if (!bairrosManaus) {
+      loadBairrosManaus()
+        .then((payload) => {
+          if (!cancel) setBairrosManaus(payload);
+        })
+        .catch(() => {
+          /* Manaus permanece no círculo e a ficha diz a limitação */
+        });
+    }
+    if (!gradeManaus) {
+      loadGradeManaus()
+        .then((payload) => {
+          if (!cancel) setGradeManaus(payload);
+        })
+        .catch(() => {
+          /* Manaus permanece no círculo e a ficha diz a limitação */
+        });
+    }
+    return () => {
+      cancel = true;
+    };
+  }, [showZonas, setoresRisco, bairrosManaus, gradeManaus]);
+
+  useEffect(() => {
+    if (zonaId && !zonasChuva.some((zona) => zona.id === zonaId)) setZonaId(null);
+  }, [zonaId, zonasChuva]);
   const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
   const airPoints = useMemo(() => airSensorsForMap(air), [air]);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -1689,6 +1762,95 @@ export function AlertsWorkbench() {
     });
   }
 
+  function baixarBlob(blob: Blob, nome: string) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nome;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function pacoteZona(lista: typeof zonasChuva) {
+    const setores = incluirSetoresZona ? lista.flatMap((zona) => zona.setores) : [];
+    return {
+      zonas: lista.flatMap((zona) => {
+        const descricao = [
+          `Estação: ${zona.estacao}`,
+          `Município: ${zona.municipio}`,
+          `Acumulado: ${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h`,
+          `Intensidade média: ${zona.intensidadeMmH == null ? "indisponível" : `${zona.intensidadeMmH.toFixed(1)} mm/h`}`,
+          `Classificação: ${LEVEL_LABELS[zona.level] ?? zona.level}`,
+          `Leitura: ${zona.observedAt == null ? "sem horário" : formatAmazonDateTime(zona.observedAt)}`,
+          `Cota da estação: ${zona.cotaEstacao == null ? "indisponível" : `${zona.cotaEstacao} m`}`,
+          `Bairros: ${zona.bairros.map((bairro) => bairro.nome).join(", ") || "não aplicados"}`,
+          `Método: ${zona.metodo}`,
+          ...zona.limitacoes,
+        ].join(" · ");
+        return aneisExternos(zona.geometry).map((anel, indice) => ({
+          nome: indice === 0 ? zona.estacao : `${zona.estacao} · ${indice + 1}`,
+          descricao,
+          cor: corZona(zona.level),
+          anel,
+        }));
+      }),
+      setores: setores.map((setor) => ({
+        nome: `${setor.nome} · ${setor.grau}`,
+        descricao: `${setor.municipio} · polígono de risco interceptado`,
+        cor: SETOR_CORES[(setor.grau === "R4" ? "R4" : "R3") as GrauSetor].fill,
+        anel: setor.geometry.coordinates[0],
+      })),
+    };
+  }
+
+  async function exportarZonaPng() {
+    if (!zonaAtiva) return;
+    const cor = corZona(zonaAtiva.level);
+    await exportInstitutionalPng({
+      title: "Zona de influência da chuva",
+      productLegend: `${zonaAtiva.estacao} · ${zonaAtiva.mm.toFixed(1)} mm / ${zonaAtiva.janelaHoras} h · ${LEVEL_LABELS[zonaAtiva.level] ?? zonaAtiva.level}`,
+      filename: pngFilename("zona_chuva_cemoa"),
+      colorFor: () => "#d7e4f0",
+      legendTitle: "Classificação vigente",
+      legendItems: [
+        {
+          key: zonaAtiva.level,
+          title: LEVEL_LABELS[zonaAtiva.level] ?? zonaAtiva.level,
+          text: `${zonaAtiva.mm.toFixed(1)} mm / ${zonaAtiva.janelaHoras} h`,
+          color: cor,
+          count: 1,
+        },
+      ],
+      footerSources: `CEMADEN · leitura ${zonaAtiva.observedAt == null ? "sem horário" : formatAmazonDateTime(zonaAtiva.observedAt)} · ${zonaAtiva.metodo}`,
+      extraNote: {
+        title: "ESTIMATIVA",
+        text: zonaAtiva.limitacoes.join(" "),
+      },
+      foco: [zonaAtiva.geometry, ...zonaAtiva.setores.map((setor) => setor.geometry)],
+      stains: [
+        { geometry: zonaAtiva.geometry, color: cor },
+        ...zonaAtiva.setores.map((setor) => ({
+          geometry: setor.geometry,
+          color: SETOR_CORES[(setor.grau === "R4" ? "R4" : "R3") as GrauSetor].fill,
+        })),
+      ],
+      pontos: [{ lat: zonaAtiva.lat, lon: zonaAtiva.lon, color: cor }],
+    });
+  }
+
+  function exportarZonaKmz(lista: typeof zonasChuva) {
+    if (!lista.length) return;
+    baixarBlob(kmzDeKml(kmlZonas(pacoteZona(lista))), "zona_chuva_cemoa.kmz");
+  }
+
+  function exportarZonaGeojson(lista: typeof zonasChuva) {
+    if (!lista.length) return;
+    baixarBlob(
+      new Blob([JSON.stringify(geojsonZonas(lista, incluirSetoresZona))], { type: "application/geo+json" }),
+      "zona_chuva_cemoa.geojson",
+    );
+  }
+
   return (
     <AppShell
       cache={data?.cache}
@@ -2123,6 +2285,30 @@ export function AlertsWorkbench() {
                             : "Áreas R3/R4"}
                       </MapToolButton>
                     ) : null}
+                    {showsPluvio(tipo) ? (
+                      <>
+                        <MapToolButton active={showZonas} onClick={() => setShowZonas((v) => !v)}>
+                          {showZonas ? "Ocultar zonas de chuva" : "Zonas de influência da chuva"}
+                        </MapToolButton>
+                        {showZonas ? (
+                          <div className="flex gap-1 px-2 py-1">
+                            {RAIOS_INFLUENCIA_KM.map((raio) => (
+                              <button
+                                key={raio}
+                                type="button"
+                                className={cn(
+                                  "rounded px-1.5 py-0.5 text-[10px] font-bold",
+                                  raioZonaKm === raio ? "bg-brand text-white" : "border border-border",
+                                )}
+                                onClick={() => setRaioZonaKm(raio)}
+                              >
+                                {raio} km
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </>
+                    ) : null}
                     {tipo === "CHUVA" ? (
                       <MapToolButton
                         active={avisoInmet}
@@ -2272,6 +2458,18 @@ export function AlertsWorkbench() {
                   vento={tipo === "INCENDIO" && ventoMapa ? (ventoCampo?.pontos ?? VENTO_VAZIO) : VENTO_VAZIO}
                   showSetores={(tipo === "MOVIMENTO" || tipo === "EROSAO") && showSetores}
                   setorUso={tipo === "EROSAO" ? "margem" : "movimento"}
+                  zonas={zonasChuva}
+                  showZonas={showZonas && showsPluvio(tipo)}
+                  zonaSelecionada={zonaId}
+                  setorSelecionado={setorZonaId}
+                  bairroRealce={
+                    bairrosManaus?.find((bairro) => `${bairro.zona}|${bairro.nome}` === bairroZonaId)?.geometry ?? null
+                  }
+                  onSelectZona={(id) => {
+                    setZonaId(id);
+                    setSetorZonaId(null);
+                    setBairroZonaId(null);
+                  }}
                   focosCalor={focosPontos}
                   tipo={tipo}
                   onlyRisk={onlyRisk}
@@ -2289,6 +2487,42 @@ export function AlertsWorkbench() {
                   onPolygonComplete={(pts) => void applyPolygon(pts)}
                   onStainClick={(stain) => void deleteStain(stain)}
                   onGeoError={setGeoError}
+                />
+              ) : null}
+              {zonaAtiva ? (
+                <ZonaChuvaFicha
+                  zona={zonaAtiva}
+                  outras={zonasChuva.map((zona) => ({
+                    id: zona.id,
+                    estacao: zona.estacao,
+                    mm: zona.mm,
+                    janelaHoras: zona.janelaHoras,
+                    level: zona.level,
+                  }))}
+                  incluirSetores={incluirSetoresZona}
+                  setorSelecionado={setorZonaId}
+                  bairroSelecionado={bairroZonaId}
+                  onIncluirSetores={setIncluirSetoresZona}
+                  onSelectSetor={setSetorZonaId}
+                  onSelectBairro={setBairroZonaId}
+                  onSelectZona={(id) => {
+                    setZonaId(id);
+                    setSetorZonaId(null);
+                    setBairroZonaId(null);
+                  }}
+                  onFechar={() => {
+                    setZonaId(null);
+                    setSetorZonaId(null);
+                    setBairroZonaId(null);
+                  }}
+                  onPng={() => {
+                    void exportarZonaPng().catch((err) => {
+                      toast.error(err instanceof Error ? err.message : "Não foi possível exportar o PNG.");
+                    });
+                  }}
+                  onKmz={() => exportarZonaKmz([zonaAtiva])}
+                  onKmzVisiveis={() => exportarZonaKmz(zonasChuva)}
+                  onGeojson={() => exportarZonaGeojson([zonaAtiva])}
                 />
               ) : null}
               {geoError ? (

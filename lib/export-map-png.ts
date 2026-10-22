@@ -35,6 +35,8 @@ export type InstitutionalPngOptions = {
   footerSources: string;
   extraNote?: { title: string; text: string };
   stains?: Array<{ geometry: Geom; color: string }>;
+  /** Quando presente, o mapa enquadra estas geometrias em vez do estado inteiro. */
+  foco?: Geom[];
   municipios?: Array<{ nome: string; valor: string; color: string }>;
   pontos?: Array<{ lat: number; lon: number; color: string }>;
 };
@@ -155,14 +157,27 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
-  for (const f of geo.features) {
+  let latSoma = 0;
+  let latN = 0;
+  const origem = opts.foco?.length ? opts.foco.map((geometry) => ({ geometry })) : geo.features;
+  for (const f of origem) {
     walk(f.geometry, (p) => {
       const m = merc(p[0], p[1]);
       minX = Math.min(minX, m[0]);
       maxX = Math.max(maxX, m[0]);
       minY = Math.min(minY, m[1]);
       maxY = Math.max(maxY, m[1]);
+      latSoma += p[1];
+      latN += 1;
     });
+  }
+  if (opts.foco?.length && Number.isFinite(minX)) {
+    const dx = Math.max((maxX - minX) * 0.28, 0.002);
+    const dy = Math.max((maxY - minY) * 0.28, 0.002);
+    minX -= dx;
+    maxX += dx;
+    minY -= dy;
+    maxY += dy;
   }
   if (!Number.isFinite(minX) || !Number.isFinite(maxX)) {
     throw new Error("Limites geográficos inválidos");
@@ -313,19 +328,35 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
   const sy = 1435;
   ctx.fillStyle = "#263e50";
   ctx.font = "700 15px Arial, sans-serif";
-  ctx.fillText("0", sx, sy - 10);
-  ctx.fillText("125", sx + 95, sy - 10);
-  ctx.fillText("250", sx + 190, sy - 10);
-  ctx.fillText("375 km", sx + 285, sy - 10);
-  ctx.fillStyle = "#152d3e";
-  ctx.fillRect(sx, sy, 95, 12);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(sx + 95, sy, 95, 12);
-  ctx.fillStyle = "#152d3e";
-  ctx.fillRect(sx + 190, sy, 95, 12);
-  ctx.strokeStyle = "#152d3e";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(sx, sy, 285, 12);
+  if (!opts.foco?.length) {
+    ctx.fillText("0", sx, sy - 10);
+    ctx.fillText("125", sx + 95, sy - 10);
+    ctx.fillText("250", sx + 190, sy - 10);
+    ctx.fillText("375 km", sx + 285, sy - 10);
+    ctx.fillStyle = "#152d3e";
+    ctx.fillRect(sx, sy, 95, 12);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(sx + 95, sy, 95, 12);
+    ctx.fillStyle = "#152d3e";
+    ctx.fillRect(sx + 190, sy, 95, 12);
+    ctx.strokeStyle = "#152d3e";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx, sy, 285, 12);
+  } else {
+    const lat = latN ? latSoma / latN : 0;
+    const kmPorPx = ((1 / scale) * 6378137 * Math.cos((lat * Math.PI) / 180)) / 1000;
+    const nice = [0.5, 1, 2, 5, 10, 20, 50, 100].find((n) => n >= kmPorPx * 180) ?? 100;
+    const largura = Math.max(40, Math.min(280, nice / kmPorPx));
+    ctx.fillText("0", sx, sy - 10);
+    ctx.fillText(`${nice} km`, sx + largura - 8, sy - 10);
+    ctx.fillStyle = "#152d3e";
+    ctx.fillRect(sx, sy, largura / 2, 12);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(sx + largura / 2, sy, largura / 2, 12);
+    ctx.strokeStyle = "#152d3e";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx, sy, largura, 12);
+  }
 
   const panelX = 1840;
   const panelY = 205;
