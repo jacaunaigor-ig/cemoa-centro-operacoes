@@ -16,6 +16,7 @@ import type {
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
 import { formatMm, formatMmShort, formatWindowsCompact } from "@/lib/rainfall-display";
+import { aneisExternos, corZona, type ZonaChuva } from "@/lib/zona-chuva";
 import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
 import type { AlertType } from "@/lib/alert-types";
 import { formatUg } from "@/lib/air-quality-display";
@@ -116,6 +117,12 @@ export const AlertsMap = forwardRef<
     showVento?: boolean;
     showSetores?: boolean;
     setorUso?: UsoSetor;
+    zonas?: ZonaChuva[];
+    showZonas?: boolean;
+    zonaSelecionada?: string | null;
+    setorSelecionado?: string | null;
+    bairroRealce?: GeoJSON.Polygon | null;
+    onSelectZona?: (id: string) => void;
     fillByNome?: Record<string, string> | null;
     labelByNome?: Record<string, string> | null;
     onSelect: (nome: string, bacia: string) => void;
@@ -155,6 +162,12 @@ export const AlertsMap = forwardRef<
     showVento = false,
     showSetores = false,
     setorUso = "movimento",
+    zonas = [],
+    showZonas = false,
+    zonaSelecionada = null,
+    setorSelecionado = null,
+    bairroRealce = null,
+    onSelectZona,
     fillByNome = null,
     labelByNome = null,
     onSelect,
@@ -187,6 +200,9 @@ export const AlertsMap = forwardRef<
   const setoresLayerRef = useRef<GeoJSONType | null>(null);
   const setorBolhasRef = useRef<LayerGroup | null>(null);
   const setoresDataRef = useRef<SetoresR3R4 | null>(null);
+  const zonasLayerRef = useRef<LayerGroup | null>(null);
+  const onSelectZonaRef = useRef(onSelectZona);
+  onSelectZonaRef.current = onSelectZona;
   const hoverTipRef = useRef<Tooltip | null>(null);
   const [meshReady, setMeshReady] = useState(0);
   const layersByNameRef = useRef(new Map<string, Path>());
@@ -857,15 +873,20 @@ export const AlertsMap = forwardRef<
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    const L = leafletRef.current;
+    const territory = territoryRef.current;
+    if (!map || !territory) return;
     applyTerritoryVisibility(
-      leafletRef.current,
+      L,
       map,
-      territoryRef.current,
+      territory,
       overlays,
-        pointKind === "air" ? "PurpleAir ao vivo" : "CEMADEN",
+      pointKind === "air" ? "PurpleAir ao vivo" : "CEMADEN",
     );
-  }, [overlays, pointKind]);
+    if (!overlays.pluvio || !L) return;
+    if (pointKind === "air") syncAirSensors(L, territory.pluvio, airSensors);
+    else syncPluviometers(L, territory.pluvio, pluvio);
+  }, [overlays, pointKind, pluvio, airSensors, meshReady]);
   // Efeito para desenhar/remover os focos de calor
   useEffect(() => {
     const map = mapRef.current;
@@ -1106,6 +1127,94 @@ export const AlertsMap = forwardRef<
       map.off("zoomend", syncCamadas);
     };
   }, [showSetores, setorUso, selected, drawMode, eraseMode, meshReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L || !meshReady) return;
+    if (!map.getPane("zonasPane")) {
+      const pane = map.createPane("zonasPane");
+      pane.style.zIndex = "620";
+    }
+    zonasLayerRef.current?.remove();
+    const layer = L.layerGroup().addTo(map);
+    zonasLayerRef.current = layer;
+    if (!showZonas) {
+      return () => {
+        layer.remove();
+      };
+    }
+    for (const zona of zonas) {
+      const selecionada = zona.id === zonaSelecionada;
+      const poly = L.geoJSON(zona.geometry, {
+        pane: "zonasPane",
+        style: {
+          color: corZona(zona.level),
+          weight: selecionada ? 3 : 1.4,
+          fillColor: corZona(zona.level),
+          fillOpacity: selecionada ? 0.3 : 0.16,
+          dashArray: zona.bairros.length ? undefined : "6 4",
+        },
+      });
+      poly.on("click", (event) => {
+        L.DomEvent.stopPropagation(event);
+        onSelectZonaRef.current?.(zona.id);
+      });
+      poly.bindTooltip(`${zona.estacao}<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h`, {
+        direction: "top",
+        className: "map-point-tip",
+      });
+      poly.addTo(layer);
+      if (!selecionada) continue;
+      if (bairroRealce) {
+        L.polygon(
+          bairroRealce.coordinates[0].map(([lon, lat]) => [lat, lon] as [number, number]),
+          {
+            pane: "zonasPane",
+            color: "#111827",
+            weight: 2.6,
+            fillColor: "#fdba74",
+            fillOpacity: 0.35,
+          },
+        ).addTo(layer);
+      }
+      const setor = zona.setores.find((item) => item.id === setorSelecionado);
+      if (!setor) continue;
+      L.polygon(
+        setor.geometry.coordinates[0].map(([lon, lat]) => [lat, lon] as [number, number]),
+        {
+          pane: "zonasPane",
+          color: "#111827",
+          weight: 2.4,
+          fillColor: "#f97316",
+          fillOpacity: 0.45,
+        },
+      ).addTo(layer);
+    }
+    return () => {
+      layer.remove();
+    };
+  }, [meshReady, showZonas, zonas, zonaSelecionada, setorSelecionado, bairroRealce]);
+
+  const zonasRef = useRef(zonas);
+  zonasRef.current = zonas;
+  const ancoraZona = (() => {
+    const zona = zonas.find((item) => item.id === zonaSelecionada);
+    const anel = zona ? aneisExternos(zona.geometry)[0] : null;
+    return anel?.[10]?.join(",") ?? anel?.[0]?.join(",");
+  })();
+  const bairroChave = bairroRealce?.coordinates[0]?.[0]?.join(",") ?? "";
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    const zona = zonasRef.current.find((item) => item.id === zonaSelecionada);
+    if (!map || !L || !zona) return;
+    const pontos = bairroRealce
+      ? bairroRealce.coordinates[0].map(([lon, lat]) => [lat, lon] as [number, number])
+      : aneisExternos(zona.geometry).flatMap((anel) => anel.map(([lon, lat]) => [lat, lon] as [number, number]));
+    map.fitBounds(L.latLngBounds(pontos), { padding: [36, 36], maxZoom: 13 });
+  }, [zonaSelecionada, ancoraZona, bairroChave]);
 
   return (
     <div
