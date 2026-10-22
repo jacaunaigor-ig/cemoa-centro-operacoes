@@ -953,7 +953,7 @@ export const AlertsMap = forwardRef<
     for (const estacao of pluviosRegistrandoChuva(pluvio)) {
       const apoio = rainApoio(
         tipo,
-        { mm1h: estacao.mm1h, mm6h: estacao.mm6h, mm24h: estacao.mm24h },
+        { mm1h: estacao.mm1h, mm6h: estacao.mm6h, mm24h: estacao.mm24h, mm72h: null, mm96h: null },
         { id: estacao.munId, nome: estacao.munNome },
       );
       const nivel = apoio?.level ?? "BAIXO";
