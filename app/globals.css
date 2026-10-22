@@ -474,6 +474,39 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   box-shadow: 0 0 0 1.5px #fff, 0 1px 2px rgba(15, 23, 42, 0.28);
 }
 
+.map-chuva-pin {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.2),
+    0 0 0 1px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+}
+
+.map-chuva-pin svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: var(--chuva, #2563eb);
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.25));
+}
+
+.map-chuva-pin b {
+  font-weight: 800;
+}
+
+.map-chuva-pin.is-on {
+  background: #0f172a;
+  color: #fff;
+  box-shadow:
+    0 8px 18px rgba(15, 23, 42, 0.28),
+    0 0 0 2px var(--chuva, #2563eb);
+}
+
 .map-legend-pluvio {
   width: 6px !important;
   height: 6px !important;

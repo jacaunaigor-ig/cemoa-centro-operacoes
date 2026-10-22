@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { coordenadaCemaden } from "./cemaden-estacoes.ts";
+import { leituraComChuva, pluviosNoRaio, pluviosRegistrandoChuva } from "./map-overlays.ts";
 import { kmlZonas, kmzDeKml, zipArmazenado } from "./kmz.ts";
-import { influenciaManaus } from "./manaus-chuva.ts";
+import { bairroNoPonto, curvasDaGrade, influenciaManaus, populacaoDoBairro } from "./manaus-chuva.ts";
 import { circuloIntercepta, montarZonasChuva, RAIO_INFLUENCIA_PADRAO_KM } from "./zona-chuva.ts";
 import type { RainfallPayload } from "./types.ts";
 
@@ -125,13 +126,55 @@ test("Manaus usa a coordenada do catálogo e descarta o bairro acima da cota", (
     raioKm: 5,
     grade,
     bairros: [
-      { nome: "Baixo", zona: "ZONA NORTE", elevMin: 28, elevMed: 32, geometry: baixo },
-      { nome: "Alto", zona: "ZONA NORTE", elevMin: 80, elevMed: 90, geometry: alto },
+      { nome: "Baixo", zona: "ZONA NORTE", elevMin: 28, elevMed: 32, populacao: null, geometry: baixo },
+      { nome: "Alto", zona: "ZONA NORTE", elevMin: 80, elevMed: 90, populacao: null, geometry: alto },
     ],
   });
   assert.ok(recorte);
   assert.deepEqual(recorte.bairros.map((bairro) => bairro.nome), ["Baixo"]);
   assert.equal(recorte.cotaEstacao, 30);
+  assert.equal(recorte.bairros[0]?.populacao, null);
+  const rain = chuva(27);
+  rain.byId["1302603"].estacoes[0].id = "9706";
+  rain.byId["1302603"].estacoes[0].nome = "Santa Etelvina";
+  const agora = Date.parse("2026-10-22T14:10:00Z");
+  const semBairro = montarZonasChuva({ rain, tipo: "CHUVA", raioKm: 5, now: agora });
+  const comBairro = montarZonasChuva({
+    rain,
+    tipo: "CHUVA",
+    raioKm: 5,
+    now: agora,
+    gradeManaus: grade,
+    bairrosManaus: [
+      { nome: "Baixo", zona: "ZONA NORTE", elevMin: 28, elevMed: 32, populacao: 100, geometry: baixo },
+      { nome: "Alto", zona: "ZONA NORTE", elevMin: 80, elevMed: 90, populacao: 50, geometry: alto },
+    ],
+  });
+  assert.deepEqual(comBairro[0]?.bairros.map((bairro) => bairro.nome), ["Baixo"]);
+  assert.equal(comBairro[0]?.raioKm, 5);
+  assert.equal(comBairro[0]?.geometry.type, "Polygon");
+  assert.deepEqual(comBairro[0]?.geometry, semBairro[0]?.geometry);
+});
+
+test("a grade vira curvas de 10 m e ignora a célula sem dado", () => {
+  const curvas = curvasDaGrade({
+    minLon: -60.04,
+    minLat: -3.01,
+    step: 0.01,
+    cols: 3,
+    rows: 3,
+    elev: [40, 40, 40, 40, 25, -1, 40, 40, 40],
+  });
+  assert.ok(curvas.some((curva) => curva.cota === 30 && curva.pontos.length >= 2));
+  assert.equal(curvas.some((curva) => curva.cota === 50), false);
+});
+
+test("a população de Manaus casa o nome do mapa com o Censo 2022", () => {
+  assert.equal(populacaoDoBairro("Santa Etelvina"), 40380);
+  assert.equal(populacaoDoBairro("Parque 10 de Novembro"), 45570);
+  assert.equal(populacaoDoBairro("Trancredo Neves"), 48109);
+  assert.equal(populacaoDoBairro("Tarumã-Açú"), 28501);
+  assert.equal(populacaoDoBairro("Bairro inexistente"), null);
 });
 
 test("o círculo alcança um ponto próximo e não um ponto distante", () => {
@@ -175,4 +218,38 @@ test("o KMZ guarda o KML da zona", async () => {
   assert.match(texto, /estimativa/);
   const direto = zipArmazenado("doc.kml", new TextEncoder().encode("ok"));
   assert.equal(new TextDecoder().decode(direto).includes("ok"), true);
+});
+
+test("só entra no raio o pluviômetro que está registrando chuva", () => {
+  assert.equal(leituraComChuva({ mm1h: 0, mm6h: 12, mm24h: 0 })?.janela, "6 h");
+  assert.equal(leituraComChuva({ mm1h: 0, mm6h: 0, mm24h: 0 }), null);
+  const santa = coordenadaCemaden("9706", "Santa Etelvina", "1302603");
+  assert.ok(santa);
+  const lista = pluviosRegistrandoChuva([
+    { id: "9706", nome: "Santa Etelvina", munId: "1302603", munNome: "Manaus", mm1h: 0, mm6h: 26.8, mm24h: 40 },
+    { id: "9708", nome: "Flores", munId: "1302603", munNome: "Manaus", mm1h: 0, mm6h: 0, mm24h: 0 },
+    { id: "sem", nome: "Sem coordenada", munId: "0000000", munNome: "Nenhum", mm1h: 8, mm6h: 8, mm24h: 8 },
+  ]);
+  assert.deepEqual(lista.map((item) => item.nome), ["Santa Etelvina"]);
+  assert.equal(lista[0]?.janela, "6 h");
+  const dentro = pluviosNoRaio(lista, santa.lat, santa.lon, 5);
+  assert.equal(dentro.length, 1);
+  const fora = pluviosNoRaio(lista, santa.lat + 0.2, santa.lon, 5);
+  assert.equal(fora.length, 0);
+});
+
+test("o pluviômetro abre o bairro que contém o ponto", () => {
+  const bairro = {
+    nome: "Centro",
+    zona: "SUL",
+    elevMin: 25,
+    elevMed: 30,
+    populacao: 100,
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [[[-60.02, -3.12], [-60.0, -3.12], [-60.0, -3.1], [-60.02, -3.1], [-60.02, -3.12]]],
+    },
+  };
+  assert.equal(bairroNoPonto([bairro], -3.11, -60.01)?.nome, "Centro");
+  assert.equal(bairroNoPonto([bairro], -3.2, -60.01), null);
 });

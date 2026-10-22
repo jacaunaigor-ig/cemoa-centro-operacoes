@@ -47,6 +47,7 @@ import {
   type TerritoryVisibility,
 } from "@/lib/map-overlays";
 import { reportClientError } from "@/lib/client";
+import { desenharApoioManaus } from "@/lib/manaus-camada";
 import { loadMunicipalMesh } from "@/lib/stain-clip";
 import "leaflet/dist/leaflet.css";
 
@@ -433,6 +434,31 @@ export const StationsMap = forwardRef<
     if (!L || !layer || !overlays.pluvio) return;
     syncPluviometers(L, layer, pluvio);
   }, [pluvio, overlays.pluvio]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L) return;
+    if (!overlays.bairros && !overlays.curvas && !overlays.zonas && !overlays.escoamento) return;
+    let cancelado = false;
+    const grupo = L.layerGroup().addTo(map);
+    void desenharApoioManaus(
+      L,
+      map,
+      grupo,
+      {
+        bairros: overlays.bairros,
+        curvas: overlays.curvas,
+        zonas: overlays.zonas,
+        escoamento: overlays.escoamento,
+      },
+      () => cancelado,
+    );
+    return () => {
+      cancelado = true;
+      grupo.remove();
+    };
+  }, [overlays.bairros, overlays.curvas, overlays.zonas, overlays.escoamento]);
 
   return (
     <div className={adminMode ? "absolute inset-0 cursor-crosshair" : "absolute inset-0"}>

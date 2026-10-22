@@ -50,6 +50,10 @@ export type TerritoryVisibility = {
   rurais: boolean;
   indigenas: boolean;
   pluvio: boolean;
+  bairros: boolean;
+  curvas: boolean;
+  zonas: boolean;
+  escoamento: boolean;
 };
 
 export const DEFAULT_OVERLAYS: TerritoryVisibility = {
@@ -57,6 +61,10 @@ export const DEFAULT_OVERLAYS: TerritoryVisibility = {
   rurais: false,
   indigenas: false,
   pluvio: false,
+  bairros: false,
+  curvas: false,
+  zonas: false,
+  escoamento: false,
 };
 
 export function showsPluvio(product: OverlayProduct) {
@@ -80,7 +88,84 @@ export function effectiveOverlays(
     rurais: vis.rurais,
     indigenas: vis.indigenas,
     pluvio: vis.pluvio && showsPointOverlay(product),
+    bairros: vis.bairros,
+    curvas: vis.curvas,
+    zonas: vis.zonas,
+    escoamento: vis.escoamento,
   };
+}
+
+export type PluvioComChuva = PluvioStation & {
+  lat: number;
+  lon: number;
+  mm: number;
+  janela: "1 h" | "6 h";
+};
+
+/** Janela em que o pluviômetro está registrando chuva agora. O acumulado de 24 h, sozinho, não entra. */
+export function leituraComChuva(
+  estacao: Pick<PluvioStation, "mm1h" | "mm6h">,
+): { mm: number; janela: "1 h" | "6 h" } | null {
+  if (estacao.mm1h != null && estacao.mm1h > 0) return { mm: estacao.mm1h, janela: "1 h" };
+  if (estacao.mm6h != null && estacao.mm6h > 0) return { mm: estacao.mm6h, janela: "6 h" };
+  return null;
+}
+
+function posicaoNoGrupo(estacao: PluvioStation, indice: number, total: number) {
+  const cemaden = coordenadaCemaden(estacao.id, estacao.nome, estacao.munId);
+  const hit = localidadeProxima(estacao.munId, estacao.nome);
+  const seat = sedeDo(estacao.munId);
+  const baseLat = cemaden?.lat ?? hit?.a ?? seat?.a;
+  const baseLng = cemaden?.lon ?? hit?.o ?? seat?.o;
+  if (baseLat == null || baseLng == null) return null;
+  const placedAtLocality = Boolean(!cemaden && hit && hit.t !== "Sede");
+  const [lat, lon] = cemaden || placedAtLocality
+    ? [baseLat, baseLng]
+    : offsetAround(baseLat, baseLng, indice, total);
+  return { lat, lon, catalogo: Boolean(cemaden), sede: !cemaden && !placedAtLocality };
+}
+
+export function pluviosPosicionados(stations: PluvioStation[]) {
+  const groups = new Map<string, PluvioStation[]>();
+  for (const estacao of stations) {
+    const list = groups.get(estacao.munId) ?? [];
+    list.push(estacao);
+    groups.set(estacao.munId, list);
+  }
+  const out: Array<PluvioStation & { lat: number; lon: number; catalogo: boolean; sede: boolean }> = [];
+  for (const list of groups.values()) {
+    list.forEach((estacao, indice) => {
+      const posicao = posicaoNoGrupo(estacao, indice, list.length);
+      if (posicao) out.push({ ...estacao, ...posicao });
+    });
+  }
+  return out;
+}
+
+export function pluviosRegistrandoChuva(stations: PluvioStation[]): PluvioComChuva[] {
+  return pluviosPosicionados(stations).flatMap((estacao) => {
+    const leitura = leituraComChuva(estacao);
+    return leitura ? [{ ...estacao, mm: leitura.mm, janela: leitura.janela }] : [];
+  });
+}
+
+export function distanciaKm(latA: number, lonA: number, latB: number, lonB: number) {
+  const raio = 6371;
+  const φ1 = (latA * Math.PI) / 180;
+  const φ2 = (latB * Math.PI) / 180;
+  const dφ = ((latB - latA) * Math.PI) / 180;
+  const dλ = ((lonB - lonA) * Math.PI) / 180;
+  const h = Math.sin(dφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(dλ / 2) ** 2;
+  return 2 * raio * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+export function pluviosNoRaio<T extends { lat: number; lon: number }>(
+  lista: T[],
+  lat: number,
+  lon: number,
+  raioKm: number,
+) {
+  return lista.filter((estacao) => distanciaKm(lat, lon, estacao.lat, estacao.lon) <= raioKm + 0.05);
 }
 
 export function pluvioFromRain(rain: RainfallPayload | null | undefined): PluvioStation[] {
@@ -169,7 +254,8 @@ function paintLegend(
 ) {
   if (!el) return;
   const rows: string[] = [];
-  const extra = vis.pluvio || vis.rurais || vis.indigenas;
+  const extra =
+    vis.pluvio || vis.rurais || vis.indigenas || vis.bairros || vis.curvas || vis.zonas || vis.escoamento;
   if (vis.sedes && extra) rows.push(`<span><i class="map-legend-sede"></i> Sede</span>`);
   if (vis.pluvio) {
     const air = pointLegend.toLowerCase().includes("purple");
@@ -179,6 +265,10 @@ function paintLegend(
   }
   if (vis.rurais) rows.push(`<span><i style="background:#ca8a04"></i> Rural</span>`);
   if (vis.indigenas) rows.push(`<span><i style="background:#7c3aed"></i> Indígena</span>`);
+  if (vis.bairros) rows.push(`<span><i style="background:#94a3b8"></i> Bairros de Manaus</span>`);
+  if (vis.curvas) rows.push(`<span><i style="background:#0e7490"></i> Curvas de 10 m</span>`);
+  if (vis.zonas) rows.push(`<span><i style="background:#1d4ed8"></i> Zonas de Manaus</span>`);
+  if (vis.escoamento) rows.push(`<span><i style="background:#0369a1"></i> Vias com relato de alagamento</span>`);
   if (!rows.length) {
     el.hidden = true;
     el.innerHTML = "";
@@ -254,44 +344,26 @@ export function syncPluviometers(L: LeafletNS, layer: LayerGroup, stations: Pluv
     iconSize: [8, 8],
     iconAnchor: [4, 4],
   });
-  const groups = new Map<string, PluvioStation[]>();
-  for (const s of stations) {
-    const list = groups.get(s.munId) ?? [];
-    list.push(s);
-    groups.set(s.munId, list);
-  }
-  for (const [munId, list] of groups) {
-    list.forEach((s, i) => {
-      const cemaden = coordenadaCemaden(s.id, s.nome, munId);
-      const hit = localidadeProxima(munId, s.nome);
-      const seat = sedeDo(munId);
-      const baseLat = cemaden?.lat ?? hit?.a ?? seat?.a;
-      const baseLng = cemaden?.lon ?? hit?.o ?? seat?.o;
-      if (baseLat == null || baseLng == null) return;
-      const placedAtLocality = Boolean(!cemaden && hit && hit.t !== "Sede");
-      const [lat, lng] = cemaden || placedAtLocality
-        ? [baseLat, baseLng]
-        : offsetAround(baseLat, baseLng, i, list.length);
-      const mm = [s.mm1h, s.mm6h, s.mm24h]
-        .map((v) => (v == null ? "—" : v.toFixed(1)))
-        .join(" / ");
-      const origem = cemaden
-        ? "<br/>Coordenada do catálogo CEMADEN"
-        : placedAtLocality
-          ? ""
-          : "<br/><em>Posição na sede — esta estação não está no catálogo de coordenadas</em>";
-      L.marker([lat, lng], {
-        icon,
-        keyboard: false,
-        pane: "pointsPane",
-        zIndexOffset: 40,
-      })
-        .bindTooltip(
-          `<strong>${s.nome}</strong><br/>CEMADEN · ${s.munNome}<br/>1 / 6 / 24 h: ${mm} mm${origem}`,
-          { direction: "top", className: "map-point-tip" },
-        )
-        .addTo(layer);
-    });
+  for (const s of pluviosPosicionados(stations)) {
+    const mm = [s.mm1h, s.mm6h, s.mm24h]
+      .map((v) => (v == null ? "—" : v.toFixed(1)))
+      .join(" / ");
+    const origem = s.catalogo
+      ? "<br/>Coordenada do catálogo CEMADEN"
+      : s.sede
+        ? "<br/><em>Posição na sede — esta estação não está no catálogo de coordenadas</em>"
+        : "";
+    L.marker([s.lat, s.lon], {
+      icon,
+      keyboard: false,
+      pane: "pointsPane",
+      zIndexOffset: 40,
+    })
+      .bindTooltip(
+        `<strong>${s.nome}</strong><br/>CEMADEN · ${s.munNome}<br/>1 / 6 / 24 h: ${mm} mm${origem}`,
+        { direction: "top", className: "map-point-tip" },
+      )
+      .addTo(layer);
   }
 }
 
