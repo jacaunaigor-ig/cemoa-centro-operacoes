@@ -98,18 +98,15 @@ import {
   corZona,
   geojsonZonas,
   montarZonasChuva,
-  nivelExportado,
 } from "@/lib/zona-chuva";
 import { loadBairrosManaus, loadGradeManaus, type BairroManaus, type GradeRelevo } from "@/lib/manaus-chuva";
 import { loadZonasManaus, mesmaZona, type ViaEscoamento, type ZonaAdministrativa } from "@/lib/manaus-zonas";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
-  formatMmShort,
   hasRain,
   hasRainReading,
   parseRainFilter,
-  rainHeatColor,
 } from "@/lib/rainfall-display";
 import { hitsMapBurst } from "@/lib/monitor-thresholds";
 import {
@@ -1839,83 +1836,6 @@ export function AlertsWorkbench() {
     };
   }
 
-  async function exportarZonaPng() {
-    if (!zonaAtiva) return;
-    const nivel = nivelExportado(zonaAtiva.level);
-    const cor = corZona(nivel);
-    const mm24 = pluvio.find((item) => item.id === zonaAtiva.estacaoId)?.mm24h
-      ?? (zonaAtiva.janelaHoras === 24 ? zonaAtiva.mm : null);
-    const volume = zonaAtiva.janelaHoras === 24 || mm24 == null
-      ? `${formatMmShort(zonaAtiva.mm)} mm / ${zonaAtiva.janelaHoras} h`
-      : `${formatMmShort(zonaAtiva.mm)} mm / ${zonaAtiva.janelaHoras} h · ${formatMmShort(mm24)} mm / 24 h`;
-    const volume24 = mm24 == null ? "sem leitura de 24 h" : `${formatMmShort(mm24)} mm em 24 h`;
-    const populacao = zonaAtiva.bairros.reduce((soma, bairro) => soma + (bairro.populacao ?? 0), 0);
-    const comPopulacao = zonaAtiva.bairros.some((bairro) => bairro.populacao != null);
-    const noRaio = pluviosNoRaio(pluviosChuva, zonaAtiva.lat, zonaAtiva.lon, zonaAtiva.raioKm);
-    const vizinhos = noRaio.filter((item) => item.id !== zonaAtiva.estacaoId);
-    const linhas = [
-      `Raio de perigo: ${zonaAtiva.raioKm} km, igual em todos os graus.`,
-      `Estação: ${zonaAtiva.estacao} · ${zonaAtiva.municipio}.`,
-      `Volume em 24 h: ${volume24}.`,
-      noRaio.length
-        ? `Pluviômetros com chuva no raio: ${noRaio.map((item) => `${item.nome} ${formatMmShort(item.mm)} mm / ${item.janela}${item.mm24h == null ? "" : ` e ${formatMmShort(item.mm24h)} mm / 24 h`}`).join("; ")}.`
-        : "Nenhum pluviômetro com chuva dentro deste raio.",
-      zonaAtiva.cotaEstacao == null ? "" : `Cota da estação: ${zonaAtiva.cotaEstacao} m.`,
-      zonaAtiva.bairros.length
-        ? `Bairros no recorte: ${zonaAtiva.bairros
-            .slice(0, 8)
-            .map((bairro) => bairro.nome)
-            .join(", ")}${zonaAtiva.bairros.length > 8 ? ` e mais ${zonaAtiva.bairros.length - 8}` : ""}${comPopulacao ? ` · ${populacao.toLocaleString("pt-BR")} habitantes` : ""}.`
-        : "",
-      zonaAtiva.setores.length
-        ? `${zonaAtiva.setores.length} polígonos de risco interceptam o raio.`
-        : "Nenhum polígono de risco intercepta o raio.",
-    ].filter(Boolean);
-    await exportInstitutionalPng({
-      title: "Raio de perigo da chuva",
-      productLegend: `${zonaAtiva.estacao} · ${zonaAtiva.raioKm} km · ${volume} · ${LEVEL_LABELS[nivel] ?? nivel}`,
-      filename: pngFilename("raio_perigo_chuva_cemoa"),
-      colorFor: () => "#ffffff",
-      legendTitle: "Raio de perigo",
-      legendItems: [
-        {
-          key: nivel,
-          title: LEVEL_LABELS[nivel] ?? nivel,
-          text: `${volume}. O raio não cresce com o grau.`,
-          color: cor,
-          count: 1,
-        },
-      ],
-      painel: linhas,
-      footerSources: `CEMADEN · leitura ${zonaAtiva.observedAt == null ? "sem horário" : formatAmazonDateTime(zonaAtiva.observedAt)}`,
-      extraNote: {
-        title: "ESTIMATIVA",
-        text: "O círculo é o raio de perigo. Não indica que toda a área recebeu o mesmo acumulado. A exportação não emite alerta.",
-      },
-      foco: [zonaAtiva.geometry],
-      stains: zonaAtiva.setores.map((setor) => ({
-        geometry: setor.geometry,
-        color: SETOR_CORES[(setor.grau === "R4" ? "R4" : "R3") as GrauSetor].fill,
-      })),
-      raioKm: zonaAtiva.raioKm,
-      raioCor: cor,
-      pontos: [
-        {
-          lat: zonaAtiva.lat,
-          lon: zonaAtiva.lon,
-          color: cor,
-          nome: `${zonaAtiva.estacao} · ${volume}`,
-        },
-        ...vizinhos.map((item) => ({
-          lat: item.lat,
-          lon: item.lon,
-          color: rainHeatColor(item.mm),
-          nome: `${item.nome} · ${formatMmShort(item.mm)} mm / ${item.janela}${item.mm24h == null ? "" : ` · ${formatMmShort(item.mm24h)} mm / 24 h`}`,
-        })),
-      ],
-    });
-  }
-
   function exportarZonaKmz(lista: typeof zonasChuva) {
     if (!lista.length) return;
     baixarBlob(kmzDeKml(kmlZonas(pacoteZona(lista))), "zona_chuva_cemoa.kmz");
@@ -2663,11 +2583,6 @@ export function AlertsWorkbench() {
                     setBairroZonaId(null);
                     setBairroFicha(null);
                   }}
-                  onPng={() => {
-                    void exportarZonaPng().catch((err) => {
-                      toast.error(err instanceof Error ? err.message : "Não foi possível exportar o PNG.");
-                    });
-                  }}
                   onKmz={() => exportarZonaKmz([zonaAtiva])}
                   onKmzVisiveis={() => exportarZonaKmz(zonasChuva)}
                   onGeojson={() => exportarZonaGeojson([zonaAtiva])}
@@ -2743,7 +2658,7 @@ export function AlertsWorkbench() {
                 tipo={tipo}
               />
               {showZonas && showsPluvio(tipo) && zonasChuva.length === 0 ? (
-                <p className="pointer-events-none absolute top-14 left-3 z-[1100] max-w-[18rem] rounded-lg border border-border bg-panel/95 px-2.5 py-1.5 text-[11px] leading-snug text-text shadow-[var(--shadow-card)]">
+                <p className="pointer-events-none absolute top-12 right-2 left-2 z-[1100] rounded-lg border border-border bg-panel/95 px-2.5 py-1.5 text-[11px] leading-snug text-text shadow-[var(--shadow-card)] min-[768px]:right-auto min-[768px]:left-3 min-[768px]:max-w-[18rem]">
                   {tipo === "MOVIMENTO"
                     ? "Nenhum raio de perigo neste momento. Nenhuma estação chegou a 50 mm em 24 h, ou a 30 mm em 24 h em Manaus."
                     : tipo === "ALAGAMENTO"
@@ -2757,7 +2672,7 @@ export function AlertsWorkbench() {
                       "pointer-events-auto absolute z-[1200] flex min-h-0 flex-col",
                       isMobile
                         ? zonaAtiva || bairroFicha
-                          ? "inset-x-1.5 top-10 max-h-40"
+                          ? "inset-x-1.5 top-10 max-h-24"
                           : "inset-x-1.5 bottom-1.5 top-10 max-h-[calc(100%-2.75rem)]"
                         : zonaAtiva
                           ? bairroFicha
@@ -2912,22 +2827,21 @@ export function AlertsWorkbench() {
                 ) : null}
               </MapLegendCard>
               )}
+              {chuvaNoEstado ? (
+                <div className="chuva-estado" aria-hidden="true">
+                  {Array.from({ length: 40 }, (_, i) => (
+                    <i
+                      key={i}
+                      style={{
+                        left: `${(i * 17.3) % 100}%`,
+                        animationDelay: `${(i % 13) * 0.62}s`,
+                        animationDuration: `${9 + (i % 5) * 1.6}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
-
-            {chuvaNoEstado ? (
-              <div className="chuva-estado" aria-hidden="true">
-                {Array.from({ length: 40 }, (_, i) => (
-                  <i
-                    key={i}
-                    style={{
-                      left: `${(i * 17.3) % 100}%`,
-                      animationDelay: `${(i % 13) * 0.62}s`,
-                      animationDuration: `${9 + (i % 5) * 1.6}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            ) : null}
 
             {isMobile || paintArmed || drawMode || eraseMode ? null : (
               <AlertTicker alerts={filteredAlerts} />

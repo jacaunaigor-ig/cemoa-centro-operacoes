@@ -22,7 +22,7 @@ export function ZonaAdministrativaFicha({
   const ficha = caracteristicasZona(zona, bairros);
   const cor = corZonaAdministrativa(zona.nome);
   return (
-    <aside className="pointer-events-auto absolute top-28 left-2 z-[1255] flex max-h-[min(46dvh,22rem)] w-[min(calc(100%-1rem),22rem)] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md">
+    <aside className="pointer-events-auto absolute top-12 right-1.5 left-1.5 z-[1255] flex max-h-[40%] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md min-[768px]:top-28 min-[768px]:right-auto min-[768px]:left-2 min-[768px]:max-h-[min(46dvh,22rem)] min-[768px]:w-[min(calc(100%-1rem),22rem)]">
       <header className="flex items-start gap-2 border-b border-border px-3 py-2">
         <span className="mt-1 h-3 w-3 shrink-0 rounded-sm" style={{ background: cor }} />
         <div className="min-w-0 flex-1">

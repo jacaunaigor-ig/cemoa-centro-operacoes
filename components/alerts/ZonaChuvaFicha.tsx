@@ -26,7 +26,6 @@ export function ZonaChuvaFicha({
   onSelectBairro,
   onSelectZona,
   onFechar,
-  onPng,
   onKmz,
   onKmzVisiveis,
   onGeojson,
@@ -42,7 +41,6 @@ export function ZonaChuvaFicha({
   onSelectBairro: (id: string | null) => void;
   onSelectZona: (id: string) => void;
   onFechar: () => void;
-  onPng: () => void;
   onKmz: () => void;
   onKmzVisiveis: () => void;
   onGeojson: () => void;
@@ -76,7 +74,7 @@ export function ZonaChuvaFicha({
   const semPopulacao = zona.bairros.length - comPopulacao.length;
 
   return (
-    <aside className="pointer-events-auto absolute inset-x-2 bottom-2 z-[1250] flex max-h-[min(58dvh,28rem)] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md sm:inset-x-auto sm:right-2 sm:w-[24rem]">
+    <aside className="pointer-events-auto absolute inset-x-1.5 bottom-[max(0.35rem,env(safe-area-inset-bottom))] z-[1250] flex max-h-[46%] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md max-[767px]:max-h-[42%] min-[768px]:inset-x-auto min-[768px]:right-2 min-[768px]:bottom-2 min-[768px]:max-h-[min(58dvh,28rem)] min-[768px]:w-[24rem]">
       <header className="flex items-start gap-2 border-b border-border px-3 py-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
@@ -88,7 +86,7 @@ export function ZonaChuvaFicha({
         <div className="flex shrink-0 flex-col items-end gap-1">
           <button
             type="button"
-            className="rounded px-1.5 py-0.5 text-[11px] font-semibold text-text-mute hover:bg-hover hover:text-text"
+            className="inline-flex min-h-11 items-center rounded px-2 text-[11px] font-semibold text-text-mute hover:bg-hover hover:text-text min-[768px]:min-h-0 min-[768px]:px-1.5 min-[768px]:py-0.5"
             onClick={onFechar}
           >
             Fechar
@@ -109,7 +107,7 @@ export function ZonaChuvaFicha({
                 <button
                   key={item.id}
                   type="button"
-                  className="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold"
+                  className="inline-flex min-h-11 shrink-0 items-center rounded border px-2 text-[11px] font-semibold min-[768px]:min-h-0 min-[768px]:px-1.5 min-[768px]:py-0.5 min-[768px]:text-[10px]"
                   style={{
                     borderColor: ativa ? corZona(item.level as ZonaChuva["level"]) : undefined,
                     background: ativa ? "color-mix(in srgb, var(--brand) 12%, transparent)" : undefined,
@@ -124,22 +122,19 @@ export function ZonaChuvaFicha({
         ) : null}
 
         <p className="text-[11px] font-semibold text-text">Raio de perigo: {zona.raioKm} km</p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          <button type="button" className="rounded bg-brand px-2 py-1 text-[11px] font-bold text-white" onClick={onPng}>
-            Exportar raio PNG
-          </button>
-          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onKmz}>
+        <div className="mt-2 grid grid-cols-1 gap-1.5 min-[768px]:flex min-[768px]:flex-wrap">
+          <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-border px-2 text-[12px] font-semibold min-[768px]:min-h-0 min-[768px]:px-2 min-[768px]:py-1 min-[768px]:text-[11px]" onClick={onKmz}>
             KMZ do raio
           </button>
-          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onKmzVisiveis}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-border px-2 text-[12px] font-semibold min-[768px]:min-h-0 min-[768px]:px-2 min-[768px]:py-1 min-[768px]:text-[11px]" onClick={onKmzVisiveis}>
             KMZ dos raios visíveis
           </button>
-          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onGeojson}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center rounded border border-border px-2 text-[12px] font-semibold min-[768px]:min-h-0 min-[768px]:px-2 min-[768px]:py-1 min-[768px]:text-[11px]" onClick={onGeojson}>
             GeoJSON do raio
           </button>
         </div>
         <p className="mt-1 text-[10px] leading-snug text-text-mute">
-          O PNG enquadra o círculo de {zona.raioKm} km, a estação, os pluviômetros com chuva dentro do raio e os polígonos de risco. KMZ e GeoJSON levam o mesmo círculo
+          KMZ e GeoJSON levam o círculo de {zona.raioKm} km
           {incluirSetores ? " e os polígonos de risco" : ""}. A exportação não emite alerta.
         </p>
         <p className="mt-1 text-[11px] leading-snug text-text">

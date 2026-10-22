@@ -184,14 +184,18 @@ function setoresDaZona(
   if (!setores) return [];
   const uso = tipo === "MOVIMENTO" ? "movimento" : null;
   const out: ZonaSetor[] = [];
+  const vistos = new Set<string>();
   for (const feature of setores.features) {
     const props = feature.properties;
     if (!props) continue;
     if (uso && !setorEntra(props.p, uso)) continue;
+    const id = `${props.ibge}:${props.s}`;
+    if (vistos.has(id)) continue;
     const ring = feature.geometry?.coordinates?.[0];
     if (!ring || !geometriasCruzam(geometry, ring)) continue;
+    vistos.add(id);
     out.push({
-      id: `${props.ibge}:${props.s}`,
+      id,
       nome: props.s,
       grau: props.g,
       ibge: props.ibge,

@@ -1418,8 +1418,8 @@ export const AlertsMap = forwardRef<
         icon: L.divIcon({
           className: "map-raio-centro-icon",
           html: `<span class="map-raio-centro${selecionada ? " is-on" : ""}" style="--raio:${tinta}"></span>`,
-          iconSize: selecionada ? [12, 12] : [10, 10],
-          iconAnchor: selecionada ? [6, 6] : [5, 5],
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
         }),
         keyboard: false,
         pane: "raioPane",
