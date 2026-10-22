@@ -52,6 +52,8 @@ export type TerritoryVisibility = {
   pluvio: boolean;
   bairros: boolean;
   curvas: boolean;
+  zonas: boolean;
+  escoamento: boolean;
 };
 
 export const DEFAULT_OVERLAYS: TerritoryVisibility = {
@@ -61,6 +63,8 @@ export const DEFAULT_OVERLAYS: TerritoryVisibility = {
   pluvio: false,
   bairros: false,
   curvas: false,
+  zonas: false,
+  escoamento: false,
 };
 
 export function showsPluvio(product: OverlayProduct) {
@@ -86,6 +90,8 @@ export function effectiveOverlays(
     pluvio: vis.pluvio && showsPointOverlay(product),
     bairros: vis.bairros,
     curvas: vis.curvas,
+    zonas: vis.zonas,
+    escoamento: vis.escoamento,
   };
 }
 
@@ -248,7 +254,8 @@ function paintLegend(
 ) {
   if (!el) return;
   const rows: string[] = [];
-  const extra = vis.pluvio || vis.rurais || vis.indigenas || vis.bairros || vis.curvas;
+  const extra =
+    vis.pluvio || vis.rurais || vis.indigenas || vis.bairros || vis.curvas || vis.zonas || vis.escoamento;
   if (vis.sedes && extra) rows.push(`<span><i class="map-legend-sede"></i> Sede</span>`);
   if (vis.pluvio) {
     const air = pointLegend.toLowerCase().includes("purple");
@@ -260,6 +267,8 @@ function paintLegend(
   if (vis.indigenas) rows.push(`<span><i style="background:#7c3aed"></i> Indígena</span>`);
   if (vis.bairros) rows.push(`<span><i style="background:#94a3b8"></i> Bairros de Manaus</span>`);
   if (vis.curvas) rows.push(`<span><i style="background:#0e7490"></i> Curvas de 10 m</span>`);
+  if (vis.zonas) rows.push(`<span><i style="background:#1d4ed8"></i> Zonas de Manaus</span>`);
+  if (vis.escoamento) rows.push(`<span><i style="background:#0369a1"></i> Vias com relato de alagamento</span>`);
   if (!rows.length) {
     el.hidden = true;
     el.innerHTML = "";

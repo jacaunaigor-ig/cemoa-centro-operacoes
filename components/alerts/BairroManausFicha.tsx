@@ -26,11 +26,13 @@ export function BairroManausFicha({
   raios,
   onFechar,
   onAbrirRaio,
+  onAbrirZona,
 }: {
   bairro: BairroFichaDados;
   raios: RaioDoBairro[];
   onFechar: () => void;
   onAbrirRaio: (id: string) => void;
+  onAbrirZona?: () => void;
 }) {
   return (
     <aside className="pointer-events-auto absolute inset-x-2 bottom-2 z-[1260] flex max-h-[min(52dvh,24rem)] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md sm:inset-x-auto sm:bottom-2 sm:left-2 sm:w-[22rem]">
@@ -39,6 +41,15 @@ export function BairroManausFicha({
           <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">Bairro de Manaus</p>
           <h2 className="truncate text-sm font-bold">{bairro.nome}</h2>
           <p className="text-xs text-text-mute">{bairro.zona || "Manaus"}</p>
+          {onAbrirZona && bairro.zona ? (
+            <button
+              type="button"
+              className="mt-0.5 text-[11px] font-semibold text-sky-800 hover:underline dark:text-sky-300"
+              onClick={onAbrirZona}
+            >
+              Ficha da zona
+            </button>
+          ) : null}
         </div>
         <button
           type="button"

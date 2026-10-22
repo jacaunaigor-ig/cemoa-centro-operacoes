@@ -20,6 +20,7 @@ import { RISK_COLORS } from "@/lib/risk";
 import { aneisExternos, corZona, type ZonaChuva } from "@/lib/zona-chuva";
 import { anelParaMapa, bairroNoPonto, type BairroManaus } from "@/lib/manaus-chuva";
 import { desenharApoioManaus } from "@/lib/manaus-camada";
+import type { ViaEscoamento, ZonaAdministrativa } from "@/lib/manaus-zonas";
 import type { BairroFichaDados } from "@/components/alerts/BairroManausFicha";
 import type { PluvioFichaDados } from "@/components/alerts/PluvioChuvaFicha";
 
@@ -135,6 +136,10 @@ export const AlertsMap = forwardRef<
     onSelectBairro?: (zonaId: string, bairroId: string) => void;
     onBairroMapa?: (bairro: (BairroFichaDados & { elevMed: number | null }) | null) => void;
     bairroDestaque?: string | null;
+    onZonaAdministrativa?: (zona: ZonaAdministrativa) => void;
+    zonaAdministrativa?: string | null;
+    onViaEscoamento?: (via: ViaEscoamento) => void;
+    viaEscoamento?: string | null;
     onPluvio?: (pluvio: PluvioFichaDados) => void;
     pluvioDestaque?: string | null;
     fillByNome?: Record<string, string> | null;
@@ -186,6 +191,10 @@ export const AlertsMap = forwardRef<
     onSelectBairro,
     onBairroMapa,
     bairroDestaque = null,
+    onZonaAdministrativa,
+    zonaAdministrativa = null,
+    onViaEscoamento,
+    viaEscoamento = null,
     onPluvio,
     pluvioDestaque = null,
     fillByNome = null,
@@ -226,10 +235,14 @@ export const AlertsMap = forwardRef<
   const onSelectBairroRef = useRef(onSelectBairro);
   const onBairroMapaRef = useRef(onBairroMapa);
   const onPluvioRef = useRef(onPluvio);
+  const onZonaAdministrativaRef = useRef(onZonaAdministrativa);
+  const onViaEscoamentoRef = useRef(onViaEscoamento);
   onSelectZonaRef.current = onSelectZona;
   onSelectBairroRef.current = onSelectBairro;
   onBairroMapaRef.current = onBairroMapa;
   onPluvioRef.current = onPluvio;
+  onZonaAdministrativaRef.current = onZonaAdministrativa;
+  onViaEscoamentoRef.current = onViaEscoamento;
   const hoverTipRef = useRef<Tooltip | null>(null);
   const [meshReady, setMeshReady] = useState(0);
   const layersByNameRef = useRef(new Map<string, Path>());
@@ -996,7 +1009,7 @@ export const AlertsMap = forwardRef<
     const map = mapRef.current;
     const L = leafletRef.current;
     if (!map || !L || !meshReady) return;
-    if (!overlays.bairros && !overlays.curvas) return;
+    if (!overlays.bairros && !overlays.curvas && !overlays.zonas && !overlays.escoamento) return;
     let cancelado = false;
     const grupo = L.layerGroup().addTo(map);
     void desenharApoioManaus(
@@ -1006,8 +1019,14 @@ export const AlertsMap = forwardRef<
       {
         bairros: overlays.bairros,
         curvas: overlays.curvas,
+        zonas: overlays.zonas,
+        escoamento: overlays.escoamento,
         destaque: bairroDestaque,
+        destaqueZona: zonaAdministrativa,
+        destaqueVia: viaEscoamento,
         onBairro: (bairro) => onBairroMapaRef.current?.(bairro),
+        onZona: (zona) => onZonaAdministrativaRef.current?.(zona),
+        onVia: (via) => onViaEscoamentoRef.current?.(via),
       },
       () => cancelado,
     );
@@ -1015,7 +1034,16 @@ export const AlertsMap = forwardRef<
       cancelado = true;
       grupo.remove();
     };
-  }, [meshReady, overlays.bairros, overlays.curvas, bairroDestaque]);
+  }, [
+    meshReady,
+    overlays.bairros,
+    overlays.curvas,
+    overlays.zonas,
+    overlays.escoamento,
+    bairroDestaque,
+    zonaAdministrativa,
+    viaEscoamento,
+  ]);
   // Efeito para desenhar/remover os focos de calor
   useEffect(() => {
     const map = mapRef.current;

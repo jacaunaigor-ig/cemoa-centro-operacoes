@@ -100,6 +100,7 @@ import {
   montarZonasChuva,
 } from "@/lib/zona-chuva";
 import { loadBairrosManaus, loadGradeManaus, type BairroManaus, type GradeRelevo } from "@/lib/manaus-chuva";
+import { loadZonasManaus, mesmaZona, type ViaEscoamento, type ZonaAdministrativa } from "@/lib/manaus-zonas";
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
@@ -118,6 +119,8 @@ import {
 } from "@/lib/air-quality-display";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
 import { BairroManausFicha, type BairroFichaDados } from "@/components/alerts/BairroManausFicha";
+import { ViaEscoamentoFicha } from "@/components/alerts/ViaEscoamentoFicha";
+import { ZonaAdministrativaFicha } from "@/components/alerts/ZonaAdministrativaFicha";
 import { PluvioChuvaFicha, type PluvioFichaDados } from "@/components/alerts/PluvioChuvaFicha";
 import { ZonaChuvaFicha } from "@/components/alerts/ZonaChuvaFicha";
 import { AlertList } from "@/components/alerts/AlertList";
@@ -405,6 +408,8 @@ export function AlertsWorkbench() {
   const [setorZonaId, setSetorZonaId] = useState<string | null>(null);
   const [bairroZonaId, setBairroZonaId] = useState<string | null>(null);
   const [bairroFicha, setBairroFicha] = useState<BairroFichaDados | null>(null);
+  const [zonaAdm, setZonaAdm] = useState<ZonaAdministrativa | null>(null);
+  const [viaAlagamento, setViaAlagamento] = useState<ViaEscoamento | null>(null);
   const [pluvioFicha, setPluvioFicha] = useState<PluvioFichaDados | null>(null);
   const [setoresRisco, setSetoresRisco] = useState<SetoresR3R4 | null>(null);
   const [bairrosManaus, setBairrosManaus] = useState<BairroManaus[] | null>(null);
@@ -502,6 +507,21 @@ export function AlertsWorkbench() {
       cancel = true;
     };
   }, [showZonas, setoresRisco, bairrosManaus, gradeManaus]);
+
+  useEffect(() => {
+    if (!zonaAdm || bairrosManaus) return;
+    let cancel = false;
+    loadBairrosManaus()
+      .then((payload) => {
+        if (!cancel) setBairrosManaus(payload);
+      })
+      .catch(() => {
+        /* a ficha da zona fica sem a lista de bairros */
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [zonaAdm, bairrosManaus]);
 
   useEffect(() => {
     if (zonaId && !zonasChuva.some((zona) => zona.id === zonaId)) setZonaId(null);
@@ -2516,6 +2536,10 @@ export function AlertsWorkbench() {
                   bairroDestaque={bairroFicha ? `${bairroFicha.zona}|${bairroFicha.nome}` : bairroZonaId}
                   pluvioDestaque={pluvioFicha?.id ?? null}
                   onPluvio={setPluvioFicha}
+                  zonaAdministrativa={zonaAdm?.nome ?? null}
+                  viaEscoamento={viaAlagamento?.id ?? null}
+                  onZonaAdministrativa={setZonaAdm}
+                  onViaEscoamento={setViaAlagamento}
                   onBairroMapa={(bairro) => {
                     if (!bairro) {
                       setBairroFicha(null);
@@ -2666,7 +2690,37 @@ export function AlertsWorkbench() {
                     setSetorZonaId(null);
                     setBairroZonaId(`${bairroFicha.zona}|${bairroFicha.nome}`);
                   }}
+                  onAbrirZona={() => {
+                    void loadZonasManaus()
+                      .then((lista) => {
+                        const achada = lista.find((zona) => mesmaZona(zona.nome, bairroFicha.zona));
+                        if (achada) setZonaAdm(achada);
+                      })
+                      .catch(() => {
+                        /* o botão não abre a ficha se o polígono não carregar */
+                      });
+                  }}
                 />
+              ) : null}
+              {zonaAdm ? (
+                <ZonaAdministrativaFicha
+                  zona={zonaAdm}
+                  bairros={bairrosManaus ?? []}
+                  onFechar={() => setZonaAdm(null)}
+                  onAbrirBairro={(bairro) => {
+                    setBairroFicha({
+                      nome: bairro.nome,
+                      zona: bairro.zona,
+                      elevMin: bairro.elevMin,
+                      elevMed: bairro.elevMed,
+                      populacao: bairro.populacao,
+                    });
+                    setBairroZonaId(`${bairro.zona}|${bairro.nome}`);
+                  }}
+                />
+              ) : null}
+              {viaAlagamento ? (
+                <ViaEscoamentoFicha via={viaAlagamento} onFechar={() => setViaAlagamento(null)} />
               ) : null}
               {geoError ? (
                 <div className="absolute inset-x-3 top-14 z-[1200] rounded-lg border border-risco-severo/40 bg-panel/95 px-3 py-2 text-xs text-text">

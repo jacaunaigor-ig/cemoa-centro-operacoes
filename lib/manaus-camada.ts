@@ -7,6 +7,13 @@ import {
   loadGradeManaus,
   type BairroManaus,
 } from "@/lib/manaus-chuva";
+import {
+  corZonaAdministrativa,
+  loadViasEscoamento,
+  loadZonasManaus,
+  type ViaEscoamento,
+  type ZonaAdministrativa,
+} from "@/lib/manaus-zonas";
 
 type LeafletNS = typeof import("leaflet");
 
@@ -25,13 +32,19 @@ export async function desenharApoioManaus(
   pedido: {
     bairros: boolean;
     curvas: boolean;
+    zonas?: boolean;
+    escoamento?: boolean;
     destaque?: string | null;
+    destaqueZona?: string | null;
+    destaqueVia?: string | null;
     onBairro?: (bairro: BairroManaus) => void;
+    onZona?: (zona: ZonaAdministrativa) => void;
+    onVia?: (via: ViaEscoamento) => void;
   },
   cancelado: () => boolean,
 ) {
   grupo.clearLayers();
-  if (!pedido.bairros && !pedido.curvas) return;
+  if (!pedido.bairros && !pedido.curvas && !pedido.zonas && !pedido.escoamento) return;
   if (!map.getPane("manausPane")) {
     const pane = map.createPane("manausPane");
     pane.style.zIndex = "560";
@@ -101,6 +114,73 @@ export async function desenharApoioManaus(
           { direction: "top", className: "map-point-tip" },
         )
         .addTo(grupo);
+    }
+  }
+
+  if (pedido.zonas) {
+    if (!map.getPane("zonasAdmPane")) {
+      const pane = map.createPane("zonasAdmPane");
+      pane.style.zIndex = "545";
+      pane.style.pointerEvents = "auto";
+    }
+    const zonas = await loadZonasManaus();
+    if (cancelado()) return;
+    for (const zona of zonas) {
+      const anel = (zona.geometry.coordinates[0] ?? []).map(
+        ([lon, lat]) => [lat, lon] as [number, number],
+      );
+      for (const [lat, lon] of anel) marca(lat, lon);
+      const ativa = pedido.destaqueZona === zona.nome;
+      const poly = L.polygon(anel, {
+        pane: "zonasAdmPane",
+        color: corZonaAdministrativa(zona.nome),
+        weight: ativa ? 3.4 : 2,
+        fillColor: corZonaAdministrativa(zona.nome),
+        fillOpacity: ativa ? 0.28 : 0.12,
+      });
+      poly.on("click", (event) => {
+        L.DomEvent.stop(event);
+        pedido.onZona?.(zona);
+      });
+      poly
+        .bindTooltip(`<strong>Zona ${zona.nome}</strong><br/>Clique para a ficha da região`, {
+          direction: "top",
+          className: "map-point-tip",
+        })
+        .addTo(grupo);
+    }
+  }
+
+  if (pedido.escoamento) {
+    if (!map.getPane("viasPane")) {
+      const pane = map.createPane("viasPane");
+      pane.style.zIndex = "575";
+      pane.style.pointerEvents = "auto";
+    }
+    const vias = await loadViasEscoamento();
+    if (cancelado()) return;
+    for (const via of vias) {
+      const ativa = pedido.destaqueVia === via.id;
+      for (const trecho of via.geometry.coordinates) {
+        const linha = trecho.map(([lon, lat]) => [lat, lon] as [number, number]);
+        for (const [lat, lon] of linha) marca(lat, lon);
+        const path = L.polyline(linha, {
+          pane: "viasPane",
+          color: ativa ? "#0c4a6e" : "#0369a1",
+          weight: ativa ? 5 : 3.2,
+          opacity: 0.95,
+        });
+        path.on("click", (event) => {
+          L.DomEvent.stop(event);
+          pedido.onVia?.(via);
+        });
+        path
+          .bindTooltip(`<strong>${via.nome}</strong><br/>${via.fonte}`, {
+            direction: "top",
+            className: "map-point-tip",
+          })
+          .addTo(grupo);
+      }
     }
   }
 

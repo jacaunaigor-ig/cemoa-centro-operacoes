@@ -439,21 +439,26 @@ export const StationsMap = forwardRef<
     const map = mapRef.current;
     const L = leafletRef.current;
     if (!map || !L) return;
-    if (!overlays.bairros && !overlays.curvas) return;
+    if (!overlays.bairros && !overlays.curvas && !overlays.zonas && !overlays.escoamento) return;
     let cancelado = false;
     const grupo = L.layerGroup().addTo(map);
     void desenharApoioManaus(
       L,
       map,
       grupo,
-      { bairros: overlays.bairros, curvas: overlays.curvas },
+      {
+        bairros: overlays.bairros,
+        curvas: overlays.curvas,
+        zonas: overlays.zonas,
+        escoamento: overlays.escoamento,
+      },
       () => cancelado,
     );
     return () => {
       cancelado = true;
       grupo.remove();
     };
-  }, [overlays.bairros, overlays.curvas]);
+  }, [overlays.bairros, overlays.curvas, overlays.zonas, overlays.escoamento]);
 
   return (
     <div className={adminMode ? "absolute inset-0 cursor-crosshair" : "absolute inset-0"}>
