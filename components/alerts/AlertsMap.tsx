@@ -15,8 +15,15 @@ import type {
 } from "leaflet";
 import type { AlertLevel } from "@/lib/types";
 import { LEVEL_COLORS, LEVEL_LABELS } from "@/lib/alert-types";
-import { formatMm, formatMmShort, formatWindowsCompact } from "@/lib/rainfall-display";
+import { formatMm, formatMmShort, formatWindowsCompact, rainApoio } from "@/lib/rainfall-display";
+import { RISK_COLORS } from "@/lib/risk";
 import { aneisExternos, corZona, type ZonaChuva } from "@/lib/zona-chuva";
+import { anelParaMapa, bairroNoPonto, type BairroManaus } from "@/lib/manaus-chuva";
+import { desenharApoioManaus } from "@/lib/manaus-camada";
+import type { BairroFichaDados } from "@/components/alerts/BairroManausFicha";
+import type { PluvioFichaDados } from "@/components/alerts/PluvioChuvaFicha";
+
+const BAIRROS_VAZIOS: BairroManaus[] = [];
 import { hitsMapBurst, mapBurstThreshold } from "@/lib/monitor-thresholds";
 import type { AlertType } from "@/lib/alert-types";
 import { formatUg } from "@/lib/air-quality-display";
@@ -37,6 +44,7 @@ import { addAmazonasRiverFlow } from "@/lib/map-rivers";
 import {
   addTerritoryOverlays,
   applyTerritoryVisibility,
+  pluviosRegistrandoChuva,
   syncAirSensors,
   syncPluviometers,
   type PluvioStation,
@@ -122,7 +130,13 @@ export const AlertsMap = forwardRef<
     zonaSelecionada?: string | null;
     setorSelecionado?: string | null;
     bairroRealce?: GeoJSON.Polygon | null;
+    bairrosManaus?: BairroManaus[];
     onSelectZona?: (id: string) => void;
+    onSelectBairro?: (zonaId: string, bairroId: string) => void;
+    onBairroMapa?: (bairro: (BairroFichaDados & { elevMed: number | null }) | null) => void;
+    bairroDestaque?: string | null;
+    onPluvio?: (pluvio: PluvioFichaDados) => void;
+    pluvioDestaque?: string | null;
     fillByNome?: Record<string, string> | null;
     labelByNome?: Record<string, string> | null;
     onSelect: (nome: string, bacia: string) => void;
@@ -167,7 +181,13 @@ export const AlertsMap = forwardRef<
     zonaSelecionada = null,
     setorSelecionado = null,
     bairroRealce = null,
+    bairrosManaus = BAIRROS_VAZIOS,
     onSelectZona,
+    onSelectBairro,
+    onBairroMapa,
+    bairroDestaque = null,
+    onPluvio,
+    pluvioDestaque = null,
     fillByNome = null,
     labelByNome = null,
     onSelect,
@@ -201,8 +221,15 @@ export const AlertsMap = forwardRef<
   const setorBolhasRef = useRef<LayerGroup | null>(null);
   const setoresDataRef = useRef<SetoresR3R4 | null>(null);
   const zonasLayerRef = useRef<LayerGroup | null>(null);
+  const chuvaPluvioRef = useRef<LayerGroup | null>(null);
   const onSelectZonaRef = useRef(onSelectZona);
+  const onSelectBairroRef = useRef(onSelectBairro);
+  const onBairroMapaRef = useRef(onBairroMapa);
+  const onPluvioRef = useRef(onPluvio);
   onSelectZonaRef.current = onSelectZona;
+  onSelectBairroRef.current = onSelectBairro;
+  onBairroMapaRef.current = onBairroMapa;
+  onPluvioRef.current = onPluvio;
   const hoverTipRef = useRef<Tooltip | null>(null);
   const [meshReady, setMeshReady] = useState(0);
   const layersByNameRef = useRef(new Map<string, Path>());
@@ -801,10 +828,10 @@ export const AlertsMap = forwardRef<
     const map = mapRef.current;
     const prev = prevSelectedRef.current;
     prevSelectedRef.current = selected;
-    if (!selected || adminMode || !map || selected === prev) return;
+    if (!selected || adminMode || !map || selected === prev || zonaSelecionada) return;
     const m = stateRef.current.municipios.find((item) => item.nome === selected);
     if (m) panToIfNeeded(map, m.lat, m.lon);
-  }, [selected, adminMode]);
+  }, [selected, adminMode, zonaSelecionada]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -885,8 +912,110 @@ export const AlertsMap = forwardRef<
     );
     if (!overlays.pluvio || !L) return;
     if (pointKind === "air") syncAirSensors(L, territory.pluvio, airSensors);
-    else syncPluviometers(L, territory.pluvio, pluvio);
-  }, [overlays, pointKind, pluvio, airSensors, meshReady]);
+    else {
+      const comChuva = showZonas
+        ? new Set(pluviosRegistrandoChuva(pluvio).map((item) => item.id))
+        : null;
+      syncPluviometers(
+        L,
+        territory.pluvio,
+        comChuva ? pluvio.filter((item) => !comChuva.has(item.id)) : pluvio,
+      );
+    }
+  }, [overlays, pointKind, pluvio, airSensors, meshReady, showZonas]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L || !meshReady) return;
+    chuvaPluvioRef.current?.remove();
+    chuvaPluvioRef.current = null;
+    if (!showZonas || pointKind === "air") return;
+    const layer = L.layerGroup().addTo(map);
+    chuvaPluvioRef.current = layer;
+    for (const estacao of pluviosRegistrandoChuva(pluvio)) {
+      const apoio = rainApoio(
+        tipo,
+        { mm1h: estacao.mm1h, mm6h: estacao.mm6h, mm24h: estacao.mm24h },
+        { id: estacao.munId, nome: estacao.munNome },
+      );
+      const nivel = apoio?.level ?? "BAIXO";
+      const cor = RISK_COLORS[nivel];
+      const ativa = pluvioDestaque === estacao.id;
+      const marker = L.marker([estacao.lat, estacao.lon], {
+        icon: L.divIcon({
+          className: "map-pluvio-icon",
+          html: `<span class="map-chuva-pin${ativa ? " is-on" : ""}" style="--chuva:${cor}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.2c.3 1.7 3.2 4.4 3.2 6.7a3.2 3.2 0 1 1-6.4 0C4.8 5.6 7.7 2.9 8 1.2z"/></svg></span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
+        }),
+        keyboard: false,
+        pane: "pointsPane",
+        zIndexOffset: ativa ? 240 : 140,
+      });
+      marker.bindTooltip(
+        `<strong>${estacao.nome.replace(/[&<>]/g, "")}</strong><br/>${estacao.munNome.replace(/[&<>]/g, "")}`,
+        { direction: "top", className: "map-point-tip" },
+      );
+      marker.on("click", (event) => {
+        L.DomEvent.stop(event);
+        const bairro = bairroNoPonto(bairrosManaus, estacao.lat, estacao.lon);
+        onBairroMapaRef.current?.(
+          bairro
+            ? {
+                nome: bairro.nome,
+                zona: bairro.zona,
+                elevMin: bairro.elevMin,
+                elevMed: bairro.elevMed,
+                populacao: bairro.populacao,
+              }
+            : null,
+        );
+        onPluvioRef.current?.({
+          id: estacao.id,
+          nome: estacao.nome,
+          municipio: estacao.munNome,
+          mm1h: estacao.mm1h,
+          mm6h: estacao.mm6h,
+          mm24h: estacao.mm24h,
+          mm: estacao.mm,
+          janela: estacao.janela,
+          nivel,
+          lat: estacao.lat,
+          lon: estacao.lon,
+        });
+      });
+      marker.addTo(layer);
+    }
+    return () => {
+      layer.remove();
+    };
+  }, [showZonas, pluvio, pointKind, meshReady, pluvioDestaque, tipo, bairrosManaus]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L || !meshReady) return;
+    if (!overlays.bairros && !overlays.curvas) return;
+    let cancelado = false;
+    const grupo = L.layerGroup().addTo(map);
+    void desenharApoioManaus(
+      L,
+      map,
+      grupo,
+      {
+        bairros: overlays.bairros,
+        curvas: overlays.curvas,
+        destaque: bairroDestaque,
+        onBairro: (bairro) => onBairroMapaRef.current?.(bairro),
+      },
+      () => cancelado,
+    );
+    return () => {
+      cancelado = true;
+      grupo.remove();
+    };
+  }, [meshReady, overlays.bairros, overlays.curvas, bairroDestaque]);
   // Efeito para desenhar/remover os focos de calor
   useEffect(() => {
     const map = mapRef.current;
@@ -1128,6 +1257,11 @@ export const AlertsMap = forwardRef<
     };
   }, [showSetores, setorUso, selected, drawMode, eraseMode, meshReady]);
 
+  const estruturaZonas = zonas
+    .map((zona) => `${zona.id}:${zona.level}:${zona.bairros.map((bairro) => bairro.nome).join("/")}`)
+    .join("|");
+  const bairrosCarregados = bairrosManaus.length;
+
   useEffect(() => {
     const map = mapRef.current;
     const L = leafletRef.current;
@@ -1135,6 +1269,10 @@ export const AlertsMap = forwardRef<
     if (!map.getPane("zonasPane")) {
       const pane = map.createPane("zonasPane");
       pane.style.zIndex = "620";
+    }
+    if (!map.getPane("raioPane")) {
+      const pane = map.createPane("raioPane");
+      pane.style.zIndex = "626";
     }
     zonasLayerRef.current?.remove();
     const layer = L.layerGroup().addTo(map);
@@ -1144,40 +1282,83 @@ export const AlertsMap = forwardRef<
         layer.remove();
       };
     }
-    for (const zona of zonas) {
+    const porBairro = new Map(bairrosManaus.map((bairro) => [`${bairro.zona}|${bairro.nome}`, bairro]));
+    const renderer = L.canvas({ padding: 0.15 });
+    const ordem = [...zonas].sort(
+      (a, b) => Number(a.id === zonaSelecionada) - Number(b.id === zonaSelecionada),
+    );
+    for (const zona of ordem) {
       const selecionada = zona.id === zonaSelecionada;
-      const poly = L.geoJSON(zona.geometry, {
+      const partes = selecionada
+        ? zona.bairros
+            .map((item) => porBairro.get(`${item.zona}|${item.nome}`))
+            .filter((item): item is BairroManaus => Boolean(item))
+        : [];
+      const tinta = RISK_COLORS[zona.level] ?? corZona(zona.level);
+      const traco = tinta;
+      L.circle([zona.lat, zona.lon], {
         pane: "zonasPane",
-        style: {
-          color: corZona(zona.level),
-          weight: selecionada ? 3 : 1.4,
-          fillColor: corZona(zona.level),
-          fillOpacity: selecionada ? 0.3 : 0.16,
-          dashArray: zona.bairros.length ? undefined : "6 4",
-        },
+        radius: zona.raioKm * 1000,
+        stroke: false,
+        fillColor: tinta,
+        fillOpacity: selecionada ? 0.12 : 0.18,
+        interactive: false,
+      }).addTo(layer);
+      L.circle([zona.lat, zona.lon], {
+        pane: "raioPane",
+        radius: zona.raioKm * 1000,
+        color: "#ffffff",
+        weight: selecionada ? 7 : 5,
+        opacity: 0.95,
+        fill: false,
+        interactive: false,
+      }).addTo(layer);
+      const circulo = L.circle([zona.lat, zona.lon], {
+        pane: "raioPane",
+        radius: zona.raioKm * 1000,
+        color: traco,
+        weight: selecionada ? 3.2 : 2.4,
+        opacity: 1,
+        dashArray: "8 6",
+        fill: partes.length === 0,
+        fillColor: tinta,
+        fillOpacity: 0.01,
       });
-      poly.on("click", (event) => {
-        L.DomEvent.stopPropagation(event);
+      circulo.on("click", (event) => {
+        L.DomEvent.stop(event);
         onSelectZonaRef.current?.(zona.id);
       });
-      poly.bindTooltip(`${zona.estacao}<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h`, {
-        direction: "top",
-        className: "map-point-tip",
-      });
-      poly.addTo(layer);
-      if (!selecionada) continue;
-      if (bairroRealce) {
-        L.polygon(
-          bairroRealce.coordinates[0].map(([lon, lat]) => [lat, lon] as [number, number]),
-          {
-            pane: "zonasPane",
-            color: "#111827",
-            weight: 2.6,
-            fillColor: "#fdba74",
-            fillOpacity: 0.35,
-          },
-        ).addTo(layer);
+      circulo.bindTooltip(
+        `${zona.estacao}<br/>Raio de perigo ${zona.raioKm} km<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h`,
+        { direction: "top", className: "map-point-tip" },
+      );
+      circulo.addTo(layer);
+      for (const bairro of partes) {
+        const realce = bairroRealce === bairro.geometry;
+        const poly = L.polygon(anelParaMapa(bairro.geometry.coordinates[0]), {
+          pane: "zonasPane",
+          renderer,
+          smoothFactor: 2,
+          color: realce ? "#111827" : corZona(zona.level),
+          weight: realce ? 2.4 : 1.2,
+          fillColor: realce ? "#fdba74" : corZona(zona.level),
+          fillOpacity: realce ? 0.45 : 0.22,
+        });
+        poly.on("click", (event) => {
+          L.DomEvent.stop(event);
+          onSelectBairroRef.current?.(zona.id, `${bairro.zona}|${bairro.nome}`);
+        });
+        const hab =
+          bairro.populacao == null
+            ? "população sem dado"
+            : `${bairro.populacao.toLocaleString("pt-BR")} habitantes`;
+        poly.bindTooltip(`${bairro.nome}<br/>${bairro.zona} · cota ${bairro.elevMin ?? "s/d"} m<br/>${hab}`, {
+          direction: "top",
+          className: "map-point-tip",
+        });
+        poly.addTo(layer);
       }
+      if (!selecionada) continue;
       const setor = zona.setores.find((item) => item.id === setorSelecionado);
       if (!setor) continue;
       L.polygon(
@@ -1188,33 +1369,41 @@ export const AlertsMap = forwardRef<
           weight: 2.4,
           fillColor: "#f97316",
           fillOpacity: 0.45,
+          interactive: false,
         },
       ).addTo(layer);
     }
     return () => {
       layer.remove();
     };
-  }, [meshReady, showZonas, zonas, zonaSelecionada, setorSelecionado, bairroRealce]);
+    // estruturaZonas e bairrosCarregados evitam redesenhar a camada a cada atualização da chuva.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meshReady, showZonas, estruturaZonas, bairrosCarregados, zonaSelecionada, setorSelecionado, bairroRealce]);
 
   const zonasRef = useRef(zonas);
   zonasRef.current = zonas;
-  const ancoraZona = (() => {
-    const zona = zonas.find((item) => item.id === zonaSelecionada);
-    const anel = zona ? aneisExternos(zona.geometry)[0] : null;
-    return anel?.[10]?.join(",") ?? anel?.[0]?.join(",");
-  })();
-  const bairroChave = bairroRealce?.coordinates[0]?.[0]?.join(",") ?? "";
 
   useEffect(() => {
     const map = mapRef.current;
     const L = leafletRef.current;
     const zona = zonasRef.current.find((item) => item.id === zonaSelecionada);
     if (!map || !L || !zona) return;
-    const pontos = bairroRealce
-      ? bairroRealce.coordinates[0].map(([lon, lat]) => [lat, lon] as [number, number])
-      : aneisExternos(zona.geometry).flatMap((anel) => anel.map(([lon, lat]) => [lat, lon] as [number, number]));
-    map.fitBounds(L.latLngBounds(pontos), { padding: [36, 36], maxZoom: 13 });
-  }, [zonaSelecionada, ancoraZona, bairroChave]);
+    const enquadrar = () => {
+      const atual = mapRef.current;
+      const folheto = leafletRef.current;
+      const viva = zonasRef.current.find((item) => item.id === zonaSelecionada);
+      if (!atual || !folheto || !viva) return;
+      const pontos = aneisExternos(viva.geometry).flatMap((anel) =>
+        anel.map(([lon, lat]) => [lat, lon] as [number, number]),
+      );
+      if (pontos.length < 2) return;
+      atual.invalidateSize();
+      atual.fitBounds(folheto.latLngBounds(pontos), { padding: [48, 48], maxZoom: 13, animate: false });
+    };
+    enquadrar();
+    const timer = window.setTimeout(enquadrar, 280);
+    return () => window.clearTimeout(timer);
+  }, [zonaSelecionada]);
 
   return (
     <div

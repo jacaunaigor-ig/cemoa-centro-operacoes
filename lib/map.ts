@@ -66,7 +66,13 @@ export function observeAmazonasResize(host: HTMLElement, map: LeafletMap): () =>
         map.invalidateSize();
         const after = map.getSize();
         if (after.x < MIN_MAP_PX || after.y < MIN_MAP_PX) return;
-        if (Math.abs(after.y - before) > 48 || !mapCenterInAmazonas(map)) {
+        if (!mapCenterInAmazonas(map)) {
+          fitMapToAmazonas(map, false);
+          return;
+        }
+        // Um zoom já aproximado (bairro, município) não volta para o estado
+        // quando a ficha muda a altura do mapa.
+        if (map.getZoom() < 8 && Math.abs(after.y - before) > 48) {
           fitMapToAmazonas(map, false);
         }
       } catch {

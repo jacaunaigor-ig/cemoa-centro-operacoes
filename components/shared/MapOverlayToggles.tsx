@@ -48,6 +48,12 @@ export function MapOverlayToggles({
       <MapToolButton active={vis.indigenas} onClick={() => toggle("indigenas")}>
         {vis.indigenas ? "Ocultar comunidades indígenas" : "Comunidades indígenas"}
       </MapToolButton>
+      <MapToolButton active={vis.bairros} onClick={() => toggle("bairros")}>
+        {vis.bairros ? "Ocultar bairros de Manaus" : "Bairros de Manaus"}
+      </MapToolButton>
+      <MapToolButton active={vis.curvas} onClick={() => toggle("curvas")}>
+        {vis.curvas ? "Ocultar curvas de nível" : "Curvas de nível de Manaus"}
+      </MapToolButton>
     </div>
   );
 }

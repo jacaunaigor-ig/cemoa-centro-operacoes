@@ -44,8 +44,9 @@ export type ZonaChuva = {
   confiavel: boolean;
   limitacoes: string[];
   metodo: string;
+  raioKm: number;
   cotaEstacao: number | null;
-  bairros: Array<{ nome: string; zona: string; elevMin: number | null }>;
+  bairros: Array<{ nome: string; zona: string; elevMin: number | null; populacao: number | null }>;
   geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon;
   setores: ZonaSetor[];
 };
@@ -250,7 +251,7 @@ function zonaDe(
           grade: gradeManaus,
         })
       : null;
-  const geometry = manaus?.geometry ?? circulo(lugar.lat, lugar.lon, raioKm);
+  const geometry = circulo(lugar.lat, lugar.lon, raioKm);
   const limitacoes: string[] = [];
   if (lugar.posicao === "sede") {
     limitacoes.push("O catálogo do CEMADEN não trouxe esta estação. O círculo está na sede do município.");
@@ -263,7 +264,7 @@ function zonaDe(
   }
   limitacoes.push(
     manaus
-      ? "A zona segue os bairros abaixo da cota da estação. Isso não significa que todo o bairro recebeu o mesmo acumulado."
+      ? "O raio de perigo continua o círculo fixo. Os bairros listados só cruzam esse raio e ficam na cota da estação ou abaixo."
       : "O círculo é uma estimativa de influência. Não indica que toda a área recebeu o mesmo acumulado.",
   );
   const leituraNova = estacao.observedAt != null && now - estacao.observedAt <= LEITURA_VELHA_MS;
@@ -284,6 +285,7 @@ function zonaDe(
     confiavel: lugar.posicao !== "sede" && leituraNova && (munId !== "1302603" || Boolean(manaus)),
     limitacoes,
     metodo: manaus ? METODO_MANAUS : METODO_ZONA,
+    raioKm,
     cotaEstacao: manaus?.cotaEstacao ?? null,
     bairros: manaus?.bairros ?? [],
     geometry,

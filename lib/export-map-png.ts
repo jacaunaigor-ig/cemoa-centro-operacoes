@@ -38,7 +38,11 @@ export type InstitutionalPngOptions = {
   /** Quando presente, o mapa enquadra estas geometrias em vez do estado inteiro. */
   foco?: Geom[];
   municipios?: Array<{ nome: string; valor: string; color: string }>;
-  pontos?: Array<{ lat: number; lon: number; color: string }>;
+  pontos?: Array<{ lat: number; lon: number; color: string; nome?: string }>;
+  /** Quando informado, o círculo do raio de perigo ganha contorno e rótulo. */
+  raioKm?: number;
+  /** Linhas curtas no painel lateral, abaixo da legenda. */
+  painel?: string[];
 };
 
 function merc(lon: number, lat: number): [number, number] {
@@ -288,16 +292,55 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     }
   }
 
+  if (opts.foco?.length && opts.raioKm) {
+    ctx.save();
+    ctx.setLineDash([14, 8]);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    for (const geometry of opts.foco) {
+      const drawPoly = (poly: Ring[]) => {
+        ctx.beginPath();
+        poly.forEach((ring) => {
+          ring.forEach((p, idx) => {
+            const q = project(p[0], p[1]);
+            if (idx === 0) ctx.moveTo(q[0], q[1]);
+            else ctx.lineTo(q[0], q[1]);
+          });
+          ctx.closePath();
+        });
+        ctx.stroke();
+      };
+      if (geometry.type === "Polygon") drawPoly(geometry.coordinates);
+      else geometry.coordinates.forEach(drawPoly);
+    }
+    ctx.restore();
+    const ancora = opts.pontos?.[0];
+    if (ancora) {
+      const dLon = opts.raioKm / (111 * Math.max(0.2, Math.cos((ancora.lat * Math.PI) / 180)));
+      const [x, y] = project(ancora.lon + dLon, ancora.lat);
+      ctx.fillStyle = "#111827";
+      ctx.font = "800 18px Arial, sans-serif";
+      ctx.fillText(`raio ${opts.raioKm} km`, x + 10, y - 8);
+    }
+  }
+
   if (opts.pontos?.length) {
     for (const ponto of opts.pontos) {
       const [x, y] = project(ponto.lon, ponto.lat);
+      const raio = ponto.nome ? 8 : 3.4;
       ctx.beginPath();
       ctx.fillStyle = ponto.color;
-      ctx.strokeStyle = "#fff7ed";
-      ctx.lineWidth = 0.6;
-      ctx.arc(x, y, 3.4, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = ponto.nome ? 2.5 : 0.6;
+      ctx.arc(x, y, raio, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      if (ponto.nome) {
+        ctx.fillStyle = "#111827";
+        ctx.font = "800 18px Arial, sans-serif";
+        ctx.fillText(ponto.nome, x + 14, y - 12);
+      }
     }
   }
 
@@ -427,6 +470,16 @@ export async function exportInstitutionalPng(opts: InstitutionalPngOptions) {
     ctx.lineTo(panelX + panelW - 38, y);
     ctx.stroke();
     y += 34;
+  }
+
+  if (opts.painel?.length) {
+    ctx.fillStyle = "#173044";
+    ctx.font = "700 16px Arial, sans-serif";
+    for (const linha of opts.painel) {
+      if (y > panelY + panelH - 170) break;
+      y = wrapText(ctx, linha, panelX + 38, y, panelW - 76, 22, "700 16px Arial, sans-serif");
+      y += 8;
+    }
   }
 
   if (opts.extraNote) {

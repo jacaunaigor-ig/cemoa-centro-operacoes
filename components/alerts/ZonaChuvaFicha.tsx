@@ -2,7 +2,9 @@
 
 import { corPainel, LEVEL_LABELS, riskActionFor } from "@/lib/alert-types";
 import { SETOR_CORES, type GrauSetor } from "@/lib/setores-r3r4";
+import { formatMmShort } from "@/lib/rainfall-display";
 import { formatAmazonDateTime } from "@/lib/utils";
+import { FONTE_POPULACAO_MANAUS } from "@/lib/manaus-chuva";
 import { corZona, type ZonaChuva } from "@/lib/zona-chuva";
 
 export type ZonaResumo = {
@@ -28,6 +30,7 @@ export function ZonaChuvaFicha({
   onKmz,
   onKmzVisiveis,
   onGeojson,
+  pluviosNoRaio = [],
 }: {
   zona: ZonaChuva;
   outras: ZonaResumo[];
@@ -43,6 +46,7 @@ export function ZonaChuvaFicha({
   onKmz: () => void;
   onKmzVisiveis: () => void;
   onGeojson: () => void;
+  pluviosNoRaio?: Array<{ nome: string; mm: number; janela: string }>;
 }) {
   const cor = corPainel(zona.level);
   const tinta = zona.level === "MODERADO" || zona.level === "BAIXO" ? "#1f2937" : "#fff";
@@ -53,7 +57,10 @@ export function ZonaChuvaFicha({
         ? "Localidade do mapa"
         : "Sede municipal";
   const avisos = zona.limitacoes.filter(
-    (item) => !item.startsWith("A zona segue") && !item.startsWith("O círculo é uma estimativa"),
+    (item) =>
+      !item.startsWith("A zona segue") &&
+      !item.startsWith("O círculo é uma estimativa") &&
+      !item.startsWith("O raio de perigo continua"),
   );
   const grupos = new Map<string, ZonaChuva["bairros"]>();
   for (const bairro of zona.bairros) {
@@ -64,6 +71,9 @@ export function ZonaChuvaFicha({
   }
   const r4 = zona.setores.filter((setor) => setor.grau === "R4").length;
   const r3 = zona.setores.length - r4;
+  const comPopulacao = zona.bairros.filter((bairro) => bairro.populacao != null);
+  const populacaoRecorte = comPopulacao.reduce((soma, bairro) => soma + (bairro.populacao ?? 0), 0);
+  const semPopulacao = zona.bairros.length - comPopulacao.length;
 
   return (
     <aside className="pointer-events-auto absolute inset-x-2 bottom-2 z-[1250] flex max-h-[min(58dvh,28rem)] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md sm:inset-x-auto sm:right-2 sm:w-[24rem]">
@@ -113,6 +123,33 @@ export function ZonaChuvaFicha({
           </div>
         ) : null}
 
+        <p className="text-[11px] font-semibold text-text">Raio de perigo: {zona.raioKm} km</p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          <button type="button" className="rounded bg-brand px-2 py-1 text-[11px] font-bold text-white" onClick={onPng}>
+            Exportar raio PNG
+          </button>
+          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onKmz}>
+            KMZ do raio
+          </button>
+          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onKmzVisiveis}>
+            KMZ dos raios visíveis
+          </button>
+          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onGeojson}>
+            GeoJSON do raio
+          </button>
+        </div>
+        <p className="mt-1 text-[10px] leading-snug text-text-mute">
+          O PNG enquadra o círculo de {zona.raioKm} km, a estação, os pluviômetros com chuva dentro do raio e os polígonos de risco. KMZ e GeoJSON levam o mesmo círculo
+          {incluirSetores ? " e os polígonos de risco" : ""}. A exportação não emite alerta.
+        </p>
+        <p className="mt-1 text-[11px] leading-snug text-text">
+          {pluviosNoRaio.length
+            ? `${pluviosNoRaio.length} pluviômetro${pluviosNoRaio.length === 1 ? "" : "s"} com chuva neste raio: ${pluviosNoRaio
+                .slice(0, 8)
+                .map((item) => `${item.nome} ${formatMmShort(item.mm)} mm / ${item.janela}`)
+                .join(" · ")}${pluviosNoRaio.length > 8 ? ` · e mais ${pluviosNoRaio.length - 8}` : ""}.`
+            : "Nenhum pluviômetro com chuva dentro deste raio."}
+        </p>
         <p className="text-sm font-semibold">
           {zona.mm.toFixed(1)} mm / {zona.janelaHoras} h
           <span className="font-normal text-text-mute">
@@ -146,7 +183,12 @@ export function ZonaChuvaFicha({
           <section className="mt-2">
             <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">
               {zona.bairros.length} bairros no recorte
+              {comPopulacao.length
+                ? ` · ${populacaoRecorte.toLocaleString("pt-BR")} habitantes`
+                : ""}
+              {semPopulacao ? ` · ${semPopulacao} sem dado` : ""}
             </p>
+            <p className="mt-0.5 text-[10px] leading-snug text-text-mute">{FONTE_POPULACAO_MANAUS}</p>
             {[...grupos.entries()].map(([zonaNome, lista]) => (
               <div key={zonaNome} className="mt-1">
                 <p className="text-[10px] font-semibold text-text-mute">{zonaNome}</p>
@@ -164,6 +206,7 @@ export function ZonaChuvaFicha({
                         >
                           {bairro.nome}
                           {bairro.elevMin == null ? "" : ` · ${bairro.elevMin} m`}
+                          {bairro.populacao == null ? " · sem dado" : ` · ${bairro.populacao.toLocaleString("pt-BR")} hab.`}
                         </button>
                       </li>
                     );
@@ -214,21 +257,7 @@ export function ZonaChuvaFicha({
           <input type="checkbox" checked={incluirSetores} onChange={(event) => onIncluirSetores(event.target.checked)} />
           Incluir polígonos de risco no KMZ e no GeoJSON
         </label>
-        <div className="mt-2 flex flex-wrap gap-1">
-          <button type="button" className="rounded bg-brand px-2 py-1 text-[11px] font-bold text-white" onClick={onPng}>
-            Exportar mapa PNG
-          </button>
-          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onKmz}>
-            Exportar zona KMZ
-          </button>
-          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onKmzVisiveis}>
-            KMZ das visíveis
-          </button>
-          <button type="button" className="rounded border border-border px-2 py-1 text-[11px] font-semibold" onClick={onGeojson}>
-            GeoJSON
-          </button>
-        </div>
-        <p className="mt-1.5 text-[10px] leading-snug text-text-mute">A seleção não emite alerta oficial.</p>
+        <p className="text-[10px] leading-snug text-text-mute">A seleção não emite alerta oficial.</p>
       </footer>
     </aside>
   );

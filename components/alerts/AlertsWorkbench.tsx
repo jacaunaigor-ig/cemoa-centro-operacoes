@@ -48,6 +48,8 @@ import {
   DEFAULT_OVERLAYS,
   effectiveOverlays,
   pluvioFromRain,
+  pluviosNoRaio,
+  pluviosRegistrandoChuva,
   showsPluvio,
   type TerritoryVisibility,
 } from "@/lib/map-overlays";
@@ -101,9 +103,11 @@ import { loadBairrosManaus, loadGradeManaus, type BairroManaus, type GradeRelevo
 import type { AirQualityPayload, AlertsPayload, HydrologyPayload, HydroStation, RainfallPayload } from "@/lib/types";
 import {
   applyRainClassification,
+  formatMmShort,
   hasRain,
   hasRainReading,
   parseRainFilter,
+  rainHeatColor,
 } from "@/lib/rainfall-display";
 import { hitsMapBurst } from "@/lib/monitor-thresholds";
 import {
@@ -113,6 +117,8 @@ import {
   parseAirFilter,
 } from "@/lib/air-quality-display";
 import { AlertsMap, type AlertsMapHandle } from "@/components/alerts/AlertsMap";
+import { BairroManausFicha, type BairroFichaDados } from "@/components/alerts/BairroManausFicha";
+import { PluvioChuvaFicha, type PluvioFichaDados } from "@/components/alerts/PluvioChuvaFicha";
 import { ZonaChuvaFicha } from "@/components/alerts/ZonaChuvaFicha";
 import { AlertList } from "@/components/alerts/AlertList";
 import { AlertDetail } from "@/components/alerts/AlertDetail";
@@ -398,6 +404,8 @@ export function AlertsWorkbench() {
   const [zonaId, setZonaId] = useState<string | null>(null);
   const [setorZonaId, setSetorZonaId] = useState<string | null>(null);
   const [bairroZonaId, setBairroZonaId] = useState<string | null>(null);
+  const [bairroFicha, setBairroFicha] = useState<BairroFichaDados | null>(null);
+  const [pluvioFicha, setPluvioFicha] = useState<PluvioFichaDados | null>(null);
   const [setoresRisco, setSetoresRisco] = useState<SetoresR3R4 | null>(null);
   const [bairrosManaus, setBairrosManaus] = useState<BairroManaus[] | null>(null);
   const [gradeManaus, setGradeManaus] = useState<GradeRelevo | null>(null);
@@ -499,6 +507,7 @@ export function AlertsWorkbench() {
     if (zonaId && !zonasChuva.some((zona) => zona.id === zonaId)) setZonaId(null);
   }, [zonaId, zonasChuva]);
   const pluvio = useMemo(() => pluvioFromRain(rain), [rain]);
+  const pluviosChuva = useMemo(() => pluviosRegistrandoChuva(pluvio), [pluvio]);
   const airPoints = useMemo(() => airSensorsForMap(air), [air]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -1806,35 +1815,73 @@ export function AlertsWorkbench() {
   async function exportarZonaPng() {
     if (!zonaAtiva) return;
     const cor = corZona(zonaAtiva.level);
+    const populacao = zonaAtiva.bairros.reduce((soma, bairro) => soma + (bairro.populacao ?? 0), 0);
+    const comPopulacao = zonaAtiva.bairros.some((bairro) => bairro.populacao != null);
+    const noRaio = pluviosNoRaio(pluviosChuva, zonaAtiva.lat, zonaAtiva.lon, zonaAtiva.raioKm);
+    const daEstacao = noRaio.find((item) => item.id === zonaAtiva.estacaoId);
+    const vizinhos = noRaio.filter((item) => item.id !== zonaAtiva.estacaoId);
+    const linhas = [
+      `Raio de perigo: ${zonaAtiva.raioKm} km, igual em todos os graus.`,
+      `Estação: ${zonaAtiva.estacao} · ${zonaAtiva.municipio}.`,
+      noRaio.length
+        ? `Pluviômetros com chuva no raio: ${noRaio.map((item) => `${item.nome} ${formatMmShort(item.mm)} mm / ${item.janela}`).join("; ")}.`
+        : "Nenhum pluviômetro com chuva dentro deste raio.",
+      zonaAtiva.cotaEstacao == null ? "" : `Cota da estação: ${zonaAtiva.cotaEstacao} m.`,
+      zonaAtiva.bairros.length
+        ? `${zonaAtiva.bairros.length} bairros cruzam o raio${comPopulacao ? ` · ${populacao.toLocaleString("pt-BR")} habitantes` : ""}.`
+        : "",
+      ...zonaAtiva.bairros.slice(0, 12).map((bairro) => bairro.nome),
+      zonaAtiva.bairros.length > 12 ? `e mais ${zonaAtiva.bairros.length - 12} bairros.` : "",
+      zonaAtiva.setores.length
+        ? `${zonaAtiva.setores.length} polígonos de risco interceptam o raio.`
+        : "Nenhum polígono de risco intercepta o raio.",
+    ].filter(Boolean);
     await exportInstitutionalPng({
-      title: "Zona de influência da chuva",
-      productLegend: `${zonaAtiva.estacao} · ${zonaAtiva.mm.toFixed(1)} mm / ${zonaAtiva.janelaHoras} h · ${LEVEL_LABELS[zonaAtiva.level] ?? zonaAtiva.level}`,
-      filename: pngFilename("zona_chuva_cemoa"),
-      colorFor: () => "#d7e4f0",
-      legendTitle: "Classificação vigente",
+      title: "Raio de perigo da chuva",
+      productLegend: `${zonaAtiva.estacao} · ${zonaAtiva.raioKm} km · ${zonaAtiva.mm.toFixed(1)} mm / ${zonaAtiva.janelaHoras} h · ${LEVEL_LABELS[zonaAtiva.level] ?? zonaAtiva.level}`,
+      filename: pngFilename("raio_perigo_chuva_cemoa"),
+      colorFor: () => "#e7eef4",
+      legendTitle: "Raio de perigo",
       legendItems: [
         {
           key: zonaAtiva.level,
           title: LEVEL_LABELS[zonaAtiva.level] ?? zonaAtiva.level,
-          text: `${zonaAtiva.mm.toFixed(1)} mm / ${zonaAtiva.janelaHoras} h`,
+          text: `${zonaAtiva.mm.toFixed(1)} mm / ${zonaAtiva.janelaHoras} h. O raio não cresce com o grau.`,
           color: cor,
           count: 1,
         },
       ],
-      footerSources: `CEMADEN · leitura ${zonaAtiva.observedAt == null ? "sem horário" : formatAmazonDateTime(zonaAtiva.observedAt)} · ${zonaAtiva.metodo}`,
+      painel: linhas,
+      footerSources: `CEMADEN · leitura ${zonaAtiva.observedAt == null ? "sem horário" : formatAmazonDateTime(zonaAtiva.observedAt)}`,
       extraNote: {
         title: "ESTIMATIVA",
-        text: zonaAtiva.limitacoes.join(" "),
+        text: "O círculo é o raio de perigo. Não indica que toda a área recebeu o mesmo acumulado. A exportação não emite alerta.",
       },
-      foco: [zonaAtiva.geometry, ...zonaAtiva.setores.map((setor) => setor.geometry)],
+      foco: [zonaAtiva.geometry],
       stains: [
-        { geometry: zonaAtiva.geometry, color: cor },
         ...zonaAtiva.setores.map((setor) => ({
           geometry: setor.geometry,
           color: SETOR_CORES[(setor.grau === "R4" ? "R4" : "R3") as GrauSetor].fill,
         })),
+        { geometry: zonaAtiva.geometry, color: cor },
       ],
-      pontos: [{ lat: zonaAtiva.lat, lon: zonaAtiva.lon, color: cor }],
+      raioKm: zonaAtiva.raioKm,
+      pontos: [
+        {
+          lat: zonaAtiva.lat,
+          lon: zonaAtiva.lon,
+          color: "#111827",
+          nome: daEstacao
+            ? `${zonaAtiva.estacao} · ${formatMmShort(daEstacao.mm)} mm / ${daEstacao.janela}`
+            : zonaAtiva.estacao,
+        },
+        ...vizinhos.map((item) => ({
+          lat: item.lat,
+          lon: item.lon,
+          color: rainHeatColor(item.mm),
+          nome: `${item.nome} · ${formatMmShort(item.mm)} mm / ${item.janela}`,
+        })),
+      ],
     });
   }
 
@@ -2462,13 +2509,56 @@ export function AlertsWorkbench() {
                   showZonas={showZonas && showsPluvio(tipo)}
                   zonaSelecionada={zonaId}
                   setorSelecionado={setorZonaId}
+                  bairrosManaus={bairrosManaus ?? undefined}
                   bairroRealce={
                     bairrosManaus?.find((bairro) => `${bairro.zona}|${bairro.nome}` === bairroZonaId)?.geometry ?? null
                   }
+                  bairroDestaque={bairroFicha ? `${bairroFicha.zona}|${bairroFicha.nome}` : bairroZonaId}
+                  pluvioDestaque={pluvioFicha?.id ?? null}
+                  onPluvio={setPluvioFicha}
+                  onBairroMapa={(bairro) => {
+                    if (!bairro) {
+                      setBairroFicha(null);
+                      setBairroZonaId(null);
+                      return;
+                    }
+                    setBairroFicha({
+                      nome: bairro.nome,
+                      zona: bairro.zona,
+                      elevMin: bairro.elevMin,
+                      elevMed: bairro.elevMed,
+                      populacao: bairro.populacao,
+                    });
+                    setBairroZonaId(`${bairro.zona}|${bairro.nome}`);
+                  }}
+                  onSelectBairro={(zonaAlvo, bairroId) => {
+                    setZonaId(zonaAlvo);
+                    setSetorZonaId(null);
+                    setBairroZonaId(bairroId);
+                    const [zonaNome, nome] = bairroId.split("|");
+                    const achado = bairrosManaus?.find((bairro) => bairro.zona === zonaNome && bairro.nome === nome);
+                    const daZona = zonasChuva
+                      .find((zona) => zona.id === zonaAlvo)
+                      ?.bairros.find((bairro) => `${bairro.zona}|${bairro.nome}` === bairroId);
+                    setBairroFicha(
+                      achado
+                        ? {
+                            nome: achado.nome,
+                            zona: achado.zona,
+                            elevMin: achado.elevMin,
+                            elevMed: achado.elevMed,
+                            populacao: achado.populacao,
+                          }
+                        : daZona
+                          ? { nome: daZona.nome, zona: daZona.zona, elevMin: daZona.elevMin, elevMed: null, populacao: daZona.populacao }
+                          : null,
+                    );
+                  }}
                   onSelectZona={(id) => {
                     setZonaId(id);
                     setSetorZonaId(null);
                     setBairroZonaId(null);
+                    setBairroFicha(null);
                   }}
                   focosCalor={focosPontos}
                   tipo={tipo}
@@ -2504,16 +2594,39 @@ export function AlertsWorkbench() {
                   bairroSelecionado={bairroZonaId}
                   onIncluirSetores={setIncluirSetoresZona}
                   onSelectSetor={setSetorZonaId}
-                  onSelectBairro={setBairroZonaId}
+                  onSelectBairro={(id) => {
+                    setBairroZonaId(id);
+                    if (!id || !zonaAtiva) {
+                      setBairroFicha(null);
+                      return;
+                    }
+                    const achado = bairrosManaus?.find((bairro) => `${bairro.zona}|${bairro.nome}` === id);
+                    const daZona = zonaAtiva.bairros.find((bairro) => `${bairro.zona}|${bairro.nome}` === id);
+                    setBairroFicha(
+                      achado
+                        ? {
+                            nome: achado.nome,
+                            zona: achado.zona,
+                            elevMin: achado.elevMin,
+                            elevMed: achado.elevMed,
+                            populacao: achado.populacao,
+                          }
+                        : daZona
+                          ? { nome: daZona.nome, zona: daZona.zona, elevMin: daZona.elevMin, elevMed: null, populacao: daZona.populacao }
+                          : null,
+                    );
+                  }}
                   onSelectZona={(id) => {
                     setZonaId(id);
                     setSetorZonaId(null);
                     setBairroZonaId(null);
+                    setBairroFicha(null);
                   }}
                   onFechar={() => {
                     setZonaId(null);
                     setSetorZonaId(null);
                     setBairroZonaId(null);
+                    setBairroFicha(null);
                   }}
                   onPng={() => {
                     void exportarZonaPng().catch((err) => {
@@ -2523,6 +2636,36 @@ export function AlertsWorkbench() {
                   onKmz={() => exportarZonaKmz([zonaAtiva])}
                   onKmzVisiveis={() => exportarZonaKmz(zonasChuva)}
                   onGeojson={() => exportarZonaGeojson([zonaAtiva])}
+                  pluviosNoRaio={pluviosNoRaio(pluviosChuva, zonaAtiva.lat, zonaAtiva.lon, zonaAtiva.raioKm)}
+                />
+              ) : null}
+              {pluvioFicha ? (
+                <PluvioChuvaFicha pluvio={pluvioFicha} onFechar={() => setPluvioFicha(null)} />
+              ) : null}
+              {bairroFicha ? (
+                <BairroManausFicha
+                  bairro={bairroFicha}
+                  raios={zonasChuva
+                    .filter((zona) =>
+                      zona.bairros.some((bairro) => bairro.nome === bairroFicha.nome && bairro.zona === bairroFicha.zona),
+                    )
+                    .map((zona) => ({
+                      id: zona.id,
+                      estacao: zona.estacao,
+                      raioKm: zona.raioKm,
+                      mm: zona.mm,
+                      janelaHoras: zona.janelaHoras,
+                      level: zona.level,
+                    }))}
+                  onFechar={() => {
+                    setBairroFicha(null);
+                    setBairroZonaId(null);
+                  }}
+                  onAbrirRaio={(id) => {
+                    setZonaId(id);
+                    setSetorZonaId(null);
+                    setBairroZonaId(`${bairroFicha.zona}|${bairroFicha.nome}`);
+                  }}
                 />
               ) : null}
               {geoError ? (
@@ -2534,13 +2677,24 @@ export function AlertsWorkbench() {
                 className="pointer-events-auto absolute left-16 top-3 z-[1100]"
                 tipo={tipo}
               />
+              {showZonas && showsPluvio(tipo) && zonasChuva.length === 0 ? (
+                <p className="pointer-events-none absolute top-14 left-3 z-[1100] max-w-[18rem] rounded-lg border border-border bg-panel/95 px-2.5 py-1.5 text-[11px] leading-snug text-text shadow-[var(--shadow-card)]">
+                  Nenhum raio de perigo neste momento. Nenhuma estação chegou a 10 mm em 1 h ou a 20 mm em 6 h.
+                </p>
+              ) : null}
               {selectedRow && !paintArmed && !drawMode && !eraseMode ? (
                   <div
                     className={cn(
-                      "pointer-events-auto absolute z-[1200]",
+                      "pointer-events-auto absolute z-[1200] flex min-h-0 flex-col",
                       isMobile
-                        ? "inset-x-1.5 bottom-1.5 top-10 flex max-h-[calc(100%-2.75rem)] flex-col"
-                        : "top-2 right-2 bottom-2 flex w-[min(calc(100%-1rem),32rem)] min-h-0 flex-col",
+                        ? zonaAtiva || bairroFicha
+                          ? "inset-x-1.5 top-10 max-h-40"
+                          : "inset-x-1.5 bottom-1.5 top-10 max-h-[calc(100%-2.75rem)]"
+                        : zonaAtiva
+                          ? bairroFicha
+                            ? "top-2 left-2 h-56 w-[min(calc(100%-1rem),22rem)] overflow-hidden"
+                            : "top-2 bottom-2 left-2 w-[min(calc(100%-1rem),22rem)]"
+                          : "top-2 right-2 bottom-2 w-[min(calc(100%-1rem),32rem)]",
                     )}
                   >
                   <AlertDetail
