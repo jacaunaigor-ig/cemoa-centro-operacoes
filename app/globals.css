@@ -231,6 +231,25 @@ html[data-theme="dark"] .leaflet-control-attribution a {
   72% { opacity: 0.95; }
   to { transform: translateY(-28px); opacity: 0; }
 }
+@media (max-width: 767px) {
+  .vento-fluxo {
+    width: 28px;
+    height: 28px;
+    margin: 7px;
+  }
+  .vento-fluxo i {
+    margin-left: -4px;
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-bottom-width: 10px;
+  }
+  @keyframes vento-corre {
+    from { transform: translateY(2px); opacity: 0; }
+    16% { opacity: 1; }
+    72% { opacity: 0.95; }
+    to { transform: translateY(-18px); opacity: 0; }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .vento-fluxo i {
     animation: none;
@@ -701,6 +720,10 @@ html[data-theme="dark"] .chuva-estado i {
   background: linear-gradient(to bottom, transparent, rgba(214, 228, 242, 0.42), transparent);
 }
 
+@media (max-width: 767px) {
+  .chuva-estado i:nth-child(n + 18) { display: none; }
+}
+
 @keyframes chuva-gota {
   0% { transform: translate3d(0, -24px, 0) rotate(11deg); opacity: 0; }
   14% { opacity: 0.42; }
@@ -712,6 +735,12 @@ html[data-theme="dark"] .chuva-estado i {
 .leaflet-container .map-raio-km-icon {
   background: transparent;
   border: 0;
+}
+
+.leaflet-container .map-raio-centro-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 .map-raio-centro {

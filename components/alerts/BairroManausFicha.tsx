@@ -35,7 +35,7 @@ export function BairroManausFicha({
   onAbrirZona?: () => void;
 }) {
   return (
-    <aside className="pointer-events-auto absolute inset-x-2 bottom-2 z-[1260] flex max-h-[min(52dvh,24rem)] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md sm:inset-x-auto sm:bottom-2 sm:left-2 sm:w-[22rem]">
+    <aside className="pointer-events-auto absolute inset-x-1.5 top-12 z-[1260] flex max-h-[38%] flex-col overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md min-[768px]:inset-x-auto min-[768px]:top-auto min-[768px]:bottom-2 min-[768px]:left-2 min-[768px]:max-h-[min(52dvh,24rem)] min-[768px]:w-[22rem]">
       <header className="flex items-start gap-2 border-b border-border px-3 py-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold tracking-wide text-text-mute uppercase">Bairro de Manaus</p>
@@ -79,7 +79,7 @@ export function BairroManausFicha({
                 <li key={raio.id}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-2 rounded border border-border px-2 py-1 text-left hover:bg-hover"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded border border-border px-2 py-1 text-left hover:bg-hover min-[768px]:min-h-0"
                     onClick={() => onAbrirRaio(raio.id)}
                   >
                     <span>

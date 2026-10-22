@@ -10,7 +10,7 @@ export function ViaEscoamentoFicha({
   onFechar: () => void;
 }) {
   return (
-    <aside className="pointer-events-auto absolute bottom-2 left-1/2 z-[1258] w-[min(calc(100%-1rem),24rem)] -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md">
+    <aside className="pointer-events-auto absolute top-12 left-1/2 z-[1258] max-h-[40%] w-[min(calc(100%-0.75rem),24rem)] -translate-x-1/2 overflow-auto rounded-lg border border-border bg-panel/97 text-text shadow-[var(--shadow-card)] backdrop-blur-md min-[768px]:top-auto min-[768px]:bottom-2 min-[768px]:max-h-none">
       <header className="flex items-start gap-2 border-b border-border px-3 py-2">
         <span className="mt-1 h-1.5 w-6 shrink-0 rounded-full bg-sky-700" />
         <div className="min-w-0 flex-1">
