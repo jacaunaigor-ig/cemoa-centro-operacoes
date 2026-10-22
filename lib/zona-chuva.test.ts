@@ -4,7 +4,7 @@ import { coordenadaCemaden } from "./cemaden-estacoes.ts";
 import { leituraComChuva, pluviosNoRaio, pluviosRegistrandoChuva } from "./map-overlays.ts";
 import { kmlZonas, kmzDeKml, zipArmazenado } from "./kmz.ts";
 import { bairroNoPonto, curvasDaGrade, influenciaManaus, populacaoDoBairro } from "./manaus-chuva.ts";
-import { circuloIntercepta, montarZonasChuva, RAIO_INFLUENCIA_PADRAO_KM } from "./zona-chuva.ts";
+import { circuloIntercepta, montarZonasChuva, nivelExportado, RAIO_INFLUENCIA_PADRAO_KM } from "./zona-chuva.ts";
 import type { RainfallPayload } from "./types.ts";
 
 function chuva(mm1h: number, nome = "Pluviômetro Centro"): RainfallPayload {
@@ -55,6 +55,12 @@ function chuva(mm1h: number, nome = "Pluviômetro Centro"): RainfallPayload {
   };
 }
 
+test("o arquivo exportado para em Severo", () => {
+  assert.equal(nivelExportado("EXTREMO"), "SEVERO");
+  assert.equal(nivelExportado("SEVERO"), "SEVERO");
+  assert.equal(nivelExportado("MODERADO"), "MODERADO");
+});
+
 test("o raio da zona não cresce quando o grau sobe", () => {
   const agora = Date.parse("2026-10-22T14:10:00Z");
   const moderada = montarZonasChuva({
@@ -77,6 +83,76 @@ test("o raio da zona não cresce quando o grau sobe", () => {
   assert.equal(extrema[0].intensidadeMmH, 70);
   assert.equal(extrema[0].janelaHoras, 1);
 });
+
+test("no raio de 24 h e de 1 h o grau para em severo", () => {
+  const agora = Date.parse("2026-10-22T14:10:00Z");
+  const zona = (tipo: "MOVIMENTO" | "ALAGAMENTO", munId: string, nome: string, mm1h: number, mm24h: number) =>
+    montarZonasChuva({
+      rain: chuvaMunicipio(munId, nome, mm1h, mm24h),
+      tipo,
+      raioKm: 5,
+      now: agora,
+    });
+  assert.equal(zona("MOVIMENTO", "1300300", "Autazes", 0, 60)[0]?.level, "SEVERO");
+  assert.equal(zona("MOVIMENTO", "1300300", "Autazes", 0, 60)[0]?.janelaHoras, 24);
+  assert.equal(zona("MOVIMENTO", "1300300", "Autazes", 0, 100)[0]?.level, "SEVERO");
+  assert.equal(zona("MOVIMENTO", "1300300", "Autazes", 0, 150)[0]?.level, "SEVERO");
+  assert.equal(zona("MOVIMENTO", "1300300", "Autazes", 0, 40).length, 0);
+  assert.equal(zona("ALAGAMENTO", "1300300", "Autazes", 25, 0)[0]?.level, "SEVERO");
+  assert.equal(zona("ALAGAMENTO", "1300300", "Autazes", 25, 0)[0]?.janelaHoras, 1);
+  assert.equal(zona("ALAGAMENTO", "1300300", "Autazes", 50, 0)[0]?.level, "SEVERO");
+  assert.equal(zona("ALAGAMENTO", "1300300", "Autazes", 80, 0)[0]?.level, "SEVERO");
+  assert.equal(zona("ALAGAMENTO", "1302603", "Manaus", 22, 0)[0]?.level, "SEVERO");
+  assert.equal(zona("MOVIMENTO", "1302603", "Manaus", 0, 35)[0]?.level, "SEVERO");
+});
+
+function chuvaMunicipio(munId: string, nome: string, mm1h: number, mm24h: number): RainfallPayload {
+  const estacao = {
+    id: `${munId}-estacao`,
+    nome: "Pluviômetro Centro",
+    uf: "AM",
+    mm1h,
+    mm6h: 0,
+    mm24h,
+    mm72h: null,
+    mm96h: null,
+    ultimoMm: mm1h || mm24h,
+    observedAt: Date.parse("2026-10-22T14:00:00Z"),
+  };
+  const mun = {
+    id: munId,
+    nome,
+    codigoIbge: munId,
+    bacia: "Médio Amazonas",
+    mm1h,
+    mm6h: 0,
+    mm24h,
+    mm72h: null,
+    mm96h: null,
+    ultimoMm: estacao.ultimoMm,
+    observedAt: estacao.observedAt,
+    estacoes: [estacao],
+  };
+  return {
+    generatedAt: estacao.observedAt,
+    source: "teste",
+    cache: "HIT",
+    error: null,
+    coverage: {
+      municipiosCemoa: 1,
+      comEstacao: 1,
+      comLeitura: 1,
+      comAcumulado24h: 1,
+      comChuva: 1,
+      intenso1h: 0,
+      semEstacao: [],
+      picos: { mm1h: null, mm6h: null, mm24h: null, mm72h: null },
+    },
+    maior: null,
+    byId: { [mun.id]: mun },
+    byNome: { [mun.nome]: mun },
+  };
+}
 
 test("chuva abaixo do limiar não vira zona", () => {
   const zonas = montarZonasChuva({

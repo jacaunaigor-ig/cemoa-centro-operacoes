@@ -51,6 +51,17 @@ export type ZonaChuva = {
   setores: ZonaSetor[];
 };
 
+function nivelDoRaio(tipo: AlertType, level: RiskLevel): RiskLevel {
+  if (tipo !== "MOVIMENTO" && tipo !== "ALAGAMENTO") return level;
+  if (level === "MODERADO" || level === "ALTO" || level === "SEVERO") return "SEVERO";
+  return level;
+}
+
+/** No PNG, chuva intensa também para em Severo. */
+export function nivelExportado(level: RiskLevel): RiskLevel {
+  return level === "EXTREMO" ? "SEVERO" : level;
+}
+
 function janelaDaClasse(
   tipo: AlertType,
   rain: RainfallWindows,
@@ -277,7 +288,7 @@ function zonaDe(
     lat: lugar.lat,
     lon: lugar.lon,
     posicao: lugar.posicao,
-    level: apoio.level,
+    level: nivelDoRaio(tipo, apoio.level),
     mm: janela.mm,
     janelaHoras: janela.horas,
     intensidadeMmH: janela.horas > 0 ? janela.mm / janela.horas : null,

@@ -1106,8 +1106,8 @@ export const AlertsMap = forwardRef<
         pane: "ventoPane",
         icon: L.divIcon({
           className: "vento-seta",
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          iconSize: [42, 42],
+          iconAnchor: [21, 21],
           html: `<div class="vento-fluxo" title="Vento de ${rosaDosVentos(ponto.de)}, ${ponto.kmh} km/h, sopra para ${rosaDosVentos(para)}" style="color:${cor};transform:rotate(${para}deg)"><i style="animation-duration:${Math.max(seg, 1.8)}s"></i></div>`,
         }),
       });
@@ -1362,7 +1362,7 @@ export const AlertsMap = forwardRef<
         onSelectZonaRef.current?.(zona.id);
       });
       circulo.bindTooltip(
-        `<strong>${zona.estacao}</strong><br/>${LEVEL_LABELS[zona.level] ?? zona.level} · raio de perigo ${zona.raioKm} km<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h<br/>Clique no ponto central para abrir a influência`,
+        `<strong>${zona.estacao}</strong><br/>${zona.municipio}<br/>${LEVEL_LABELS[zona.level] ?? zona.level} · raio de perigo ${zona.raioKm} km<br/>${zona.mm.toFixed(1)} mm / ${zona.janelaHoras} h<br/>Clique no ponto central para abrir a influência`,
         { direction: "top", className: "map-point-tip" },
       );
       circulo.addTo(layer);
