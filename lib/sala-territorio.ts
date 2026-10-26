@@ -84,6 +84,12 @@ export function ufPorIbge(ibge: string | null | undefined): UfSala | null {
   return UFS_SALA.find((uf) => uf.ibge === ibge) ?? null;
 }
 
+/** Código de estação permanece como veio. Nome de lugar ganha caixa de título. */
+export function nomeEstacao(raw: string): string {
+  if (/\d/.test(raw)) return raw;
+  return nomeProprio(raw);
+}
+
 export function nomeProprio(raw: string): string {
   return raw
     .toLocaleLowerCase("pt-BR")

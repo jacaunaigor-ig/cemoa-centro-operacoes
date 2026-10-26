@@ -10,6 +10,7 @@ import {
   corChuva24h,
   formatHoraBrasilia,
   formatMmSala,
+  nomeEstacao,
   temChuva,
   ufPorIbge,
   ufPorSigla,
@@ -429,9 +430,9 @@ function Lista({
       <ul className="grid gap-1">
         {linhas.map((item) => (
           <li key={item.id} className="flex items-center justify-between gap-3 px-2 py-1.5 text-sm">
-            <span className="min-w-0 truncate">{item.nome}</span>
+            <span className="min-w-0 truncate">{nomeEstacao(item.nome)}</span>
             <span className="shrink-0 font-mono text-xs tabular-nums">
-              {formatMmSala(item.mm1h)} · {formatMmSala(item.mm24h)}
+              1 h {formatMmSala(item.mm1h)} · 24 h {formatMmSala(item.mm24h)}
             </span>
           </li>
         ))}

@@ -6,11 +6,17 @@ import {
   corChuva24h,
   estacaoCemaden,
   formatHoraBrasilia,
+  nomeEstacao,
   parseCemadenBrasilia,
   resumirUf,
   temChuva,
   ufPorSigla,
 } from "./sala-territorio.ts";
+
+test("código de pluviômetro não vira nome de lugar", () => {
+  assert.equal(nomeEstacao("G2-130260301A"), "G2-130260301A");
+  assert.equal(nomeEstacao("IGARAPE DO MINDU"), "Igarape do Mindu");
+});
 
 test("o relógio do CEMADEN permanece em horário de Brasília", () => {
   const ts = parseCemadenBrasilia("26/10/26 17:10");
