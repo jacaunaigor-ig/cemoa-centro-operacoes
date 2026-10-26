@@ -10,6 +10,7 @@ import {
   Info,
   LogIn,
   LogOut,
+  Map,
   Moon,
   Pencil,
   Radio,
@@ -134,7 +135,7 @@ export function AppShell({
         </div>
         <nav
           aria-label="Produtos"
-          className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl border border-border bg-hover p-1"
+          className="mt-1.5 grid grid-cols-4 gap-1 rounded-xl border border-border bg-hover p-1"
         >
           <NavTab
             href={`/${suffix}`}
@@ -159,6 +160,14 @@ export function AppShell({
             compact
           >
             Meteo
+          </NavTab>
+          <NavTab
+            href={`/sala${suffix}`}
+            active={pathname.startsWith("/sala")}
+            icon={<Map className="size-3.5" />}
+            compact
+          >
+            Sala
           </NavTab>
         </nav>
       </header>
@@ -213,6 +222,14 @@ export function AppShell({
             compact={isMobile}
           >
             {isMobile ? "Risco" : "Gestão de Risco"}
+          </NavTab>
+          <NavTab
+            href={`/sala${suffix}`}
+            active={pathname.startsWith("/sala")}
+            icon={<Map className="size-3.5" />}
+            compact={isMobile}
+          >
+            Sala
           </NavTab>
         </nav>
 
