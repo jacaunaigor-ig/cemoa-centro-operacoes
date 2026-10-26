@@ -8,6 +8,7 @@ export type InmetAvisoMapa = {
   inicio: string;
   fim: string;
   riscos: string;
+  estados: string;
   geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon;
 };
 
@@ -62,8 +63,11 @@ function cobreAmazonas(estados: unknown) {
   return estados.split(",").some((item) => item.trim() === "Amazonas");
 }
 
-/** Avisos vigentes de hoje cuja mancha cobre o Amazonas. */
-export function avisosDoPayload(payload: unknown): InmetAvisoMapa[] {
+/** Avisos vigentes de hoje. Sem filtro, mantém só a mancha que cobre o Amazonas. */
+export function avisosDoPayload(
+  payload: unknown,
+  cobre: (estados: unknown) => boolean = cobreAmazonas,
+): InmetAvisoMapa[] {
   if (!payload || typeof payload !== "object") return [];
   const hoje = (payload as { hoje?: unknown }).hoje;
   if (!Array.isArray(hoje)) return [];
@@ -72,7 +76,7 @@ export function avisosDoPayload(payload: unknown): InmetAvisoMapa[] {
     if (!row || typeof row !== "object") continue;
     const rec = row as Record<string, unknown>;
     if (rec.encerrado === true || rec.encerrado === "S") continue;
-    if (!cobreAmazonas(rec.estados)) continue;
+    if (!cobre(rec.estados)) continue;
     const geometry = parsePoligono(rec.poligono);
     if (!geometry) continue;
     const id = rec.id ?? rec.id_aviso;
@@ -84,6 +88,7 @@ export function avisosDoPayload(payload: unknown): InmetAvisoMapa[] {
       inicio: texto(rec.inicio, 24),
       fim: texto(rec.fim, 24),
       riscos: texto(rec.riscos),
+      estados: typeof rec.estados === "string" ? rec.estados : "",
       geometry,
     });
   }

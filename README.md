@@ -2,6 +2,14 @@
 
 Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 municípios do Amazonas. Integra dados de chuva, rios, qualidade do ar, focos de calor e vulnerabilidade territorial em um painel único, para desktop e celular.
 
+## Sala pública
+
+Recorte de divulgação, com dado público, em três escalas: município, estado e Brasil. A rota é [`/sala`](app/sala/page.tsx). O portfólio está em [`docs/index.html`](docs/index.html).
+
+![Brasil na sala de monitoramento](docs/portfolio/brasil.png)
+
+A sala lê pluviômetros do CEMADEN, avisos vigentes do INMET e a malha do IBGE. As cores são faixas de leitura. Não é alerta oficial e não substitui a Defesa Civil, o CEMADEN nem o INMET.
+
 ## Módulos
 
 | Módulo | Rota | O que faz |
@@ -10,6 +18,7 @@ Plataforma de monitoramento hidrometeorológico e gestão de riscos para os 62 m
 | Boletim Hidrológico | `/boletim` | Estiagem e inundação por município e calha, cotas dos rios, limiares ANA/SGB e projeção |
 | Meteorologia | `/meteorologia` | Aviso meteorológico do plantão, chuva CEMADEN, imagem GOES-19 e análise climática (MERGE/CPTEC) |
 | Gestão de Risco | `/risco` | Mapa em degradê do IRG e IREs com exportação em PNG, índices IVM, IRE e IRG, ranking, ficha municipal, território (Censo 2022) e decretos |
+| Sala pública | `/sala` | Chuva CEMADEN e avisos INMET em município, estado e Brasil, só com dado público |
 
 ## Fontes de dados
 
@@ -48,4 +57,4 @@ Veja `.env.example`. Nunca versione chaves reais.
 
 ## Licença
 
-Defina a licença do projeto no arquivo `LICENSE`.
+MIT. O texto está em [`LICENSE`](LICENSE).
