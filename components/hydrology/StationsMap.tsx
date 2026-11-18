@@ -38,6 +38,7 @@ import {
 import { useOpsMode } from "@/components/shared/OpsMode";
 import { loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
+import { addMapCoordinates } from "@/lib/map-coordinates";
 import {
   addTerritoryOverlays,
   applyTerritoryVisibility,
@@ -233,6 +234,7 @@ export const StationsMap = forwardRef<
         maxZoom: 18,
         worldCopyJump: false,
       }).setView(AMAZONAS_CENTER, 6);
+      addMapCoordinates(L, map);
 
       const tiles = L.tileLayer(OSM_TILE_URL, {
         attribution: OSM_ATTRIBUTION,

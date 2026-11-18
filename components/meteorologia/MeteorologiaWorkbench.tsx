@@ -13,6 +13,7 @@ import { MunicipioChoropleth } from "@/components/shared/MunicipioChoropleth";
 import { fetchJson } from "@/lib/client";
 import { startVisiblePoll, useNow } from "@/lib/client-hooks";
 import { exportInstitutionalPng, pngFilename } from "@/lib/export-map-png";
+import { pluvioFromRain } from "@/lib/map-overlays";
 import { SEM_LEITURA_FILL } from "@/lib/map-observacao";
 import { formatMm, rainBand, rainHeatColor, resumoChuvaPng } from "@/lib/rainfall-display";
 import { STATIC_DEPLOY, withBase } from "@/lib/site";
@@ -69,7 +70,7 @@ export function MeteorologiaWorkbench() {
   const [goesFrames, setGoesFrames] = useState<GoesFrame[]>([]);
   const [goesFrameIdx, setGoesFrameIdx] = useState(-1);
   const [goesPlaying, setGoesPlaying] = useState(false);
-  const [painel, setPainel] = useState<"chuva" | "clima" | "temperatura" | "previsao">("chuva");
+  const [painel, setPainel] = useState<"chuva" | "temperatura" | "previsao">("previsao");
   const [temp, setTemp] = useState<TemperaturaPayload | null>(null);
   const [tempErro, setTempErro] = useState<string | null>(null);
   const [exportando, setExportando] = useState<"mm1h" | "mm24h" | null>(null);
@@ -186,6 +187,8 @@ export function MeteorologiaWorkbench() {
     return next;
   }, [rain, janela]);
 
+  const estacoes = useMemo(() => pluvioFromRain(rain), [rain]);
+
   const titles = useMemo(() => {
     const next: Record<string, string> = {};
     for (const rec of Object.values(rain?.byNome ?? {})) {
@@ -259,10 +262,9 @@ export function MeteorologiaWorkbench() {
 
         <div className="flex shrink-0 gap-1 overflow-x-auto" role="tablist" aria-label="Painel meteorológico">
           {([
-            ["chuva", "Chuva"],
-            ["previsao", "Previsão"],
-            ["temperatura", "Temperatura"],
-            ["clima", "Clima"],
+            ["previsao", "Previsão CEMOA"],
+            ["chuva", "Chuva observada"],
+            ["temperatura", "Temperatura agora"],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -334,7 +336,7 @@ export function MeteorologiaWorkbench() {
                 O mapa de chuva fica indisponível na publicação estática.
               </p>
             ) : (
-              <MunicipioChoropleth className="meteo-map" fills={fills} titles={titles} selected={selected} onSelect={setSelected} />
+              <MunicipioChoropleth className="meteo-map" fills={fills} titles={titles} selected={selected} onSelect={setSelected} estacoes={estacoes} ativo={painel === "chuva"} />
             )}
             <ul className="flex flex-wrap gap-2 text-[10px] text-text-mute">
               {ESCALA.map((item) => (
@@ -343,6 +345,14 @@ export function MeteorologiaWorkbench() {
                   {item.ate}
                 </li>
               ))}
+              <li className="flex items-center gap-1">
+                <span className="size-2.5 rounded-full bg-[#2563eb] ring-1 ring-white" />
+                CEMADEN
+              </li>
+              <li className="flex items-center gap-1">
+                <span className="size-2.5 rounded-full bg-[#0f766e] ring-1 ring-white" />
+                ANA
+              </li>
             </ul>
           </div>
 
@@ -529,97 +539,8 @@ export function MeteorologiaWorkbench() {
           </aside>
         </section>
 
-        <section className={cn("grid gap-3", painel !== "clima" && "hidden")}>
-          <div>
-            <h3 className="text-sm font-black">Clima · MERGE</h3>
-            {isMobile ? null : (
-              <p className="mt-1 max-w-3xl text-[12px] text-text-mute">
-                Contexto de estiagem, sem classificar chuva nem alerta. Vermelho é déficit em relação à climatologia; azul é excesso.
-                Fonte:{" "}
-                <a className="underline" href="https://data.inpe.br/dados/merge/" target="_blank" rel="noreferrer">
-                  data.inpe.br/dados/merge
-                </a>
-                .
-              </p>
-            )}
-          </div>
-          <div className="grid gap-3 lg:grid-cols-2">
-            <MergeCard qual="anterior" titulo="Mês anterior" />
-            <MergeCard qual="atual" titulo="Mês atual" />
-          </div>
-          <div className="grid gap-3 lg:grid-cols-2">
-            <IndiceCard
-              produto="dd"
-              titulo="Número de dias sem precipitação"
-              texto="Quantos dias do mês ficaram sem chuva no MERGE. O CPTEC publica o mês já fechado."
-            />
-            <IndiceCard
-              produto="cdd"
-              titulo="Número de dias consecutivos sem precipitação"
-              texto="Maior sequência de dias secos seguida no mês, no MERGE. O CPTEC publica o mês já fechado."
-            />
-          </div>
-        </section>
       </div>
     </AppShell>
-  );
-}
-
-function MergeCard({ qual, titulo }: { qual: "atual" | "anterior"; titulo: string }) {
-  const src = withBase(`/api/clima/merge?produto=anomalia&qual=${qual}`);
-  return (
-    <figure className="overflow-hidden rounded-xl border border-border bg-panel">
-      <figcaption className="border-b border-border px-3 py-2 text-[12px] font-bold">{titulo}</figcaption>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={`Anomalia de precipitação MERGE — ${titulo}`} className="h-auto w-full bg-white object-contain" />
-    </figure>
-  );
-}
-
-function IndiceCard({ produto, titulo, texto }: { produto: "dd" | "cdd"; titulo: string; texto: string }) {
-  const src = withBase(`/api/clima/merge?produto=${produto}`);
-  const [baixando, setBaixando] = useState(false);
-  async function baixar() {
-    setBaixando(true);
-    try {
-      const res = await fetch(src);
-      if (!res.ok) throw new Error("Imagem indisponível.");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = pngFilename(produto === "dd" ? "merge_dias_sem_precipitacao" : "merge_dias_consecutivos_sem_precipitacao");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-      toast.success("PNG exportado.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao exportar.");
-    } finally {
-      setBaixando(false);
-    }
-  }
-  return (
-    <figure className="overflow-hidden rounded-xl border border-border bg-panel">
-      <figcaption className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
-        <span>
-          <span className="block text-[12px] font-bold">{titulo}</span>
-          <span className="mt-0.5 hidden text-[11px] font-normal text-text-mute sm:block">{texto}</span>
-        </span>
-        <button
-          type="button"
-          onClick={() => void baixar()}
-          disabled={baixando || STATIC_DEPLOY}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-border bg-panel px-3 text-[12px] font-bold disabled:opacity-50"
-        >
-          <ImageDown className="size-3.5" />
-          {baixando ? "Gerando…" : "PNG"}
-        </button>
-      </figcaption>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={`${titulo} — MERGE/CPTEC`} className="h-auto w-full bg-white object-contain" />
-    </figure>
   );
 }
 
@@ -667,7 +588,11 @@ function Foco({ item, janela }: { item: RainfallMunicipio; janela: Janela }) {
   return (
     <div className="mt-1">
       <strong className="text-[13px] break-words">{item.nome}</strong>
-      {item.estacoes.length ? null : (
+      {item.estacoes.length ? (
+        <p className="text-[11px] text-text-mute">
+          {item.estacoes.map((estacao) => estacao.nome).join(" · ")}
+        </p>
+      ) : (
         <p className="text-[11px] text-text-mute">Sem pluviômetro neste município.</p>
       )}
       <dl className="mt-1 grid grid-cols-4 gap-1">

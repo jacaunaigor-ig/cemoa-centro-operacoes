@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPrevisaoMunicipios } from "@/lib/open-meteo";
+import { getPrevisaoMunicipios } from "@/lib/cemoa-previsao";
 
 export const dynamic = "force-dynamic";
 

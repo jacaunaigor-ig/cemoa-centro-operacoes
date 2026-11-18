@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { GeoJSON as GeoJSONLayer, Map as LeafletMap, PathOptions } from "leaflet";
 import { addOsmTiles, leafletNamespace, resetLeafletHost } from "@/lib/leaflet-osm";
+import { addMapCoordinates } from "@/lib/map-coordinates";
 import "leaflet/dist/leaflet.css";
 
 type Props = {
@@ -44,6 +45,7 @@ export function SalaMapa({ malha, avisos, cores, nomes, selecionado, onSelect }:
       if (cancelled || !node.isConnected) return;
       resetLeafletHost(node);
       map = L.map(node, { zoomControl: true, attributionControl: true, minZoom: 3 });
+      addMapCoordinates(L, map);
       addOsmTiles(L, map);
 
       const territorio: GeoJSONLayer = L.geoJSON(malha, {

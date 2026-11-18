@@ -12,6 +12,8 @@ const AMARELO_MS = 20 * 60_000;
 const VERMELHO_MS = 45 * 60_000;
 const GOES_AMARELO_MS = 30 * 60_000;
 const GOES_VERMELHO_MS = 90 * 60_000;
+const ANA_RAIN_AMARELO_MS = 30 * 60_000;
+const ANA_RAIN_VERMELHO_MS = 3 * 60 * 60_000;
 const HIDRO_AMARELO_MS = 20 * 60 * 60_000;
 const HIDRO_VERMELHO_MS = 30 * 60 * 60_000;
 
@@ -32,6 +34,9 @@ export function buildSourceHealth(input: {
   now?: number;
   rainAt: number | null;
   rainError: string | null;
+  anaRainAt: number | null;
+  anaRainError: string | null;
+  anaRainSensores: number;
   airAt: number | null;
   airError: string | null;
   airSensores: number;
@@ -64,6 +69,20 @@ export function buildSourceHealth(input: {
       tone: rainTone,
       at: input.rainAt,
       detalhe: input.rainError ?? (input.rainAt ? "chuva ao vivo" : "aguardando consulta"),
+    },
+    {
+      id: "ana-chuva",
+      label: "ANA chuva",
+      tone: toneFromAge(
+        input.anaRainAt,
+        now,
+        ANA_RAIN_AMARELO_MS,
+        ANA_RAIN_VERMELHO_MS,
+      ),
+      at: input.anaRainAt,
+      detalhe:
+        input.anaRainError ??
+        `${input.anaRainSensores} pluviômetros com leitura válida · consulta a cada 15 min`,
     },
     {
       id: "ana-hidro",

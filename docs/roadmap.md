@@ -17,10 +17,10 @@ Corte de 8 de outubro de 2026. O Centro já opera os cinco produtos de alerta, o
 
 ## P0 — Fechar a entrega do plantão (1–2 semanas)
 
-1. **Barra de saúde das fontes** no rodapé: SELVA, CEMADEN, ANA hidro 16 h, ANA chuva 15 min, GOES, Power BI. Verde / amarelo / vermelho pela idade da leitura.
-2. **Três estados no mapa de chuva:** sem estação (cinza), 0 mm, chuva. No boletim: cota de hoje vs série antiga.
+1. **Barra de saúde das fontes** no rodapé: SELVA, CEMADEN, ANA hidro 16 h, ANA chuva 15 min, GOES, Power BI. Verde / amarelo / vermelho pela idade da leitura, com ANA chuva separada da CEMADEN. *(no ar)*
+2. **Três estados no mapa de chuva:** sem estação (cinza), 0 mm, chuva. No boletim: cota de hoje vs série antiga. *(no ar: escala e PNG identificam sem estação/sem leitura/0 mm; ficha hidro separa cota atual de recente e data do dado)*
 3. **Abrir e encerrar plantão** na troca de turno, no lugar do marco de tempo estático. *(no ar: cartão em Meteorologia)*
-4. **Aviso 4 h e PNG** com hora de Manaus, fonte e validade. Avisar se a cena GOES passou de 30 min.
+4. **Aviso 4 h e PNG** com hora de Manaus, fonte e validade. Avisar se a cena GOES passou de 30 min. *(no ar: alerta informa idade, PNG carimba imagem/validade e avisa cena acima de 30 min)*
 
 ## P1 — Sala de situação (2–4 semanas)
 

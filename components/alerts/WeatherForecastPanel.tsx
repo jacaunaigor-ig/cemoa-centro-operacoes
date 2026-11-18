@@ -1,24 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CloudRain, CloudSun, ExternalLink, Thermometer } from "lucide-react";
+import { CloudRain, CloudSun, Thermometer } from "lucide-react";
 import { fetchJson } from "@/lib/client";
+import { norteDe, vistaDoDia } from "@/lib/cemoa-norte";
+import { CemoaMeteograma } from "@/components/meteorologia/CemoaMeteograma";
+import { indicativoChuva } from "@/lib/boletim-chuva";
+import { RISK_LABELS } from "@/lib/risk";
+import type { PrevisaoLote } from "@/lib/open-meteo";
 import { formatMm, formatMmShort } from "@/lib/rainfall-display";
 import { STATIC_DEPLOY } from "@/lib/site";
 import type { RainfallMunicipio, WeatherForecast } from "@/lib/types";
 import { formatAmazonDateTime } from "@/lib/utils";
 import {
   formatTempC,
-  INMET_PORTAL_URL,
   periodLabel,
 } from "@/lib/weather-forecast";
-
-const HORIZON_SLOTS: Array<{ id: WeatherForecast["horizons"][number]["id"]; label: string }> = [
-  { id: "24h", label: "24 h" },
-  { id: "48h", label: "48 h" },
-  { id: "72h", label: "72 h" },
-  { id: "5d", label: "5 dias" },
-];
 
 export function useWeatherForecast(ibge?: string) {
   const [data, setData] = useState<WeatherForecast | null>(null);
@@ -76,15 +73,6 @@ export function WeatherForecastPanel({
   const station = data?.station;
   const tempMax = now?.tempMax ?? today?.tempMax ?? station?.tempMaxObs ?? null;
   const tempMin = now?.tempMin ?? today?.tempMin ?? station?.tempMinObs ?? null;
-  const horizons = HORIZON_SLOTS.map((slot) => {
-    const found = data?.horizons.find((h) => h.id === slot.id);
-    return {
-      id: slot.id,
-      label: found?.label ?? slot.label,
-      resumo: found?.resumo ?? null,
-      tempMax: found?.tempMax ?? null,
-    };
-  });
 
   return (
     <div className="mt-3 rounded-lg border border-border bg-bg/40 p-2.5">
@@ -154,54 +142,80 @@ export function WeatherForecastPanel({
         </>
       )}
 
-      <SectionLabel icon={<CloudSun className="size-3.5" />}>Previsão · INMET</SectionLabel>
-      {loading && !data ? (
-        <p className="mt-1.5 text-center text-[11px] text-text-mute">Carregando 24 h / 48 h / 72 h / 5 dias…</p>
-      ) : data?.days.length || data?.horizons.some((h) => h.resumo || h.tempMax != null) ? (
-        <ol className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
-          {horizons.map((h) => (
-            <li
-              key={h.id}
-              className="flex flex-col items-center justify-center rounded-md border border-border bg-panel/50 px-1.5 py-1.5 text-center"
-            >
-              <small className="block text-[9px] font-bold tracking-wide text-text-mute uppercase">
-                {h.label}
-              </small>
-              <span className="mt-0.5 w-full text-[10px] leading-snug break-words text-text">
-                {h.resumo ?? "—"}
-              </span>
-              <strong className="mt-0.5 font-mono text-[11px] tabular-nums">
-                {formatTempC(h.tempMax)}
-              </strong>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="mt-1.5 text-center text-[11px] text-text-mute">
-          {error ?? "Sem previsão INMET para este município."}
-        </p>
-      )}
+      <SectionLabel icon={<CloudSun className="size-3.5" />}>Previsão · CEMOA</SectionLabel>
+      <CemoaNoAlerta ibge={ibge} rain={rain} />
 
       {error && (data?.days.length || station) ? (
         <p className="mt-1.5 text-center text-[10px] text-risco-alto">{error}</p>
       ) : null}
 
       <p className="mt-2 text-center text-[10px] leading-snug text-text-mute">
-        {data
-          ? `Consulta ${formatAmazonDateTime(data.generatedAt)}${data.cache === "HIT" ? " · lote em cache" : ""}. Previsão do INMET, não é observação nem grau.`
-          : "Previsão do INMET, não é observação nem grau."}
+        Temperatura observada no INMET. A chuva prevista é a rodada CEMOA; o CEMADEN confirma o que já caiu.
       </p>
-      <a
-        href={INMET_PORTAL_URL}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-focus hover:underline"
-      >
-        Portal INMET
-        <ExternalLink className="size-3" />
-      </a>
     </div>
   );
+}
+
+function CemoaNoAlerta({ ibge, rain }: { ibge: string; rain?: RainfallMunicipio | null }) {
+  const [lote, setLote] = useState<PrevisaoLote | null>(null);
+  const [falha, setFalha] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (STATIC_DEPLOY) return;
+    let cancel = false;
+    lerLoteCemoa()
+      .then((data) => {
+        if (!cancel) setLote(data);
+      })
+      .catch((err: unknown) => {
+        if (!cancel) setFalha(err instanceof Error ? err.message : "Sem rodada CEMOA.");
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const bruto = lote?.municipios.find((ponto) => ponto.id === ibge) ?? null;
+  const indice = bruto?.dias?.findIndex((dia) => dia.data === lote?.diaOperacional) ?? 0;
+  const ponto = bruto ? vistaDoDia(bruto, indice >= 0 ? indice : 0) : null;
+  const norte = ponto ? norteDe(ponto, rain, lote?.diaOperacional ?? null) : null;
+  const sinal = ponto ? indicativoChuva(ponto) : null;
+
+  if (STATIC_DEPLOY) {
+    return <p className="mt-1.5 text-center text-[11px] text-text-mute">Previsão CEMOA indisponível no modo estático.</p>;
+  }
+  if (!ponto) {
+    return <p className="mt-1.5 text-center text-[11px] text-text-mute">{falha ?? "Lendo a rodada CEMOA…"}</p>;
+  }
+  return (
+    <div className="mt-1.5 grid gap-1.5">
+      <p className="text-center text-[11px] leading-snug text-text">
+        {ponto.categoria || "Previsão do dia"} · {ponto.prob24h ?? "—"}% · consenso {ponto.consenso || "—"}
+        {sinal ? ` · ${RISK_LABELS[sinal.nivel]} em 24 h` : ""}
+      </p>
+      <div className="mt-1.5 grid gap-1.5">
+        <div className="grid grid-cols-3 gap-1">
+          <ClimaStat label="Máxima" value={ponto.tempMaxC != null ? `${Math.round(ponto.tempMaxC)}°` : "—"} />
+          <ClimaStat label="Mínima" value={ponto.tempMinC != null ? `${Math.round(ponto.tempMinC)}°` : "—"} />
+          <ClimaStat label="Chance" value={ponto.prob24h != null ? `${ponto.prob24h}%` : "—"} />
+        </div>
+        <CemoaMeteograma dias={bruto?.dias ?? []} ativo={lote?.diaOperacional} compact />
+      </div>
+      <p className="text-center text-[10px] leading-snug text-text-mute">{norte?.texto}</p>
+    </div>
+  );
+}
+
+let loteCemoa: Promise<PrevisaoLote> | null = null;
+
+function lerLoteCemoa() {
+  if (!loteCemoa) {
+    loteCemoa = fetchJson<PrevisaoLote>("/api/meteorologia/previsao").catch((err: unknown) => {
+      loteCemoa = null;
+      throw err;
+    });
+  }
+  return loteCemoa;
 }
 
 function SectionLabel({ icon, children }: { icon: React.ReactNode; children: string }) {

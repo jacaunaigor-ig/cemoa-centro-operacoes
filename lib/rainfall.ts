@@ -71,7 +71,10 @@ let anaRainInflight: Promise<void> | null = null;
 let anaRainLastFetched = 0;
 const ANA_REFRESH_INTERVAL_MS = 15 * 60_000;
 const ANA_DEAD_REPROBE_MS = 6 * 60 * 60_000;
-const anaRainHealth = new Map<string, { ok: boolean; at: number }>();
+const anaRainHealth = new Map<
+  string,
+  { ok: boolean; at: number; observedAt: number | null }
+>();
 
 function shouldPollAnaRain(codigo: string, now: number) {
   const health = anaRainHealth.get(codigo);
@@ -98,10 +101,20 @@ function refreshAnaRainfallBackground(missingMunis: typeof MUNICIPALITIES) {
       for (const { id, target } of anaTargets) {
         try {
           const st = await fetchAnaRainStation(target.codigo, target.nome);
-          anaRainHealth.set(target.codigo, { ok: Boolean(st), at: Date.now() });
+          const previous = anaRainHealth.get(target.codigo);
+          anaRainHealth.set(target.codigo, {
+            ok: Boolean(st),
+            at: Date.now(),
+            observedAt: st?.observedAt ?? previous?.observedAt ?? null,
+          });
           if (st) anaRainCache.set(id, st);
         } catch {
-          anaRainHealth.set(target.codigo, { ok: false, at: Date.now() });
+          const previous = anaRainHealth.get(target.codigo);
+          anaRainHealth.set(target.codigo, {
+            ok: false,
+            at: Date.now(),
+            observedAt: previous?.observedAt ?? null,
+          });
         }
       }
       anaRainLastFetched = Date.now();
@@ -331,6 +344,23 @@ export function peekRainfallCache(): {
     at: memo.at,
     registros: memo.data.coverage.estacoes,
     erro: memo.data.error,
+  };
+}
+
+export function peekAnaRainHealth(now = Date.now()): {
+  at: number | null;
+  registros: number;
+  erro: string | null;
+} {
+  const readings = [...anaRainHealth.values()]
+    .map((health) => health.observedAt)
+    .filter((at): at is number => at != null);
+  const at = readings.length ? Math.max(...readings) : null;
+  const registros = readings.filter((observedAt) => now - observedAt <= 3 * 60 * 60_000).length;
+  return {
+    at,
+    registros,
+    erro: registros ? null : "Sem leitura válida da ANA nas últimas 3 horas.",
   };
 }
 

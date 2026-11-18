@@ -94,12 +94,14 @@ export function usePauseMotionWhenHidden() {
 }
 
 /**
- * Polls while the tab is visible. Hidden tabs skip the network round-trip
- * and resume as soon as the operator comes back.
+ * Polls while the tab is visible. The first reading always runs, so a restored
+ * or background tab does not open empty. Later rounds skip the network until
+ * the operator comes back.
  */
 export function startVisiblePoll(load: () => Promise<void> | void, intervalMs: number) {
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let first = true;
 
   const arm = () => {
     if (cancelled) return;
@@ -110,7 +112,9 @@ export function startVisiblePoll(load: () => Promise<void> | void, intervalMs: n
 
   const run = async () => {
     if (cancelled) return;
-    if (typeof document !== "undefined" && document.hidden) {
+    const abrir = first;
+    first = false;
+    if (!abrir && typeof document !== "undefined" && document.hidden) {
       arm();
       return;
     }

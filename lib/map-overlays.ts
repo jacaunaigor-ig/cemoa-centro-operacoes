@@ -338,29 +338,31 @@ function offsetAround(lat: number, lng: number, index: number, total: number): [
 
 export function syncPluviometers(L: LeafletNS, layer: LayerGroup, stations: PluvioStation[]) {
   layer.clearLayers();
-  const icon = L.divIcon({
-    className: "map-pluvio-icon",
-    html: "<span></span>",
-    iconSize: [8, 8],
-    iconAnchor: [4, 4],
-  });
   for (const s of pluviosPosicionados(stations)) {
     const mm = [s.mm1h, s.mm6h, s.mm24h]
       .map((v) => (v == null ? "—" : v.toFixed(1)))
       .join(" / ");
+    const ana = s.nome.startsWith("ANA") || s.id.startsWith("ANA");
+    const rede = ana ? "ANA" : "CEMADEN";
     const origem = s.catalogo
-      ? "<br/>Coordenada do catálogo CEMADEN"
+      ? "<br/>Coordenada do catálogo"
       : s.sede
         ? "<br/><em>Posição na sede — esta estação não está no catálogo de coordenadas</em>"
         : "";
+    const marca = L.divIcon({
+      className: "map-pluvio-icon",
+      html: `<span class="${ana ? "is-ana" : ""}"></span>`,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
+    });
     L.marker([s.lat, s.lon], {
-      icon,
+      icon: marca,
       keyboard: false,
       pane: "pointsPane",
       zIndexOffset: 40,
     })
       .bindTooltip(
-        `<strong>${s.nome}</strong><br/>CEMADEN · ${s.munNome}<br/>1 / 6 / 24 h: ${mm} mm${origem}`,
+        `<strong>${s.nome}</strong><br/>${rede} · ${s.munNome}<br/>1 / 6 / 24 h: ${mm} mm${origem}`,
         { direction: "top", className: "map-point-tip" },
       )
       .addTo(layer);

@@ -2771,7 +2771,7 @@ export function AlertsWorkbench() {
                       className="size-2.5 rounded-sm border border-dashed border-text-mute"
                       style={{ background: SEM_LEITURA_FILL }}
                     />
-                    Sem leitura · {semLeitura}. Não é o verde de Baixo.
+                    Sem leitura · {semLeitura}.
                   </p>
                 ) : null}
                 {(tipo === "CHUVA" || tipo === "INCENDIO") && ventoMapa ? (

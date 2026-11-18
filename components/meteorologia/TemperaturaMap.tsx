@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import { addOsmTiles, loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { fitMapToAmazonas } from "@/lib/map";
+import { addMapCoordinates } from "@/lib/map-coordinates";
 import { corTemperatura, type TemperaturaEstacao } from "@/lib/inmet-temperatura";
 import { loadMunicipalMesh } from "@/lib/stain-clip";
 
@@ -25,6 +26,7 @@ export function TemperaturaMap({ estacoes }: { estacoes: TemperaturaEstacao[] })
       if (cancelled || !hostRef.current) return;
       resetLeafletHost(hostRef.current);
       const map = L.map(hostRef.current, { zoomControl: true, attributionControl: true });
+      addMapCoordinates(L, map);
       addOsmTiles(L, map);
       const geo = await loadMunicipalMesh();
       if (cancelled) {

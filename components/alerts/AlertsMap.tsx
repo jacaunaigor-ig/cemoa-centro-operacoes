@@ -66,6 +66,7 @@ import {
   type UsoSetor,
 } from "@/lib/setores-r3r4";
 import { createMapHoverTip, hideMapHoverTip, showMapHoverTip } from "@/lib/map-hover-tip";
+import { addMapCoordinates } from "@/lib/map-coordinates";
 import { reportClientError } from "@/lib/client";
 import { loadMunicipalMesh } from "@/lib/stain-clip";
 import type { AlertStain } from "@/lib/stains";
@@ -600,6 +601,7 @@ export const AlertsMap = forwardRef<
         maxZoom: 18,
         worldCopyJump: false,
       }).setView(AMAZONAS_CENTER, 6);
+      addMapCoordinates(L, map);
 
       const tiles = L.tileLayer(OSM_TILE_URL, {
         attribution: OSM_ATTRIBUTION,
@@ -677,7 +679,7 @@ export const AlertsMap = forwardRef<
               if (map && tip) {
                 const grau =
                   m?.observacao === "sem-leitura"
-                    ? "Sem leitura · não é risco baixo"
+                    ? "Sem leitura"
                     : (LEVEL_LABELS[m?.risco ?? "BAIXO"] ?? m?.risco);
                 showMapHoverTip(
                   map,

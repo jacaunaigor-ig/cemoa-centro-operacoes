@@ -5,7 +5,7 @@ import { peekAnaCache, peekAnaFetchedAt } from "@/lib/ana-telemetria";
 import { peekFabricCache, peekFabricFetchedAt } from "@/lib/fabric-cotas";
 import { peekFocosCache } from "@/lib/focos-referencia";
 import { getGoesMeta } from "@/lib/goes-satellite";
-import { peekRainfallCache } from "@/lib/rainfall";
+import { peekAnaRainHealth, peekRainfallCache } from "@/lib/rainfall";
 import { anexarFalhas, lerFalhas, novasFalhas } from "@/lib/source-failures";
 import { buildSourceHealth, classificarFonte, type FonteSaude, type FonteSinal } from "@/lib/source-health";
 import { peekWeatherCache, WEATHER_TTL_MS } from "@/lib/weather-forecast";
@@ -20,6 +20,7 @@ let anterior: FonteSaude[] | null = null;
 export async function GET() {
   const now = Date.now();
   const chuva = peekRainfallCache();
+  const anaChuva = peekAnaRainHealth(now);
   const ar = peekAirCache();
   const ana = peekAnaCache();
   const fabric = peekFabricCache();
@@ -31,6 +32,9 @@ export async function GET() {
     now,
     rainAt: chuva?.generatedAt ?? null,
     rainError: chuva?.error ?? null,
+    anaRainAt: anaChuva.at,
+    anaRainError: anaChuva.erro,
+    anaRainSensores: anaChuva.registros,
     airAt: ar?.generatedAt ?? null,
     airError: ar?.error ?? null,
     airSensores: ar?.sensores ?? 0,

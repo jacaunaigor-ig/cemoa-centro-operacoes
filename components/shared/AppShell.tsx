@@ -5,17 +5,14 @@ import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Activity,
-  CloudRain,
-  Droplets,
+  CloudSun,
   Info,
   LogIn,
   LogOut,
-  Map,
   Moon,
   Pencil,
   Radio,
   Shield,
-  ShieldAlert,
   Sun,
   Users,
 } from "lucide-react";
@@ -135,7 +132,7 @@ export function AppShell({
         </div>
         <nav
           aria-label="Produtos"
-          className="mt-1.5 grid grid-cols-4 gap-1 rounded-xl border border-border bg-hover p-1"
+          className="mt-1.5 grid grid-cols-2 gap-1 rounded-xl border border-border bg-hover p-1"
         >
           <NavTab
             href={`/${suffix}`}
@@ -146,28 +143,12 @@ export function AppShell({
             Alertas
           </NavTab>
           <NavTab
-            href={`/boletim${suffix}`}
-            active={pathname.startsWith("/boletim")}
-            icon={<Droplets className="size-3.5" />}
-            compact
-          >
-            Boletim
-          </NavTab>
-          <NavTab
             href={`/meteorologia${suffix}`}
             active={pathname.startsWith("/meteorologia")}
-            icon={<CloudRain className="size-3.5" />}
+            icon={<CloudSun className="size-3.5" />}
             compact
           >
-            Meteo
-          </NavTab>
-          <NavTab
-            href={`/sala${suffix}`}
-            active={pathname.startsWith("/sala")}
-            icon={<Map className="size-3.5" />}
-            compact
-          >
-            Sala
+            Meteorologia
           </NavTab>
         </nav>
       </header>
@@ -200,36 +181,12 @@ export function AppShell({
             {isMobile ? "Alertas" : "Painel de Alertas"}
           </NavTab>
           <NavTab
-            href={`/boletim${suffix}`}
-            active={pathname.startsWith("/boletim")}
-            icon={<Droplets className="size-3.5" />}
-            compact={isMobile}
-          >
-            {isMobile ? "Boletim" : "Boletim Hidrológico"}
-          </NavTab>
-          <NavTab
             href={`/meteorologia${suffix}`}
             active={pathname.startsWith("/meteorologia")}
-            icon={<CloudRain className="size-3.5" />}
+            icon={<CloudSun className="size-3.5" />}
             compact={isMobile}
           >
-            {isMobile ? "Meteo" : "Meteorologia"}
-          </NavTab>
-          <NavTab
-            href={`/risco${suffix}`}
-            active={pathname.startsWith("/risco")}
-            icon={<ShieldAlert className="size-3.5" />}
-            compact={isMobile}
-          >
-            {isMobile ? "Risco" : "Gestão de Risco"}
-          </NavTab>
-          <NavTab
-            href={`/sala${suffix}`}
-            active={pathname.startsWith("/sala")}
-            icon={<Map className="size-3.5" />}
-            compact={isMobile}
-          >
-            Sala
+            Meteorologia
           </NavTab>
         </nav>
 

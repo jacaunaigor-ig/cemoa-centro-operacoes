@@ -1,4 +1,3 @@
-import { MUNICIPALITIES } from "@/lib/municipalities";
 import { corTemperatura } from "@/lib/inmet-temperatura";
 import { formatMmShort, rainHeatColor } from "@/lib/rainfall-display";
 
@@ -7,19 +6,31 @@ export const OPEN_METEO_ATRIBUICAO = "https://open-meteo.com/";
 export const OPEN_METEO_SOURCE = "Open-Meteo · previsão horária";
 export const PREVISAO_TTL_MS = 30 * 60_000;
 
-const FETCH_MS = 20_000;
 const HORAS_6 = 6;
 const HORAS_24 = 24;
 
-export type PrevisaoMetrica = "precip6h" | "precip24h" | "temp" | "prob6h" | "prob24h";
+export type PrevisaoMetrica = "precip6h" | "precip24h" | "p90" | "temp" | "prob6h" | "prob24h";
 
 export const PREVISAO_METRICAS: Array<{ id: PrevisaoMetrica; label: string }> = [
-  { id: "precip6h", label: "Chuva 6 h" },
-  { id: "precip24h", label: "Chuva 24 h" },
-  { id: "temp", label: "Temperatura" },
-  { id: "prob6h", label: "Prob. 6 h" },
-  { id: "prob24h", label: "Prob. 24 h" },
+  { id: "precip24h", label: "Chuva típica" },
+  { id: "p90", label: "Extremo P90" },
+  { id: "prob24h", label: "Probabilidade" },
+  { id: "temp", label: "Máxima" },
 ];
+
+export type CemoaDia = {
+  data: string;
+  rotulo: string;
+  chuvaP50: number;
+  chuvaP90: number;
+  prob: number;
+  tempMax: number | null;
+  tempMin: number | null;
+  categoria: string;
+  periodo: string;
+  consenso: string;
+  consensoNivel: number;
+};
 
 export type PrevisaoPonto = {
   id: string;
@@ -33,6 +44,12 @@ export type PrevisaoPonto = {
   precip24hMm: number | null;
   prob6h: number | null;
   prob24h: number | null;
+  chuvaP90?: number | null;
+  categoria?: string | null;
+  periodo?: string | null;
+  consenso?: string | null;
+  consensoNivel?: number | null;
+  dias?: CemoaDia[];
 };
 
 export type PrevisaoLote = {
@@ -42,6 +59,11 @@ export type PrevisaoLote = {
   cache: "HIT" | "MISS";
   error: string | null;
   municipios: PrevisaoPonto[];
+  ciclo?: string | null;
+  modelo?: string | null;
+  diaOperacional?: string | null;
+  vigente?: boolean;
+  horizonteAjustado?: boolean;
 };
 
 type Serie = {
@@ -59,9 +81,6 @@ type Serie = {
     temperature_2m_min: Array<number | null>;
   };
 };
-
-type Memo = { at: number; data: PrevisaoLote };
-let memo: Memo | null = null;
 
 function round1(value: number) {
   return Math.round(value * 10) / 10;
@@ -237,7 +256,8 @@ export function montarPrevisao(
 export function valorPrevisao(ponto: PrevisaoPonto, metrica: PrevisaoMetrica): number | null {
   if (metrica === "precip6h") return ponto.precip6hMm;
   if (metrica === "precip24h") return ponto.precip24hMm;
-  if (metrica === "temp") return ponto.tempC;
+  if (metrica === "p90") return ponto.chuvaP90 ?? null;
+  if (metrica === "temp") return ponto.tempMaxC ?? ponto.tempC;
   if (metrica === "prob6h") return ponto.prob6h;
   return ponto.prob24h;
 }
@@ -251,6 +271,7 @@ export function textoMarcador(ponto: PrevisaoPonto, metrica: PrevisaoMetrica) {
 }
 
 export function precipDaCamada(ponto: PrevisaoPonto, metrica: PrevisaoMetrica) {
+  if (metrica === "p90") return ponto.chuvaP90 ?? null;
   if (metrica === "precip6h" || metrica === "prob6h") return ponto.precip6hMm;
   return ponto.precip24hMm;
 }
@@ -282,97 +303,9 @@ export function tintaMarcador(cor: string) {
 }
 
 export function janelaDaCamada(metrica: PrevisaoMetrica) {
-  return metrica === "precip6h" || metrica === "prob6h" ? "6 h" : "24 h";
-}
-
-function loteVazio(error: string | null, now = Date.now()): PrevisaoLote {
-  return {
-    generatedAt: now,
-    source: OPEN_METEO_SOURCE,
-    timezone: "America/Manaus",
-    cache: "MISS",
-    error,
-    municipios: MUNICIPALITIES.map((muni) => ({
-      id: muni.id,
-      nome: muni.nome,
-      lat: muni.lat,
-      lon: muni.lon,
-      tempC: null,
-      tempMaxC: null,
-      tempMinC: null,
-      precip6hMm: null,
-      precip24hMm: null,
-      prob6h: null,
-      prob24h: null,
-    })),
-  };
-}
-
-function temLeitura(lote: PrevisaoLote) {
-  return lote.municipios.some(
-    (ponto) => ponto.tempC != null || ponto.precip24hMm != null || ponto.prob24h != null,
-  );
-}
-
-async function fetchOpenMeteo(now: number) {
-  const url = new URL(OPEN_METEO_URL);
-  url.searchParams.set("latitude", MUNICIPALITIES.map((muni) => muni.lat.toFixed(4)).join(","));
-  url.searchParams.set("longitude", MUNICIPALITIES.map((muni) => muni.lon.toFixed(4)).join(","));
-  url.searchParams.set("hourly", "temperature_2m,precipitation,precipitation_probability");
-  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min");
-  url.searchParams.set("timezone", "America/Manaus");
-  url.searchParams.set("forecast_days", "2");
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), FETCH_MS);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "CEMOA-Centro-Operacoes/1.0 (Defesa Civil do Amazonas)",
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
-    const raw: unknown = await res.json();
-    if (raw && typeof raw === "object" && !Array.isArray(raw) && "reason" in raw && !("latitude" in raw)) {
-      const reason = (raw as { reason?: unknown }).reason;
-      throw new Error(typeof reason === "string" ? reason : "Open-Meteo recusou a consulta.");
-    }
-    const municipios = montarPrevisao(MUNICIPALITIES, raw, now);
-    return {
-      generatedAt: now,
-      source: OPEN_METEO_SOURCE,
-      timezone: "America/Manaus" as const,
-      cache: "MISS" as const,
-      error: null,
-      municipios,
-    };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-export function peekPrevisaoCache(): { at: number; registros: number } | null {
-  if (!memo) return null;
-  return { at: memo.at, registros: memo.data.municipios.length };
-}
-
-export async function getPrevisaoMunicipios(now = Date.now()): Promise<PrevisaoLote> {
-  if (memo && now - memo.at < PREVISAO_TTL_MS) {
-    return { ...memo.data, cache: "HIT", generatedAt: memo.data.generatedAt };
-  }
-  try {
-    const lote = await fetchOpenMeteo(now);
-    if (!temLeitura(lote)) {
-      if (memo) return { ...memo.data, cache: "HIT", error: "Previsão Open-Meteo incompleta; último lote." };
-      return loteVazio("Open-Meteo não devolveu previsão para os municípios.", now);
-    }
-    memo = { at: now, data: lote };
-    return lote;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Falha ao consultar o Open-Meteo.";
-    if (memo) return { ...memo.data, cache: "HIT", error: `${message} · último lote.` };
-    return loteVazio(message, now);
-  }
+  if (metrica === "p90") return "extremo do dia";
+  if (metrica === "temp") return "máxima do dia";
+  if (metrica === "prob24h" || metrica === "prob6h") return "probabilidade";
+  if (metrica === "precip6h") return "6 h";
+  return "chuva típica do dia";
 }

@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import type { GeoJSON as GeoLayer, LayerGroup, Map as LeafletMap, PathOptions } from "leaflet";
 import { addOsmTiles, loadLeafletWithCluster, resetLeafletHost } from "@/lib/leaflet-osm";
 import { fitMapToAmazonas } from "@/lib/map";
+import { addMapCoordinates } from "@/lib/map-coordinates";
 import {
   corMarcador,
   precipDaCamada,
@@ -48,6 +49,7 @@ export function PrevisaoMap({
       if (cancelled || !hostRef.current) return;
       resetLeafletHost(hostRef.current);
       const map = L.map(hostRef.current, { zoomControl: true, attributionControl: true });
+      addMapCoordinates(L, map);
       addOsmTiles(L, map);
       const geo = await loadMunicipalMesh();
       if (cancelled) {
@@ -128,9 +130,9 @@ export function PrevisaoMap({
       });
       const dica = [
         ponto.nome,
-        ponto.tempC == null ? "temperatura —" : `${ponto.tempC.toLocaleString("pt-BR")} °C agora`,
-        `chuva 6 h ${ponto.precip6hMm ?? "—"} mm · 24 h ${ponto.precip24hMm ?? "—"} mm`,
-        `probabilidade ${ponto.prob6h ?? "—"}% em 6 h · ${ponto.prob24h ?? "—"}% em 24 h`,
+        ponto.categoria || "Previsão CEMOA",
+        `típica ${ponto.precip24hMm ?? "—"} mm · extremo ${ponto.chuvaP90 ?? "—"} mm`,
+        `probabilidade ${ponto.prob24h ?? "—"}% · máxima ${ponto.tempMaxC ?? "—"} °C`,
       ].join("<br>");
       L.marker([ponto.lat, ponto.lon], { icon, keyboard: false })
         .bindTooltip(dica, { direction: "top" })

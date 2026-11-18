@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classificarFonte } from "./source-health.ts";
+import { buildSourceHealth, classificarFonte } from "./source-health.ts";
 
 const base = {
   id: "cemaden",
@@ -42,4 +42,47 @@ test("erro sem registro não vira risco zero", () => {
     now,
   );
   assert.equal(row.estado, "erro");
+});
+
+test("saúde da chuva ANA usa a idade da leitura, separada do CEMADEN", () => {
+  const now = 10_000_000;
+  const base = {
+    now,
+    rainAt: now,
+    rainError: null,
+    anaRainAt: now - 31 * 60_000,
+    anaRainError: null,
+    anaRainSensores: 2,
+    airAt: now,
+    airError: null,
+    airSensores: 3,
+    anaAt: now,
+    fabricAt: now,
+    goesAt: now,
+  };
+  const sources = buildSourceHealth(base);
+
+  assert.equal(sources.find((source) => source.id === "cemaden")?.tone, "ok");
+  assert.equal(sources.find((source) => source.id === "ana-chuva")?.tone, "atraso");
+  assert.equal(sources.find((source) => source.id === "ana-chuva")?.at, now - 31 * 60_000);
+});
+
+test("chuva ANA sem leitura recente aparece como indisponível", () => {
+  const now = 10_000_000;
+  const sources = buildSourceHealth({
+    now,
+    rainAt: now,
+    rainError: null,
+    anaRainAt: now - 4 * 60 * 60_000,
+    anaRainError: "Sem leitura válida da ANA nas últimas 3 horas.",
+    anaRainSensores: 0,
+    airAt: now,
+    airError: null,
+    airSensores: 3,
+    anaAt: now,
+    fabricAt: now,
+    goesAt: now,
+  });
+
+  assert.equal(sources.find((source) => source.id === "ana-chuva")?.tone, "falha");
 });
